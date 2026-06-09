@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dpp_app/main.dart';
 import 'package:dpp_app/screens/login_screen.dart';
@@ -139,6 +140,52 @@ void main() {
 
     // Verify it navigated to ClinicianDashboardScreen
     expect(find.byType(ClinicianDashboardScreen), findsOneWidget);
+
+    await resetTestWindow(tester);
+  });
+
+  testWidgets('Biometric Login Flow Navigation Test', (WidgetTester tester) async {
+    await setupTestWindow(tester);
+
+    // Register a mock handler on the local_auth channel
+    const channel = MethodChannel('plugins.flutter.io/local_auth');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      channel,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'isDeviceSupported') {
+          return true;
+        }
+        if (methodCall.method == 'canCheckBiometrics') {
+          return true;
+        }
+        if (methodCall.method == 'getAvailableBiometrics') {
+          return ['fingerprint'];
+        }
+        if (methodCall.method == 'authenticate') {
+          return true;
+        }
+        return null;
+      },
+    );
+
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const DPPApp());
+    await tester.pumpAndSettle();
+
+    // Verify we are on the Login Screen
+    expect(find.text('Welcome!'), findsOneWidget);
+
+    // Ensure the Biometric Login button is tapped
+    final biometricButton = find.widgetWithText(OutlinedButton, 'Biometric Login');
+    await tester.ensureVisible(biometricButton);
+    await tester.tap(biometricButton);
+    await tester.pumpAndSettle();
+
+    // Since it was 'Patient' role selected by default, verify we navigated to the Patient MainShell
+    expect(find.byType(MainShell), findsOneWidget);
+
+    // Reset the Mock handler
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
 
     await resetTestWindow(tester);
   });

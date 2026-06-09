@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import '../main.dart'; // MainShell
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
@@ -26,6 +27,64 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _authenticateWithBiometrics() async {
+    final LocalAuthentication auth = LocalAuthentication();
+    try {
+      final bool canCheck = await auth.canCheckBiometrics;
+      final bool isSupported = await auth.isDeviceSupported();
+
+      if (!canCheck || !isSupported) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Biometric authentication is not supported or set up on this device.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+
+      final List<BiometricType> availableBiometrics = await auth.getAvailableBiometrics();
+      if (availableBiometrics.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No biometrics are enrolled. Please register a fingerprint or face in settings.'),
+              backgroundColor: Colors.orangeAccent,
+            ),
+          );
+        }
+        return;
+      }
+
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Please authenticate to log in to DiaPrevent',
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
+      );
+
+      if (didAuthenticate && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => _isPatientSelected
+                ? const MainShell()
+                : const ClinicianDashboardScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Biometric authentication failed: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -364,14 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           backgroundColor: Colors.white,
                           elevation: 0,
                         ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Biometric Login Initialized'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
+                        onPressed: _authenticateWithBiometrics,
                         icon: const Icon(Icons.fingerprint_rounded, color: _borderBlue, size: 26),
                         label: const Text(
                           'Biometric Login',
