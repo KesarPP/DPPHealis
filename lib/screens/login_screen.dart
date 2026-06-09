@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../main.dart'; // MainShell
 import 'signup_screen.dart';
+import 'clinician_dashboard_screen.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -314,7 +315,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         onPressed: () {
                           Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const MainShell()),
+                            MaterialPageRoute(
+                              builder: (_) => _isPatientSelected
+                                  ? const MainShell()
+                                  : const ClinicianDashboardScreen(),
+                            ),
                           );
                         },
                         child: const Text(
