@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'clinician_profile_screen.dart';
 
 // Brand colors
 const _brandColor = Color(0xFF1B3D6D);
@@ -35,20 +36,28 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      'assets/images/clinician_avatar.png',
-                      width: 44,
-                      height: 44,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return CircleAvatar(
-                          radius: 22,
-                          backgroundColor: _brandColor.withValues(alpha: 0.1),
-                          child: const Icon(Icons.person_rounded, color: _brandColor),
-                        );
-                      },
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ClinicianProfileScreen()),
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/images/clinician_avatar.png',
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return CircleAvatar(
+                            radius: 22,
+                            backgroundColor: _brandColor.withValues(alpha: 0.1),
+                            child: const Icon(Icons.person_rounded, color: _brandColor),
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
