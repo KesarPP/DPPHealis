@@ -1,29 +1,34 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../main.dart'; // MainShell
-import 'signup_screen.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
 const _borderBlue = Color(0xFF4A88C5);
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isPatientSelected = true;
+
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -31,29 +36,33 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: const BackButton(color: _brandColor),
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Brand Logo
                 Image.asset(
                   'assets/images/diaprevent_logo.png',
-                  height: 64,
+                  height: 60,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
-                    // Fallback design in case image fails to load
                     return const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.monitor_heart_rounded, size: 40, color: Color(0xFF00B0FF)),
+                        Icon(Icons.monitor_heart_rounded, size: 36, color: Color(0xFF00B0FF)),
                         SizedBox(width: 8),
                         Text(
                           'DiaPrevent',
                           style: TextStyle(
-                            fontSize: 32,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: _brandColor,
                           ),
@@ -62,13 +71,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // Welcome Header
+                // Header
                 const Text(
-                  'Welcome!',
+                  'Create Account',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 30,
                     fontWeight: FontWeight.w800,
                     color: _brandColor,
                     letterSpacing: -0.5,
@@ -76,32 +85,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Your path to a healthier life starts here.',
+                  'Join DiaPrevent and start your healthy life today.',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                     color: _slateGrey,
                   ),
                   textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-
-                // Healthcare Illustration
-                Image.asset(
-                  'assets/images/diaprevent_illustration.png',
-                  height: 210,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 210,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.medical_services_outlined,
-                        size: 80,
-                        color: _slateGrey,
-                      ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 24),
 
@@ -197,13 +187,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Email or Phone Number Field
+                      // Full Name Field
                       TextField(
-                        controller: _emailController,
+                        controller: _nameController,
                         style: const TextStyle(color: _brandColor, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
-                          labelText: 'Email or Phone Number',
-                          hintText: 'Email or Phone Number',
+                          labelText: 'Full Name',
+                          hintText: 'Enter your full name',
                           floatingLabelBehavior: FloatingLabelBehavior.always,
                           labelStyle: const TextStyle(
                             color: _borderBlue,
@@ -221,7 +211,52 @@ class _LoginScreenState extends State<LoginScreen> {
                               children: [
                                 Icon(Icons.person_outline_rounded, color: _borderBlue, size: 24),
                                 SizedBox(width: 6),
-                                Icon(Icons.phone_android_rounded, color: _borderBlue, size: 24),
+                                Icon(Icons.badge_outlined, color: _borderBlue, size: 22),
+                              ],
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(color: _borderBlue, width: 2.0),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Email ID Field
+                      TextField(
+                        controller: _emailController,
+                        style: const TextStyle(color: _brandColor, fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          labelText: 'Email Address',
+                          hintText: 'Enter your email address',
+                          floatingLabelBehavior: FloatingLabelBehavior.always,
+                          labelStyle: const TextStyle(
+                            color: _borderBlue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          hintStyle: const TextStyle(
+                            color: _slateGrey,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.only(left: 16.0, right: 12.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.mail_outline_rounded, color: _borderBlue, size: 24),
+                                SizedBox(width: 6),
+                                Icon(Icons.alternate_email_rounded, color: _borderBlue, size: 22),
                               ],
                             ),
                           ),
@@ -249,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: const TextStyle(color: _brandColor, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          hintText: 'Password',
+                          hintText: 'Create a password',
                           floatingLabelBehavior: FloatingLabelBehavior.always,
                           labelStyle: const TextStyle(
                             color: _borderBlue,
@@ -302,112 +337,74 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-
-                      // Forgot Password Link
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            foregroundColor: _brandColor,
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Forgot Password?',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Login Button
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF427EBD),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 2,
-                          shadowColor: const Color(0xFF427EBD).withValues(alpha: 0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const MainShell()),
-                          );
-                        },
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 20),
 
-                      // OR Divider
-                      const Row(
-                        children: [
-                          Expanded(child: Divider(color: Color(0xFFE2E8F0), thickness: 1.5)),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Text(
-                              'OR',
-                              style: TextStyle(
-                                color: _slateGrey,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                      // Confirm Password Field
+                      TextField(
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirmPassword,
+                        style: const TextStyle(color: _brandColor, fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          hintText: 'Retype your password',
+                          floatingLabelBehavior: FloatingLabelBehavior.always,
+                          labelStyle: const TextStyle(
+                            color: _borderBlue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          hintStyle: const TextStyle(
+                            color: _slateGrey,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.only(left: 16.0, right: 12.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.lock_outline_rounded, color: _borderBlue, size: 22),
+                                SizedBox(width: 6),
+                                Icon(Icons.vpn_key_outlined, color: _borderBlue, size: 22),
+                              ],
+                            ),
+                          ),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: _borderBlue,
                               ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                                });
+                              },
                             ),
                           ),
-                          Expanded(child: Divider(color: Color(0xFFE2E8F0), thickness: 1.5)),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Biometric Login Button
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _brandColor,
-                          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
                           ),
-                          backgroundColor: Colors.white,
-                          elevation: 0,
-                        ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Biometric Login Initialized'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.fingerprint_rounded, color: _borderBlue, size: 26),
-                        label: const Text(
-                          'Biometric Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(color: _borderBlue, width: 2.0),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 28),
 
-                      // Sign Up Button
+                      // Register Button (Primary Sign Up)
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF90D185),
+                          backgroundColor: const Color(0xFF90D185), // Soft green
                           foregroundColor: _brandColor,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: 2,
@@ -417,9 +414,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                          // Show a success message and navigate
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Registration Successful!'),
+                              backgroundColor: Colors.green,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                          // Navigate to Dashboard
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (_) => const MainShell()),
                           );
                         },
                         child: const Text(
@@ -435,7 +440,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Footer
+                // Footer Link back to Login
                 RichText(
                   text: TextSpan(
                     style: const TextStyle(
@@ -444,24 +449,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                     children: [
-                      const TextSpan(text: "Don't have an account? "),
+                      const TextSpan(text: "Already have an account? "),
                       TextSpan(
-                        text: 'Create one',
+                        text: 'Log In',
                         style: const TextStyle(
                           color: _borderBlue,
                           fontWeight: FontWeight.bold,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                            );
+                            Navigator.pop(context);
                           },
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
