@@ -48,31 +48,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Brand Logo
-                Image.asset(
-                  'assets/images/diaprevent_logo.png',
-                  height: 60,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.monitor_heart_rounded, size: 36, color: Color(0xFF00B0FF)),
-                        SizedBox(width: 8),
-                        Text(
-                          'DiaPrevent',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: _brandColor,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-
                 // Header
                 const Text(
                   'Create Account',
