@@ -28,8 +28,9 @@ void main() {
     expect(find.byType(SplashScreen), findsOneWidget);
     
     // Verify brand assets/elements exist
-    expect(find.text('DiaPrevent'), findsOneWidget);
-    expect(find.text('Lifestyle Intervention Program'), findsOneWidget);
+    expect(find.text('Diabetes'), findsOneWidget);
+    expect(find.text('Prevention'), findsOneWidget);
+    expect(find.text('— Program —'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     // Initial frame renders and starts animation. Run animation to end.
