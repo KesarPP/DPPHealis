@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import '../widgets/dashboard_header.dart';
+import '../widgets/dashboard_risk_card.dart';
+import '../widgets/dashboard_progress_snapshot.dart';
+import '../widgets/dashboard_ai_coach_card.dart';
+import '../widgets/dashboard_timeline.dart';
+import '../widgets/dashboard_quick_actions.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -9,56 +14,62 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  late final WebViewController _controller;
-  bool _initialized = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
-            debugPrint('Dashboard WebView Loading: $progress%');
-          },
-          onPageStarted: (String url) {
-            debugPrint('Dashboard Page started loading: $url');
-          },
-          onPageFinished: (String url) {
-            debugPrint('Dashboard Page finished loading: $url');
-          },
-          onWebResourceError: (WebResourceError error) {
-            debugPrint('''
-Dashboard WebView Error:
-  code: ${error.errorCode}
-  description: ${error.description}
-  errorType: ${error.errorType}
-  isForMainFrame: ${error.isForMainFrame}
-            ''');
-          },
-        ),
-      );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      final String baseUrl = Theme.of(context).platform == TargetPlatform.android
-          ? 'http://10.0.2.2:8081'
-          : 'http://localhost:8081';
-      _controller.loadRequest(Uri.parse('$baseUrl/?tab=dashboard&hideNav=true'));
-      _initialized = true;
-    }
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FC), // Cloud background
       body: SafeArea(
-        child: WebViewWidget(controller: _controller),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // 1. Dashboard Header
+            const SliverToBoxAdapter(
+              child: DashboardHeader(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // 2. Prediabetes Risk Card
+            const SliverToBoxAdapter(
+              child: DashboardRiskCard(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            // 3. Today's Progress Snapshot
+            const SliverToBoxAdapter(
+              child: DashboardProgressSnapshot(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            // 4. AI Coach Card
+            const SliverToBoxAdapter(
+              child: DashboardAICoachCard(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            // 5. Today's Timeline Journey
+            const SliverToBoxAdapter(
+              child: DashboardTimeline(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            // 6. Quick Actions
+            const SliverToBoxAdapter(
+              child: DashboardQuickActions(),
+            ),
+            
+            // Bottom Padding for BottomNavigationBar
+            const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+          ],
+        ),
       ),
     );
   }
