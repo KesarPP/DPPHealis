@@ -35,9 +35,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             // Fixed header
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   SizedBox(height: 12),
                   ActivityHeader(),
                   SizedBox(height: 12),
@@ -46,9 +46,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // Hero Banner
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   HeroBanner(),
                   SizedBox(height: 16),
                 ],
@@ -56,9 +56,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // Journey to Goal
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   GoalJourney(
                     currentSteps: 102450,
                     goalSteps: 150000,
@@ -95,9 +95,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(80, 24),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           Text(
                             'View Insights',
                             style: TextStyle(
@@ -117,9 +117,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // Overview Cards
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   OverviewCards(),
                   SizedBox(height: 16),
                 ],
@@ -127,9 +127,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // Weekly Progress
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   WeeklyProgress(),
                   SizedBox(height: 16),
                 ],
@@ -137,9 +137,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // Daily Goals
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   DailyGoals(),
                   SizedBox(height: 16),
                 ],
@@ -147,9 +147,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // Activity Feed
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   ActivityFeed(),
                   SizedBox(height: 16),
                 ],
@@ -157,9 +157,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // Motivation + Streak
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   MotivationSection(),
                   SizedBox(height: 16),
                 ],
@@ -167,9 +167,9 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
             ),
 
             // AI Coach CTA
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Column(
-                children: const [
+                children: [
                   AiCoachCard(),
                 ],
               ),

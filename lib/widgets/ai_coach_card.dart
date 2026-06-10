@@ -51,7 +51,7 @@ class _AiCoachCardState extends State<AiCoachCard>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0284C7).withOpacity(0.3 * _glowAnim.value),
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.3 * _glowAnim.value),
                   blurRadius: 15,
                   spreadRadius: 1,
                   offset: const Offset(0, 4),
@@ -69,8 +69,8 @@ class _AiCoachCardState extends State<AiCoachCard>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(
                         Icons.health_and_safety_outlined,
                         color: Colors.white,
@@ -92,7 +92,7 @@ class _AiCoachCardState extends State<AiCoachCard>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
+                      color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -120,7 +120,7 @@ class _AiCoachCardState extends State<AiCoachCard>
               Container(
                 height: 1,
                 width: double.infinity,
-                color: Colors.white.withOpacity(0.18),
+                color: Colors.white.withValues(alpha: 0.18),
               ),
               const SizedBox(height: 12),
               const Text(
@@ -146,9 +146,9 @@ class _AiCoachCardState extends State<AiCoachCard>
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Text(
                           'Take a 15-min walk after lunch',
                           style: TextStyle(

@@ -223,7 +223,7 @@ class _MetricCardState extends State<_MetricCard>
             border: Border.all(color: const Color(0xFFF1F5F9)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -317,7 +317,7 @@ class _MetricCardState extends State<_MetricCard>
                         child: LinearProgressIndicator(
                           value: widget.progress * widget.progressAnim.value,
                           minHeight: 4,
-                          backgroundColor: widget.color.withOpacity(0.12),
+                          backgroundColor: widget.color.withValues(alpha: 0.12),
                           valueColor: AlwaysStoppedAnimation(widget.color),
                         ),
                       ),

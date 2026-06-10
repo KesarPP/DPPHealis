@@ -62,7 +62,7 @@ class _HeroBannerState extends State<HeroBanner>
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        Colors.black.withOpacity(0.45),
+                        Colors.black.withValues(alpha: 0.45),
                         Colors.transparent,
                       ],
                     ),
@@ -77,10 +77,10 @@ class _HeroBannerState extends State<HeroBanner>
                   opacity: _fadeAnim,
                   child: SlideTransition(
                     position: _slideAnim,
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Text(
                           'Small steps today,',
                           style: TextStyle(
