@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'handouts_screen.dart';
+import '../data/handouts_data.dart';
 
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
@@ -46,7 +49,7 @@ class SessionsScreen extends StatelessWidget {
           const SizedBox(height: 20),
           const _SectionLabel('Resource Library'),
           const SizedBox(height: 10),
-          _buildResourceLibrary(),
+          _buildResourceLibrary(context),
           const SizedBox(height: 20),
           _buildPhaseCard(),
           const SizedBox(height: 20),
@@ -64,59 +67,47 @@ class SessionsScreen extends StatelessWidget {
   }
 
   Widget _buildHeroBanner() {
-    return Container(
-      height: 160,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF00897B), Color(0xFF4DB6AC)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: CustomPaint(painter: _HillsPainter()),
-            ),
-          ),
-          Positioned(top: 14, left: 80,  child: _Cloud(width: 48, height: 18, opacity: 0.35)),
-          Positioned(top: 22, left: 140, child: _Cloud(width: 32, height: 14, opacity: 0.25)),
-          Positioned(top: 12, right: 52, child: const _SunWidget()),
-          Positioned(bottom: 38, right: 90,  child: const _Tree(height: 28)),
-          Positioned(bottom: 42, right: 110, child: const _Tree(height: 22)),
-          Positioned(bottom: 16, right: 20,  child: const _WalkingPerson()),
-          const Positioned(
-            left: 20, top: 24,
-            child: SizedBox(
-              width: 190,
-              child: Text(
-                'Welcome to your\nDiabetes Prevention\nJourney',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  height: 1.35,
-                ),
-              ),
-            ),
-          ),
-        ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.asset(
+        'assets/images/Session_Header.png',
+        width: double.infinity,
+        height: 200,
+        fit: BoxFit.fitWidth,
+        alignment: Alignment.centerLeft,
       ),
     );
   }
 
-  Widget _buildResourceLibrary() {
-    const resources = [
-      (Icons.apple,          'Food\nHandouts'),
-      (Icons.directions_run, 'Activity\nHandouts'),
-      (Icons.language,       'NDPP\nHandouts'),
+  Widget _buildResourceLibrary(BuildContext context) {
+    final List<(Widget, String, VoidCallback)> resources = [
+      (
+      const FaIcon(FontAwesomeIcons.utensils, color: Color(0xFF00897B), size: 24),
+      'Food\nHandouts',
+          () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const HandoutsScreen(title: 'Food Handouts', handouts: foodHandouts)))
+      ),
+      (
+      const FaIcon(FontAwesomeIcons.personWalking, color: Color(0xFF00897B), size: 24),
+      'Activity\nHandouts',
+          () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const HandoutsScreen(title: 'Activity Handouts', handouts: activityHandouts)))
+      ),
+      (
+      const FaIcon(FontAwesomeIcons.bookOpen, color: Color(0xFF00897B), size: 24),
+      'NDPP\nHandouts',
+          () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const HandoutsScreen(title: 'NDPP Handouts', handouts: ndppHandouts)))
+      ),
     ];
     return Row(
       children: resources
-          .map((r) => Expanded(child: _ResourceTile(icon: r.$1, label: r.$2)))
+          .map((r) => Expanded(
+        child: GestureDetector(
+          onTap: r.$3,
+          child: _ResourceTile(icon: r.$1, label: r.$2),
+        ),
+      ))
           .toList(),
     );
   }
@@ -219,7 +210,7 @@ class _SectionLabel extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════
 
 class _ResourceTile extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;  // new
   final String label;
   const _ResourceTile({required this.icon, required this.label});
 
@@ -242,7 +233,7 @@ class _ResourceTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: const BoxDecoration(color: Color(0xFFE0F2F1), shape: BoxShape.circle),
-            child: Icon(icon, size: 26, color: const Color(0xFF00897B)),
+            child: Center(child: icon),
           ),
           const SizedBox(height: 8),
           Text(
