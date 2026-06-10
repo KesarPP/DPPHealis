@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'handouts_screen.dart';
 import '../data/handouts_data.dart';
+import 'journey_screen.dart';
 
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
@@ -55,7 +56,7 @@ class SessionsScreen extends StatelessWidget {
           const SizedBox(height: 20),
           const _SectionLabel('Session Timeline'),
           const SizedBox(height: 12),
-          _buildTimeline(),
+          const JourneyMap(),
           const SizedBox(height: 20),
           const _SectionLabel('Current Session Card'),
           const SizedBox(height: 10),
@@ -114,13 +115,13 @@ class SessionsScreen extends StatelessWidget {
 
   Widget _buildPhaseCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(color: _tealBg, borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Phase 2',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: _navy)),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _navy)),
           const SizedBox(height: 2),
           const Text('Session 6',
               style: TextStyle(fontSize: 14, color: _grey, fontWeight: FontWeight.w500)),
