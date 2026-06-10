@@ -17,7 +17,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000));
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            debugPrint('Dashboard WebView Loading: $progress%');
+          },
+          onPageStarted: (String url) {
+            debugPrint('Dashboard Page started loading: $url');
+          },
+          onPageFinished: (String url) {
+            debugPrint('Dashboard Page finished loading: $url');
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint('''
+Dashboard WebView Error:
+  code: ${error.errorCode}
+  description: ${error.description}
+  errorType: ${error.errorType}
+  isForMainFrame: ${error.isForMainFrame}
+            ''');
+          },
+        ),
+      );
   }
 
   @override

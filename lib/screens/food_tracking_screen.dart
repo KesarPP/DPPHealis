@@ -17,7 +17,29 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000));
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            debugPrint('Food WebView Loading: $progress%');
+          },
+          onPageStarted: (String url) {
+            debugPrint('Food Page started loading: $url');
+          },
+          onPageFinished: (String url) {
+            debugPrint('Food Page finished loading: $url');
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint('''
+Food WebView Error:
+  code: ${error.errorCode}
+  description: ${error.description}
+  errorType: ${error.errorType}
+  isForMainFrame: ${error.isForMainFrame}
+            ''');
+          },
+        ),
+      );
   }
 
   @override
