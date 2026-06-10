@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'clinician_profile_screen.dart';
+import "clinical_inbox.dart";
 
 // Brand colors
 const _brandColor = Color(0xFF1B3D6D);
@@ -218,7 +219,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                             activeBg: const Color(0xFFFFEBEE),
                             onTap: () {
                               setState(() {
-                                _selectedFilter = _selectedFilter == 'High Risk' ? 'All' : 'High Risk';
+                                _selectedFilter =
+                                _selectedFilter == 'High Risk' ? 'All' : 'High Risk';
                               });
                             },
                           ),
@@ -232,7 +234,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                             activeBg: const Color(0xFFEFEBE9),
                             onTap: () {
                               setState(() {
-                                _selectedFilter = _selectedFilter == 'Session Delay' ? 'All' : 'Session Delay';
+                                _selectedFilter =
+                                _selectedFilter == 'Session Delay' ? 'All' : 'Session Delay';
                               });
                             },
                           ),
@@ -264,13 +267,16 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        style: const TextStyle(color: _brandColor, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                            color: _brandColor, fontWeight: FontWeight.w500),
                         decoration: const InputDecoration(
                           prefixIcon: Icon(Icons.search_rounded, color: _slateGrey),
                           hintText: 'Search patients...',
-                          hintStyle: TextStyle(color: _slateGrey, fontWeight: FontWeight.w400),
+                          hintStyle:
+                          TextStyle(color: _slateGrey, fontWeight: FontWeight.w400),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                          contentPadding:
+                          EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         ),
                       ),
                     ),
@@ -278,7 +284,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
 
                     // Patients List Header Block
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       decoration: const BoxDecoration(
                         color: Color(0xFFEBF2FA),
                         borderRadius: BorderRadius.only(
@@ -292,21 +299,30 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                             flex: 3,
                             child: Text(
                               'PATIENT NAME',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _brandColor),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: _brandColor),
                             ),
                           ),
                           Expanded(
                             flex: 2,
                             child: Text(
                               'RISK STATUS',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _brandColor),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: _brandColor),
                             ),
                           ),
                           Expanded(
                             flex: 2,
                             child: Text(
                               'WEIGHT (30D)',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _brandColor),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: _brandColor),
                               textAlign: TextAlign.end,
                             ),
                           ),
@@ -327,7 +343,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                       child: Column(
                         children: [
                           // Elena Martinez Row
-                          if (_selectedFilter == 'All' || _selectedFilter == 'High Risk')
+                          if (_selectedFilter == 'All' ||
+                              _selectedFilter == 'High Risk')
                             _buildPatientRow(
                               initials: 'EM',
                               name: 'Elena Martinez',
@@ -342,9 +359,13 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                             ),
                           // Divider
                           if (_selectedFilter == 'All')
-                            const Divider(height: 1, color: Color(0xFFE2E8F0), thickness: 1),
+                            const Divider(
+                                height: 1,
+                                color: Color(0xFFE2E8F0),
+                                thickness: 1),
                           // James Blackwell Row
-                          if (_selectedFilter == 'All' || _selectedFilter == 'Session Delay')
+                          if (_selectedFilter == 'All' ||
+                              _selectedFilter == 'Session Delay')
                             _buildPatientRow(
                               initials: 'JB',
                               name: 'James Blackwell',
@@ -376,10 +397,21 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavDestination(0, Icons.home_rounded, 'Home'),
-                  _buildNavDestination(1, Icons.people_outline_rounded, 'Patients'),
-                  _buildNavDestination(2, Icons.analytics_outlined, 'Clinical'),
-                  _buildNavDestination(3, Icons.mail_outline_rounded, 'Inbox'),
+                  _buildNavDestination(0, Icons.people_outline_rounded, 'Patients'),
+                  _buildNavDestination(1, Icons.home_rounded, 'Home'),
+                  _buildNavDestination(
+                    2,
+                    Icons.mail_outline_rounded,
+                    'Inbox',
+                    onTap: () {
+                      setState(() => _currentTabIndex = 2);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ClinicalInboxScreen()),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -406,7 +438,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           color: isActive ? activeBg : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? activeColor : const Color(0xFF8D6E63).withValues(alpha: 0.3),
+            color: isActive
+                ? activeColor
+                : const Color(0xFF8D6E63).withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -414,7 +448,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 18, color: isActive ? activeColor : const Color(0xFF8D6E63)),
+              Icon(icon,
+                  size: 18,
+                  color: isActive ? activeColor : const Color(0xFF8D6E63)),
               const SizedBox(width: 6),
             ],
             Text(
@@ -492,9 +528,12 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isHighRisk ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9),
+                  color: isHighRisk
+                      ? const Color(0xFFFFEBEE)
+                      : const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -505,7 +544,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: isHighRisk ? const Color(0xFFD32F2F) : const Color(0xFF388E3C),
+                        color: isHighRisk
+                            ? const Color(0xFFD32F2F)
+                            : const Color(0xFF388E3C),
                       ),
                     ),
                     Text(
@@ -513,7 +554,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: isHighRisk ? const Color(0xFFD32F2F) : const Color(0xFF388E3C),
+                        color: isHighRisk
+                            ? const Color(0xFFD32F2F)
+                            : const Color(0xFF388E3C),
                       ),
                     ),
                   ],
@@ -540,21 +583,27 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
   }
 
   // Helper widget to build navigation destinations
-  Widget _buildNavDestination(int index, IconData icon, String label) {
+  Widget _buildNavDestination(
+      int index,
+      IconData icon,
+      String label, {
+        VoidCallback? onTap,
+      }) {
     final isSelected = _currentTabIndex == index;
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentTabIndex = index;
-        });
-      },
+      onTap: onTap ??
+              () {
+            setState(() => _currentTabIndex = index);
+          },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF69F0AE).withValues(alpha: 0.3) : Colors.transparent,
+              color: isSelected
+                  ? const Color(0xFF69F0AE).withValues(alpha: 0.3)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
@@ -598,7 +647,7 @@ class _SparklinePainter extends CustomPainter {
 
     final path = Path();
     final double stepX = size.width / (points.length - 1);
-    
+
     // Find min and max to scale properly
     double minVal = points[0];
     double maxVal = points[0];
@@ -606,14 +655,15 @@ class _SparklinePainter extends CustomPainter {
       if (val < minVal) minVal = val;
       if (val > maxVal) maxVal = val;
     }
-    
+
     final range = (maxVal - minVal) == 0 ? 1.0 : (maxVal - minVal);
 
     for (int i = 0; i < points.length; i++) {
       final double x = i * stepX;
       // Invert Y coordinate because canvas y goes downwards
       final double normY = (points[i] - minVal) / range;
-      final double y = size.height - (normY * size.height * 0.8 + size.height * 0.1);
+      final double y =
+          size.height - (normY * size.height * 0.8 + size.height * 0.1);
 
       if (i == 0) {
         path.moveTo(x, y);
