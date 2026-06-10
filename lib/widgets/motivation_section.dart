@@ -62,8 +62,6 @@ class _MotivationSectionState extends State<MotivationSection>
 
     if (_particles.isEmpty) {
       _particleController.stop();
-    } else {
-      _particleController.forward(from: 0);
     }
   }
 
@@ -88,7 +86,7 @@ class _MotivationSectionState extends State<MotivationSection>
       }
     });
     if (!_particleController.isAnimating) {
-      _particleController.forward(from: 0);
+      _particleController.repeat();
     }
   }
 
