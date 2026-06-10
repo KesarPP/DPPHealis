@@ -7,9 +7,7 @@ class HandoutsScreen extends StatelessWidget {
 
   const HandoutsScreen({super.key, required this.title, required this.handouts});
 
-  static const Color _teal = Color(0xFF00897B);
   static const Color _navy = Color(0xFF1A3A5C);
-  static const Color _grey = Color(0xFF78909C);
   static const Color _pageBg = Color(0xFFF5F5F5);
 
   @override
@@ -94,7 +92,7 @@ class _SessionCardState extends State<_SessionCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
