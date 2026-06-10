@@ -11,6 +11,12 @@ class DashboardScreen extends StatelessWidget {
         title: const Text('Dashboard'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.mail_outline_rounded),
+            onPressed: () {
+              // TODO: Open messaging / inbox
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
               // TODO: Open notifications panel
