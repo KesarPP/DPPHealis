@@ -68,7 +68,7 @@ class _DailyGoalsState extends State<DailyGoals>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -81,8 +81,8 @@ class _DailyGoalsState extends State<DailyGoals>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Text('🎯', style: TextStyle(fontSize: 18)),
                   SizedBox(width: 8),
                   Text(
@@ -145,9 +145,9 @@ class _DailyGoalsState extends State<DailyGoals>
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFFEF3C7)),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Text('🏆', style: TextStyle(fontSize: 24)),
                       SizedBox(height: 6),
                       Text(

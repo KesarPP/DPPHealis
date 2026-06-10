@@ -75,7 +75,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -87,8 +87,8 @@ class _WeeklyProgressState extends State<WeeklyProgress>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(
                     Icons.bar_chart_rounded,
                     color: Color(0xFF10B981),
@@ -264,7 +264,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: const Color(0xFF047857).withOpacity(0.3),
+                                                  color: const Color(0xFF047857).withValues(alpha: 0.3),
                                                   blurRadius: 6,
                                                   spreadRadius: 1,
                                                 )

@@ -73,7 +73,7 @@ class _GoalJourneyState extends State<GoalJourney>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -86,9 +86,9 @@ class _GoalJourneyState extends State<GoalJourney>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'Journey to Your Goal',
                     style: TextStyle(
@@ -174,7 +174,7 @@ class _GoalJourneyState extends State<GoalJourney>
                                         borderRadius: BorderRadius.circular(2),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFFF59E0B).withOpacity(0.5),
+                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
                                             blurRadius: 6,
                                             spreadRadius: 1,
                                           ),
@@ -272,7 +272,7 @@ class _GoalJourneyState extends State<GoalJourney>
                   border: Border.all(color: const Color(0xFFFCD34D), width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF59E0B).withOpacity(0.15),
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -333,7 +333,7 @@ class _GoalJourneyState extends State<GoalJourney>
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFF59E0B).withOpacity(0.8 * _glowAnim.value),
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.8 * _glowAnim.value),
               blurRadius: 12,
               spreadRadius: 3,
             ),
@@ -361,7 +361,7 @@ class _GoalJourneyState extends State<GoalJourney>
         boxShadow: isCompleted
             ? [
                 BoxShadow(
-                  color: const Color(0xFFFCD34D).withOpacity(0.4),
+                  color: const Color(0xFFFCD34D).withValues(alpha: 0.4),
                   blurRadius: 4,
                   spreadRadius: 0.5,
                 ),

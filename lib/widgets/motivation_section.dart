@@ -108,7 +108,7 @@ class _MotivationSectionState extends State<MotivationSection>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -144,9 +144,9 @@ class _MotivationSectionState extends State<MotivationSection>
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
+                  const Row(
                     children: [
-                      const Text(
+                      Text(
                         '12',
                         style: TextStyle(
                           fontSize: 40,
@@ -155,10 +155,10 @@ class _MotivationSectionState extends State<MotivationSection>
                           height: 1,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Days',
                             style: TextStyle(
@@ -279,7 +279,7 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
       final paint = Paint()
-        ..color = p.color.withOpacity(p.life)
+        ..color = p.color.withValues(alpha: p.life)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(p.x, p.y), p.size * p.life, paint);
     }

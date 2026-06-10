@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import '../data/journey_data.dart';
 
 class JourneyMap extends StatefulWidget {
@@ -242,7 +241,7 @@ class _SessionNode extends StatelessWidget {
         ),
         boxShadow: isCompleted || isCurrent
             ? [BoxShadow(
-            color: const Color(0xFF00897B).withOpacity(0.3),
+            color: const Color(0xFF00897B).withValues(alpha: 0.3),
             blurRadius: 10, spreadRadius: 2)]
             : null,
       ),
@@ -308,7 +307,7 @@ class _WindyPathPainter extends CustomPainter {
 
     // Dashed effect
     final dashedPaint = Paint()
-      ..color = const Color(0xFF00897B).withOpacity(0.4)
+      ..color = const Color(0xFF00897B).withValues(alpha: 0.4)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
