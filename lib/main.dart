@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/food_tracking_screen.dart';
 import 'screens/activity_fitness_screen.dart';
@@ -22,7 +22,7 @@ class DPPApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
