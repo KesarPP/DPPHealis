@@ -1,4 +1,4 @@
-enum ModuleState { locked, current, completed }
+enum ModuleState { locked, current, pendingQuiz, completed }
 enum SessionState { locked, current, completed }
 
 class SessionNode {
@@ -23,10 +23,10 @@ const List<ModuleNode> journeyModules = [
     SessionNode(3, 'Reducing Fat\n& Calories', SessionState.completed),
     SessionNode(4, 'Healthy Eating\nfor Life', SessionState.completed),
   ]),
-  ModuleNode(2, 'Physical Activity\n& Weight Loss', ModuleState.current, [
+  ModuleNode(2, 'Physical Activity\n& Weight Loss', ModuleState.pendingQuiz, [
     SessionNode(5, 'Move Those\nMuscles', SessionState.completed),
-    SessionNode(6, 'Being Active as\na Way of Life', SessionState.current),
-    SessionNode(7, 'Tip the Calorie\nBalance', SessionState.locked),
+    SessionNode(6, 'Being Active as\na Way of Life', SessionState.completed),
+    SessionNode(7, 'Tip the Calorie\nBalance', SessionState.completed),
   ]),
   ModuleNode(3, 'Psychology &\nBehavior Change', ModuleState.locked, [
     SessionNode(8, 'Take Charge of\nWhat\'s Around You', SessionState.locked),
