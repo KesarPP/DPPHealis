@@ -219,14 +219,19 @@ class _GoalRow extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${goal.label} (${goal.current} / ${goal.target})',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF475569),
+                    Expanded(
+                      child: Text(
+                        '${goal.label} (${goal.current} / ${goal.target})',
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF475569),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 4),
                     Text(
                       '$pct%',
                       style: TextStyle(

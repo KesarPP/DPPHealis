@@ -4,37 +4,39 @@ import 'handouts_screen.dart';
 import '../data/handouts_data.dart';
 import 'journey_screen.dart';
 
+// Pastel Color Palette "GELATO DAYS"
+const Color _pastelPink = Color(0xFFFFCBE1);
+const Color _pastelGreen = Color(0xFFD6E5BD);
+const Color _pastelYellow = Color(0xFFF9E1A8);
+const Color _pastelBlue = Color(0xFFBCD8EC);
+const Color _pastelPurple = Color(0xFFDCCCEC);
+const Color _pastelPeach = Color(0xFFFFDAB4);
+
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
-
-  static const Color _teal   = Color(0xFF00897B);
-  static const Color _tealBg = Color(0xFFE0F2F1);
-  static const Color _navy   = Color(0xFF1A3A5C);
-  static const Color _grey   = Color(0xFF78909C);
-  static const Color _pageBg = Color(0xFFEAF2F8);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _pageBg,
+      backgroundColor: _pastelBlue,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        backgroundColor: const Color(0xFF7B1FA2), // 🟣 purple
-        icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+        backgroundColor: _pastelPurple, // purple
+        icon: const Icon(Icons.auto_awesome_rounded, color: Colors.black87),
         label: const Text('Ask AI Coach',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 13)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _navy),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.maybePop(context),
         ),
         title: const Text(
           'DPP Journey',
-          style: TextStyle(color: _navy, fontWeight: FontWeight.w700, fontSize: 18),
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 18),
         ),
         centerTitle: true,
       ),
@@ -42,7 +44,7 @@ class SessionsScreen extends StatelessWidget {
         children: [
           Positioned.fill(
             child: CustomPaint(
-              painter: _DotsPainter(color: const Color(0xFF1A3A5C).withValues(alpha: 0.06)),
+              painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.06)),
             ),
           ),
           ListView(
@@ -85,25 +87,25 @@ class SessionsScreen extends StatelessWidget {
   }
 
   Widget _buildResourceLibrary(BuildContext context) {
-    final List<(Widget, String, Color, VoidCallback)> resources = [ // 👈 added Color
+    final List<(Widget, String, Color, VoidCallback)> resources = [ // added Color
       (
-      FaIcon(FontAwesomeIcons.utensils, color: const Color(0xFFFF7043), size: 24), // 🟠 orange
+      FaIcon(FontAwesomeIcons.utensils, color: _pastelPeach, size: 24), // orange
       'Food\nHandouts',
-      const Color(0xFFFF7043),
+      _pastelPeach,
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Food Handouts', handouts: foodHandouts)))
       ),
       (
-      FaIcon(FontAwesomeIcons.personWalking, color: const Color(0xFF43A047), size: 24), // 🟢 green
+      FaIcon(FontAwesomeIcons.personWalking, color: _pastelGreen, size: 24), // green
       'Activity\nHandouts',
-      const Color(0xFF43A047),
+      _pastelGreen,
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Activity Handouts', handouts: activityHandouts)))
       ),
       (
-      FaIcon(FontAwesomeIcons.bookOpen, color: const Color(0xFF1E88E5), size: 24), // 🔵 blue
+      FaIcon(FontAwesomeIcons.bookOpen, color: _pastelBlue, size: 24), // blue
       'NDPP\nHandouts',
-      const Color(0xFF1E88E5),
+      _pastelBlue,
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'NDPP Handouts', handouts: ndppHandouts)))
       ),
@@ -112,8 +114,8 @@ class SessionsScreen extends StatelessWidget {
       children: resources
           .map((r) => Expanded(
         child: GestureDetector(
-          onTap: r.$4, // 👈 was $3, now $4
-          child: _ResourceTile(icon: r.$1, label: r.$2, color: r.$3), // 👈 pass color
+          onTap: r.$4, // was $3, now $4
+          child: _ResourceTile(icon: r.$1, label: r.$2, color: r.$3), // pass color
         ),
       ))
           .toList(),
@@ -124,30 +126,30 @@ class SessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A3A5C),
+        color: _pastelBlue,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Module 2',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)), // 👈 white text
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black87)), // text
           const SizedBox(height: 2),
           const Text('Session 6',
-              style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)), // 👈
+              style: TextStyle(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w500)), 
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: const LinearProgressIndicator(
               value: 0.68,
               minHeight: 8,
-              backgroundColor: Colors.white30, // 👈
-              color: const Color(0xFFFF7043), // 🟠 orange progress bar
+              backgroundColor: Colors.white70, 
+              color: _pastelPurple, // progress bar
             ),
           ),
           const SizedBox(height: 6),
           const Text('68% Completed',
-              style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500)), // 👈
+              style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500)), 
         ],
       ),
     );
@@ -170,19 +172,19 @@ class SessionsScreen extends StatelessWidget {
         children: [
           const Text(
             'Session 6',
-            style: TextStyle(fontSize: 11, color: _grey, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+            style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600, letterSpacing: 0.5),
           ),
           const SizedBox(height: 4),
           const Text(
             'Being Active as a Way of Life',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _navy),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.black87),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _ActionButton(icon: Icons.play_circle_fill_rounded, label: 'Watch Video', color: const Color(0xFFFF7043), onTap: () {})),
+              Expanded(child: _ActionButton(icon: Icons.play_circle_fill_rounded, label: 'Watch Video', color: _pastelPeach, onTap: () {})),
               const SizedBox(width: 10),
-              Expanded(child: _ActionButton(icon: Icons.quiz_rounded, label: 'Take Quiz', color: const Color(0xFF43A047), onTap: () {})),
+              Expanded(child: _ActionButton(icon: Icons.quiz_rounded, label: 'Take Quiz', color: _pastelGreen, onTap: () {})),
             ],
           ),
         ],
@@ -202,7 +204,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(text,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1A3A5C)));
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87));
   }
 }
 
@@ -213,8 +215,8 @@ class _SectionLabel extends StatelessWidget {
 class _ResourceTile extends StatelessWidget {
   final Widget icon;
   final String label;
-  final Color color; // 👈 added
-  const _ResourceTile({required this.icon, required this.label, required this.color}); // 👈
+  final Color color; // added
+  const _ResourceTile({required this.icon, required this.label, required this.color}); //
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +237,7 @@ class _ResourceTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15), // 👈 dynamic tinted bg
+              color: color.withValues(alpha: 0.4), // tinted bg, increased opacity for visibility on pastel
               shape: BoxShape.circle,
             ),
             child: Center(child: icon),
@@ -245,7 +247,7 @@ class _ResourceTile extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1A3A5C), height: 1.3,
+              fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black87, height: 1.3,
             ),
           ),
         ],
@@ -261,18 +263,18 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color color;  // 👈 added
-  const _ActionButton({required this.icon, required this.label, required this.onTap, required this.color});  // 👈
+  final Color color;  // added
+  const _ActionButton({required this.icon, required this.label, required this.onTap, required this.color});  //
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+      icon: Icon(icon, size: 18, color: Colors.black87),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.black87)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color,  // 👈 dynamic now
-        foregroundColor: Colors.white,
+        backgroundColor: color,  // dynamic now
+        foregroundColor: Colors.black87,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
@@ -289,12 +291,12 @@ class _CoachButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: onTap,
-      icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+      icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.black87),
       label: const Text('Ask Session Coach',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.black87)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF00897B),
-        foregroundColor: Colors.white,
+        backgroundColor: _pastelGreen,
+        foregroundColor: Colors.black87,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
