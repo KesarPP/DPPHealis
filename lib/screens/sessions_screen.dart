@@ -19,7 +19,7 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.lerp(_pastelBlue, Colors.white, 0.5)!,
+      backgroundColor: _pastelBlue.withValues(alpha: 0.3),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
         backgroundColor: _pastelBlue,
@@ -45,7 +45,7 @@ class SessionsScreen extends StatelessWidget {
         children: [
           Positioned.fill(
             child: CustomPaint(
-              painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.06)),
+              painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
             ),
           ),
           ListView(
