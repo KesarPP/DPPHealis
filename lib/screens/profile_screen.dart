@@ -48,28 +48,31 @@ class ProfileScreen extends StatelessWidget {
 
             _SectionTitle('Active Quests'),
             const SizedBox(height: 12),
-            const Row(
-              children: [
-                Expanded(child: _GoalCard(
-                  title: 'Weight Goal', 
-                  target: 'Lose 10 kg', 
-                  current: 'Current: 65 kg', 
-                  progress: 0.4, 
-                  icon: Icons.monitor_weight_rounded,
-                  color: _pastelBlue,
-                  bgColor: _pastelBlue,
-                )),
-                SizedBox(width: 12),
-                Expanded(child: _GoalCard(
-                  title: 'Activity Goal', 
-                  target: '150 min/wk', 
-                  current: 'Current: 90 min', 
-                  progress: 0.6, 
-                  icon: Icons.directions_run_rounded,
-                  color: _pastelPeach,
-                  bgColor: _pastelYellow,
-                )),
-              ],
+            const IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _GoalCard(
+                    title: 'Weight Goal', 
+                    target: 'Lose 10 kg', 
+                    current: 'Current: 65 kg', 
+                    progress: 0.4, 
+                    icon: Icons.monitor_weight_rounded,
+                    color: _pastelBlue,
+                    bgColor: _pastelBlue,
+                  )),
+                  SizedBox(width: 12),
+                  Expanded(child: _GoalCard(
+                    title: 'Activity Goal', 
+                    target: '150 min/wk', 
+                    current: 'Current: 90 min', 
+                    progress: 0.6, 
+                    icon: Icons.directions_run_rounded,
+                    color: _pastelPeach,
+                    bgColor: _pastelYellow,
+                  )),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -265,8 +268,8 @@ class _GoalCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: Colors.black12,
-              valueColor: AlwaysStoppedAnimation<Color>(color == _pastelBlue ? _pastelPeach : _pastelBlue),
+              backgroundColor: Colors.white,
+              valueColor: const AlwaysStoppedAnimation<Color>(_darkText),
               minHeight: 10,
             ),
           ),
@@ -362,8 +365,8 @@ class _JourneyProgressCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: const LinearProgressIndicator(
                   value: 0.68,
-                  backgroundColor: Colors.black12,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  backgroundColor: Colors.white,
+                  valueColor: const AlwaysStoppedAnimation<Color>(_darkText),
                   minHeight: 16,
                 ),
               ),

@@ -11,6 +11,7 @@ const Color _pastelYellow = Color(0xFFF9E1A8);
 const Color _pastelBlue = Color(0xFFBCD8EC);
 const Color _pastelPurple = Color(0xFFDCCCEC);
 const Color _pastelPeach = Color(0xFFFFDAB4);
+const Color _darkText = Color(0xFF2E3A59);
 
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
@@ -18,11 +19,11 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _pastelBlue,
+      backgroundColor: Color.lerp(_pastelBlue, Colors.white, 0.5)!,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        backgroundColor: Color.lerp(_pastelBlue, Colors.black, 0.1)!, // slightly darker pastel blue
-        icon: const Icon(Icons.auto_awesome_rounded, color: Colors.black87),
+        backgroundColor: _pastelBlue,
+        icon: const Icon(Icons.auto_awesome_rounded, color: _darkText),
         label: const Text('Ask AI Coach',
             style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 13)),
       ),
@@ -89,21 +90,21 @@ class SessionsScreen extends StatelessWidget {
   Widget _buildResourceLibrary(BuildContext context) {
     final List<(Widget, String, Color, VoidCallback)> resources = [ // added Color
       (
-      FaIcon(FontAwesomeIcons.utensils, color: Color.lerp(_pastelPeach, Colors.black, 0.4)!, size: 24), // orange
+      const FaIcon(FontAwesomeIcons.utensils, color: _darkText, size: 24), // orange
       'Food\nHandouts',
       _pastelPeach,
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Food Handouts', handouts: foodHandouts)))
       ),
       (
-      FaIcon(FontAwesomeIcons.personWalking, color: Color.lerp(_pastelGreen, Colors.black, 0.4)!, size: 24), // green
+      const FaIcon(FontAwesomeIcons.personWalking, color: _darkText, size: 24), // green
       'Activity\nHandouts',
       _pastelGreen,
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Activity Handouts', handouts: activityHandouts)))
       ),
       (
-      FaIcon(FontAwesomeIcons.bookOpen, color: Color.lerp(_pastelBlue, Colors.black, 0.4)!, size: 24), // blue
+      const FaIcon(FontAwesomeIcons.bookOpen, color: _darkText, size: 24), // blue
       'NDPP\nHandouts',
       _pastelBlue,
           () => Navigator.push(context, MaterialPageRoute(
@@ -126,10 +127,10 @@ class SessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _pastelBlue,
+        color: _pastelPurple,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: _pastelBlue.withValues(alpha: 0.5), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(color: _pastelPurple.withValues(alpha: 0.5), blurRadius: 12, offset: const Offset(0, 6)),
         ],
       ),
       child: Column(
@@ -145,9 +146,9 @@ class SessionsScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: const LinearProgressIndicator(
               value: 0.68,
-              minHeight: 8,
-              backgroundColor: Colors.black12, 
-              color: Colors.white, // progress bar
+              minHeight: 10,
+              backgroundColor: Colors.white, 
+              color: _darkText, // progress bar
             ),
           ),
           const SizedBox(height: 6),
