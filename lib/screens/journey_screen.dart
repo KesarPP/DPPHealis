@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import '../data/journey_data.dart';
 
+// Pastel Color Palette "GELATO DAYS"
+const Color _pastelPink = Color(0xFFFFCBE1);
+const Color _pastelGreen = Color(0xFFD6E5BD);
+const Color _pastelYellow = Color(0xFFF9E1A8);
+const Color _pastelBlue = Color(0xFFBCD8EC);
+const Color _pastelPurple = Color(0xFFDCCCEC);
+const Color _pastelPeach = Color(0xFFFFDAB4);
+const Color _darkText = Color(0xFF2E3A59);
+
 class JourneyMap extends StatefulWidget {
   const JourneyMap({super.key});
 
@@ -33,11 +42,11 @@ class _JourneyMapState extends State<JourneyMap> with TickerProviderStateMixin {
 
   // Fun colors for each module
   static const List<Color> _moduleColors = [
-    Color(0xFF00897B), // teal - Module 1
-    Color(0xFF1565C0), // blue - Module 2
-    Color(0xFF6A1B9A), // purple - Module 3
-    Color(0xFFE65100), // orange - Module 4
-    Color(0xFF558B2F), // green - Module 5
+    _pastelPink,
+    _pastelBlue,
+    _pastelPurple,
+    _pastelPeach,
+    _pastelGreen,
   ];
 
   static const List<IconData> _moduleIcons = [
@@ -148,8 +157,9 @@ class _ModuleBubble extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: bubbleColor.withValues(alpha: 0.4),
-            blurRadius: 12,
+            color: bubbleColor,
+            blurRadius: 16,
+            spreadRadius: 2,
             offset: const Offset(0, 4),
           ),
         ],
@@ -162,12 +172,12 @@ class _ModuleBubble extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: Colors.white.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   isLocked ? Icons.lock_outline : icon,
-                  color: Colors.white,
+                  color: _darkText,
                   size: 22,
                 ),
               ),
@@ -179,7 +189,7 @@ class _ModuleBubble extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.2,
-                    color: Colors.white,
+                    color: _darkText,
                   ),
                 ),
               ),
@@ -188,7 +198,7 @@ class _ModuleBubble extends StatelessWidget {
                   isExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
-                  color: Colors.white70,
+                  color: _darkText,
                   size: 18,
                 ),
             ],
@@ -198,32 +208,33 @@ class _ModuleBubble extends StatelessWidget {
             module.title,
             style: TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: isLocked
                   ? const Color(0xFF78909C)
-                  : Colors.white,
+                  : _darkText,
               height: 1.3,
             ),
           ),
           if (!isLocked) ...[
             const SizedBox(height: 12),
             if (module.state == ModuleState.completed) ...[
-              const Text('✓ Sessions Completed', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+              const Text('✓ Sessions Completed', style: TextStyle(color: _darkText, fontSize: 11, fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
-              const Text('✓ Module Quiz Passed', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+              const Text('✓ Module Quiz Passed', style: TextStyle(color: _darkText, fontSize: 11, fontWeight: FontWeight.w700)),
             ] else if (module.state == ModuleState.pendingQuiz) ...[
-              const Text('✓ Sessions Completed', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+              const Text('✓ Sessions Completed', style: TextStyle(color: _darkText, fontSize: 11, fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.quiz_rounded, size: 16),
-                label: const Text('Take Module Quiz', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                label: const Text('Take Module Quiz', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: color,
+                  foregroundColor: _darkText,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+                  elevation: 4,
+                  shadowColor: color,
                 ),
               ),
               const SizedBox(height: 8),
@@ -231,8 +242,8 @@ class _ModuleBubble extends StatelessWidget {
                 '⚠️ Next module locked until quiz passed.',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w500,
+                  color: _darkText,
+                  fontWeight: FontWeight.w600,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -240,15 +251,15 @@ class _ModuleBubble extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: Colors.white.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
                   '▶ In Progress',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+                    color: _darkText,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -407,21 +418,21 @@ class _SessionNode extends StatelessWidget {
           width: isCurrent ? 3.5 : 2.5,
         ),
         boxShadow: isCompleted
-            ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 14, spreadRadius: 3)]
+            ? [BoxShadow(color: color, blurRadius: 16, spreadRadius: 4)]
             : isCurrent
-            ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 2)]
+            ? [BoxShadow(color: color, blurRadius: 16, spreadRadius: 4)]
             : null,
       ),
       child: Center(
         child: isCompleted
-            ? const Icon(Icons.check_rounded, color: Colors.white, size: 28)
+            ? const Icon(Icons.check_rounded, color: _darkText, size: 28)
             : isCurrent
-            ? Icon(Icons.play_arrow_rounded, color: color, size: 30)
+            ? Icon(Icons.play_arrow_rounded, color: _darkText, size: 30)
             : Text(
-          '${session.number}',   // 👈 shows number instead of lock icon
+          '${session.number}',
           style: const TextStyle(
             fontSize: 16,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
             color: Color(0xFFB0BEC5),
           ),
         ),
