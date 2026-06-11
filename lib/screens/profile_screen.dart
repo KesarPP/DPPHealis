@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
+// Pastel Color Palette "GELATO DAYS"
+const Color _pastelPink = Color(0xFFFFCBE1);
+const Color _pastelGreen = Color(0xFFD6E5BD);
+const Color _pastelYellow = Color(0xFFF9E1A8);
+const Color _pastelBlue = Color(0xFFBCD8EC);
+const Color _pastelPurple = Color(0xFFDCCCEC);
+const Color _pastelPeach = Color(0xFFFFDAB4);
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
-
-  // Very soft pastel lavender background
-  static const Color _bgWarm = Color(0xFFF5EEFC);
-  static const Color _navy = Color(0xFF1A3A5C);
-  
-  // Vibrant gamified palette
-  static const Color _royalBlue = Color(0xFF2962FF);
-  static const Color _purple = Color(0xFFAA00FF);
-  static const Color _coral = Color(0xFFFF6D00);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgWarm,
+      backgroundColor: _pastelPink,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
           'My Profile',
-          style: TextStyle(color: _navy, fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.5),
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.5),
         ),
         centerTitle: true,
       ),
@@ -49,8 +48,8 @@ class ProfileScreen extends StatelessWidget {
                   current: 'Current: 65 kg', 
                   progress: 0.4, 
                   icon: Icons.monitor_weight_rounded,
-                  color: _royalBlue,
-                  bgColor: Color(0xFFE8EAF6),
+                  color: _pastelBlue,
+                  bgColor: _pastelBlue,
                 )),
                 SizedBox(width: 12),
                 Expanded(child: _GoalCard(
@@ -59,8 +58,8 @@ class ProfileScreen extends StatelessWidget {
                   current: 'Current: 90 min', 
                   progress: 0.6, 
                   icon: Icons.directions_run_rounded,
-                  color: _coral,
-                  bgColor: Color(0xFFFFF3E0),
+                  color: _pastelPeach,
+                  bgColor: _pastelYellow,
                 )),
               ],
             ),
@@ -70,11 +69,11 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const Row(
               children: [
-                Expanded(child: _StatCard(title: 'Current Phase', value: 'Phase 1', icon: Icons.emoji_events_rounded, color: _royalBlue)),
+                Expanded(child: _StatCard(title: 'Current Phase', value: 'Phase 1', icon: Icons.emoji_events_rounded, color: _pastelBlue)),
                 SizedBox(width: 12),
-                Expanded(child: _StatCard(title: 'Sessions', value: '12 / 16', icon: Icons.menu_book_rounded, color: _purple)),
+                Expanded(child: _StatCard(title: 'Sessions', value: '12 / 16', icon: Icons.menu_book_rounded, color: _pastelPurple)),
                 SizedBox(width: 12),
-                Expanded(child: _StatCard(title: 'Streak', value: '14 Days', icon: Icons.local_fire_department_rounded, color: _coral)),
+                Expanded(child: _StatCard(title: 'Streak', value: '14 Days', icon: Icons.local_fire_department_rounded, color: _pastelPeach)),
               ],
             ),
             const SizedBox(height: 32),
@@ -97,10 +96,10 @@ class ProfileScreen extends StatelessWidget {
                     (_) => false,
                   );
                 },
-                icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                icon: const Icon(Icons.logout_rounded, color: Colors.black87),
                 label: const Text(
                   'Logout',
-                  style: TextStyle(color: Colors.redAccent, fontSize: 16, fontWeight: FontWeight.w800),
+                  style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w800),
                 ),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -127,7 +126,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1A3A5C), letterSpacing: -0.5),
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5),
     );
   }
 }
@@ -143,29 +142,29 @@ class _ProfileHeader extends StatelessWidget {
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFFF6D00), width: 4), // Coral Orange Circle
+            border: Border.all(color: _pastelPeach, width: 4), // Coral Orange Circle
           ),
           child: const CircleAvatar(
             radius: 56,
-            backgroundColor: Color(0xFFFFF3E0),
-            child: Icon(Icons.person_rounded, size: 56, color: Color(0xFFFF6D00)),
+            backgroundColor: _pastelYellow,
+            child: Icon(Icons.person_rounded, size: 56, color: _pastelPeach),
           ),
         ),
         const SizedBox(height: 16),
         const Text(
           'Janice Pattice',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A3A5C), letterSpacing: -0.5),
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5),
         ),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF3E0),
+            color: _pastelYellow,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Text(
-            '🔥 On a 14-day winning streak!',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFFF6D00)),
+            'On a 14-day winning streak!',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87),
           ),
         ),
         const SizedBox(height: 16),
@@ -174,8 +173,8 @@ class _ProfileHeader extends StatelessWidget {
           icon: const Icon(Icons.edit_rounded, size: 16),
           label: const Text('Edit Profile'),
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFE8EAF6),
-            foregroundColor: const Color(0xFF2962FF),
+            backgroundColor: _pastelBlue,
+            foregroundColor: Colors.black87,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
           ),
@@ -282,9 +281,9 @@ class _JourneyProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E5F5), // Purple tint
+        color: _pastelPurple, // Purple tint
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFAA00FF).withValues(alpha: 0.2), width: 2),
+        border: Border.all(color: _pastelPurple.withValues(alpha: 0.2), width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,18 +294,18 @@ class _JourneyProgressCard extends StatelessWidget {
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Overall Journey', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFFAA00FF), letterSpacing: -0.5)),
+                  Text('Overall Journey', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5)),
                   SizedBox(height: 4),
-                  Text('12 of 17 milestones', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1A3A5C))),
+                  Text('12 of 17 milestones', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black87)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFAA00FF),
+                  color: _pastelPurple,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text('68%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                child: const Text('68%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87)),
               ),
             ],
           ),
@@ -319,7 +318,7 @@ class _JourneyProgressCard extends StatelessWidget {
                 child: const LinearProgressIndicator(
                   value: 0.68,
                   backgroundColor: Colors.white,
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFAA00FF)),
+                  valueColor: AlwaysStoppedAnimation<Color>(_pastelPurple),
                   minHeight: 16,
                 ),
               ),
@@ -332,7 +331,7 @@ class _JourneyProgressCard extends StatelessWidget {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.star_rounded, color: Color(0xFFFF6D00), size: 24),
+                  child: const Icon(Icons.star_rounded, color: _pastelPeach, size: 24),
                 ),
               ),
             ],
@@ -352,11 +351,11 @@ class _HistorySection extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: Column(
         children: [
-          _ActionTile(icon: Icons.show_chart_rounded, title: 'Weight Journey', color: const Color(0xFF2962FF)),
+          _ActionTile(icon: Icons.show_chart_rounded, title: 'Weight Journey', color: _pastelBlue),
           const Divider(height: 1, color: Colors.black12, indent: 60),
-          _ActionTile(icon: Icons.science_rounded, title: 'Lab Results', color: const Color(0xFFAA00FF)),
+          _ActionTile(icon: Icons.science_rounded, title: 'Lab Results', color: _pastelPurple),
           const Divider(height: 1, color: Colors.black12, indent: 60),
-          _ActionTile(icon: Icons.fact_check_rounded, title: 'Risk Assessments', color: const Color(0xFFFF6D00)),
+          _ActionTile(icon: Icons.fact_check_rounded, title: 'Risk Assessments', color: _pastelPeach),
         ],
       ),
     );
@@ -375,23 +374,23 @@ class _SettingsSection extends StatelessWidget {
           ListTile(
             leading: Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: const Color(0xFFECEFF1), borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.notifications_active_rounded, color: Color(0xFF546E7A), size: 20),
+              decoration: BoxDecoration(color: _pastelGreen, borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.notifications_active_rounded, color: Colors.black54, size: 20),
             ),
-            title: const Text('Notifications', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A3A5C))),
-            trailing: Switch(value: true, onChanged: (v) {}, activeColor: const Color(0xFF2962FF)),
+            title: const Text('Notifications', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black87)),
+            trailing: Switch(value: true, onChanged: (v) {}, activeColor: _pastelBlue),
           ),
           const Divider(height: 1, color: Colors.black12, indent: 60),
-          _ActionTile(icon: Icons.privacy_tip_rounded, title: 'Privacy', color: const Color(0xFF546E7A)),
+          const _ActionTile(icon: Icons.privacy_tip_rounded, title: 'Privacy', color: Colors.black54),
           const Divider(height: 1, color: Colors.black12, indent: 60),
           ListTile(
             leading: Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: const Color(0xFFECEFF1), borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.language_rounded, color: Color(0xFF546E7A), size: 20),
+              decoration: BoxDecoration(color: _pastelGreen, borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.language_rounded, color: Colors.black54, size: 20),
             ),
-            title: const Text('Language', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A3A5C))),
-            trailing: const Text('English 🇺🇸', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF78909C))),
+            title: const Text('Language', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black87)),
+            trailing: const Text('English', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black54)),
           ),
         ],
       ),
@@ -417,8 +416,8 @@ class _ActionTile extends StatelessWidget {
         ),
         child: Icon(icon, color: color, size: 20),
       ),
-      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A3A5C))),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFFB0BEC5)),
+      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black87)),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.black54),
       onTap: () {},
     );
   }
