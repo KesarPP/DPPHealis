@@ -112,7 +112,7 @@ class _ActionButtonState extends State<_ActionButton> {
             ),
             boxShadow: [
               BoxShadow(
-                color: a.colors[0].withOpacity(0.2),
+                color: a.colors[0].withValues(alpha: 0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -125,7 +125,7 @@ class _ActionButtonState extends State<_ActionButton> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -139,6 +139,7 @@ class _ActionButtonState extends State<_ActionButton> {
               // Labels
               Expanded(
                 child: Column(
+                    mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -157,7 +158,7 @@ class _ActionButtonState extends State<_ActionButton> {
                     Text(
                       a.sub,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
@@ -171,7 +172,7 @@ class _ActionButtonState extends State<_ActionButton> {
               // Arrow
               Icon(
                 Icons.arrow_forward_rounded,
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
                 size: 14,
               ),
             ],

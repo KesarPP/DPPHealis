@@ -79,7 +79,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFDC2626).withOpacity(0.12),
+            color: const Color(0xFFDC2626).withValues(alpha: 0.12),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -130,6 +130,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                       children: [
                         Expanded(
                           child: Column(
+                    mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
@@ -186,7 +187,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                       borderRadius: BorderRadius.circular(20),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xFFF59E0B).withOpacity(0.35),
+                                          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 3),
                                         ),
@@ -206,12 +207,12 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.arrow_downward_rounded, size: 14, color: Colors.white.withOpacity(0.9)),
+                                  Icon(Icons.arrow_downward_rounded, size: 14, color: Colors.white.withValues(alpha: 0.9)),
                                   const SizedBox(width: 2),
                                   Text(
                                     '6 points improved this week',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.9),
+                                      color: Colors.white.withValues(alpha: 0.9),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -259,7 +260,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                               height: 8,
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
+                                color: Colors.white.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: ClipRRect(
@@ -271,9 +272,9 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
-                                          const Color(0xFFFCA5A5).withOpacity(0.55), // Low
-                                          const Color(0xFFFCD34D).withOpacity(0.55), // Moderate
-                                          Colors.white.withOpacity(0.55), // High
+                                          const Color(0xFFFCA5A5).withValues(alpha: 0.55), // Low
+                                          const Color(0xFFFCD34D).withValues(alpha: 0.55), // Moderate
+                                          Colors.white.withValues(alpha: 0.55), // High
                                         ],
                                       ),
                                     ),
@@ -297,12 +298,12 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.28),
+                                          color: Colors.black.withValues(alpha: 0.28),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
                                       ],
-                                      border: Border.all(color: Colors.white.withOpacity(0.35), width: 3),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 3),
                                     ),
                                     child: Center(
                                       child: Container(
@@ -398,6 +399,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                 // 2. Program Progress (Horizontal Bar)
                 Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
@@ -525,7 +527,7 @@ class _ECGHeartPainter extends CustomPainter {
 
     // 2. Draw glossy white highlight curve at the top-left lobe
     final highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.35)
+      ..color = Colors.white.withValues(alpha: 0.35)
       ..style = PaintingStyle.fill;
     final highlightPath = Path();
     highlightPath.moveTo(18 * s, 18 * s);
@@ -537,7 +539,7 @@ class _ECGHeartPainter extends CustomPainter {
 
     // 3. Draw ECG plaque (white rectangle in center)
     final plaquePaint = Paint()
-      ..color = Colors.white.withOpacity(0.92)
+      ..color = Colors.white.withValues(alpha: 0.92)
       ..style = PaintingStyle.fill;
     final plaqueRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(10 * s, 26 * s, 44 * s, 14 * s),

@@ -502,6 +502,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           Expanded(
             flex: 3,
             child: Column(
+                    mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(

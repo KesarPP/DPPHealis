@@ -213,6 +213,7 @@ class _GoalRow extends StatelessWidget {
           // Progress Bars and details
           Expanded(
             child: Column(
+                    mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(

@@ -148,7 +148,7 @@ class _ModuleBubble extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: bubbleColor.withOpacity(0.4),
+            color: bubbleColor.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -162,7 +162,7 @@ class _ModuleBubble extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withValues(alpha: 0.25),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -240,7 +240,7 @@ class _ModuleBubble extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -329,7 +329,7 @@ class _SessionPath extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
-                          BoxShadow(color: color.withOpacity(0.3), blurRadius: 4, spreadRadius: 1),
+                          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4, spreadRadius: 1),
                         ],
                       ),
                       child: const Center(
@@ -390,13 +390,13 @@ class _SessionNode extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: isCompleted
             ? LinearGradient(
-          colors: [color, color.withOpacity(0.7)],
+          colors: [color, color.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         )
             : isCurrent
             ? LinearGradient(
-          colors: [Colors.white, color.withOpacity(0.08)],
+          colors: [Colors.white, color.withValues(alpha: 0.08)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         )
@@ -407,9 +407,9 @@ class _SessionNode extends StatelessWidget {
           width: isCurrent ? 3.5 : 2.5,
         ),
         boxShadow: isCompleted
-            ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 14, spreadRadius: 3)]
+            ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 14, spreadRadius: 3)]
             : isCurrent
-            ? [BoxShadow(color: color.withOpacity(0.3), blurRadius: 10, spreadRadius: 2)]
+            ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 2)]
             : null,
       ),
       child: Center(
@@ -480,13 +480,13 @@ class _WindyPathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.4)
+      ..color = color.withValues(alpha: 0.4)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
     final dotPaint = Paint()
-      ..color = color.withOpacity(0.6)
+      ..color = color.withValues(alpha: 0.6)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -580,13 +580,13 @@ class _ContinuousPathPainter extends CustomPainter {
     if (count <= 1) return;
 
     final paint = Paint()
-      ..color = color.withOpacity(0.4)
+      ..color = color.withValues(alpha: 0.4)
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
     final dotPaint = Paint()
-      ..color = color.withOpacity(0.6)
+      ..color = color.withValues(alpha: 0.6)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;

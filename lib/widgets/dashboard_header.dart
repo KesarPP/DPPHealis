@@ -158,6 +158,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
           // Greetings
           Expanded(
             child: Column(
+                    mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(

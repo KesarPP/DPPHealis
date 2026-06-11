@@ -42,7 +42,7 @@ class SessionsScreen extends StatelessWidget {
         children: [
           Positioned.fill(
             child: CustomPaint(
-              painter: _DotsPainter(color: const Color(0xFF1A3A5C).withOpacity(0.06)),
+              painter: _DotsPainter(color: const Color(0xFF1A3A5C).withValues(alpha: 0.06)),
             ),
           ),
           ListView(
@@ -235,7 +235,7 @@ class _ResourceTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15), // 👈 dynamic tinted bg
+              color: color.withValues(alpha: 0.15), // 👈 dynamic tinted bg
               shape: BoxShape.circle,
             ),
             child: Center(child: icon),

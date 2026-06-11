@@ -51,7 +51,7 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0EA5E9).withOpacity(0.25),
+            color: const Color(0xFF0EA5E9).withValues(alpha: 0.25),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -92,7 +92,7 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -124,7 +124,7 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
           // Divider
           Container(
             height: 1,
-            color: Colors.white.withOpacity(0.18),
+            color: Colors.white.withValues(alpha: 0.18),
           ),
           const SizedBox(height: 12),
 
@@ -162,7 +162,7 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

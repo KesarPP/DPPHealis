@@ -208,7 +208,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
             boxShadow: isExpanded
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -264,6 +264,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                   // Value display
                   Expanded(
                     child: Column(
+                    mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         RichText(
@@ -586,7 +587,7 @@ class _SparklinePainter extends CustomPainter {
     fillPath.close();
 
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.08)
+      ..color = color.withValues(alpha: 0.08)
       ..style = PaintingStyle.fill;
     canvas.drawPath(fillPath, fillPaint);
 

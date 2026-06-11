@@ -42,6 +42,7 @@ class _ActivityHeaderState extends State<ActivityHeader>
         children: [
           Expanded(
             child: Column(
+                    mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
