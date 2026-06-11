@@ -62,8 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final bool didAuthenticate = await auth.authenticate(
         localizedReason: 'Please authenticate to log in to DiaPrevent',
-        biometricOnly: true,
-        persistAcrossBackgrounding: true,
       );
 
       if (didAuthenticate && mounted) {
