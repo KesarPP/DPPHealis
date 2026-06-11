@@ -15,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _pastelPink,
+      backgroundColor: _pastelPink.withValues(alpha: 0.3),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -25,10 +25,17 @@ class ProfileScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+            ),
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const _ProfileHeader(),
             const SizedBox(height: 32),
@@ -96,17 +103,17 @@ class ProfileScreen extends StatelessWidget {
                     (_) => false,
                   );
                 },
-                icon: const Icon(Icons.logout_rounded, color: Colors.black87),
+                icon: const Icon(Icons.logout_rounded, color: Colors.white),
                 label: const Text(
                   'Logout',
-                  style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w800),
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
                 ),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.redAccent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  elevation: 2,
-                  shadowColor: Colors.black12,
+                  elevation: 4,
+                  shadowColor: Colors.redAccent.withValues(alpha: 0.4),
                 ),
               ),
             ),
@@ -114,8 +121,32 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+        ],
+      ),
     );
   }
+}
+
+class _DotsPainter extends CustomPainter {
+  final Color color;
+  const _DotsPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double gridSize = 16.0;
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+      
+    for (double x = 0; x <= size.width; x += gridSize) {
+      for (double y = 0; y <= size.height; y += gridSize) {
+        canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotsPainter oldDelegate) => oldDelegate.color != color;
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -202,29 +233,32 @@ class _GoalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 2),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 22),
+              Icon(icon, color: Colors.white, size: 22, shadows: const [Shadow(color: Colors.black26, blurRadius: 4)]),
               const SizedBox(width: 8),
-              Expanded(child: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.5))),
+              Expanded(child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5, shadows: [Shadow(color: Colors.black26, blurRadius: 4)]))),
             ],
           ),
           const SizedBox(height: 16),
-          Text(target, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1A3A5C))),
+          Text(target, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white, shadows: [Shadow(color: Colors.black26, blurRadius: 4)])),
           const SizedBox(height: 4),
-          Text(current, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF546E7A))),
+          Text(current, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)),
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: Colors.white,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+              backgroundColor: Colors.black12,
+              valueColor: AlwaysStoppedAnimation<Color>(color == _pastelBlue ? _pastelPeach : _pastelBlue),
               minHeight: 10,
             ),
           ),
@@ -250,7 +284,7 @@ class _StatCard extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12, offset: const Offset(0, 6)),
         ],
       ),
       child: Column(
@@ -261,12 +295,12 @@ class _StatCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
+            child: Icon(icon, color: Colors.white, size: 28, shadows: const [Shadow(color: Colors.black26, blurRadius: 4)]),
           ),
           const SizedBox(height: 16),
-          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5, shadows: [Shadow(color: Colors.black26, blurRadius: 4)])),
           const SizedBox(height: 4),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white70)),
+          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black26, blurRadius: 2)])),
         ],
       ),
     );
@@ -283,7 +317,10 @@ class _JourneyProgressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _pastelPurple, // Purple tint
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _pastelPurple.withValues(alpha: 0.2), width: 2),
+        border: Border.all(color: _pastelPurple.withValues(alpha: 0.4), width: 2),
+        boxShadow: [
+          BoxShadow(color: _pastelPurple.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 8)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,8 +354,8 @@ class _JourneyProgressCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: const LinearProgressIndicator(
                   value: 0.68,
-                  backgroundColor: Colors.white,
-                  valueColor: AlwaysStoppedAnimation<Color>(_pastelPurple),
+                  backgroundColor: Colors.black12,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   minHeight: 16,
                 ),
               ),

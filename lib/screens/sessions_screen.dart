@@ -18,10 +18,10 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _pastelBlue,
+      backgroundColor: _pastelBlue.withValues(alpha: 0.3),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        backgroundColor: _pastelPurple, // purple
+        backgroundColor: Color.lerp(_pastelBlue, Colors.black, 0.1)!, // slightly darker pastel blue
         icon: const Icon(Icons.auto_awesome_rounded, color: Colors.black87),
         label: const Text('Ask AI Coach',
             style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 13)),
@@ -89,21 +89,21 @@ class SessionsScreen extends StatelessWidget {
   Widget _buildResourceLibrary(BuildContext context) {
     final List<(Widget, String, Color, VoidCallback)> resources = [ // added Color
       (
-      FaIcon(FontAwesomeIcons.utensils, color: _pastelPeach, size: 24), // orange
+      FaIcon(FontAwesomeIcons.utensils, color: Color.lerp(_pastelPeach, Colors.black, 0.4)!, size: 24), // orange
       'Food\nHandouts',
       _pastelPeach,
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Food Handouts', handouts: foodHandouts)))
       ),
       (
-      FaIcon(FontAwesomeIcons.personWalking, color: _pastelGreen, size: 24), // green
+      FaIcon(FontAwesomeIcons.personWalking, color: Color.lerp(_pastelGreen, Colors.black, 0.4)!, size: 24), // green
       'Activity\nHandouts',
       _pastelGreen,
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Activity Handouts', handouts: activityHandouts)))
       ),
       (
-      FaIcon(FontAwesomeIcons.bookOpen, color: _pastelBlue, size: 24), // blue
+      FaIcon(FontAwesomeIcons.bookOpen, color: Color.lerp(_pastelBlue, Colors.black, 0.4)!, size: 24), // blue
       'NDPP\nHandouts',
       _pastelBlue,
           () => Navigator.push(context, MaterialPageRoute(
@@ -128,6 +128,9 @@ class SessionsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: _pastelBlue,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: _pastelBlue.withValues(alpha: 0.5), blurRadius: 12, offset: const Offset(0, 6)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,8 +146,8 @@ class SessionsScreen extends StatelessWidget {
             child: const LinearProgressIndicator(
               value: 0.68,
               minHeight: 8,
-              backgroundColor: Colors.white70, 
-              color: _pastelPurple, // progress bar
+              backgroundColor: Colors.black12, 
+              color: Colors.white, // progress bar
             ),
           ),
           const SizedBox(height: 6),
@@ -164,7 +167,7 @@ class SessionsScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6)),
         ],
       ),
       child: Column(
@@ -227,7 +230,7 @@ class _ResourceTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -277,7 +280,8 @@ class _ActionButton extends StatelessWidget {
         foregroundColor: Colors.black87,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 0,
+        elevation: 3,
+        shadowColor: color.withValues(alpha: 0.5),
       ),
     );
   }
