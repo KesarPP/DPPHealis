@@ -105,28 +105,33 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Today's Progress",
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Today's Progress",
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    "Click any card to log or view insights",
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF94A3B8),
-                      fontWeight: FontWeight.w600,
+                    SizedBox(height: 2),
+                    Text(
+                      "Click any card to log or view insights",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -155,30 +160,61 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
 
           // Cards List/Grid Layout
           Column(
-            children: [
-              // Rows
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _buildCard('meals')),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildCard('activity')),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _buildCard('water')),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildCard('sleep')),
-                ],
-              ),
-            ],
+            children: _buildCardLayout(),
           ),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildCardLayout() {
+    final List<String> keys = ['meals', 'activity', 'water', 'sleep'];
+    final List<List<String>> rows = [];
+    List<String> currentRow = [];
+    int currentSpan = 0;
+    for (final key in keys) {
+      final span = (key == _expandedKey) ? 2 : 1;
+      if (currentSpan + span > 2) {
+        rows.add(currentRow);
+        currentRow = [key];
+        currentSpan = span;
+      } else {
+        currentRow.add(key);
+        currentSpan += span;
+      }
+    }
+    if (currentRow.isNotEmpty) rows.add(currentRow);
+
+    final List<Widget> children = [];
+    for (int i = 0; i < rows.length; i++) {
+      final rowKeys = rows[i];
+      if (i > 0) children.add(const SizedBox(height: 12));
+      if (rowKeys.length == 2) {
+        children.add(Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildCard(rowKeys[0])),
+            const SizedBox(width: 12),
+            Expanded(child: _buildCard(rowKeys[1])),
+          ],
+        ));
+      } else {
+        final key = rowKeys[0];
+        if (key == _expandedKey) {
+          children.add(_buildCard(key));
+        } else {
+          children.add(Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildCard(key)),
+              const SizedBox(width: 12),
+              const Expanded(child: SizedBox()),
+            ],
+          ));
+        }
+      }
+    }
+    return children;
   }
 
   Widget _buildCard(String key) {
