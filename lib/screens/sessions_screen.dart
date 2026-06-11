@@ -11,25 +11,22 @@ class SessionsScreen extends StatelessWidget {
   static const Color _tealBg = Color(0xFFE0F2F1);
   static const Color _navy   = Color(0xFF1A3A5C);
   static const Color _grey   = Color(0xFF78909C);
-  static const Color _pageBg = Color(0xFFF5F5F5);
-
-  static const List<_SessionData> _sessions = [
-    _SessionData(1, 'Completed',       null,                         null,                     true,  false, false),
-    _SessionData(2, 'Completed',       'Unlocked Food Tracking',     Icons.apple,              true,  false, false),
-    _SessionData(3, 'Completed',       'Unlocked Recipe Making',     Icons.menu_book_outlined, true,  false, false),
-    _SessionData(4, 'Completed',       'Unlocked Barcode Scanner',   Icons.barcode_reader,     true,  false, false),
-    _SessionData(5, 'Completed',       'Unlocked Activity Tracking', Icons.directions_run,     true,  false, false),
-    _SessionData(6, 'Current Session', 'Unlocked Exercise Handbook', Icons.menu_book_outlined, false, true,  false),
-    _SessionData(7, 'Locked',          null,                         null,                     false, false, true),
-    _SessionData(8, 'Locked',          null,                         null,                     false, false, true),
-  ];
+  static const Color _pageBg = Color(0xFFEAF2F8);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _pageBg,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {},
+        backgroundColor: const Color(0xFF7B1FA2), // 🟣 purple
+        icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+        label: const Text('Ask AI Coach',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _navy),
@@ -41,7 +38,14 @@ class SessionsScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: ListView(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _DotsPainter(color: const Color(0xFF1A3A5C).withValues(alpha: 0.06)),
+            ),
+          ),
+          ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         children: [
           _buildHeroBanner(),
@@ -52,14 +56,16 @@ class SessionsScreen extends StatelessWidget {
           const SizedBox(height: 20),
           _buildPhaseCard(),
           const SizedBox(height: 20),
+          const _SectionLabel('Current Session'),
+          const SizedBox(height: 10),
+          _buildCurrentSessionCard(),
+          const SizedBox(height: 20),
           const _SectionLabel('Session Timeline'),
           const SizedBox(height: 12),
           const JourneyMap(),
-          const SizedBox(height: 20),
-          const _SectionLabel('Current Session Card'),
-          const SizedBox(height: 10),
-          _buildCurrentSessionCard(),
           const SizedBox(height: 32),
+        ],
+      ),
         ],
       ),
     );
@@ -69,32 +75,35 @@ class SessionsScreen extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Image.asset(
-        'assets/images/Session_Header.png',
+        'assets/images/session_header.png',
         width: double.infinity,
         height: 200,
-        fit: BoxFit.fitWidth,
+        fit: BoxFit.cover,
         alignment: Alignment.centerLeft,
       ),
     );
   }
 
   Widget _buildResourceLibrary(BuildContext context) {
-    final List<(Widget, String, VoidCallback)> resources = [
+    final List<(Widget, String, Color, VoidCallback)> resources = [ // 👈 added Color
       (
-      const FaIcon(FontAwesomeIcons.utensils, color: Color(0xFF00897B), size: 24),
+      FaIcon(FontAwesomeIcons.utensils, color: const Color(0xFFFF7043), size: 24), // 🟠 orange
       'Food\nHandouts',
+      const Color(0xFFFF7043),
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Food Handouts', handouts: foodHandouts)))
       ),
       (
-      const FaIcon(FontAwesomeIcons.personWalking, color: Color(0xFF00897B), size: 24),
+      FaIcon(FontAwesomeIcons.personWalking, color: const Color(0xFF43A047), size: 24), // 🟢 green
       'Activity\nHandouts',
+      const Color(0xFF43A047),
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'Activity Handouts', handouts: activityHandouts)))
       ),
       (
-      const FaIcon(FontAwesomeIcons.bookOpen, color: Color(0xFF00897B), size: 24),
+      FaIcon(FontAwesomeIcons.bookOpen, color: const Color(0xFF1E88E5), size: 24), // 🔵 blue
       'NDPP\nHandouts',
+      const Color(0xFF1E88E5),
           () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const HandoutsScreen(title: 'NDPP Handouts', handouts: ndppHandouts)))
       ),
@@ -103,8 +112,8 @@ class SessionsScreen extends StatelessWidget {
       children: resources
           .map((r) => Expanded(
         child: GestureDetector(
-          onTap: r.$3,
-          child: _ResourceTile(icon: r.$1, label: r.$2),
+          onTap: r.$4, // 👈 was $3, now $4
+          child: _ResourceTile(icon: r.$1, label: r.$2, color: r.$3), // 👈 pass color
         ),
       ))
           .toList(),
@@ -114,32 +123,36 @@ class SessionsScreen extends StatelessWidget {
   Widget _buildPhaseCard() {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: _tealBg, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A3A5C),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Phase 2',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _navy)),
+          const Text('Module 2',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)), // 👈 white text
           const SizedBox(height: 2),
           const Text('Session 6',
-              style: TextStyle(fontSize: 14, color: _grey, fontWeight: FontWeight.w500)),
+              style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)), // 👈
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: const LinearProgressIndicator(
               value: 0.68,
               minHeight: 8,
-              backgroundColor: Colors.white,
-              color: _teal,
+              backgroundColor: Colors.white30, // 👈
+              color: const Color(0xFFFF7043), // 🟠 orange progress bar
             ),
           ),
           const SizedBox(height: 6),
           const Text('68% Completed',
-              style: TextStyle(fontSize: 13, color: _grey, fontWeight: FontWeight.w500)),
+              style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500)), // 👈
         ],
       ),
     );
   }
+
 
 
   Widget _buildCurrentSessionCard() {
@@ -155,25 +168,21 @@ class SessionsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(child: _ActionButton(icon: Icons.play_circle_fill_rounded, label: 'Watch Video', onTap: () {})),
-              const SizedBox(width: 10),
-              Expanded(child: _ActionButton(icon: Icons.quiz_rounded, label: 'Take Quiz', onTap: () {})),
-            ],
+          const Text(
+            'Session 6',
+            style: TextStyle(fontSize: 11, color: _grey, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Being Active as a Way of Life',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _navy),
           ),
           const SizedBox(height: 12),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
-                child: Text(
-                  'Summary tasks for\nSession 6',
-                  style: TextStyle(fontSize: 13, color: _grey, fontWeight: FontWeight.w500),
-                ),
-              ),
+              Expanded(child: _ActionButton(icon: Icons.play_circle_fill_rounded, label: 'Watch Video', color: const Color(0xFFFF7043), onTap: () {})),
               const SizedBox(width: 10),
-              _CoachButton(onTap: () {}),
+              Expanded(child: _ActionButton(icon: Icons.quiz_rounded, label: 'Take Quiz', color: const Color(0xFF43A047), onTap: () {})),
             ],
           ),
         ],
@@ -202,9 +211,10 @@ class _SectionLabel extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════
 
 class _ResourceTile extends StatelessWidget {
-  final Widget icon;  // new
+  final Widget icon;
   final String label;
-  const _ResourceTile({required this.icon, required this.label});
+  final Color color; // 👈 added
+  const _ResourceTile({required this.icon, required this.label, required this.color}); // 👈
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +234,10 @@ class _ResourceTile extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(color: Color(0xFFE0F2F1), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15), // 👈 dynamic tinted bg
+              shape: BoxShape.circle,
+            ),
             child: Center(child: icon),
           ),
           const SizedBox(height: 8),
@@ -240,151 +253,6 @@ class _ResourceTile extends StatelessWidget {
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
-// Session data model
-// ══════════════════════════════════════════════════════════════
-
-class _SessionData {
-  final int number;
-  final String status;
-  final String? unlockLabel;
-  final IconData? unlockIcon;
-  final bool completed;
-  final bool current;
-  final bool locked;
-
-  const _SessionData(
-      this.number, this.status, this.unlockLabel, this.unlockIcon,
-      this.completed, this.current, this.locked,
-      );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Timeline row
-// ══════════════════════════════════════════════════════════════
-
-class _TimelineRow extends StatelessWidget {
-  final _SessionData session;
-  final bool isLast;
-  const _TimelineRow({required this.session, required this.isLast});
-
-  static const _teal   = Color(0xFF00897B);
-  static const _locked = Color(0xFFB0BEC5);
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 40,
-            child: Column(
-              children: [
-                _buildDot(),
-                if (!isLast)
-                  Expanded(
-                    child: Container(width: 2, color: session.completed ? _teal : _locked),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Session ${session.number}',
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1A3A5C))),
-                      const SizedBox(height: 2),
-                      Text(
-                        session.status,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: (session.completed || session.current) ? _teal : _locked,
-                        ),
-                      ),
-                      if (session.unlockLabel != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(session.unlockIcon, size: 14, color: const Color(0xFF546E7A)),
-                            const SizedBox(width: 4),
-                            Text(session.unlockLabel!,
-                                style: const TextStyle(
-                                    fontSize: 12, color: Color(0xFF546E7A), fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (session.current)
-                    Positioned(
-                      right: 0, top: -4,
-                      child: Transform.rotate(
-                        angle: 0.52,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1565C0),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'START\nHERE',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800, height: 1.2),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDot() {
-    if (session.completed) {
-      return Container(
-        width: 30, height: 30,
-        decoration: const BoxDecoration(color: _teal, shape: BoxShape.circle),
-        child: const Icon(Icons.check, color: Colors.white, size: 18),
-      );
-    }
-    if (session.current) {
-      return Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(
-          color: Colors.white, shape: BoxShape.circle,
-          border: Border.all(color: _teal, width: 3),
-          boxShadow: [BoxShadow(color: _teal.withValues(alpha: 0.35), blurRadius: 10, spreadRadius: 2)],
-        ),
-        child: const Icon(Icons.play_arrow_rounded, color: _teal, size: 20),
-      );
-    }
-    return Container(
-      width: 30, height: 30,
-      decoration: BoxDecoration(
-        color: Colors.white, shape: BoxShape.circle,
-        border: Border.all(color: _locked, width: 2),
-      ),
-      child: const Icon(Icons.lock_outline, color: _locked, size: 16),
-    );
-  }
-}
-
 // ══════════════════════════════════════════════════════════════
 // Buttons
 // ══════════════════════════════════════════════════════════════
@@ -393,7 +261,8 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _ActionButton({required this.icon, required this.label, required this.onTap});
+  final Color color;  // 👈 added
+  const _ActionButton({required this.icon, required this.label, required this.onTap, required this.color});  // 👈
 
   @override
   Widget build(BuildContext context) {
@@ -402,7 +271,7 @@ class _ActionButton extends StatelessWidget {
       icon: Icon(icon, size: 18),
       label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF00897B),
+        backgroundColor: color,  // 👈 dynamic now
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -432,4 +301,28 @@ class _CoachButton extends StatelessWidget {
       ),
     );
   }
-}
+}
+
+
+
+class _DotsPainter extends CustomPainter {
+  final Color color;
+  const _DotsPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double gridSize = 16.0;
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+      
+    for (double x = 0; x <= size.width; x += gridSize) {
+      for (double y = 0; y <= size.height; y += gridSize) {
+        canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotsPainter oldDelegate) => oldDelegate.color != color;
+}

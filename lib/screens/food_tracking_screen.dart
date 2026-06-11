@@ -1,64 +1,64 @@
 import 'package:flutter/material.dart';
-import '../widgets.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-class FoodTrackingScreen extends StatelessWidget {
+class FoodTrackingScreen extends StatefulWidget {
   const FoodTrackingScreen({super.key});
+
+  @override
+  State<FoodTrackingScreen> createState() => _FoodTrackingScreenState();
+}
+
+class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
+  late final WebViewController _controller;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            debugPrint('Food WebView Loading: $progress%');
+          },
+          onPageStarted: (String url) {
+            debugPrint('Food Page started loading: $url');
+          },
+          onPageFinished: (String url) {
+            debugPrint('Food Page finished loading: $url');
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint('''
+Food WebView Error:
+  code: ${error.errorCode}
+  description: ${error.description}
+  errorType: ${error.errorType}
+  isForMainFrame: ${error.isForMainFrame}
+            ''');
+          },
+        ),
+      );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final String baseUrl = Theme.of(context).platform == TargetPlatform.android
+          ? 'http://10.0.2.2:8081'
+          : 'http://localhost:8081';
+      _controller.loadRequest(Uri.parse('$baseUrl/?tab=food&hideNav=true'));
+      _initialized = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Food Tracking')),
-      body: ListView(
-        children: const [
-          // ── Log food ──────────────────────────────────────────
-          SectionHeader('Log Food'),
-          PlaceholderCard(
-            icon: Icons.edit_note,
-            title: 'Manual Food Entry',
-            subtitle: 'Placeholder – search & log meals manually',
-          ),
-          PlaceholderCard(
-            icon: Icons.qr_code_scanner,
-            title: 'Barcode Scanner',
-            subtitle: 'Placeholder – scan packaged food labels',
-          ),
-          PlaceholderCard(
-            icon: Icons.camera_alt_outlined,
-            title: 'Photo Recognition',
-            subtitle: 'Placeholder – identify food from a photo',
-          ),
-
-          // ── Summary ───────────────────────────────────────────
-          SectionHeader('Today\'s Nutrition'),
-          PlaceholderCard(
-            icon: Icons.pie_chart_outline,
-            title: 'Nutrition Summary',
-            subtitle: 'Placeholder – calories, carbs, fat, protein breakdown',
-          ),
-          PlaceholderCard(
-            icon: Icons.water_drop_outlined,
-            title: 'Water Intake',
-            subtitle: 'Placeholder – daily hydration tracker',
-          ),
-
-          // ── History ───────────────────────────────────────────
-          SectionHeader('History'),
-          PlaceholderCard(
-            icon: Icons.history,
-            title: 'Meal History',
-            subtitle: 'Placeholder – past meals & patterns',
-          ),
-
-          SizedBox(height: 24),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Open quick log bottom sheet
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Log Food'),
-      ),
+      body: WebViewWidget(controller: _controller),
     );
   }
 }

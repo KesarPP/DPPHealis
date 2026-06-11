@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/food_tracking_screen.dart';
-import 'screens/activity_tracking_screen.dart';
+import 'screens/activity_fitness_screen.dart';
 import 'screens/sessions_screen.dart';
 import 'screens/profile_screen.dart';
 
@@ -42,7 +42,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = const [
     DashboardScreen(),
     FoodTrackingScreen(),
-    ActivityTrackingScreen(),
+    ActivityFitnessScreen(),
     SessionsScreen(),
     ProfileScreen(),
   ];
@@ -78,7 +78,10 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {

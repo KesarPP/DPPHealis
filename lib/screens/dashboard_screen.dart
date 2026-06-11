@@ -1,98 +1,75 @@
 import 'package:flutter/material.dart';
-import '../widgets.dart';
+import '../widgets/dashboard_header.dart';
+import '../widgets/dashboard_risk_card.dart';
+import '../widgets/dashboard_progress_snapshot.dart';
+import '../widgets/dashboard_ai_coach_card.dart';
+import '../widgets/dashboard_timeline.dart';
+import '../widgets/dashboard_quick_actions.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Open notifications panel
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        children: const [
-          // ── Greeting banner ───────────────────────────────────
-          _WelcomeBanner(),
+      backgroundColor: const Color(0xFFF7F9FC), // Cloud background
+      body: SafeArea(
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // 1. Dashboard Header
+            const SliverToBoxAdapter(
+              child: DashboardHeader(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-          // ── Today's summary ───────────────────────────────────
-          SectionHeader('Today\'s Summary'),
-          PlaceholderCard(
-            icon: Icons.restaurant,
-            title: 'Food Progress',
-            subtitle: 'Placeholder – calories & macros will appear here',
-          ),
-          PlaceholderCard(
-            icon: Icons.directions_run,
-            title: 'Activity Progress',
-            subtitle: 'Placeholder – steps & minutes will appear here',
-          ),
+            // 2. Prediabetes Risk Card
+            const SliverToBoxAdapter(
+              child: DashboardRiskCard(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-          // ── Trends ────────────────────────────────────────────
-          SectionHeader('Trends'),
-          PlaceholderCard(
-            icon: Icons.show_chart,
-            title: 'Weight Trend',
-            subtitle: 'Placeholder – weight chart will appear here',
-          ),
+            // 3. Today's Progress Snapshot
+            const SliverToBoxAdapter(
+              child: DashboardProgressSnapshot(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-          // ── Engagement ────────────────────────────────────────
-          SectionHeader('Engagement'),
-          PlaceholderCard(
-            icon: Icons.local_fire_department,
-            title: 'Streaks',
-            subtitle: 'Placeholder – logging streak will appear here',
-          ),
-          PlaceholderCard(
-            icon: Icons.emoji_events_outlined,
-            title: 'Achievements',
-            subtitle: 'Placeholder – badges & milestones will appear here',
-          ),
+            // 4. AI Coach Card
+            const SliverToBoxAdapter(
+              child: DashboardAICoachCard(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-          SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-}
+            // 5. Today's Timeline Journey
+            const SliverToBoxAdapter(
+              child: DashboardTimeline(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-class _WelcomeBanner extends StatelessWidget {
-  const _WelcomeBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Good morning! 👋',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onPrimaryContainer,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Week 1 of your DPP journey',
-            style: TextStyle(color: colorScheme.onPrimaryContainer),
-          ),
-        ],
+            // 6. Quick Actions
+            const SliverToBoxAdapter(
+              child: DashboardQuickActions(),
+            ),
+            
+            // Bottom Padding for BottomNavigationBar
+            const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+          ],
+        ),
       ),
     );
   }

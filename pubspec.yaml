@@ -12,8 +12,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  webview_flutter: ^4.13.1
   local_auth: ^3.0.1
-  font_awesome_flutter: ^10.7.0
+  font_awesome_flutter: ^11.0.0
 
 dev_dependencies:
   flutter_test:

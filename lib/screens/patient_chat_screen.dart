@@ -136,6 +136,7 @@ class _PatientChatScreenState extends State<PatientChatScreen> {
                   // Name + online indicator
                   Expanded(
                     child: Column(
+                    mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(

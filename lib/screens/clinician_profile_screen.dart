@@ -60,6 +60,7 @@ class ClinicianProfileScreen extends StatelessWidget {
                 const SizedBox(width: 16),
                 const Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -267,6 +268,7 @@ class ClinicianProfileScreen extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Column(
+                    mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
