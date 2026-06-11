@@ -8,6 +8,7 @@ const Color _pastelYellow = Color(0xFFF9E1A8);
 const Color _pastelBlue = Color(0xFFBCD8EC);
 const Color _pastelPurple = Color(0xFFDCCCEC);
 const Color _pastelPeach = Color(0xFFFFDAB4);
+const Color _darkText = Color(0xFF2E3A59);
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -243,15 +244,22 @@ class _GoalCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: Colors.white, size: 22, shadows: const [Shadow(color: Colors.black26, blurRadius: 4)]),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: _darkText, size: 22),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5, shadows: [Shadow(color: Colors.black26, blurRadius: 4)]))),
+              Expanded(child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5))),
             ],
           ),
           const SizedBox(height: 16),
-          Text(target, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white, shadows: [Shadow(color: Colors.black26, blurRadius: 4)])),
+          Text(target, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: _darkText)),
           const SizedBox(height: 4),
-          Text(current, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)),
+          Text(current, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _darkText)),
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -292,15 +300,15 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.white, size: 28, shadows: const [Shadow(color: Colors.black26, blurRadius: 4)]),
+            child: Icon(icon, color: _darkText, size: 28),
           ),
           const SizedBox(height: 16),
-          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5, shadows: [Shadow(color: Colors.black26, blurRadius: 4)])),
+          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5)),
           const SizedBox(height: 4),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black26, blurRadius: 2)])),
+          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _darkText)),
         ],
       ),
     );

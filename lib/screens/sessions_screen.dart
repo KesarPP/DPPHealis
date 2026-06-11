@@ -18,7 +18,7 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _pastelBlue.withValues(alpha: 0.3),
+      backgroundColor: _pastelBlue,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
         backgroundColor: Color.lerp(_pastelBlue, Colors.black, 0.1)!, // slightly darker pastel blue
