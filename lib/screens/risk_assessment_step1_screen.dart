@@ -409,9 +409,10 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           ),
                           const SizedBox(height: 20),
                           Center(
-                            child: CustomPaint(
-                              size: const Size(200, 180),
-                              painter: WaistMeasurementPainter(),
+                            child: Image.asset(
+                              'assets/images/waist_measurement.png',
+                              height: 180,
+                              fit: BoxFit.contain,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -721,125 +722,4 @@ class _RiskStepper extends StatelessWidget {
       }),
     );
   }
-}
-
-// ─── WAIST MEASUREMENT PAINTER ──────────────────────────────────────────
-
-class WaistMeasurementPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
-
-    final double w = size.width;
-    final double h = size.height;
-
-    // Center coordinates
-    final double cx = w / 2;
-
-    // Draw Head & Neck (outline / skin color)
-    paint.color = const Color(0xFFE2E8F0);
-    // Draw neck
-    final neckPath = Path()
-      ..moveTo(cx - 15, h * 0.15)
-      ..lineTo(cx + 15, h * 0.15)
-      ..lineTo(cx + 12, h * 0.28)
-      ..lineTo(cx - 12, h * 0.28)
-      ..close();
-    canvas.drawPath(neckPath, paint);
-
-    // Draw T-Shirt (Blue)
-    paint.color = const Color(0xFF93C5FD);
-    final shirtPath = Path()
-      ..moveTo(cx - 30, h * 0.28) // neck bottom-left
-      ..quadraticBezierTo(cx, h * 0.30, cx + 30, h * 0.28) // neck collar curve
-      ..lineTo(cx + 55, h * 0.33) // right shoulder
-      ..lineTo(cx + 68, h * 0.45) // right sleeve end top
-      ..lineTo(cx + 52, h * 0.52) // right sleeve end bottom
-      ..lineTo(cx + 42, h * 0.46) // armpit right
-      ..lineTo(cx + 38, h * 0.70) // right waist shirt end
-      ..lineTo(cx - 38, h * 0.70) // left waist shirt end
-      ..lineTo(cx - 42, h * 0.46) // armpit left
-      ..lineTo(cx - 52, h * 0.52) // left sleeve end bottom
-      ..lineTo(cx - 68, h * 0.45) // left sleeve end top
-      ..lineTo(cx - 55, h * 0.33) // left shoulder
-      ..close();
-    canvas.drawPath(shirtPath, paint);
-
-    // T-shirt Collar Highlight (White)
-    paint.color = Colors.white;
-    final collarPath = Path()
-      ..moveTo(cx - 22, h * 0.28)
-      ..quadraticBezierTo(cx, h * 0.34, cx + 22, h * 0.28)
-      ..quadraticBezierTo(cx, h * 0.30, cx - 22, h * 0.28)
-      ..close();
-    canvas.drawPath(collarPath, paint);
-
-    // Draw Hands (Skin tone, simple paths resting on waist)
-    paint.color = const Color(0xFFE2E8F0);
-    
-    // Left arm/hand
-    final leftArm = Path()
-      ..moveTo(cx - 50, h * 0.50) // from sleeve
-      ..quadraticBezierTo(cx - 65, h * 0.60, cx - 45, h * 0.72)
-      ..quadraticBezierTo(cx - 38, h * 0.74, cx - 35, h * 0.70) // resting
-      ..quadraticBezierTo(cx - 45, h * 0.60, cx - 44, h * 0.48)
-      ..close();
-    canvas.drawPath(leftArm, paint);
-
-    // Right arm/hand
-    final rightArm = Path()
-      ..moveTo(cx + 50, h * 0.50)
-      ..quadraticBezierTo(cx + 65, h * 0.60, cx + 45, h * 0.72)
-      ..quadraticBezierTo(cx + 38, h * 0.74, cx + 35, h * 0.70)
-      ..quadraticBezierTo(cx + 45, h * 0.60, cx + 44, h * 0.48)
-      ..close();
-    canvas.drawPath(rightArm, paint);
-
-    // Draw Pants (Grey)
-    paint.color = const Color(0xFF64748B);
-    final pantsPath = Path()
-      ..moveTo(cx - 38, h * 0.70) // waist left
-      ..lineTo(cx + 38, h * 0.70) // waist right
-      ..lineTo(cx + 34, h * 0.95) // right hip
-      ..lineTo(cx - 34, h * 0.95) // left hip
-      ..close();
-    canvas.drawPath(pantsPath, paint);
-
-    // Draw Waist Measuring Tape (Mint Green / Teal wrapping around)
-    final tapePaint = Paint()
-      ..color = const Color(0xFF34D399) // Mint Green
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10.0
-      ..strokeCap = StrokeCap.round;
-
-    final tapePath = Path()
-      ..moveTo(cx - 42, h * 0.68)
-      ..quadraticBezierTo(cx, h * 0.73, cx + 42, h * 0.68)
-      ..quadraticBezierTo(cx + 46, h * 0.73, cx + 38, h * 0.82)
-      ..lineTo(cx + 32, h * 0.88);
-    canvas.drawPath(tapePath, tapePaint);
-
-    // Extra wrapping hang of the tape on the right side
-    final tapeHang = Path()
-      ..moveTo(cx + 38, h * 0.72)
-      ..quadraticBezierTo(cx + 48, h * 0.80, cx + 40, h * 0.92);
-    canvas.drawPath(tapeHang, tapePaint);
-
-    // Draw Dashed Measurement Marks on Tape (White/Black)
-    final markPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    for (int i = 0; i < 9; i++) {
-      final double mx = cx - 35 + i * 9;
-      final double my = h * 0.705;
-      canvas.drawLine(Offset(mx, my - 3), Offset(mx, my + 3), markPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
