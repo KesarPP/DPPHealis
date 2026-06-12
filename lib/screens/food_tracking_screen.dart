@@ -255,6 +255,14 @@ class FoodTrackingScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _ExpandableMealCard(
+            title: 'Snack 2',
+            color: GelatoTheme.purple,
+            items: [
+              _FoodItem(name: 'Greek Yogurt (1 cup)', calories: 100, details: 'C:6g, P:17g, F:0g, Fi:0g'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _ExpandableMealCard(
             title: 'Dinner',
             color: GelatoTheme.blue,
             items: [

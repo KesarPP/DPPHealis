@@ -26,30 +26,34 @@ class SessionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor:
           Color.lerp(_pastelBlue, Colors.white, 0.85), // Soft pastel wash
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'SESSION BOARD',
-          style: TextStyle(
-              color: Colors.black87, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.2),
-        ),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter:
-                  _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter:
+                    _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+              ),
             ),
-          ),
-          ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            children: [
-              _buildHeroBanner(),
-              const SizedBox(height: 20),
+            ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 24.0, top: 8.0),
+                  child: Center(
+                    child: Text(
+                      'SESSION BOARD',
+                      style: TextStyle(
+                        color: GelatoTheme.textDark,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 22,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                ),
+                _buildHeroBanner(),
+                const SizedBox(height: 20),
               const _SectionLabel('Resource Library'),
               const SizedBox(height: 10),
               _buildResourceLibrary(context),
@@ -68,7 +72,8 @@ class SessionsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildHeroBanner() {

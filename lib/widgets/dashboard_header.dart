@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../screens/profile_screen.dart';
 
 class DashboardHeader extends StatefulWidget {
   const DashboardHeader({super.key});
@@ -70,81 +71,86 @@ class _DashboardHeaderState extends State<DashboardHeader>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          // PR Avatar with Heartbeat ECG Ring
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: Stack(
-              children: [
-                // Outer circle tracking progress/design
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _AvatarRingPainter(),
-                  ),
-                ),
-                // Inner Avatar container
-                Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: GelatoTheme.pink,
+          // JP Avatar with Heartbeat ECG Ring
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+            },
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Stack(
+                children: [
+                  // Outer circle tracking progress/design
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _AvatarRingPainter(),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'PR',
-                        style: TextStyle(
-                          color: GelatoTheme.pinkDark,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.2,
+                  ),
+                  // Inner Avatar container
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: GelatoTheme.pink,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'JP',
+                          style: TextStyle(
+                            color: GelatoTheme.pinkDark,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.2,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                // Pulse Dot container bottom-right
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Pulse glow ring
-                        ScaleTransition(
-                          scale: _pulseScale,
-                          child: FadeTransition(
-                            opacity: Tween<double>(begin: 0.8, end: 0.0).animate(_pulseController),
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: const BoxDecoration(
-                                color: GelatoTheme.green,
-                                shape: BoxShape.circle,
+                  // Pulse Dot container bottom-right
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Pulse glow ring
+                          ScaleTransition(
+                            scale: _pulseScale,
+                            child: FadeTransition(
+                              opacity: Tween<double>(begin: 0.8, end: 0.0).animate(_pulseController),
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  color: GelatoTheme.green,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        // Inner solid white-ringed green dot
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: GelatoTheme.green,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
+                          // Inner solid white-ringed green dot
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: GelatoTheme.green,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -156,7 +162,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$greeting, Priya',
+                  '$greeting, Janice',
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
