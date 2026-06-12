@@ -274,11 +274,11 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Curriculum Progress', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-              const Text('85%', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F766E))),
+              Text('Curriculum Progress', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+              Text('85%', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F766E))),
             ],
           ),
           const Row(
@@ -400,14 +400,14 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             ],
           ),
           const SizedBox(height: 32),
-          Center(
+          const Center(
             child: SizedBox(
               height: 160,
               width: 160,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  const CircularProgressIndicator(
+                  CircularProgressIndicator(
                     value: 0.72,
                     strokeWidth: 16,
                     backgroundColor: Color(0xFFE5E7EB),
@@ -418,9 +418,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('72%', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black, height: 1.1)),
-                        const SizedBox(height: 2),
-                        const Text('Hit Weekly Goal', style: TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w600)),
+                        Text('72%', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black, height: 1.1)),
+                        SizedBox(height: 2),
+                        Text('Hit Weekly Goal', style: TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),

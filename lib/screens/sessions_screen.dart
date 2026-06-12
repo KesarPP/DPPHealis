@@ -44,6 +44,7 @@ class SessionsScreen extends StatelessWidget {
               color: Colors.black87, width: 1.5), // Thin black border
         ),
         child: FloatingActionButton.extended(
+          heroTag: null,
           onPressed: () {},
           backgroundColor: Colors.transparent, // Handled by container gradient
           elevation: 0,
@@ -456,6 +457,7 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
+
 
 
 
