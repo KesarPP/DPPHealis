@@ -113,7 +113,7 @@ class SessionsScreen extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Image.asset(
-        'assets/images/session_header.png',
+        'assets/images/session_header.jpg',
         width: double.infinity,
         height: 200,
         fit: BoxFit.cover,

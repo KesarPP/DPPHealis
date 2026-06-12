@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Healthcare Illustration
                 Image.asset(
-                  'assets/images/diaprevent_illustration.png',
+                  'assets/images/diaprevent_illustration.jpg',
                   height: 210,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
