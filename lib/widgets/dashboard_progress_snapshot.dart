@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../data/gelato_theme.dart';
 
 class DashboardProgressSnapshot extends StatefulWidget {
   const DashboardProgressSnapshot({super.key});
@@ -20,9 +21,10 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       value: 3.0,
       max: 4.0,
       unit: 'meals',
-      color: const Color(0xFF10B981), // Emerald green
-      bgLight: const Color(0xFFECFDF5),
-      bgTint: const Color(0x1A10B981),
+      color: GelatoTheme.green,
+      colorDark: GelatoTheme.greenDark,
+      bgLight: const Color(0xFFF2F7EC),
+      bgTint: const Color(0x2BD6E5BD),
       history: [3, 4, 3, 4, 3],
       insight: 'Consistent protein distribution. 1 meal left to hit your daily goal!',
     ),
@@ -33,9 +35,10 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       value: 28.0,
       max: 30.0,
       unit: 'mins',
-      color: const Color(0xFFF97316), // Vibrant orange
-      bgLight: const Color(0xFFFFF7ED),
-      bgTint: const Color(0x1AF97316),
+      color: GelatoTheme.orange,
+      colorDark: GelatoTheme.orangeDark,
+      bgLight: const Color(0xFFFFF6ED),
+      bgTint: const Color(0x2BFFDAB4),
       history: [30, 45, 15, 35, 28],
       insight: 'Almost there! A quick 2-minute walk will complete your daily circle.',
     ),
@@ -46,9 +49,10 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       value: 6.0,
       max: 8.0,
       unit: 'classes',
-      color: const Color(0xFF3B82F6), // Sapphire blue
-      bgLight: const Color(0xFFEFF6FF),
-      bgTint: const Color(0x1A3B82F6),
+      color: GelatoTheme.blue,
+      colorDark: GelatoTheme.blueDark,
+      bgLight: const Color(0xFFF2F6FA),
+      bgTint: const Color(0x2BBCD8EC),
       history: [8, 7, 8, 6, 6],
       insight: 'Hydration is looking steady. Sip some water now to maintain momentum.',
     ),
@@ -59,9 +63,10 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       value: 7.5,
       max: 8.0,
       unit: 'hours',
-      color: const Color(0xFF8B5CF6), // Purple
-      bgLight: const Color(0xFFF5F3FF),
-      bgTint: const Color(0x1A8B5CF6),
+      color: GelatoTheme.purple,
+      colorDark: GelatoTheme.purpleDark,
+      bgLight: const Color(0xFFF6F2FA),
+      bgTint: const Color(0x2BDCCCEC),
       history: [8.0, 7.0, 7.8, 8.2, 7.5],
       insight: 'Great deep sleep percentage (22%) recorded last night. You are well recovered.',
     ),
@@ -89,14 +94,9 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F0F172A),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,21 +235,10 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: m.color,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isExpanded ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
-              width: isExpanded ? 2.0 : 1.0,
-            ),
-            boxShadow: isExpanded
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
+            border: GelatoTheme.cardBorder,
+            boxShadow: GelatoTheme.cardShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -272,8 +261,8 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                             return CustomPaint(
                               painter: _CircularProgressPainter(
                                 value: value.clamp(0.0, 1.0),
-                                color: m.color,
-                                trackColor: const Color(0xFFF1F5F9),
+                                color: m.colorDark,
+                                trackColor: Colors.white.withOpacity(0.45),
                                 strokeWidth: 5.0,
                               ),
                             );
@@ -282,13 +271,13 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                         Container(
                           width: 38,
                           height: 38,
-                          decoration: BoxDecoration(
-                            color: m.bgLight,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             m.icon,
-                            color: m.color,
+                            color: m.colorDark,
                             size: 18,
                           ),
                         ),
@@ -300,7 +289,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                   // Value display
                   Expanded(
                     child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         RichText(
@@ -312,7 +301,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0F172A),
+                                  color: GelatoTheme.textDark,
                                 ),
                               ),
                               TextSpan(
@@ -320,7 +309,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF94A3B8),
+                                  color: GelatoTheme.textMuted,
                                 ),
                               ),
                             ],
@@ -332,7 +321,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF64748B),
+                            color: GelatoTheme.textLight,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -350,7 +339,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: m.bgTint,
+                      color: Colors.white.withOpacity(0.55),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -358,16 +347,16 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                       style: TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w900,
-                        color: m.color,
+                        color: m.colorDark,
                       ),
                     ),
                   ),
                   Text(
                     isExpanded ? 'COLLAPSE' : 'LOG',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFFCBD5E1),
+                      color: m.colorDark.withOpacity(0.75),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -377,29 +366,30 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
               // Expanded Panel
               if (isExpanded) ...[
                 const SizedBox(height: 12),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const Divider(height: 1, color: Colors.black12),
                 const SizedBox(height: 12),
 
                 // Quick Log Controls
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black, width: 1.2),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.auto_awesome_rounded, size: 14, color: m.color),
+                          Icon(Icons.auto_awesome_rounded, size: 14, color: m.colorDark),
                           const SizedBox(width: 4),
                           Text(
                             'Quick Log ${m.unit}',
                             style: const TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF475569),
+                              color: GelatoTheme.textDark,
                             ),
                           ),
                         ],
@@ -416,7 +406,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                                 border: Border.all(color: const Color(0xFFE2E8F0)),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.remove, size: 14, color: Color(0xFF64748B)),
+                              child: const Icon(Icons.remove, size: 14, color: GelatoTheme.textLight),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -425,7 +415,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF0F172A),
+                              color: GelatoTheme.textDark,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -439,7 +429,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                                 border: Border.all(color: const Color(0xFFE2E8F0)),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.add, size: 14, color: Color(0xFF64748B)),
+                              child: const Icon(Icons.add, size: 14, color: GelatoTheme.textLight),
                             ),
                           ),
                         ],
@@ -461,7 +451,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                           style: TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF64748B),
+                            color: GelatoTheme.textLight,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -470,7 +460,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                           'Average: ${(m.history.reduce((a, b) => a + b) / m.history.length).toStringAsFixed(1)} ${m.unit}',
                           style: const TextStyle(
                             fontSize: 9.5,
-                            color: Color(0xFF94A3B8),
+                            color: GelatoTheme.textMuted,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -479,9 +469,9 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        border: Border.all(color: Colors.black, width: 1.2),
                       ),
                       child: SizedBox(
                         width: 80,
@@ -489,7 +479,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                         child: CustomPaint(
                           painter: _SparklinePainter(
                             data: [...m.history, m.value],
-                            color: m.color,
+                            color: m.colorDark,
                           ),
                         ),
                       ),
@@ -502,13 +492,14 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: m.bgTint,
+                    color: Colors.white.withOpacity(0.55),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black, width: 1.2),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('💡', style: TextStyle(fontSize: 12)),
+                      Icon(Icons.lightbulb_outline_rounded, size: 14, color: m.colorDark),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -516,7 +507,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: m.color,
+                            color: m.colorDark,
                             height: 1.35,
                           ),
                         ),
@@ -661,6 +652,7 @@ class _MetricData {
   final double max;
   final String unit;
   final Color color;
+  final Color colorDark;
   final Color bgLight;
   final Color bgTint;
   final List<double> history;
@@ -674,6 +666,7 @@ class _MetricData {
     required this.max,
     required this.unit,
     required this.color,
+    required this.colorDark,
     required this.bgLight,
     required this.bgTint,
     required this.history,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 
 class ActivityFeed extends StatelessWidget {
   const ActivityFeed({super.key});
@@ -12,9 +13,10 @@ class ActivityFeed extends StatelessWidget {
         time: '7:30 AM',
         duration: '35m',
         calories: 180,
-        emoji: '🌅',
-        color: Color(0xFFFEF3C7),
-        borderColor: Color(0xFFFCD34D),
+        icon: Icons.wb_sunny_rounded,
+        color: GelatoTheme.yellow,
+        borderColor: GelatoTheme.yellowDark,
+        iconColor: GelatoTheme.yellowDark,
       ),
       _ActivityData(
         title: 'Strength Training',
@@ -22,9 +24,10 @@ class ActivityFeed extends StatelessWidget {
         time: '12:00 PM',
         duration: '55m',
         calories: 340,
-        emoji: '🏋️',
-        color: Color(0xFFEDE9FE),
-        borderColor: Color(0xFFC4B5FD),
+        icon: Icons.fitness_center_rounded,
+        color: GelatoTheme.purple,
+        borderColor: GelatoTheme.purpleDark,
+        iconColor: GelatoTheme.purpleDark,
       ),
       _ActivityData(
         title: 'Evening Cycling',
@@ -32,9 +35,10 @@ class ActivityFeed extends StatelessWidget {
         time: '6:15 PM',
         duration: '45m',
         calories: 290,
-        emoji: '🚴',
-        color: Color(0xFFDCFCE7),
-        borderColor: Color(0xFF86EFAC),
+        icon: Icons.directions_bike_rounded,
+        color: GelatoTheme.green,
+        borderColor: GelatoTheme.greenDark,
+        iconColor: GelatoTheme.greenDark,
       ),
     ];
 
@@ -43,14 +47,9 @@ class ActivityFeed extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,16 +57,21 @@ class ActivityFeed extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
-                  const Text('⚡', style: TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.bolt_rounded,
+                    color: GelatoTheme.orangeDark,
+                    size: 22,
+                  ),
+                  SizedBox(width: 8),
                   Text(
                     "Today's Activities",
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A2E),
-                        ),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: GelatoTheme.textDark,
+                    ),
                   ),
                 ],
               ),
@@ -80,15 +84,15 @@ class ActivityFeed extends StatelessWidget {
                 child: const Text(
                   'View All',
                   style: TextStyle(
-                    color: Color(0xFF10B981),
+                    color: GelatoTheme.pinkDark,
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ...activities.map((a) => _ActivityCard(activity: a)),
         ],
       ),
@@ -122,10 +126,9 @@ class _ActivityCardState extends State<_ActivityCard> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: widget.activity.color,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: widget.activity.borderColor.withValues(alpha: 0.6),
-            ),
+            borderRadius: BorderRadius.circular(16),
+            border: GelatoTheme.cardBorder,
+            boxShadow: GelatoTheme.cardShadow,
           ),
           child: Row(
             children: [
@@ -133,39 +136,50 @@ class _ActivityCardState extends State<_ActivityCard> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: Colors.white.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 1.5,
+                  ),
                 ),
                 child: Center(
-                  child: Text(
-                    widget.activity.emoji,
-                    style: const TextStyle(fontSize: 24),
+                  child: Icon(
+                    widget.activity.icon,
+                    color: widget.activity.iconColor,
+                    size: 24,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.activity.title,
                       style: const TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w900,
                         fontSize: 14,
-                        color: Color(0xFF1A1A2E),
+                        color: Colors.black, // crisp black text for maximum readability on pastel bg
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 11, color: Color(0xFF6B7280)),
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 11,
+                          color: GelatoTheme.textLight,
+                        ),
+                        const SizedBox(width: 2),
                         Text(
                           widget.activity.type,
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF6B7280),
+                            color: GelatoTheme.textLight,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -179,15 +193,18 @@ class _ActivityCardState extends State<_ActivityCard> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.timer_outlined,
-                          size: 12, color: Color(0xFF6B7280)),
+                      const Icon(
+                        Icons.timer_outlined,
+                        size: 12,
+                        color: GelatoTheme.textLight,
+                      ),
                       const SizedBox(width: 2),
                       Text(
                         widget.activity.duration,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF6B7280),
-                          fontWeight: FontWeight.w500,
+                          color: GelatoTheme.textLight,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -195,24 +212,28 @@ class _ActivityCardState extends State<_ActivityCard> {
                   const SizedBox(height: 2),
                   Text(
                     '${widget.activity.calories} kcal',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFFF97316),
-                      fontWeight: FontWeight.w600,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: widget.activity.borderColor,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                   Text(
                     widget.activity.time,
                     style: const TextStyle(
                       fontSize: 10,
-                      color: Color(0xFF9CA3AF),
+                      color: GelatoTheme.textLight,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.chevron_right_rounded,
-                  size: 18, color: Color(0xFF9CA3AF)),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: widget.activity.borderColor,
+              ),
             ],
           ),
         ),
@@ -227,9 +248,10 @@ class _ActivityData {
   final String time;
   final String duration;
   final int calories;
-  final String emoji;
+  final IconData icon;
   final Color color;
   final Color borderColor;
+  final Color iconColor;
 
   const _ActivityData({
     required this.title,
@@ -237,8 +259,9 @@ class _ActivityData {
     required this.time,
     required this.duration,
     required this.calories,
-    required this.emoji,
+    required this.icon,
     required this.color,
     required this.borderColor,
+    required this.iconColor,
   });
 }

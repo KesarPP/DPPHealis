@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+import '../data/gelato_theme.dart';
 
 class GoalJourney extends StatefulWidget {
   final int currentSteps;
@@ -22,13 +24,58 @@ class _GoalJourneyState extends State<GoalJourney>
   late AnimationController _glowController;
   late Animation<double> _glowAnim;
 
+  late AnimationController _rotationController;
+
+  // Exact milestones mapping from the mockup image
   final List<_MilestoneData> milestones = const [
-    _MilestoneData(steps: 25000, label: 'First Step', icon: '👣', isCompleted: true, isToday: false),
-    _MilestoneData(steps: 50000, label: 'On Track', icon: '👟', isCompleted: true, isToday: false),
-    _MilestoneData(steps: 75000, label: 'On Track', icon: '👟', isCompleted: true, isToday: false),
-    _MilestoneData(steps: 102450, label: 'Today', icon: '👣', isCompleted: false, isToday: true),
-    _MilestoneData(steps: 125000, label: 'Almost There', icon: '🌿', isCompleted: false, isToday: false),
-    _MilestoneData(steps: 150000, label: 'Goal', icon: '🏔️', isCompleted: false, isToday: false),
+    _MilestoneData(
+      steps: 25000,
+      label: 'First Step',
+      displaySteps: '25K',
+      icon: Icons.directions_walk_rounded,
+      isCompleted: true,
+      isToday: false,
+    ),
+    _MilestoneData(
+      steps: 50000,
+      label: 'On Track',
+      displaySteps: '50K',
+      icon: Icons.directions_run_rounded,
+      isCompleted: true,
+      isToday: false,
+    ),
+    _MilestoneData(
+      steps: 75000,
+      label: 'On Track',
+      displaySteps: '75K',
+      icon: Icons.directions_run_rounded,
+      isCompleted: true,
+      isToday: false,
+    ),
+    _MilestoneData(
+      steps: 102450,
+      label: 'Today',
+      displaySteps: '102,450',
+      icon: Icons.directions_walk_rounded,
+      isCompleted: false,
+      isToday: true,
+    ),
+    _MilestoneData(
+      steps: 125000,
+      label: 'Almost There',
+      displaySteps: '125K',
+      icon: Icons.eco_rounded,
+      isCompleted: false,
+      isToday: false,
+    ),
+    _MilestoneData(
+      steps: 150000,
+      label: 'Goal',
+      displaySteps: '150K',
+      icon: Icons.terrain_rounded,
+      isCompleted: false,
+      isToday: false,
+    ),
   ];
 
   @override
@@ -51,6 +98,11 @@ class _GoalJourneyState extends State<GoalJourney>
       CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
     );
 
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _progressController.forward();
     });
@@ -60,7 +112,18 @@ class _GoalJourneyState extends State<GoalJourney>
   void dispose() {
     _progressController.dispose();
     _glowController.dispose();
+    _rotationController.dispose();
     super.dispose();
+  }
+
+  // Get Y offset for wave curve path based on index
+  double _getYOffset(int idx) {
+    // Wave pattern similar to mockups: down, up, down, up
+    final offsets = [32.0, 48.0, 42.0, 24.0, 38.0, 32.0];
+    if (idx >= 0 && idx < offsets.length) {
+      return offsets[idx];
+    }
+    return 30.0;
   }
 
   @override
@@ -70,64 +133,100 @@ class _GoalJourneyState extends State<GoalJourney>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
+          // Header Row (Matches mockup exactly)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Journey to Your Goal',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E293B),
+              Expanded(
+                child: Row(
+                  children: [
+                    // Green running background circle
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFDCFCE7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.directions_run_rounded,
+                          color: Color(0xFF22C55E),
+                          size: 22,
+                        ),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    "You're doing great! Keep going!",
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Journey to Your Goal',
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 1),
+                          Text(
+                            "You're doing great! Keep going!",
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(12),
+                  ],
                 ),
-                child: const Text(
-                  'GOAL: 150,000 STEPS',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2563EB),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                fit: FlexFit.loose,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.emoji_events_rounded,
+                      color: Color(0xFFFBBF24),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    const Flexible(
+                      child: Text(
+                        'GOAL: 150K STEPS',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF4338CA), // Purple Indigo
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
 
-          // Milestones + Trophy Card Row
+          // Milestones Path + Trophy Card Row
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -137,109 +236,111 @@ class _GoalJourneyState extends State<GoalJourney>
                   animation: Listenable.merge([_progressAnim, _glowAnim]),
                   builder: (context, _) {
                     return SizedBox(
-                      height: 110,
+                      height: 165,
                       child: Stack(
                         children: [
-                          // Path Line
-                          Positioned(
-                            top: 24,
-                            left: 20,
-                            right: 20,
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final totalWidth = constraints.maxWidth;
-                                final progress = (widget.currentSteps / widget.goalSteps).clamp(0.0, 1.0) * _progressAnim.value;
-                                return Stack(
-                                  children: [
-                                    // Soft gold/yellow background line
-                                    Container(
-                                      height: 4,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFEF3C7),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    // Glowing gold progress line
-                                    Container(
-                                      height: 4,
-                                      width: totalWidth * progress,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFCD34D), // Light gold
-                                            Color(0xFFF59E0B), // Gold
-                                            Color(0xFFD97706), // Deep gold
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(2),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
-                                            blurRadius: 6,
-                                            spreadRadius: 1,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
+                          // 1. Curved dashed connector line
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: _PathLinePainter(
+                                completedCount: 3, // completed 25k, 50k, 75k
+                                totalCount: 6,
+                                yOffsets: List.generate(6, (i) => _getYOffset(i)),
+                                animValue: _progressAnim.value,
+                              ),
                             ),
                           ),
 
-                          // Milestone Nodes
+                          // 2. Node elements and highlight background
                           Positioned.fill(
                             child: LayoutBuilder(
                               builder: (context, constraints) {
-                                final totalWidth = constraints.maxWidth - 40;
+                                final totalWidth = constraints.maxWidth - 36;
+                                final segmentWidth = totalWidth / 5;
+
                                 return Stack(
                                   children: milestones.asMap().entries.map((entry) {
+                                    final idx = entry.key;
                                     final m = entry.value;
-                                    final stepRatio = (m.steps / widget.goalSteps).clamp(0.0, 1.0);
-                                    final double posX = 20 + totalWidth * stepRatio;
-                                    final isCompleted = widget.currentSteps >= m.steps;
+                                    final double posX = 18 + idx * segmentWidth;
+                                    final double posY = _getYOffset(idx);
+                                    final isCompleted = m.isCompleted;
 
-                                    return Positioned(
-                                      left: posX - 25,
-                                      top: 0,
-                                      width: 50,
-                                      child: Column(
-                                        children: [
-                                          _buildMilestoneNode(m, isCompleted),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            '${(m.steps / 1000).toStringAsFixed(0)}K',
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w800,
-                                              color: m.isToday || isCompleted
-                                                  ? const Color(0xFFD97706)
-                                                  : const Color(0xFF94A3B8),
+                                    return Stack(
+                                      children: [
+                                        // Today node background vertical pill highlight
+                                        if (m.isToday)
+                                          Positioned(
+                                            left: posX - 26,
+                                            top: posY - 12,
+                                            width: 52,
+                                            height: 104,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFDCFCE7).withValues(alpha: 0.55),
+                                                borderRadius: BorderRadius.circular(16),
+                                                border: Border.all(
+                                                  color: const Color(0xFF4ADE80).withValues(alpha: 0.25),
+                                                  width: 1,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
+
+                                        // Node Pedestal Circle
+                                        Positioned(
+                                          left: posX - 21,
+                                          top: posY - 21,
+                                          child: _buildMilestoneNode(m, isCompleted),
+                                        ),
+
+                                        // Values ("25K", etc.)
+                                        Positioned(
+                                          left: posX - 25,
+                                          top: posY + 28,
+                                          width: 50,
+                                          child: Text(
+                                            m.displaySteps,
+                                            style: TextStyle(
+                                              fontSize: m.isToday ? 10.5 : 9.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: m.isToday
+                                                  ? const Color(0xFF15803D)
+                                                  : const Color(0xFF0F172A),
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+
+                                        // Labels ("First Step", etc.)
+                                        Positioned(
+                                          left: posX - 30,
+                                          top: posY + 43,
+                                          width: 60,
+                                          child: Text(
                                             m.label,
                                             style: TextStyle(
-                                              fontSize: 8,
-                                              fontWeight: m.isToday || isCompleted
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w500,
+                                              fontSize: 8.5,
+                                              fontWeight: m.isToday
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w600,
                                               color: m.isToday
-                                                  ? const Color(0xFFD97706)
-                                                  : isCompleted
-                                                      ? const Color(0xFFB45309)
-                                                      : const Color(0xFFCBD5E1),
+                                                  ? const Color(0xFF166534)
+                                                  : const Color(0xFF64748B),
                                             ),
                                             textAlign: TextAlign.center,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                          const SizedBox(height: 4),
-                                          // Checkmark indicator row
-                                          _buildStatusCheckIndicator(m, isCompleted),
-                                        ],
-                                      ),
+                                        ),
+
+                                        // Checkmark green circle below completed nodes
+                                        Positioned(
+                                          left: posX - 7,
+                                          top: posY + 62,
+                                          child: _buildStatusCheckIndicator(m, isCompleted),
+                                        ),
+                                      ],
                                     );
                                   }).toList(),
                                 );
@@ -255,57 +356,112 @@ class _GoalJourneyState extends State<GoalJourney>
 
               const SizedBox(width: 8),
 
-              // Trophy Card (Right)
+              // Trophy Card (Right) - Confetti theme matches mockup
               Container(
-                width: 80,
-                height: 105,
+                width: 90,
+                height: 155,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFFEF3C7), // Light amber/gold
-                      Color(0xFFFDE68A), // Darker gold
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFCD34D), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  color: GelatoTheme.yellow,
+                  borderRadius: BorderRadius.circular(20),
+                  border: GelatoTheme.cardBorder,
+                  boxShadow: GelatoTheme.cardShadow,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('🏆', style: TextStyle(fontSize: 22)),
-                    const SizedBox(height: 6),
+                    // Confetti and Trophy stack
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Rotating sunburst rays behind trophy
+                        AnimatedBuilder(
+                          animation: _rotationController,
+                          builder: (context, child) {
+                            return CustomPaint(
+                              size: const Size(60, 60),
+                              painter: _SunburstPainter(
+                                rotationAngle: _rotationController.value * 2 * math.pi,
+                                color: const Color(0xFFB45309).withOpacity(0.12),
+                              ),
+                            );
+                          },
+                        ),
+                        // Confetti sparkles
+                        ...List.generate(6, (i) {
+                          final angles = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+                          final radius = [18.0, 22.0, 20.0, 18.0, 22.0, 20.0];
+                          final colors = [
+                            Colors.pinkAccent,
+                            Colors.blueAccent,
+                            Colors.orangeAccent,
+                            Colors.greenAccent,
+                            Colors.purpleAccent,
+                            Colors.amberAccent
+                          ];
+                          final double x = radius[i] * math.cos(angles[i] * 60 * math.pi / 180);
+                          final double y = radius[i] * math.sin(angles[i] * 60 * math.pi / 180);
+                          return Transform.translate(
+                            offset: Offset(x, y),
+                            child: Container(
+                              width: 3.5,
+                              height: 3.5,
+                              decoration: BoxDecoration(
+                                color: colors[i],
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          );
+                        }),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFBBF24).withOpacity(0.35),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFFFFE066), Color(0xFFF59E0B), Color(0xFFB45309)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ).createShader(bounds),
+                            child: const Icon(
+                              Icons.emoji_events_rounded,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     const Text(
                       'You Did It!',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF92400E),
+                        color: Color(0xFF1E3A8A), // Indigo
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${(widget.goalSteps / 1000).toStringAsFixed(0)}K',
-                      style: const TextStyle(
-                        fontSize: 13,
+                    const SizedBox(height: 4),
+                    const Text(
+                      '150K',
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF78350F),
+                        color: Color(0xFF0F172A), // Black
                       ),
                     ),
                     const Text(
                       'Steps',
                       style: TextStyle(
-                        fontSize: 8,
+                        fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF92400E),
+                        color: Color(0xFF475569),
                       ),
                     ),
                   ],
@@ -320,61 +476,66 @@ class _GoalJourneyState extends State<GoalJourney>
 
   Widget _buildMilestoneNode(_MilestoneData m, bool isCompleted) {
     if (m.isToday) {
-      // Glow and Gold Highlight on current node
+      // Today Node: double border and bright pulsing glow
       return Container(
-        width: 38,
-        height: 38,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
+          color: Colors.white,
           shape: BoxShape.circle,
-          color: const Color(0xFFFFFBEB),
           border: Border.all(
-            color: const Color(0xFFF59E0B), // Gold border
-            width: 2.5,
+            color: const Color(0xFF22C55E), // Bright green
+            width: 2.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.8 * _glowAnim.value),
-              blurRadius: 12,
-              spreadRadius: 3,
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 3,
+              offset: const Offset(0, 3),
+            ),
+            BoxShadow(
+              color: const Color(0xFF22C55E).withValues(alpha: 0.4 * _glowAnim.value),
+              blurRadius: 10,
+              spreadRadius: 2.5,
             ),
           ],
         ),
         child: Center(
-          child: Text(
+          child: Icon(
             m.icon,
-            style: const TextStyle(fontSize: 16),
+            color: const Color(0xFF22C55E),
+            size: 20,
           ),
         ),
       );
     }
 
+    final activeColor = isCompleted ? const Color(0xFF22C55E) : const Color(0xFFCBD5E1);
+
     return Container(
-      width: 32,
-      height: 32,
+      width: 38,
+      height: 38,
       decoration: BoxDecoration(
+        color: Colors.white,
         shape: BoxShape.circle,
-        color: isCompleted ? const Color(0xFFFFFBEB) : const Color(0xFFF8FAFC),
         border: Border.all(
-          color: isCompleted ? const Color(0xFFF59E0B) : const Color(0xFFE2E8F0),
+          color: isCompleted ? const Color(0xFF4ADE80) : const Color(0xFFE2E8F0),
           width: 1.5,
         ),
-        boxShadow: isCompleted
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFFCD34D).withValues(alpha: 0.4),
-                  blurRadius: 4,
-                  spreadRadius: 0.5,
-                ),
-              ]
-            : null,
+        boxShadow: [
+          // 3D bottom depth shadow
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 2,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Center(
-        child: Text(
+        child: Icon(
           m.icon,
-          style: TextStyle(
-            fontSize: 13,
-            color: isCompleted ? null : const Color(0xFF94A3B8),
-          ),
+          color: activeColor,
+          size: 18,
         ),
       ),
     );
@@ -383,46 +544,169 @@ class _GoalJourneyState extends State<GoalJourney>
   Widget _buildStatusCheckIndicator(_MilestoneData m, bool isCompleted) {
     if (m.isToday) {
       return Container(
-        height: 10,
-        width: 10,
+        height: 12,
+        width: 12,
         decoration: const BoxDecoration(
-          color: Color(0xFFF59E0B), // Gold dot for today
+          color: Color(0xFF22C55E), // Green dot for today
           shape: BoxShape.circle,
         ),
       );
     }
 
     if (isCompleted) {
-      return const Icon(
-        Icons.check_circle_rounded,
-        color: Color(0xFFF59E0B), // Gold checkmark for completed
-        size: 11,
+      return Container(
+        width: 14,
+        height: 14,
+        decoration: const BoxDecoration(
+          color: Color(0xFF22C55E), // Bright Green Circle
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.check,
+          color: Colors.white,
+          size: 9.5,
+        ),
       );
     }
 
-    return const Text(
-      '-',
-      style: TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w800,
-        color: Color(0xFFCBD5E1),
-      ),
-    );
+    return const SizedBox();
   }
+}
+
+class _PathLinePainter extends CustomPainter {
+  final int completedCount;
+  final int totalCount;
+  final List<double> yOffsets;
+  final double animValue;
+
+  _PathLinePainter({
+    required this.completedCount,
+    required this.totalCount,
+    required this.yOffsets,
+    required this.animValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double segmentWidth = (size.width - 36) / (totalCount - 1);
+    final List<Offset> points = [];
+
+    for (int i = 0; i < totalCount; i++) {
+      final double x = 18 + i * segmentWidth;
+      final double y = yOffsets[i];
+      points.add(Offset(x, y));
+    }
+
+    if (points.isEmpty) return;
+
+    final paintCompleted = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    final paintIncomplete = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i < points.length - 1; i++) {
+      final p1 = points[i];
+      final p2 = points[i + 1];
+
+      final segmentPath = Path();
+      segmentPath.moveTo(p1.dx, p1.dy);
+
+      // Create a smooth spline dip/curve between nodes
+      final double cpX = (p1.dx + p2.dx) / 2;
+      final double cpY = (p1.dy + p2.dy) / 2 + (i % 2 == 0 ? 6 : -6);
+      segmentPath.quadraticBezierTo(cpX, cpY, p2.dx, p2.dy);
+
+      final isSegmentCompleted = i < completedCount;
+
+      if (isSegmentCompleted) {
+        paintCompleted.color = const Color(0xFF22C55E); // Bright Green path
+        _drawDashedPath(canvas, segmentPath, paintCompleted, 4.0, 3.0);
+      } else {
+        paintIncomplete.color = const Color(0xFFCBD5E1); // Grey path
+        _drawDashedPath(canvas, segmentPath, paintIncomplete, 3.0, 4.0);
+      }
+    }
+  }
+
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint, double dashWidth, double dashSpace) {
+    final metrics = path.computeMetrics();
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final double length = dashWidth;
+        final Path extract = metric.extractPath(distance, distance + length);
+        canvas.drawPath(extract, paint);
+        distance += length + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PathLinePainter oldDelegate) => true;
 }
 
 class _MilestoneData {
   final int steps;
   final String label;
-  final String icon;
+  final String displaySteps;
+  final IconData icon;
   final bool isCompleted;
   final bool isToday;
 
   const _MilestoneData({
     required this.steps,
     required this.label,
+    required this.displaySteps,
     required this.icon,
     required this.isCompleted,
     required this.isToday,
   });
+}
+
+class _SunburstPainter extends CustomPainter {
+  final double rotationAngle;
+  final Color color;
+
+  _SunburstPainter({required this.rotationAngle, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.max(size.width, size.height) * 0.85;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final int rayCount = 14;
+    final double angleStep = 2 * math.pi / rayCount;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(rotationAngle);
+
+    for (int i = 0; i < rayCount; i++) {
+      final double startAngle = i * angleStep;
+      final double endAngle = startAngle + angleStep / 2;
+
+      final path = Path()
+        ..moveTo(0, 0)
+        ..lineTo(radius * math.cos(startAngle), radius * math.sin(startAngle))
+        ..lineTo(radius * math.cos(endAngle), radius * math.sin(endAngle))
+        ..close();
+
+      canvas.drawPath(path, paint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _SunburstPainter oldDelegate) {
+    return oldDelegate.rotationAngle != rotationAngle || oldDelegate.color != color;
+  }
 }

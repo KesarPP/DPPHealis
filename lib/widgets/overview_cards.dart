@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 
 class OverviewCards extends StatefulWidget {
   const OverviewCards({super.key});
@@ -47,8 +48,9 @@ class _OverviewCardsState extends State<OverviewCards>
                   unit: '',
                   subtext: '68% of Goal',
                   progress: 0.68,
-                  color: const Color(0xFF10B981),
-                  bgColor: const Color(0xFFF0FDF4),
+                  color: GelatoTheme.green,
+                  bgColor: const Color(0xFFF2F7EC),
+                  darkColor: GelatoTheme.greenDark,
                 ),
               ),
               const SizedBox(width: 12),
@@ -62,8 +64,9 @@ class _OverviewCardsState extends State<OverviewCards>
                   unit: 'km',
                   subtext: '12% vs yesterday',
                   progress: 0.72,
-                  color: const Color(0xFF6366F1),
-                  bgColor: const Color(0xFFF5F3FF),
+                  color: GelatoTheme.blue,
+                  bgColor: const Color(0xFFF2F6FA),
+                  darkColor: GelatoTheme.blueDark,
                 ),
               ),
             ],
@@ -81,8 +84,9 @@ class _OverviewCardsState extends State<OverviewCards>
                   unit: 'kcal',
                   subtext: '15% vs yesterday',
                   progress: 0.82,
-                  color: const Color(0xFFF97316),
-                  bgColor: const Color(0xFFFFF7ED),
+                  color: GelatoTheme.orange,
+                  bgColor: const Color(0xFFFFF6ED),
+                  darkColor: GelatoTheme.orangeDark,
                 ),
               ),
               const SizedBox(width: 12),
@@ -96,8 +100,9 @@ class _OverviewCardsState extends State<OverviewCards>
                   unit: 'mins',
                   subtext: '20% vs yesterday',
                   progress: 0.80,
-                  color: const Color(0xFF0EA5E9),
-                  bgColor: const Color(0xFFF0F9FF),
+                  color: GelatoTheme.purple,
+                  bgColor: const Color(0xFFF6F2FA),
+                  darkColor: GelatoTheme.purpleDark,
                 ),
               ),
             ],
@@ -118,6 +123,7 @@ class _OverviewCardsState extends State<OverviewCards>
     required double progress,
     required Color color,
     required Color bgColor,
+    required Color darkColor,
   }) {
     return AnimatedBuilder(
       animation: _controller,
@@ -143,6 +149,7 @@ class _OverviewCardsState extends State<OverviewCards>
         progress: progress,
         color: color,
         bgColor: bgColor,
+        darkColor: darkColor,
         progressAnim: _controller,
       ),
     );
@@ -158,6 +165,7 @@ class _MetricCard extends StatefulWidget {
   final double progress;
   final Color color;
   final Color bgColor;
+  final Color darkColor;
   final AnimationController progressAnim;
 
   const _MetricCard({
@@ -169,6 +177,7 @@ class _MetricCard extends StatefulWidget {
     required this.progress,
     required this.color,
     required this.bgColor,
+    required this.darkColor,
     required this.progressAnim,
   });
 
@@ -185,7 +194,6 @@ class _MetricCardState extends State<_MetricCard>
   @override
   void initState() {
     super.initState();
-    // Stagger float animations slightly based on the label length
     final int delayMs = widget.label.hashCode % 500;
     _floatController = AnimationController(
       vsync: this,
@@ -218,16 +226,10 @@ class _MetricCardState extends State<_MetricCard>
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: widget.color,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            border: GelatoTheme.cardBorder,
+            boxShadow: GelatoTheme.cardShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,12 +249,13 @@ class _MetricCardState extends State<_MetricCard>
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: widget.bgColor,
+                        color: Colors.white.withOpacity(0.55),
                         shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black, width: 1.2),
                       ),
                       child: Icon(
                         widget.icon,
-                        color: widget.color,
+                        color: widget.darkColor,
                         size: 20,
                       ),
                     ),
@@ -260,7 +263,7 @@ class _MetricCardState extends State<_MetricCard>
                   Icon(
                     Icons.trending_up_rounded,
                     size: 14,
-                    color: widget.color,
+                    color: widget.darkColor,
                   ),
                 ],
               ),
@@ -274,7 +277,7 @@ class _MetricCardState extends State<_MetricCard>
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF1E293B),
+                      color: GelatoTheme.textDark,
                       height: 1,
                     ),
                   ),
@@ -287,7 +290,7 @@ class _MetricCardState extends State<_MetricCard>
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: widget.color,
+                          color: widget.darkColor,
                         ),
                       ),
                     ),
@@ -300,7 +303,7 @@ class _MetricCardState extends State<_MetricCard>
                 widget.label,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: GelatoTheme.textLight,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -316,9 +319,9 @@ class _MetricCardState extends State<_MetricCard>
                         borderRadius: BorderRadius.circular(3),
                         child: LinearProgressIndicator(
                           value: widget.progress * widget.progressAnim.value,
-                          minHeight: 4,
-                          backgroundColor: widget.color.withValues(alpha: 0.12),
-                          valueColor: AlwaysStoppedAnimation(widget.color),
+                          minHeight: 5,
+                          backgroundColor: Colors.white.withOpacity(0.45),
+                          valueColor: AlwaysStoppedAnimation(widget.darkColor),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -326,7 +329,7 @@ class _MetricCardState extends State<_MetricCard>
                         widget.subtext,
                         style: TextStyle(
                           fontSize: 10,
-                          color: widget.color,
+                          color: widget.darkColor,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

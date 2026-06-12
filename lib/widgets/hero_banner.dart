@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 
 class HeroBanner extends StatefulWidget {
   const HeroBanner({super.key});
@@ -38,13 +39,15 @@ class _HeroBannerState extends State<HeroBanner>
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          height: 150,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-          ),
+      child: Container(
+        height: 150,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: GelatoTheme.cardBorder,
+          boxShadow: GelatoTheme.cardShadow,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
           child: Stack(
             children: [
               // Real background picture loaded from assets/images/banner_run.png

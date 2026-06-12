@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 
 class MotivationSection extends StatefulWidget {
   const MotivationSection({super.key});
@@ -18,6 +19,11 @@ class _MotivationSectionState extends State<MotivationSection>
   final List<bool> _activeDays = [true, true, true, true, true, false, false];
   final List<_Particle> _particles = [];
   final math.Random _random = math.Random();
+
+  // Vibrant streak colors (popping red-orange)
+  static const Color streakColor = Color(0xFFFF4D00);
+  static const Color streakBg = Color(0xFFFFE5D9);
+  static const Color streakColorSecondary = Color(0xFFFF1A40);
 
   @override
   void initState() {
@@ -77,9 +83,7 @@ class _MotivationSectionState extends State<MotivationSection>
             vx: math.cos(angle) * speed,
             vy: math.sin(angle) * speed - 1.5, // bias upwards
             life: _random.nextDouble() * 0.4 + 0.6,
-            color: _random.nextBool()
-                ? const Color(0xFFF97316) // Orange
-                : const Color(0xFFEF4444), // Red
+            color: _random.nextBool() ? streakColor : streakColorSecondary,
             size: _random.nextDouble() * 5.0 + 3.0,
           ),
         );
@@ -102,15 +106,17 @@ class _MotivationSectionState extends State<MotivationSection>
             child: Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                borderRadius: GelatoTheme.cardRadius,
+                border: GelatoTheme.cardBorder,
+                boxShadow: GelatoTheme.cardShadow,
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF1E1B4B), // Deep indigo (muted dark color)
+                    Color(0xFF0F172A), // Dark slate
+                  ],
+                ),
               ),
               child: Column(
                 children: [
@@ -123,57 +129,91 @@ class _MotivationSectionState extends State<MotivationSection>
                             animation: _flameAnim,
                             builder: (context, child) => Transform.scale(
                               scale: _flameAnim.value,
-                              child: const Text(
-                                '🔥',
-                                style: TextStyle(fontSize: 22),
+                              child: const Icon(
+                                Icons.local_fire_department_rounded,
+                                color: streakColor,
+                                size: 26,
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'Your Streak',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF1E293B),
-                                ),
+                          const Text(
+                            'Consistency Streak',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF334155)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.auto_awesome_rounded, size: 10, color: Color(0xFFFBBF24)),
+                            SizedBox(width: 4),
+                            Text(
+                              'Level 3',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFCBD5E1),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  const Row(
+                  const SizedBox(height: 14),
+                  Row(
                     children: [
-                      Text(
-                        '12',
-                        style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF1E293B),
-                          height: 1,
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFFF97316), Color(0xFFF59E0B), Color(0xFFFFE066)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ).createShader(bounds),
+                        child: const Text(
+                          '12',
+                          style: TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1,
+                          ),
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Days',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF334155),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Days Active',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Keep the momentum going!',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF64748B),
-                              fontWeight: FontWeight.w500,
+                            Text(
+                              "You're on fire! Keep logging your progress.",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: const Color(0xFF94A3B8),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -189,25 +229,37 @@ class _MotivationSectionState extends State<MotivationSection>
                             duration: const Duration(milliseconds: 200),
                             width: 32,
                             height: 32,
-                            decoration: BoxDecoration(
-                              color: active
-                                  ? const Color(0xFFFFF7ED)
-                                  : const Color(0xFFF1F5F9),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: active
-                                    ? const Color(0xFFF97316)
-                                    : const Color(0xFFE2E8F0),
-                                width: 1.5,
-                              ),
-                            ),
+                            decoration: active
+                                ? BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFEA580C), Color(0xFFF97316), Color(0xFFFBBF24)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFEA580C).withOpacity(0.4),
+                                        blurRadius: 8,
+                                        spreadRadius: 1,
+                                      )
+                                    ],
+                                  )
+                                : BoxDecoration(
+                                    color: const Color(0xFF1E293B),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFF334155),
+                                      width: 1.5,
+                                    ),
+                                  ),
                             child: Center(
-                              child: Text(
-                                active ? '🔥' : '○',
-                                style: TextStyle(
-                                  fontSize: active ? 14 : 12,
-                                  color: active ? null : const Color(0xFF94A3B8),
-                                ),
+                              child: Icon(
+                                active
+                                    ? Icons.local_fire_department_rounded
+                                    : Icons.radio_button_unchecked_rounded,
+                                size: active ? 16 : 12,
+                                color: active ? Colors.white : const Color(0xFF475569),
                               ),
                             ),
                           ),
@@ -216,17 +268,39 @@ class _MotivationSectionState extends State<MotivationSection>
                             entry.value,
                             style: TextStyle(
                               fontSize: 10,
-                              color: active
-                                  ? const Color(0xFFF97316)
-                                  : const Color(0xFF64748B),
-                              fontWeight: active
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
+                              color: active ? const Color(0xFFF97316) : const Color(0xFF64748B),
+                              fontWeight: active ? FontWeight.w900 : FontWeight.w600,
                             ),
                           ),
                         ],
                       );
                     }).toList(),
+                  ),
+                  const SizedBox(height: 14),
+                  // Bottom Reward Info
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 2),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '2 days remaining to hit milestone',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        Text(
+                          '+150 XP PENDING',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFFEA580C),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

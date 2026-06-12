@@ -7,7 +7,7 @@ import '../widgets/weekly_progress.dart';
 import '../widgets/daily_goals.dart';
 import '../widgets/activity_feed.dart';
 import '../widgets/motivation_section.dart';
-import '../widgets/ai_coach_card.dart';
+import '../data/gelato_theme.dart';
 
 class ActivityFitnessScreen extends StatefulWidget {
   const ActivityFitnessScreen({super.key});
@@ -28,7 +28,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: GelatoTheme.bg,
       body: SafeArea(
         child: CustomScrollView(
           controller: _scrollController,
@@ -75,17 +75,17 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Text('📊', style: TextStyle(fontSize: 18)),
-                        const SizedBox(width: 8),
+                        Icon(Icons.bar_chart_rounded, color: GelatoTheme.purpleDark, size: 20),
+                        SizedBox(width: 8),
                         Text(
                           "Today's Overview",
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1A1A2E),
-                                  ),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: GelatoTheme.textDark,
+                          ),
                         ),
                       ],
                     ),
@@ -94,6 +94,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(80, 24),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -101,13 +102,13 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                           Text(
                             'View Insights',
                             style: TextStyle(
-                              color: Color(0xFF10B981),
+                              color: GelatoTheme.purpleDark,
                               fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           Icon(Icons.chevron_right_rounded,
-                              size: 16, color: Color(0xFF10B981)),
+                              size: 16, color: GelatoTheme.purpleDark),
                         ],
                       ),
                     ),
@@ -166,17 +167,8 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
               ),
             ),
 
-            // AI Coach CTA
-            const SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  AiCoachCard(),
-                ],
-              ),
-            ),
-
-            // Bottom padding for navigation bar
-            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+            // Bottom padding for navigation bar and floating button
+            const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
           ],
         ),
       ),

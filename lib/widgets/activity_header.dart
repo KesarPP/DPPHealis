@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 
 class ActivityHeader extends StatefulWidget {
   const ActivityHeader({super.key});
@@ -42,22 +43,22 @@ class _ActivityHeaderState extends State<ActivityHeader>
         children: [
           Expanded(
             child: Column(
-                    mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Activity & Fitness',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1A1A2E),
+                        color: GelatoTheme.textDark,
                         letterSpacing: -0.5,
                       ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Every step brings you closer to a healthier you! 💚',
+                  'Every step brings you closer to a healthier you!',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF6B7280),
+                        color: GelatoTheme.textLight,
                       ),
                 ),
               ],
@@ -90,14 +91,8 @@ class _HealthConnectBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +104,7 @@ class _HealthConnectBadge extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
+                  color: GelatoTheme.green,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -119,7 +114,7 @@ class _HealthConnectBadge extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF22C55E),
+                  color: GelatoTheme.greenDark,
                 ),
               ),
               const SizedBox(width: 4),
@@ -130,26 +125,26 @@ class _HealthConnectBadge extends StatelessWidget {
                   child: const Icon(
                     Icons.sync,
                     size: 14,
-                    color: Color(0xFF6B7280),
+                    color: GelatoTheme.textLight,
                   ),
                 ),
               ),
               const SizedBox(width: 2),
-              const Icon(Icons.more_vert, size: 14, color: Color(0xFF9CA3AF)),
+              const Icon(Icons.more_vert, size: 14, color: GelatoTheme.textMuted),
             ],
           ),
           const Text(
             'via Health Connect',
             style: TextStyle(
               fontSize: 9,
-              color: Color(0xFF9CA3AF),
+              color: GelatoTheme.textMuted,
             ),
           ),
           const Text(
             'synced: 2 mins ago',
             style: TextStyle(
               fontSize: 9,
-              color: Color(0xFF9CA3AF),
+              color: GelatoTheme.textMuted,
             ),
           ),
         ],

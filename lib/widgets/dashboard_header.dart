@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 
 class DashboardHeader extends StatefulWidget {
   const DashboardHeader({super.key});
@@ -89,20 +90,13 @@ class _DashboardHeaderState extends State<DashboardHeader>
                     height: 38,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFFDC2626), // Crimson
-                          Color(0xFFF43F5E), // Rose
-                        ],
-                      ),
+                      color: GelatoTheme.pink,
                     ),
                     child: const Center(
                       child: Text(
                         'PR',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: GelatoTheme.pinkDark,
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.2,
@@ -130,18 +124,18 @@ class _DashboardHeaderState extends State<DashboardHeader>
                               width: 10,
                               height: 10,
                               decoration: const BoxDecoration(
-                                color: Color(0xFFDC2626),
+                                color: GelatoTheme.green,
                                 shape: BoxShape.circle,
                               ),
                             ),
                           ),
                         ),
-                        // Inner solid white-ringed red dot
+                        // Inner solid white-ringed green dot
                         Container(
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDC2626),
+                            color: GelatoTheme.green,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
@@ -158,7 +152,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
           // Greetings
           Expanded(
             child: Column(
-                    mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -166,7 +160,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: GelatoTheme.textDark,
                     letterSpacing: -0.2,
                   ),
                 ),
@@ -175,7 +169,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
                   'Your risk score improved again this week.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: GelatoTheme.textLight,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -207,7 +201,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
                         child: const Icon(
                           Icons.notifications_rounded,
                           size: 25,
-                          color: Color(0xFF334155),
+                          color: GelatoTheme.textDark,
                         ),
                       );
                     },
@@ -219,14 +213,14 @@ class _DashboardHeaderState extends State<DashboardHeader>
                     child: Container(
                       padding: const EdgeInsets.all(3.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444), // Coral
+                        color: GelatoTheme.pink,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1.5),
                       ),
                       child: const Text(
                         '1',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: GelatoTheme.pinkDark,
                           fontSize: 7,
                           fontWeight: FontWeight.bold,
                         ),
@@ -249,23 +243,17 @@ class _AvatarRingPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - 2.5) / 2;
 
-    // Background circle (Blush light red)
+    // Background circle (Pastel Pink trace)
     final bgPaint = Paint()
-      ..color = const Color(0xFFFEE2E2)
+      ..color = GelatoTheme.pink.withValues(alpha: 0.3)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
     canvas.drawCircle(center, radius, bgPaint);
 
-    // Active arc gradient
+    // Active arc (Solid Gelato Purple)
     final rect = Rect.fromCircle(center: center, radius: radius);
     final activePaint = Paint()
-      ..shader = const SweepGradient(
-        colors: [
-          Color(0xFFDC2626), // Crimson
-          Color(0xFFF43F5E), // Rose
-          Color(0xFFDC2626),
-        ],
-      ).createShader(rect)
+      ..color = GelatoTheme.purple
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;

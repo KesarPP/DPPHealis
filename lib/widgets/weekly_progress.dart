@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../data/gelato_theme.dart';
 
 class WeeklyProgress extends StatefulWidget {
   const WeeklyProgress({super.key});
@@ -72,14 +74,17 @@ class _WeeklyProgressState extends State<WeeklyProgress>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            Color(0xFFF2F7EC), // Light green tint
+          ],
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +96,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                 children: [
                   Icon(
                     Icons.bar_chart_rounded,
-                    color: Color(0xFF10B981),
+                    color: GelatoTheme.purpleDark,
                     size: 20,
                   ),
                   SizedBox(width: 8),
@@ -100,7 +105,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E293B),
+                      color: GelatoTheme.textDark,
                     ),
                   ),
                 ],
@@ -109,8 +114,16 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: const Color(0xFFFAF8FA),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      offset: const Offset(1.5, 1.5),
+                      blurRadius: 0,
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -119,15 +132,15 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                       _tabs[_selectedTab],
                       style: const TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF475569),
+                        fontWeight: FontWeight.w800,
+                        color: GelatoTheme.textDark,
                       ),
                     ),
                     const SizedBox(width: 4),
                     const Icon(
                       Icons.keyboard_arrow_down_rounded,
                       size: 12,
-                      color: Color(0xFF475569),
+                      color: GelatoTheme.textDark,
                     ),
                   ],
                 ),
@@ -139,6 +152,27 @@ class _WeeklyProgressState extends State<WeeklyProgress>
           Row(
             children: _tabs.asMap().entries.map((e) {
               final selected = e.key == _selectedTab;
+              Color activeBg;
+              Color activeText;
+              
+              switch (e.key) {
+                case 0: // Steps
+                  activeBg = GelatoTheme.green;
+                  activeText = GelatoTheme.greenDark;
+                  break;
+                case 1: // Calories
+                  activeBg = GelatoTheme.orange;
+                  activeText = GelatoTheme.orangeDark;
+                  break;
+                case 2: // Distance
+                  activeBg = GelatoTheme.blue;
+                  activeText = GelatoTheme.blueDark;
+                  break;
+                default:
+                  activeBg = GelatoTheme.purple;
+                  activeText = GelatoTheme.purpleDark;
+              }
+
               return GestureDetector(
                 onTap: () => _switchTab(e.key),
                 child: AnimatedContainer(
@@ -147,17 +181,26 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: selected
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFF1F5F9),
+                    color: selected ? activeBg : const Color(0xFFFAF8FA),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: selected ? Colors.black : const Color(0xFFEFEAEA),
+                      width: selected ? 2.0 : 1.2,
+                    ),
+                    boxShadow: selected ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        offset: const Offset(2.0, 2.0),
+                        blurRadius: 0,
+                      )
+                    ] : null,
                   ),
                   child: Text(
                     e.value,
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: selected ? Colors.white : const Color(0xFF475569),
+                      fontWeight: FontWeight.w800,
+                      color: selected ? activeText : GelatoTheme.textLight,
                     ),
                   ),
                 ),
@@ -170,131 +213,183 @@ class _WeeklyProgressState extends State<WeeklyProgress>
           AnimatedBuilder(
             animation: _barAnim,
             builder: (context, _) {
-              return SizedBox(
-                height: 160,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Gridlines
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(4, (index) => Container(
-                        height: 1,
-                        color: const Color(0xFFF1F5F9),
-                      )),
-                    ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final double chartWidth = constraints.maxWidth;
+                  final double segmentWidth = chartWidth / 7;
 
-                    // Goal Line (drawn at 75% height)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 40 + (100 * 0.75),
-                      child: Container(
-                        height: 1.5,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFF10B981),
-                              blurRadius: 2,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onHorizontalDragUpdate: (details) {
+                      final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
+                      final int index = ((relativeX / chartWidth) * 7).floor().clamp(0, 6);
+                      if (index != _selectedBarIndex) {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _selectedBarIndex = index;
+                        });
+                      }
+                    },
+                    onTapDown: (details) {
+                      final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
+                      final int index = ((relativeX / chartWidth) * 7).floor().clamp(0, 6);
+                      setState(() {
+                        _selectedBarIndex = _selectedBarIndex == index ? null : index;
+                      });
+                    },
+                    child: SizedBox(
+                      height: 160,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Gridlines
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(4, (index) => Container(
+                              height: 1,
+                              color: const Color(0xFFF1F5F9),
+                            )),
+                          ),
 
-                    // Tooltip display
-                    if (_selectedBarIndex != null)
-                      Positioned(
-                        left: 10 + (_selectedBarIndex! * (MediaQuery.of(context).size.width - 64 - 20) / 7),
-                        bottom: 42 + (100 * currentData[_selectedBarIndex!] * _barAnim.value) + 4,
-                        child: FractionalTranslation(
-                          translation: const Offset(-0.35, 0.0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              currentTooltips[_selectedBarIndex!],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
+                          // Goal Line (drawn at 75% height)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 40 + (100 * 0.75),
+                            child: Container(
+                              height: 1.8,
+                              decoration: const BoxDecoration(
+                                color: GelatoTheme.purpleDark,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: GelatoTheme.purple,
+                                    blurRadius: 2,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ),
-                      ),
 
-                    // Bars
-                    Positioned.fill(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: currentData.asMap().entries.map((entry) {
-                          final i = entry.key;
-                          final val = entry.value;
-                          final isToday = i == 3; // Thursday is today
-                          final double barHeight = 100.0 * val * _barAnim.value;
-                          final bool isSelected = _selectedBarIndex == i;
-
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedBarIndex = _selectedBarIndex == i ? null : i;
-                                });
-                              },
+                          // Tooltip display
+                          if (_selectedBarIndex != null)
+                            Positioned(
+                              left: _selectedBarIndex! * segmentWidth + (segmentWidth - 56) / 2,
+                              bottom: 40 + (100 * currentData[_selectedBarIndex!] * _barAnim.value) + 6,
                               child: Container(
-                                color: Colors.transparent, // expand tap area
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Container(
-                                      width: 16,
-                                      height: barHeight,
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? const Color(0xFF047857) // Deep emerald when selected
-                                            : isToday
-                                                ? const Color(0xFF10B981) // Bright green for today
-                                                : const Color(0xFFA7F3D0), // Light green for normal
-                                        borderRadius: BorderRadius.circular(4),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: const Color(0xFF047857).withValues(alpha: 0.3),
-                                                  blurRadius: 6,
-                                                  spreadRadius: 1,
-                                                )
-                                              ]
-                                            : null,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _days[i],
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: isToday
-                                            ? const Color(0xFF10B981)
-                                            : const Color(0xFF64748B),
-                                        fontWeight: isToday
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                      ),
+                                width: 56,
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: GelatoTheme.textDark,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.black, width: 1.0),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      offset: const Offset(1.5, 1.5),
+                                      blurRadius: 0,
                                     ),
                                   ],
                                 ),
+                                child: Text(
+                                  currentTooltips[_selectedBarIndex!],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
-                          );
-                        }).toList(),
+
+                          // Bars
+                          Positioned.fill(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: currentData.asMap().entries.map((entry) {
+                                final i = entry.key;
+                                final val = entry.value;
+                                final isToday = i == 3;
+                                final double barHeight = 100.0 * val * _barAnim.value;
+                                final bool isSelected = _selectedBarIndex == i;
+
+                                return Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Builder(
+                                        builder: (context) {
+                                          Color getBarColor() {
+                                            switch (_selectedTab) {
+                                              case 0: // Steps (Green)
+                                                return isSelected
+                                                    ? GelatoTheme.greenDark
+                                                    : isToday
+                                                        ? GelatoTheme.greenBright
+                                                        : GelatoTheme.greenBright.withOpacity(0.25);
+                                              case 1: // Calories (Orange)
+                                                return isSelected
+                                                    ? GelatoTheme.orangeDark
+                                                    : isToday
+                                                        ? GelatoTheme.orangeBright
+                                                        : GelatoTheme.orangeBright.withOpacity(0.25);
+                                              case 2: // Distance (Blue)
+                                                return isSelected
+                                                    ? GelatoTheme.blueDark
+                                                    : isToday
+                                                        ? GelatoTheme.blueBright
+                                                        : GelatoTheme.blueBright.withOpacity(0.25);
+                                              default:
+                                                return GelatoTheme.purple;
+                                            }
+                                          }
+
+                                          final barColor = getBarColor();
+
+                                          return Container(
+                                            width: 16,
+                                            height: barHeight,
+                                            decoration: BoxDecoration(
+                                              color: barColor,
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: Colors.black, width: 1.5),
+                                              boxShadow: isSelected
+                                                  ? [
+                                                      BoxShadow(
+                                                        color: barColor.withOpacity(0.35),
+                                                        blurRadius: 6,
+                                                        spreadRadius: 1,
+                                                      )
+                                                    ]
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _days[i],
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: isToday
+                                              ? GelatoTheme.purpleDark
+                                              : GelatoTheme.textLight,
+                                          fontWeight: isToday
+                                              ? FontWeight.w900
+                                              : FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -305,26 +400,26 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               Container(
                 width: 14,
                 height: 2,
-                color: const Color(0xFF10B981),
+                color: GelatoTheme.purpleDark,
               ),
               const SizedBox(width: 4),
               const Text(
                 'Daily goal line',
-                style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 10, color: GelatoTheme.textLight, fontWeight: FontWeight.w600),
               ),
               const SizedBox(width: 16),
               Container(
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
+                  color: GelatoTheme.purple,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 4),
               const Text(
                 'Best day',
-                style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 10, color: GelatoTheme.textLight, fontWeight: FontWeight.w600),
               ),
             ],
           ),

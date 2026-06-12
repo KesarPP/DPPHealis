@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 
 class DashboardRiskCard extends StatefulWidget {
   const DashboardRiskCard({super.key});
@@ -76,30 +77,24 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFDC2626).withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
       ),
       child: Column(
         children: [
-          // ─── TOP CONTAINER (RED/ROSE GRADIENT) ───
+          // ─── TOP CONTAINER (SOLID PASTEL PINK) ───
           Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFFDC2626), // Crimson
-                  Color(0xFFE11D48), // Deep Rose
-                  Color(0xFFF43F5E), // Rose
-                  Color(0xFFFB7185), // Soft Rose
+                  Color(0xFFEF4444),
+                  Color(0xFFDC2626),
+                  Color(0xFFB91C1C),
                 ],
               ),
             ),
@@ -110,12 +105,12 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                   top: -30,
                   right: -30,
                   child: Opacity(
-                    opacity: 0.1,
+                    opacity: 0.12,
                     child: SizedBox(
                       width: 150,
                       height: 150,
                       child: CustomPaint(
-                        painter: _FaintCirclesPainter(),
+                        painter: _FaintCirclesPainter(color: Colors.white),
                       ),
                     ),
                   ),
@@ -133,10 +128,10 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                     mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'YOUR PREDIABETES RISK',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: Colors.white.withValues(alpha: 0.7),
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.5,
@@ -171,10 +166,10 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                       );
                                     },
                                   ),
-                                  const Text(
+                                  Text(
                                     ' /100',
                                     style: TextStyle(
-                                      color: Colors.white70,
+                                      color: Colors.white.withValues(alpha: 0.7),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -183,20 +178,14 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF59E0B),
+                                      color: GelatoTheme.orange,
                                       borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
+                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                                     ),
                                     child: const Text(
                                       'Moderate Risk',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: GelatoTheme.orangeDark,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w800,
                                       ),
@@ -207,12 +196,12 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.arrow_downward_rounded, size: 14, color: Colors.white.withValues(alpha: 0.9)),
+                                  const Icon(Icons.arrow_downward_rounded, size: 14, color: GelatoTheme.pinkDark),
                                   const SizedBox(width: 2),
                                   Text(
                                     '6 points improved this week',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: GelatoTheme.pinkDark.withValues(alpha: 0.9),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -260,7 +249,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                               height: 8,
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.25),
+                                color: GelatoTheme.pinkDark.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: ClipRRect(
@@ -269,14 +258,15 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                   alignment: Alignment.centerLeft,
                                   widthFactor: 1.0,
                                   child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          const Color(0xFFFCA5A5).withValues(alpha: 0.55), // Low
-                                          const Color(0xFFFCD34D).withValues(alpha: 0.55), // Moderate
-                                          Colors.white.withValues(alpha: 0.55), // High
-                                        ],
-                                      ),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.transparent,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(child: Container(color: GelatoTheme.green)),
+                                        Expanded(child: Container(color: GelatoTheme.yellow)),
+                                        Expanded(child: Container(color: GelatoTheme.orange)),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -298,19 +288,19 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.28),
-                                          blurRadius: 8,
+                                          color: Colors.black.withValues(alpha: 0.15),
+                                          blurRadius: 6,
                                           offset: const Offset(0, 2),
                                         ),
                                       ],
-                                      border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 3),
+                                      border: Border.all(color: Colors.white, width: 2),
                                     ),
                                     child: Center(
                                       child: Container(
-                                        width: 6,
-                                        height: 6,
+                                        width: 8,
+                                        height: 8,
                                         decoration: const BoxDecoration(
-                                          color: Color(0xFFDC2626),
+                                          color: GelatoTheme.purpleDark,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -326,25 +316,25 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                     const SizedBox(height: 14),
                     
                     // Risk intervals label text
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           children: [
-                            Text('Low Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                            Text('0 – 30', style: TextStyle(color: Colors.white70, fontSize: 9)),
+                            const Text('Low Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            Text('0 – 30', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9, fontWeight: FontWeight.w500)),
                           ],
                         ),
                         Column(
                           children: [
-                            Text('Moderate Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                            Text('31 – 60', style: TextStyle(color: Colors.white70, fontSize: 9)),
+                            const Text('Moderate Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            Text('31 – 60', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9, fontWeight: FontWeight.w500)),
                           ],
                         ),
                         Column(
                           children: [
-                            Text('High Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                            Text('61 – 100', style: TextStyle(color: Colors.white70, fontSize: 9)),
+                            const Text('High Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            Text('61 – 100', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9, fontWeight: FontWeight.w500)),
                           ],
                         ),
                       ],
@@ -357,10 +347,17 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
           
           // ─── BOTTOM CONTAINER (WHITE BACKGROUND) ───
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFEFF6FF), // var(--tint-sapphire) equivalent
+                  Colors.white,
+                ],
+              ),
             ),
             child: Row(
               children: [
@@ -370,31 +367,42 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                     const Text(
                       'Weekly Progress',
                       style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: GelatoTheme.textDark,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _CircularProgressWidget(
+                    const _CircularProgressWidget(
                       pct: 78,
                       size: 68,
-                      color: const Color(0xFF2563EB), // Sapphire blue
-                      trackColor: const Color(0xFFE2E8F0),
+                      color: GelatoTheme.blueBright,
+                      trackColor: Color(0x123B82F6),
+                      gradientColors: [GelatoTheme.blueBright, GelatoTheme.purpleBright],
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'On Track',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFDBEAFE)),
+                      ),
+                      child: const Text(
+                        'ON TRACK',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: GelatoTheme.blueDark,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 
-                const SizedBox(width: 20),
+                const SizedBox(width: 24),
                 
                 // 2. Program Progress (Horizontal Bar)
                 Expanded(
@@ -405,29 +413,53 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                       const Text(
                         'Program Progress',
                         style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: GelatoTheme.textDark,
+                          letterSpacing: -0.2,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Session 5 of 16',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Text(
+                            'Session 5',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: GelatoTheme.textDark,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: const Text(
+                              'of 16',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: GelatoTheme.textLight,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Expanded(
+                          const Expanded(
                             child: _ProgressBarWidget(
                               pct: 31,
                               height: 6,
-                              color: const Color(0xFF2563EB),
-                              trackColor: const Color(0xFFE2E8F0),
+                              color: GelatoTheme.purpleBright,
+                              trackColor: Color(0x188B5CF6),
+                              gradientColors: [GelatoTheme.blueBright, GelatoTheme.purpleBright],
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -435,30 +467,38 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                             '31%',
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2563EB),
+                              fontWeight: FontWeight.w900,
+                              color: GelatoTheme.blueDark,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      const Row(
-                        children: [
-                          Icon(Icons.star_rounded, size: 15, color: Color(0xFFF59E0B)),
-                          SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              'Great consistency this week!',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF334155),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFEF3C7)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.star_rounded, size: 16, color: GelatoTheme.yellowBright),
+                            SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Great consistency this week!',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: GelatoTheme.yellowDark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -473,11 +513,14 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
 }
 
 class _FaintCirclesPainter extends CustomPainter {
+  final Color color;
+  _FaintCirclesPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
-      ..color = Colors.white
+      ..color = color.withValues(alpha: 0.15)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
       
@@ -527,7 +570,7 @@ class _ECGHeartPainter extends CustomPainter {
 
     // 2. Draw glossy white highlight curve at the top-left lobe
     final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
+      ..color = Colors.white.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
     final highlightPath = Path();
     highlightPath.moveTo(18 * s, 18 * s);
@@ -539,7 +582,7 @@ class _ECGHeartPainter extends CustomPainter {
 
     // 3. Draw ECG plaque (white rectangle in center)
     final plaquePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.92)
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
     final plaqueRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(10 * s, 26 * s, 44 * s, 14 * s),
@@ -548,7 +591,6 @@ class _ECGHeartPainter extends CustomPainter {
     canvas.drawRRect(plaqueRect, plaquePaint);
 
     // 4. Draw Beating ECG line inside the plaque
-    // points="11,33 18,33 21,28 25,38 29,24 33,40 37,30 42,33 53,33"
     final ecgPoints = [
       Offset(11 * s, 33 * s),
       Offset(18 * s, 33 * s),
@@ -593,12 +635,14 @@ class _CircularProgressWidget extends StatelessWidget {
   final double size;
   final Color color;
   final Color trackColor;
+  final List<Color>? gradientColors;
 
   const _CircularProgressWidget({
     required this.pct,
     required this.size,
     required this.color,
     required this.trackColor,
+    this.gradientColors,
   });
 
   @override
@@ -620,7 +664,8 @@ class _CircularProgressWidget extends StatelessWidget {
                     value: value,
                     color: color,
                     trackColor: trackColor,
-                    strokeWidth: 5.5,
+                    strokeWidth: 6.5,
+                    gradientColors: gradientColors,
                   ),
                 );
               },
@@ -631,7 +676,7 @@ class _CircularProgressWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w900,
-              color: color,
+              color: gradientColors != null ? gradientColors!.first : color,
             ),
           ),
         ],
@@ -645,12 +690,14 @@ class _CircularProgressPainter extends CustomPainter {
   final Color color;
   final Color trackColor;
   final double strokeWidth;
+  final List<Color>? gradientColors;
 
   _CircularProgressPainter({
     required this.value,
     required this.color,
     required this.trackColor,
     required this.strokeWidth,
+    this.gradientColors,
   });
 
   @override
@@ -667,10 +714,20 @@ class _CircularProgressPainter extends CustomPainter {
 
     // Active Arc
     final activePaint = Paint()
-      ..color = color
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
+
+    if (gradientColors != null && gradientColors!.length >= 2) {
+      final rect = Rect.fromCircle(center: center, radius: radius);
+      activePaint.shader = SweepGradient(
+        colors: gradientColors!,
+        stops: const [0.0, 1.0],
+        transform: const GradientRotation(-math.pi / 2),
+      ).createShader(rect);
+    } else {
+      activePaint.color = color;
+    }
 
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
@@ -683,7 +740,7 @@ class _CircularProgressPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) {
-    return oldDelegate.value != value;
+    return oldDelegate.value != value || oldDelegate.gradientColors != gradientColors;
   }
 }
 
@@ -692,12 +749,14 @@ class _ProgressBarWidget extends StatelessWidget {
   final double height;
   final Color color;
   final Color trackColor;
+  final List<Color>? gradientColors;
 
   const _ProgressBarWidget({
     required this.pct,
     required this.height,
     required this.color,
     required this.trackColor,
+    this.gradientColors,
   });
 
   @override
@@ -722,7 +781,12 @@ class _ProgressBarWidget extends StatelessWidget {
                   width: totalWidth * value,
                   height: height,
                   decoration: BoxDecoration(
-                    color: color,
+                    color: gradientColors == null ? color : null,
+                    gradient: gradientColors != null
+                        ? LinearGradient(
+                            colors: gradientColors!,
+                          )
+                        : null,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),

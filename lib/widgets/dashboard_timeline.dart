@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../data/gelato_theme.dart';
 
 class DashboardTimeline extends StatelessWidget {
   const DashboardTimeline({super.key});
@@ -21,15 +22,17 @@ class DashboardTimeline extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB), // Tint amber background
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F0F172A),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFFDF5),
+            Color(0xFFFEF9E6),
+          ],
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +46,7 @@ class DashboardTimeline extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: GelatoTheme.textDark,
                 ),
               ),
               Text(
@@ -51,7 +54,7 @@ class DashboardTimeline extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF10B981), // Jade
+                  color: GelatoTheme.greenDark,
                 ),
               ),
             ],
@@ -88,13 +91,14 @@ class DashboardTimeline extends StatelessWidget {
                                 ? Container(
                                     width: 26,
                                     height: 26,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF10B981), // Jade
+                                    decoration: BoxDecoration(
+                                      color: GelatoTheme.green,
                                       shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.black, width: 1.5),
                                     ),
                                     child: const Icon(
                                       Icons.check,
-                                      color: Colors.white,
+                                      color: GelatoTheme.greenDark,
                                       size: 14,
                                     ),
                                   )
@@ -105,8 +109,8 @@ class DashboardTimeline extends StatelessWidget {
                                       color: Colors.white,
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: const Color(0xFFCBD5E1), // Slate 300
-                                        width: 2.0,
+                                        color: Colors.black,
+                                        width: 1.5,
                                       ),
                                     ),
                                     child: Center(
@@ -114,7 +118,7 @@ class DashboardTimeline extends StatelessWidget {
                                         width: 6,
                                         height: 6,
                                         decoration: const BoxDecoration(
-                                          color: Color(0xFFE2E8F0), // Slate 200
+                                          color: GelatoTheme.purple,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -132,8 +136,8 @@ class DashboardTimeline extends StatelessWidget {
                               fontSize: 14,
                               fontWeight: it.done ? FontWeight.bold : FontWeight.w500,
                               color: it.done
-                                  ? const Color(0xFF1E293B) // Dark
-                                  : const Color(0xFF64748B), // Slate 500
+                                  ? GelatoTheme.textDark
+                                  : GelatoTheme.textLight,
                             ),
                           ),
                         ),
@@ -146,8 +150,8 @@ class DashboardTimeline extends StatelessWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: it.done
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFF94A3B8),
+                                ? GelatoTheme.greenDark
+                                : GelatoTheme.textMuted,
                           ),
                         ),
                       ],
@@ -172,13 +176,13 @@ class DashboardTimeline extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFFF59E0B), // Amber warn
+                    color: GelatoTheme.purpleDark,
                   ),
                 ),
                 SizedBox(width: 2),
                 Icon(
                   Icons.arrow_forward_rounded,
-                  color: Color(0xFFF59E0B),
+                  color: GelatoTheme.purpleDark,
                   size: 14,
                 ),
               ],
@@ -194,7 +198,7 @@ class _DashedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0x3D0F172A) // transparent slate
+      ..color = GelatoTheme.textMuted.withValues(alpha: 0.3)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
