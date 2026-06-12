@@ -115,7 +115,7 @@ class ProfileScreen extends StatelessWidget {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 0.5)),
                   elevation: 4,
                   shadowColor: Colors.redAccent.withValues(alpha: 0.4),
                 ),
@@ -179,10 +179,16 @@ class _ProfileHeader extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: _pastelPeach, width: 4), // Coral Orange Circle
           ),
-          child: const CircleAvatar(
-            radius: 56,
-            backgroundColor: _pastelYellow,
-            child: Icon(Icons.person_rounded, size: 56, color: _pastelPeach),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black87, width: 0.5),
+            ),
+            child: const CircleAvatar(
+              radius: 56,
+              backgroundColor: _pastelYellow,
+              child: Icon(Icons.person_rounded, size: 56, color: _pastelPeach),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -210,7 +216,7 @@ class _ProfileHeader extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: _pastelBlue,
             foregroundColor: Colors.black87,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 0.5)),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
           ),
         ),
@@ -237,7 +243,7 @@ class _GoalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
           BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 8)),
         ],
@@ -314,7 +320,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
           BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 24, offset: const Offset(0, 8)),
         ],
@@ -353,7 +359,7 @@ class _JourneyProgressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85), // Frosted glass effect
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
           BoxShadow(color: _pastelPurple.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 8)),
         ],
@@ -377,6 +383,7 @@ class _JourneyProgressCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _pastelPurple.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.black87, width: 0.5),
                 ),
                 child: const Text('68%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _darkText)),
               ),
@@ -529,7 +536,7 @@ class _WhiteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 24, offset: const Offset(0, 8)),
         ],
