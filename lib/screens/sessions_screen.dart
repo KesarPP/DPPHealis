@@ -26,7 +26,6 @@ class SessionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor:
           Color.lerp(_pastelBlue, Colors.white, 0.85), // Soft pastel wash
-
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -76,7 +75,7 @@ class SessionsScreen extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Image.asset(
-        'assets/images/session_header.png',
+        'assets/images/session_header.jpg',
         width: double.infinity,
         height: 200,
         fit: BoxFit.cover,
@@ -420,6 +419,7 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
+
 
 
 

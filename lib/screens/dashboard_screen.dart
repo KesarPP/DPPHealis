@@ -30,33 +30,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: CustomScrollView(
           controller: _scrollController,
           physics: const BouncingScrollPhysics(),
-          slivers: [
+          slivers: const [
             // 1. Dashboard Header
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: DashboardHeader(),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            SliverToBoxAdapter(child: SizedBox(height: 12)),
 
             // 2. Prediabetes Risk Card
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: DashboardRiskCard(),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
 
             // 3. Sessions & Meals Analytics
             const SliverToBoxAdapter(
               child: DashboardAnalytics(),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
 
             // 4. Today's Progress Snapshot
             const SliverToBoxAdapter(
               child: DashboardProgressSnapshot(),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
 
             // 5. Today's Timeline Journey
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: DashboardTimeline(),
             ),
             

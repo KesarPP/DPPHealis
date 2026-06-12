@@ -154,11 +154,11 @@ class PatientProfileScreen extends StatelessWidget {
           const SizedBox(height: 4),
           const Text('ID #DPP-9210', style: TextStyle(fontSize: 12, color: Colors.black54)),
           const SizedBox(height: 20),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('OVERALL PROGRAM COMPLETION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black54)),
-              const Text('45%', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _navy)),
+              Text('OVERALL PROGRAM COMPLETION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black54)),
+              Text('45%', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _navy)),
             ],
           ),
           const SizedBox(height: 8),
@@ -166,7 +166,7 @@ class PatientProfileScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: 0.45,
-              backgroundColor: _navy.withOpacity(0.1),
+              backgroundColor: _navy.withValues(alpha: 0.1),
               color: _navy,
               minHeight: 6,
             ),
@@ -181,10 +181,10 @@ class PatientProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Weight Loss', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text('Weight Loss', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
               Icon(Icons.hourglass_bottom_rounded, color: _navy, size: 20),
             ],
           ),
@@ -235,18 +235,18 @@ class PatientProfileScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFD1FAE5),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF34D399).withOpacity(0.5)),
+              border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.5)),
             ),
             child: const Center(
               child: Text('-4.2 kg lost', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
             ),
           ),
           const SizedBox(height: 16),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('TARGET: 7% (6.2 KG)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
-              const Text('68% OF GOAL', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text('TARGET: 7% (6.2 KG)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text('68% OF GOAL', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
             ],
           ),
           const SizedBox(height: 8),
@@ -265,18 +265,18 @@ class PatientProfileScreen extends StatelessWidget {
   }
 
   Widget _buildActivityTrackerCard() {
-    return _ProfileCard(
+    return const _ProfileCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Activity Tracker', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text('Activity Tracker', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
               Icon(Icons.directions_run_rounded, color: _navy, size: 20),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               SizedBox(
@@ -285,7 +285,7 @@ class PatientProfileScreen extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    const CircularProgressIndicator(
+                    CircularProgressIndicator(
                       value: 110 / 150,
                       strokeWidth: 6,
                       backgroundColor: Color(0xFFE5E7EB),
@@ -296,28 +296,28 @@ class PatientProfileScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('110', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _navy, height: 1.1)),
-                          const Text('/ 150 MIN', style: TextStyle(fontSize: 7, color: Colors.black87, fontWeight: FontWeight.w600)),
+                          Text('110', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _navy, height: 1.1)),
+                          Text('/ 150 MIN', style: TextStyle(fontSize: 7, color: Colors.black87, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Last Activity:', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                    const SizedBox(height: 4),
-                    const Text('Brisk Walking', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    const SizedBox(height: 6),
+                    Text('Last Activity:', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                    SizedBox(height: 4),
+                    Text('Brisk Walking', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.timer_outlined, size: 12, color: Colors.black54),
-                        const SizedBox(width: 4),
-                        const Text('40 mins  •  Yesterday', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                        Icon(Icons.timer_outlined, size: 12, color: Colors.black54),
+                        SizedBox(width: 4),
+                        Text('40 mins  •  Yesterday', style: TextStyle(fontSize: 11, color: Colors.black54)),
                       ],
                     ),
                   ],
@@ -335,11 +335,11 @@ class PatientProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Curriculum: Session 4 of 16', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
-              const Text('VIEW PROGRAM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _navy)),
+              Text('Curriculum: Session 4 of 16', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text('VIEW PROGRAM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _navy)),
             ],
           ),
           const SizedBox(height: 20),
@@ -360,20 +360,20 @@ class PatientProfileScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(8),
-              border: Border(left: BorderSide(color: _navy, width: 4)),
+              border: const Border(left: BorderSide(color: _navy, width: 4)),
             ),
-            child: Row(
+            child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.assignment_rounded, color: _navy, size: 18),
-                const SizedBox(width: 10),
+                Icon(Icons.assignment_rounded, color: _navy, size: 18),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('ACTION ITEM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54)),
-                      const SizedBox(height: 4),
-                      const Text('"Walk for 20 mins after dinner daily"', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.black87)),
+                      Text('ACTION ITEM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54)),
+                      SizedBox(height: 4),
+                      Text('"Walk for 20 mins after dinner daily"', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.black87)),
                     ],
                   ),
                 )
@@ -500,11 +500,11 @@ class PatientProfileScreen extends StatelessWidget {
                   color: const Color(0xFFF5E6CC),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
+                child: const Row(
                   children: [
-                    const Icon(Icons.local_fire_department_rounded, color: Color(0xFFC2410C), size: 14),
-                    const SizedBox(width: 4),
-                    const Text('12 Days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF78350F))),
+                    Icon(Icons.local_fire_department_rounded, color: Color(0xFFC2410C), size: 14),
+                    SizedBox(width: 4),
+                    Text('12 Days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF78350F))),
                   ],
                 ),
               )
@@ -535,22 +535,22 @@ class PatientProfileScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Row(
             children: [
-              Expanded(
+              const Expanded(
                 child: Column(
                   children: [
-                    const Text('86%', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    const SizedBox(height: 2),
-                    const Text('Logging Rate', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                    Text('86%', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    SizedBox(height: 2),
+                    Text('Logging Rate', style: TextStyle(fontSize: 11, color: Colors.black54)),
                   ],
                 ),
               ),
               Container(width: 1, height: 30, color: Colors.black12),
-              Expanded(
+              const Expanded(
                 child: Column(
                   children: [
-                    const Text('14/14', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    const SizedBox(height: 2),
-                    const Text('Med Compliance', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                    Text('14/14', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    SizedBox(height: 2),
+                    Text('Med Compliance', style: TextStyle(fontSize: 11, color: Colors.black54)),
                   ],
                 ),
               ),

@@ -45,7 +45,6 @@ void main() {
 
     // Verify that the app transitioned successfully to LoginScreen
     expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Welcome!'), findsOneWidget);
 
     await resetTestWindow(tester);
   });

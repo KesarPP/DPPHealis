@@ -50,12 +50,12 @@ class ProfileScreen extends StatelessWidget {
             const _ProfileHeader(),
             const SizedBox(height: 32),
             
-            _SectionTitle('Journey Progress'),
+            const _SectionTitle('Journey Progress'),
             const SizedBox(height: 12),
             const _JourneyProgressCard(),
             const SizedBox(height: 32),
 
-            _SectionTitle('Active Quests'),
+            const _SectionTitle('Active Quests'),
             const SizedBox(height: 12),
             const IntrinsicHeight(
               child: Row(
@@ -85,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            _SectionTitle('Achievements'),
+            const _SectionTitle('Achievements'),
             const SizedBox(height: 12),
             const Row(
               children: [
@@ -98,12 +98,12 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            _SectionTitle('Journey Records'),
+            const _SectionTitle('Journey Records'),
             const SizedBox(height: 12),
             const _HistorySection(),
             const SizedBox(height: 32),
 
-            _SectionTitle('Settings'),
+            const _SectionTitle('Settings'),
             const SizedBox(height: 12),
             const _SettingsSection(),
             const SizedBox(height: 32),
@@ -449,14 +449,14 @@ class _HistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _WhiteCard(
+    return const _WhiteCard(
       padding: EdgeInsets.zero,
       child: Column(
         children: [
           _ActionTile(icon: Icons.show_chart_rounded, title: 'Weight Journey', color: _pastelBlue),
-          const Divider(height: 1, color: Colors.black12, indent: 60),
+          Divider(height: 1, color: Colors.black12, indent: 60),
           _ActionTile(icon: Icons.science_rounded, title: 'Lab Results', color: _pastelPurple),
-          const Divider(height: 1, color: Colors.black12, indent: 60),
+          Divider(height: 1, color: Colors.black12, indent: 60),
           _ActionTile(icon: Icons.fact_check_rounded, title: 'Risk Assessments', color: _pastelPeach),
         ],
       ),
@@ -480,7 +480,7 @@ class _SettingsSection extends StatelessWidget {
               child: const Icon(Icons.notifications_active_rounded, color: Colors.black54, size: 20),
             ),
             title: const Text('Notifications', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black87)),
-            trailing: Switch(value: true, onChanged: (v) {}, activeColor: _pastelBlue),
+            trailing: Switch(value: true, onChanged: (v) {}, activeThumbColor: _pastelBlue),
           ),
           const Divider(height: 1, color: Colors.black12, indent: 60),
           const _ActionTile(icon: Icons.privacy_tip_rounded, title: 'Privacy', color: Colors.black54),

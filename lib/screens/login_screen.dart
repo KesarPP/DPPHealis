@@ -4,6 +4,8 @@ import 'package:local_auth/local_auth.dart';
 import '../main.dart'; // MainShell
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
+import 'risk_assessment_step1_screen.dart';
+import '../data/gelato_theme.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -68,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => _isPatientSelected
-                ? const MainShell()
+                ? const RiskAssessmentStep1Screen()
                 : const ClinicianDashboardScreen(),
           ),
         );
@@ -88,69 +90,75 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Welcome Header
-                const Text(
-                  'Welcome!',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: _brandColor,
-                    letterSpacing: -0.5,
+      backgroundColor: _isPatientSelected ? GelatoTheme.bg : const Color(0xFFF7F9FC),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFEFE8FC), // Soft purple/violet
+              Color(0xFFFDE8E8), // Soft pink/rose tint
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Hero Banner (Occupying the entire width as a true full-width banner)
+                  Image.asset(
+                    _isPatientSelected
+                        ? 'assets/images/login_hero.jpg'
+                        : 'assets/images/clinician_login_hero.jpg',
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180,
+                        color: Colors.white,
+                        alignment: Alignment.center,
+                        child: Text(
+                          _isPatientSelected
+                              ? 'Welcome to DiaPrevent'
+                              : 'Welcome to DiaPrevent - Clinician Portal',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: _isPatientSelected ? const Color(0xFF1E1E50) : const Color(0xFF1B3D6D),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Your path to a healthier life starts here.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: _slateGrey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                // Healthcare Illustration
-                Image.asset(
-                  'assets/images/diaprevent_illustration.png',
-                  height: 210,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 210,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.medical_services_outlined,
-                        size: 80,
-                        color: _slateGrey,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Form Container Card
-                Container(
-                  padding: const EdgeInsets.all(20.0),
+                  // Form Container Card
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    borderRadius: _isPatientSelected ? GelatoTheme.cardRadius : BorderRadius.circular(28),
+                    border: _isPatientSelected
+                        ? GelatoTheme.cardBorder
+                        : Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                    boxShadow: _isPatientSelected
+                        ? GelatoTheme.cardShadow
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -159,8 +167,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEBF2FA),
+                          color: _isPatientSelected ? GelatoTheme.bg : const Color(0xFFEBF2FA),
                           borderRadius: BorderRadius.circular(16),
+                          border: _isPatientSelected
+                              ? Border.all(color: Colors.black, width: 1.5)
+                              : null,
                         ),
                         child: Row(
                           children: [
@@ -176,18 +187,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   decoration: BoxDecoration(
                                     color: _isPatientSelected
-                                        ? const Color(0xFF427EBD)
+                                        ? GelatoTheme.purple
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(12),
+                                    border: _isPatientSelected
+                                        ? Border.all(color: Colors.black, width: 1.5)
+                                        : null,
                                   ),
                                   alignment: Alignment.center,
                                   child: Text(
                                     'Patient',
                                     style: TextStyle(
                                       color: _isPatientSelected
-                                          ? Colors.white
+                                          ? GelatoTheme.purpleDark
                                           : const Color(0xFF4A6F8A),
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w900,
                                       fontSize: 16,
                                     ),
                                   ),
@@ -216,8 +230,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: TextStyle(
                                       color: !_isPatientSelected
                                           ? Colors.white
-                                          : const Color(0xFF4A6F8A),
-                                      fontWeight: FontWeight.bold,
+                                          : GelatoTheme.textLight,
+                                      fontWeight: FontWeight.w900,
                                       fontSize: 16,
                                     ),
                                   ),
@@ -232,43 +246,63 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Email or Phone Number Field
                       TextField(
                         controller: _emailController,
-                        style: const TextStyle(color: _brandColor, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          color: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
+                          fontWeight: _isPatientSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Email or Phone Number',
                           hintText: 'Email or Phone Number',
                           floatingLabelBehavior: FloatingLabelBehavior.always,
-                          labelStyle: const TextStyle(
-                            color: _borderBlue,
+                          labelStyle: TextStyle(
+                            color: _isPatientSelected ? GelatoTheme.textDark : _borderBlue,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
-                          hintStyle: const TextStyle(
-                            color: _slateGrey,
-                            fontWeight: FontWeight.w400,
+                          hintStyle: TextStyle(
+                            color: _isPatientSelected ? GelatoTheme.textMuted : _slateGrey,
+                            fontWeight: _isPatientSelected ? FontWeight.w500 : FontWeight.w400,
                           ),
-                          prefixIcon: const Padding(
-                            padding: EdgeInsets.only(left: 16.0, right: 12.0),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.only(left: 16.0, right: 12.0),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.person_outline_rounded, color: _borderBlue, size: 24),
-                                SizedBox(width: 6),
-                                Icon(Icons.phone_android_rounded, color: _borderBlue, size: 24),
+                                Icon(
+                                  Icons.person_outline_rounded,
+                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.phone_android_rounded,
+                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                                  size: 24,
+                                ),
                               ],
                             ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: _isPatientSelected ? 2.0 : 1.5,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: _isPatientSelected ? 2.0 : 1.5,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(color: _borderBlue, width: 2.0),
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: 2.0,
+                            ),
                           ),
                         ),
                       ),
@@ -278,28 +312,39 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(color: _brandColor, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          color: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
+                          fontWeight: _isPatientSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Password',
                           hintText: 'Password',
                           floatingLabelBehavior: FloatingLabelBehavior.always,
-                          labelStyle: const TextStyle(
-                            color: _borderBlue,
+                          labelStyle: TextStyle(
+                            color: _isPatientSelected ? GelatoTheme.textDark : _borderBlue,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
-                          hintStyle: const TextStyle(
-                            color: _slateGrey,
-                            fontWeight: FontWeight.w400,
+                          hintStyle: TextStyle(
+                            color: _isPatientSelected ? GelatoTheme.textMuted : _slateGrey,
+                            fontWeight: _isPatientSelected ? FontWeight.w500 : FontWeight.w400,
                           ),
-                          prefixIcon: const Padding(
-                            padding: EdgeInsets.only(left: 16.0, right: 12.0),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.only(left: 16.0, right: 12.0),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.lock_outline_rounded, color: _borderBlue, size: 22),
-                                SizedBox(width: 6),
-                                Icon(Icons.vpn_key_outlined, color: _borderBlue, size: 22),
+                                Icon(
+                                  Icons.lock_outline_rounded,
+                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.vpn_key_outlined,
+                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                                  size: 22,
+                                ),
                               ],
                             ),
                           ),
@@ -310,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _obscurePassword
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: _borderBlue,
+                                color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -321,16 +366,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: _isPatientSelected ? 2.0 : 1.5,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(color: _borderBlue, width: 1.5),
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: _isPatientSelected ? 2.0 : 1.5,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(color: _borderBlue, width: 2.0),
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: 2.0,
+                            ),
                           ),
                         ),
                       ),
@@ -342,15 +396,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton(
                           onPressed: () {},
                           style: TextButton.styleFrom(
-                            foregroundColor: _brandColor,
+                            foregroundColor: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(0, 0),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Forgot Password?',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: _isPatientSelected ? FontWeight.w900 : FontWeight.bold,
                               fontSize: 14,
                             ),
                           ),
@@ -359,125 +413,227 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
 
                       // Login Button
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF427EBD),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 2,
-                          shadowColor: const Color(0xFF427EBD).withValues(alpha: 0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (_) => _isPatientSelected
-                                  ? const MainShell()
-                                  : const ClinicianDashboardScreen(),
+                      _isPatientSelected
+                          ? Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: GelatoTheme.cardShadow,
+                              ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: GelatoTheme.purple,
+                                  foregroundColor: GelatoTheme.purpleDark,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: const BorderSide(color: Colors.black, width: 2.0),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (_) => const RiskAssessmentStep1Screen(),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF427EBD),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                elevation: 2,
+                                shadowColor: const Color(0xFF427EBD).withValues(alpha: 0.3),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (_) => const ClinicianDashboardScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          );
-                        },
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 20),
 
                       // OR Divider
-                      const Row(
+                      Row(
                         children: [
-                          Expanded(child: Divider(color: Color(0xFFE2E8F0), thickness: 1.5)),
+                          Expanded(
+                            child: Divider(
+                              color: _isPatientSelected ? Colors.black : const Color(0xFFE2E8F0),
+                              thickness: 1.5,
+                            ),
+                          ),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
                             child: Text(
                               'OR',
                               style: TextStyle(
-                                color: _slateGrey,
-                                fontWeight: FontWeight.bold,
+                                color: _isPatientSelected ? GelatoTheme.textDark : _slateGrey,
+                                fontWeight: _isPatientSelected ? FontWeight.w900 : FontWeight.bold,
                                 fontSize: 14,
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: Color(0xFFE2E8F0), thickness: 1.5)),
+                          Expanded(
+                            child: Divider(
+                              color: _isPatientSelected ? Colors.black : const Color(0xFFE2E8F0),
+                              thickness: 1.5,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
 
                       // Biometric Login Button
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _brandColor,
-                          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          backgroundColor: Colors.white,
-                          elevation: 0,
-                        ),
-                        onPressed: _authenticateWithBiometrics,
-                        icon: const Icon(Icons.fingerprint_rounded, color: _borderBlue, size: 26),
-                        label: const Text(
-                          'Biometric Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      _isPatientSelected
+                          ? Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: GelatoTheme.cardShadow,
+                              ),
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: GelatoTheme.textDark,
+                                  side: const BorderSide(color: Colors.black, width: 2.0),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                onPressed: _authenticateWithBiometrics,
+                                icon: const Icon(Icons.fingerprint_rounded, color: GelatoTheme.purpleDark, size: 26),
+                                label: const Text(
+                                  'Biometric Login',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _brandColor,
+                                side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                backgroundColor: Colors.white,
+                                elevation: 0,
+                              ),
+                              onPressed: _authenticateWithBiometrics,
+                              icon: const Icon(Icons.fingerprint_rounded, color: _borderBlue, size: 26),
+                              label: const Text(
+                                'Biometric Login',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                       const SizedBox(height: 16),
 
                       // Sign Up Button
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF90D185),
-                          foregroundColor: _brandColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 2,
-                          shadowColor: const Color(0xFF90D185).withValues(alpha: 0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                          );
-                        },
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      _isPatientSelected
+                          ? Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: GelatoTheme.cardShadow,
+                              ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: GelatoTheme.green,
+                                  foregroundColor: GelatoTheme.greenDark,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: const BorderSide(color: Colors.black, width: 2.0),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                                  );
+                                },
+                                child: const Text(
+                                  'Sign Up',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF90D185),
+                                foregroundColor: _brandColor,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                elevation: 2,
+                                shadowColor: const Color(0xFF90D185).withValues(alpha: 0.3),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                                );
+                              },
+                              child: const Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                     ],
                   ),
                 ),
+              ),
                 const SizedBox(height: 24),
 
                 // Footer
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
-                      color: _slateGrey,
-                      fontWeight: FontWeight.w500,
+                      color: _isPatientSelected ? GelatoTheme.textLight : _slateGrey,
+                      fontWeight: _isPatientSelected ? FontWeight.w600 : FontWeight.w500,
                     ),
                     children: [
                       const TextSpan(text: "Don't have an account? "),
                       TextSpan(
                         text: 'Create one',
-                        style: const TextStyle(
-                          color: _borderBlue,
+                        style: TextStyle(
+                          color: _isPatientSelected ? GelatoTheme.purpleDark : _borderBlue,
                           fontWeight: FontWeight.bold,
                         ),
                         recognizer: TapGestureRecognizer()
@@ -491,11 +647,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-              ],
-            ),
+            ],
+          ),
           ),
         ),
       ),
+    ),
     );
   }
 }

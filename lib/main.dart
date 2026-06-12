@@ -115,6 +115,7 @@ class _MainShellState extends State<MainShell> {
           ? Container(
               margin: const EdgeInsets.only(bottom: 16),
               child: FloatingActionButton.extended(
+                heroTag: null,
                 onPressed: () {},
                 backgroundColor: const Color(0xFFDCCCEC),
                 elevation: 4,
