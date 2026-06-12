@@ -119,12 +119,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '1. What is your current age?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '1. What is your current age?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               Text(
@@ -238,12 +240,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '3. What is your height?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '3. What is your height?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               Row(
@@ -301,12 +305,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '4. What is your current weight?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '4. What is your current weight?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               Row(
@@ -364,12 +370,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '5. What is your waist circumference?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '5. What is your waist circumference?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               const Icon(

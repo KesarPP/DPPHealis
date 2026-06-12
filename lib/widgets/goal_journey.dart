@@ -132,7 +132,7 @@ class _GoalJourneyState extends State<GoalJourney>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: GelatoTheme.purple,
         borderRadius: GelatoTheme.cardRadius,
         border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
@@ -195,44 +195,21 @@ class _GoalJourneyState extends State<GoalJourney>
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                fit: FlexFit.loose,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.emoji_events_rounded,
-                      color: Color(0xFFFBBF24),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    const Flexible(
-                      child: Text(
-                        'GOAL: 150K STEPS',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF4338CA), // Purple Indigo
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 20),
 
           // Milestones Path + Trophy Card Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Milestones Path (Left)
-              Expanded(
-                child: AnimatedBuilder(
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Milestones Path (Left)
+                SizedBox(
+                  width: 380,
+                  child: AnimatedBuilder(
                   animation: Listenable.merge([_progressAnim, _glowAnim]),
                   builder: (context, _) {
                     return SizedBox(
@@ -255,37 +232,20 @@ class _GoalJourneyState extends State<GoalJourney>
                           Positioned.fill(
                             child: LayoutBuilder(
                               builder: (context, constraints) {
-                                final totalWidth = constraints.maxWidth - 36;
+                                final totalWidth = constraints.maxWidth - 64;
                                 final segmentWidth = totalWidth / 5;
 
                                 return Stack(
                                   children: milestones.asMap().entries.map((entry) {
                                     final idx = entry.key;
                                     final m = entry.value;
-                                    final double posX = 18 + idx * segmentWidth;
+                                    final double posX = 32 + idx * segmentWidth;
                                     final double posY = _getYOffset(idx);
                                     final isCompleted = m.isCompleted;
 
                                     return Stack(
                                       children: [
-                                        // Today node background vertical pill highlight
-                                        if (m.isToday)
-                                          Positioned(
-                                            left: posX - 26,
-                                            top: posY - 12,
-                                            width: 52,
-                                            height: 104,
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFDCFCE7).withValues(alpha: 0.55),
-                                                borderRadius: BorderRadius.circular(16),
-                                                border: Border.all(
-                                                  color: const Color(0xFF4ADE80).withValues(alpha: 0.25),
-                                                  width: 1,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
+                                        // Removed Today node background vertical pill highlight
 
                                         // Node Pedestal Circle
                                         Positioned(
@@ -296,16 +256,16 @@ class _GoalJourneyState extends State<GoalJourney>
 
                                         // Values ("25K", etc.)
                                         Positioned(
-                                          left: posX - 25,
+                                          left: posX - 35,
                                           top: posY + 28,
-                                          width: 50,
+                                          width: 70,
                                           child: Text(
                                             m.displaySteps,
                                             style: TextStyle(
                                               fontSize: m.isToday ? 10.5 : 9.5,
                                               fontWeight: FontWeight.w900,
                                               color: m.isToday
-                                                  ? const Color(0xFF15803D)
+                                                  ? const Color(0xFFD97706) // Golden
                                                   : const Color(0xFF0F172A),
                                             ),
                                             textAlign: TextAlign.center,
@@ -314,9 +274,9 @@ class _GoalJourneyState extends State<GoalJourney>
 
                                         // Labels ("First Step", etc.)
                                         Positioned(
-                                          left: posX - 30,
+                                          left: posX - 40,
                                           top: posY + 43,
-                                          width: 60,
+                                          width: 80,
                                           child: Text(
                                             m.label,
                                             style: TextStyle(
@@ -325,7 +285,7 @@ class _GoalJourneyState extends State<GoalJourney>
                                                   ? FontWeight.w800
                                                   : FontWeight.w600,
                                               color: m.isToday
-                                                  ? const Color(0xFF166534)
+                                                  ? const Color(0xFFD97706) // Golden
                                                   : const Color(0xFF64748B),
                                             ),
                                             textAlign: TextAlign.center,
@@ -469,6 +429,7 @@ class _GoalJourneyState extends State<GoalJourney>
               ),
             ],
           ),
+          ),
         ],
       ),
     );
@@ -478,13 +439,13 @@ class _GoalJourneyState extends State<GoalJourney>
     if (m.isToday) {
       // Today Node: double border and bright pulsing glow
       return Container(
-        width: 42,
-        height: 42,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           border: Border.all(
-            color: const Color(0xFF22C55E), // Bright green
+            color: const Color(0xFFF59E0B), // Bright golden
             width: 2.2,
           ),
           boxShadow: [
@@ -494,7 +455,7 @@ class _GoalJourneyState extends State<GoalJourney>
               offset: const Offset(0, 3),
             ),
             BoxShadow(
-              color: const Color(0xFF22C55E).withValues(alpha: 0.4 * _glowAnim.value),
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.4 * _glowAnim.value),
               blurRadius: 10,
               spreadRadius: 2.5,
             ),
@@ -503,8 +464,8 @@ class _GoalJourneyState extends State<GoalJourney>
         child: Center(
           child: Icon(
             m.icon,
-            color: const Color(0xFF22C55E),
-            size: 20,
+            color: const Color(0xFFF59E0B),
+            size: 16,
           ),
         ),
       );
@@ -513,8 +474,8 @@ class _GoalJourneyState extends State<GoalJourney>
     final activeColor = isCompleted ? const Color(0xFF22C55E) : const Color(0xFFCBD5E1);
 
     return Container(
-      width: 38,
-      height: 38,
+      width: 30,
+      height: 30,
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
@@ -535,7 +496,7 @@ class _GoalJourneyState extends State<GoalJourney>
         child: Icon(
           m.icon,
           color: activeColor,
-          size: 18,
+          size: 14,
         ),
       ),
     );
@@ -547,7 +508,7 @@ class _GoalJourneyState extends State<GoalJourney>
         height: 12,
         width: 12,
         decoration: const BoxDecoration(
-          color: Color(0xFF22C55E), // Green dot for today
+          color: Color(0xFFF59E0B), // Golden dot for today
           shape: BoxShape.circle,
         ),
       );
@@ -588,11 +549,11 @@ class _PathLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double segmentWidth = (size.width - 36) / (totalCount - 1);
+    final double segmentWidth = (size.width - 64) / (totalCount - 1);
     final List<Offset> points = [];
 
     for (int i = 0; i < totalCount; i++) {
-      final double x = 18 + i * segmentWidth;
+      final double x = 32 + i * segmentWidth;
       final double y = yOffsets[i];
       points.add(Offset(x, y));
     }
