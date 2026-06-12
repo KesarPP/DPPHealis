@@ -19,7 +19,8 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.lerp(_pastelBlue, Colors.white, 0.85), // Soft pastel wash
+      backgroundColor:
+          Color.lerp(_pastelBlue, Colors.white, 0.85), // Soft pastel wash
       floatingActionButton: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -29,9 +30,13 @@ class SessionsScreen extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
           boxShadow: [
-            BoxShadow(color: _pastelBlue.withValues(alpha: 0.5), blurRadius: 16, offset: const Offset(0, 8)),
+            BoxShadow(
+                color: _pastelBlue.withValues(alpha: 0.5),
+                blurRadius: 16,
+                offset: const Offset(0, 8)),
           ],
-          border: Border.all(color: Colors.black87, width: 0.5), // Thin black border
+          border: Border.all(
+              color: Colors.black87, width: 0.5), // Thin black border
         ),
         child: FloatingActionButton.extended(
           onPressed: () {},
@@ -42,7 +47,11 @@ class SessionsScreen extends StatelessWidget {
           focusElevation: 0,
           icon: const Icon(Icons.auto_awesome_rounded, color: _darkText),
           label: const Text('Ask AI Coach',
-              style: TextStyle(color: _darkText, fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: -0.5)),
+              style: TextStyle(
+                  color: _darkText,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  letterSpacing: -0.5)),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -55,7 +64,8 @@ class SessionsScreen extends StatelessWidget {
         ),
         title: const Text(
           'DPP Journey',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 18),
+          style: TextStyle(
+              color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 18),
         ),
         centerTitle: true,
       ),
@@ -63,30 +73,31 @@ class SessionsScreen extends StatelessWidget {
         children: [
           Positioned.fill(
             child: CustomPaint(
-              painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+              painter:
+                  _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
             ),
           ),
           ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        children: [
-          _buildHeroBanner(),
-          const SizedBox(height: 20),
-          const _SectionLabel('Resource Library'),
-          const SizedBox(height: 10),
-          _buildResourceLibrary(context),
-          const SizedBox(height: 20),
-          _buildPhaseCard(),
-          const SizedBox(height: 20),
-          const _SectionLabel('Current Session'),
-          const SizedBox(height: 10),
-          _buildCurrentSessionCard(),
-          const SizedBox(height: 20),
-          const _SectionLabel('Session Timeline'),
-          const SizedBox(height: 12),
-          const JourneyMap(),
-          const SizedBox(height: 32),
-        ],
-      ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            children: [
+              _buildHeroBanner(),
+              const SizedBox(height: 20),
+              const _SectionLabel('Resource Library'),
+              const SizedBox(height: 10),
+              _buildResourceLibrary(context),
+              const SizedBox(height: 20),
+              _buildPhaseCard(),
+              const SizedBox(height: 20),
+              const _SectionLabel('Current Session'),
+              const SizedBox(height: 10),
+              _buildCurrentSessionCard(),
+              const SizedBox(height: 20),
+              const _SectionLabel('Session Timeline'),
+              const SizedBox(height: 12),
+              const JourneyMap(),
+              const SizedBox(height: 32),
+            ],
+          ),
         ],
       ),
     );
@@ -106,37 +117,51 @@ class SessionsScreen extends StatelessWidget {
   }
 
   Widget _buildResourceLibrary(BuildContext context) {
-    final List<(Widget, String, Color, VoidCallback)> resources = [ // added Color
+    final List<(Widget, String, Color, VoidCallback)> resources = [
+      // added Color
       (
-      const FaIcon(FontAwesomeIcons.utensils, color: _darkText, size: 24), // orange
-      'Food\nHandouts',
-      _pastelPeach,
-          () => Navigator.push(context, MaterialPageRoute(
-          builder: (_) => const HandoutsScreen(title: 'Food Handouts', handouts: foodHandouts)))
+        const FaIcon(FontAwesomeIcons.utensils,
+            color: _darkText, size: 24), // orange
+        'Food\nHandouts',
+        _pastelPeach,
+        () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const HandoutsScreen(
+                    title: 'Food Handouts', handouts: foodHandouts)))
       ),
       (
-      const FaIcon(FontAwesomeIcons.personWalking, color: _darkText, size: 24), // green
-      'Activity\nHandouts',
-      _pastelGreen,
-          () => Navigator.push(context, MaterialPageRoute(
-          builder: (_) => const HandoutsScreen(title: 'Activity Handouts', handouts: activityHandouts)))
+        const FaIcon(FontAwesomeIcons.personWalking,
+            color: _darkText, size: 24), // green
+        'Activity\nHandouts',
+        _pastelGreen,
+        () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const HandoutsScreen(
+                    title: 'Activity Handouts', handouts: activityHandouts)))
       ),
       (
-      const FaIcon(FontAwesomeIcons.bookOpen, color: _darkText, size: 24), // blue
-      'NDPP\nHandouts',
-      _pastelBlue,
-          () => Navigator.push(context, MaterialPageRoute(
-          builder: (_) => const HandoutsScreen(title: 'NDPP Handouts', handouts: ndppHandouts)))
+        const FaIcon(FontAwesomeIcons.bookOpen,
+            color: _darkText, size: 24), // blue
+        'NDPP\nHandouts',
+        _pastelBlue,
+        () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const HandoutsScreen(
+                    title: 'NDPP Handouts', handouts: ndppHandouts)))
       ),
     ];
     return Row(
       children: resources
           .map((r) => Expanded(
-        child: GestureDetector(
-          onTap: r.$4, // was $3, now $4
-          child: _ResourceTile(icon: r.$1, label: r.$2, color: r.$3), // pass color
-        ),
-      ))
+                child: GestureDetector(
+                  onTap: r.$4, // was $3, now $4
+                  child: _ResourceTile(
+                      icon: r.$1, label: r.$2, color: r.$3), // pass color
+                ),
+              ))
           .toList(),
     );
   }
@@ -149,7 +174,10 @@ class SessionsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
-          BoxShadow(color: _pastelPurple.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 8)),
+          BoxShadow(
+              color: _pastelPurple.withValues(alpha: 0.25),
+              blurRadius: 24,
+              offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -159,17 +187,31 @@ class SessionsScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Module 2',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.8)),
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: _darkText,
+                      letterSpacing: -0.8)),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: _pastelPurple, borderRadius: BorderRadius.circular(20)),
-                child: const Text('In Progress', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _darkText)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                    color: _pastelPurple,
+                    borderRadius: BorderRadius.circular(20)),
+                child: const Text('In Progress',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: _darkText)),
               )
             ],
           ),
           const SizedBox(height: 2),
           Text('Session 6',
-              style: TextStyle(fontSize: 15, color: _darkText.withValues(alpha: 0.7), fontWeight: FontWeight.w600)), 
+              style: TextStyle(
+                  fontSize: 15,
+                  color: _darkText.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
           // Upgraded Pill-styled gradient progress bar
           Container(
@@ -190,7 +232,10 @@ class SessionsScreen extends StatelessWidget {
                         colors: [_pastelBlue, _pastelPurple],
                       ),
                       boxShadow: [
-                        BoxShadow(color: _pastelPurple.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2)),
+                        BoxShadow(
+                            color: _pastelPurple.withValues(alpha: 0.5),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2)),
                       ],
                     ),
                   ),
@@ -200,13 +245,12 @@ class SessionsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text('68% Completed',
-              style: TextStyle(fontSize: 14, color: _darkText, fontWeight: FontWeight.w700)), 
+              style: TextStyle(
+                  fontSize: 14, color: _darkText, fontWeight: FontWeight.w700)),
         ],
       ),
     );
   }
-
-
 
   Widget _buildCurrentSessionCard() {
     return Container(
@@ -216,7 +260,10 @@ class SessionsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
-          BoxShadow(color: _pastelBlue.withValues(alpha: 0.15), blurRadius: 24, offset: const Offset(0, 8)),
+          BoxShadow(
+              color: _pastelBlue.withValues(alpha: 0.15),
+              blurRadius: 24,
+              offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -224,19 +271,37 @@ class SessionsScreen extends StatelessWidget {
         children: [
           Text(
             'SESSION 6',
-            style: TextStyle(fontSize: 12, color: _darkText.withValues(alpha: 0.6), fontWeight: FontWeight.w800, letterSpacing: 1.0),
+            style: TextStyle(
+                fontSize: 12,
+                color: _darkText.withValues(alpha: 0.6),
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.0),
           ),
           const SizedBox(height: 4),
           const Text(
             'Being Active as a Way of Life',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5),
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: _darkText,
+                letterSpacing: -0.5),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _ActionButton(icon: Icons.play_circle_fill_rounded, label: 'Watch Video', color: _pastelPeach, onTap: () {})),
+              Expanded(
+                  child: _ActionButton(
+                      icon: Icons.play_circle_fill_rounded,
+                      label: 'Watch Video',
+                      color: _pastelPeach,
+                      onTap: () {})),
               const SizedBox(width: 12),
-              Expanded(child: _ActionButton(icon: Icons.quiz_rounded, label: 'Take Quiz', color: _pastelGreen, onTap: () {})),
+              Expanded(
+                  child: _ActionButton(
+                      icon: Icons.quiz_rounded,
+                      label: 'Take Quiz',
+                      color: _pastelGreen,
+                      onTap: () {})),
             ],
           ),
         ],
@@ -256,7 +321,11 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(text,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5));
+        style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: _darkText,
+            letterSpacing: -0.5));
   }
 }
 
@@ -268,19 +337,25 @@ class _ResourceTile extends StatelessWidget {
   final Widget icon;
   final String label;
   final Color color; // added
-  const _ResourceTile({required this.icon, required this.label, required this.color}); //
+  const _ResourceTile(
+      {required this.icon, required this.label, required this.color}); //
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8), // Increased padding
+      padding: const EdgeInsets.symmetric(
+          vertical: 20, horizontal: 8), // Increased padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20), // Increased radius
-        border: Border.all(color: Colors.black87, width: 0.5), // Thin black border
+        border:
+            Border.all(color: Colors.black87, width: 0.5), // Thin black border
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 8)), // Soft Neumorphic wide shadow
+          BoxShadow(
+              color: color.withValues(alpha: 0.35),
+              blurRadius: 24,
+              offset: const Offset(0, 8)), // Soft Neumorphic wide shadow
         ],
       ),
       child: Column(
@@ -290,8 +365,12 @@ class _ResourceTile extends StatelessWidget {
             width: 56, // Slightly larger icon container
             height: 56,
             decoration: BoxDecoration(
-              gradient: LinearGradient( // Soft gradient icon background
-                colors: [color.withValues(alpha: 0.6), color.withValues(alpha: 0.2)],
+              gradient: LinearGradient(
+                // Soft gradient icon background
+                colors: [
+                  color.withValues(alpha: 0.6),
+                  color.withValues(alpha: 0.2)
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -304,7 +383,11 @@ class _ResourceTile extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w800, color: _darkText, height: 1.2, letterSpacing: -0.3,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: _darkText,
+              height: 1.2,
+              letterSpacing: -0.3,
             ),
           ),
         ],
@@ -320,8 +403,12 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color color;  // added
-  const _ActionButton({required this.icon, required this.label, required this.onTap, required this.color});  //
+  final Color color; // added
+  const _ActionButton(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      required this.color}); //
 
   @override
   Widget build(BuildContext context) {
@@ -329,20 +416,29 @@ class _ActionButton extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 6)),
+          BoxShadow(
+              color: color.withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6)),
         ],
       ),
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 18, color: _darkText),
-        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _darkText, letterSpacing: -0.3)),
+        label: Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: _darkText,
+                letterSpacing: -0.3)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: color,  // dynamic now
+          backgroundColor: color, // dynamic now
           foregroundColor: _darkText,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Colors.black87, width: 0.5), // Thin black edge
+            side: const BorderSide(
+                color: Colors.black87, width: 0.5), // Thin black edge
           ),
           elevation: 0, // Handled by Container box shadow
         ),
@@ -359,9 +455,13 @@ class _CoachButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: onTap,
-      icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.black87),
+      icon: const Icon(Icons.auto_awesome_rounded,
+          size: 16, color: Colors.black87),
       label: const Text('Ask Session Coach',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.black87)),
+          style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: Colors.black87)),
       style: ElevatedButton.styleFrom(
         backgroundColor: _pastelGreen,
         foregroundColor: Colors.black87,
@@ -373,8 +473,6 @@ class _CoachButton extends StatelessWidget {
   }
 }
 
-
-
 class _DotsPainter extends CustomPainter {
   final Color color;
   const _DotsPainter({required this.color});
@@ -385,7 +483,7 @@ class _DotsPainter extends CustomPainter {
     final dotPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-      
+
     for (double x = 0; x <= size.width; x += gridSize) {
       for (double y = 0; y <= size.height; y += gridSize) {
         canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
@@ -394,5 +492,6 @@ class _DotsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DotsPainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(covariant _DotsPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
