@@ -111,96 +111,31 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Welcome Header (Horizontal layout matching reference image)
+                  // Hero Banner (Replacing text and illustration with the single uploaded image)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Left text column
-                        Expanded(
-                          flex: 5,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome!',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: _isPatientSelected ? FontWeight.w900 : FontWeight.w800,
-                                  color: const Color(0xFF1E1E50), // Dark indigo/purple
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Your path to a healthier life starts here.',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF4A4B7C), // Medium slate purple
-                                  height: 1.3,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              // Pagination dots
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF907BE5), // Active purple dot
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.8), // Inactive white dot
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.8), // Inactive white dot
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Right illustration
-                        Expanded(
-                          flex: 6,
-                          child: Image.asset(
-                            'assets/images/diaprevent_illustration.jpg',
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/images/login_hero.jpg',
+                        width: double.infinity,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
                             height: 180,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 180,
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.medical_services_outlined,
-                                  size: 70,
-                                  color: _isPatientSelected ? GelatoTheme.textLight : _slateGrey,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
+                            color: Colors.white,
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Welcome to DiaPrevent',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E1E50),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
 
