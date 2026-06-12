@@ -114,7 +114,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   // Hero Banner (Occupying the entire width as a true full-width banner)
                   Image.asset(
-                    'assets/images/login_hero.jpg',
+                    _isPatientSelected
+                        ? 'assets/images/login_hero.jpg'
+                        : 'assets/images/clinician_login_hero.jpg',
                     width: double.infinity,
                     fit: BoxFit.fitWidth,
                     errorBuilder: (context, error, stackTrace) {
@@ -122,12 +124,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 180,
                         color: Colors.white,
                         alignment: Alignment.center,
-                        child: const Text(
-                          'Welcome to DiaPrevent',
+                        child: Text(
+                          _isPatientSelected
+                              ? 'Welcome to DiaPrevent'
+                              : 'Welcome to DiaPrevent - Clinician Portal',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E1E50),
+                            color: _isPatientSelected ? const Color(0xFF1E1E50) : const Color(0xFF1B3D6D),
                           ),
                         ),
                       );
