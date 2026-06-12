@@ -16,13 +16,13 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _pastelPink.withValues(alpha: 0.3),
+      backgroundColor: Color.lerp(_pastelPink, Colors.white, 0.85), // Soft pastel wash
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
           'My Profile',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.5),
+          style: TextStyle(color: _darkText, fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.8),
         ),
         centerTitle: true,
       ),
@@ -59,7 +59,7 @@ class ProfileScreen extends StatelessWidget {
                     progress: 0.4, 
                     icon: Icons.monitor_weight_rounded,
                     color: _pastelBlue,
-                    bgColor: _pastelBlue,
+                    gradientColors: [_pastelBlue, _pastelPurple],
                   )),
                   SizedBox(width: 12),
                   Expanded(child: _GoalCard(
@@ -68,8 +68,8 @@ class ProfileScreen extends StatelessWidget {
                     current: 'Current: 90 min', 
                     progress: 0.6, 
                     icon: Icons.directions_run_rounded,
-                    color: _pastelPeach,
-                    bgColor: _pastelYellow,
+                    color: _pastelGreen,
+                    gradientColors: [_pastelGreen, _pastelBlue],
                   )),
                 ],
               ),
@@ -161,7 +161,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5),
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.8),
     );
   }
 }
@@ -188,7 +188,7 @@ class _ProfileHeader extends StatelessWidget {
         const SizedBox(height: 16),
         const Text(
           'Janice Pattice',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5),
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.8),
         ),
         const SizedBox(height: 4),
         Container(
@@ -226,20 +226,20 @@ class _GoalCard extends StatelessWidget {
   final double progress;
   final IconData icon;
   final Color color;
-  final Color bgColor;
+  final List<Color> gradientColors;
 
-  const _GoalCard({required this.title, required this.target, required this.current, required this.progress, required this.icon, required this.color, required this.bgColor});
+  const _GoalCard({required this.title, required this.target, required this.current, required this.progress, required this.icon, required this.color, required this.gradientColors});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -248,29 +248,49 @@ class _GoalCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  gradient: LinearGradient(
+                    colors: [color.withValues(alpha: 0.6), color.withValues(alpha: 0.2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: _darkText, size: 22),
+                child: Icon(icon, color: _darkText, size: 24),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5))),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(target, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: _darkText)),
+          const SizedBox(height: 20),
+          Text(target, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _darkText)),
           const SizedBox(height: 4),
-          Text(current, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _darkText)),
+          Text(current, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _darkText.withValues(alpha: 0.7))),
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.white,
-              valueColor: const AlwaysStoppedAnimation<Color>(_darkText),
-              minHeight: 10,
+          // Pill styled gradient progress bar
+          Container(
+            height: 10,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Stack(
+              children: [
+                FractionallySizedBox(
+                  widthFactor: progress,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: LinearGradient(colors: gradientColors),
+                      boxShadow: [
+                        BoxShadow(color: gradientColors[0].withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -292,18 +312,23 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
       decoration: BoxDecoration(
-        color: color,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 24, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.5),
+              gradient: LinearGradient(
+                colors: [color.withValues(alpha: 0.6), color.withValues(alpha: 0.2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: _darkText, size: 28),
@@ -311,7 +336,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5)),
           const SizedBox(height: 4),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _darkText)),
+          Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _darkText.withValues(alpha: 0.7))),
         ],
       ),
     );
@@ -326,11 +351,11 @@ class _JourneyProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _pastelPurple, // Purple tint
+        color: Colors.white.withValues(alpha: 0.85), // Frosted glass effect
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _pastelPurple.withValues(alpha: 0.4), width: 2),
+        border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: [
-          BoxShadow(color: _pastelPurple.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 8)),
+          BoxShadow(color: _pastelPurple.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -339,21 +364,21 @@ class _JourneyProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Overall Journey', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87, letterSpacing: -0.5)),
-                  SizedBox(height: 4),
-                  Text('12 of 17 milestones', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black87)),
+                  const Text('Overall Journey', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
+                  Text('12 of 17 milestones', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _darkText.withValues(alpha: 0.7))),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: _pastelPurple,
+                  color: _pastelPurple.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text('68%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87)),
+                child: const Text('68%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _darkText)),
               ),
             ],
           ),
@@ -361,25 +386,45 @@ class _JourneyProgressCard extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: const LinearProgressIndicator(
-                  value: 0.68,
-                  backgroundColor: Colors.white,
-                  valueColor: const AlwaysStoppedAnimation<Color>(_darkText),
-                  minHeight: 16,
+              Container(
+                height: 12,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Stack(
+                  children: [
+                    FractionallySizedBox(
+                      widthFactor: 0.68,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          gradient: const LinearGradient(
+                            colors: [_pastelPurple, _pastelPink],
+                          ),
+                          boxShadow: [
+                            BoxShadow(color: _pastelPurple.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Positioned(
-                right: MediaQuery.of(context).size.width * 0.32 - 40, // rough position
-                top: -10,
+                right: MediaQuery.of(context).size.width * 0.32 - 40,
+                top: -8,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: _pastelPeach.withValues(alpha: 0.5), blurRadius: 8, offset: const Offset(0, 4)),
+                    ],
                   ),
-                  child: const Icon(Icons.star_rounded, color: _pastelPeach, size: 24),
+                  child: const Icon(Icons.star_rounded, color: _pastelPeach, size: 20),
                 ),
               ),
             ],
@@ -484,8 +529,9 @@ class _WhiteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 24, offset: const Offset(0, 8)),
         ],
       ),
       child: child,

@@ -19,13 +19,31 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _pastelBlue.withValues(alpha: 0.3),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        backgroundColor: _pastelBlue,
-        icon: const Icon(Icons.auto_awesome_rounded, color: _darkText),
-        label: const Text('Ask AI Coach',
-            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 13)),
+      backgroundColor: Color.lerp(_pastelBlue, Colors.white, 0.85), // Soft pastel wash
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            colors: [_pastelGreen, _pastelBlue],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(color: _pastelBlue.withValues(alpha: 0.5), blurRadius: 16, offset: const Offset(0, 8)),
+          ],
+          border: Border.all(color: Colors.white, width: 1.5), // Inner white glow effect
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () {},
+          backgroundColor: Colors.transparent, // Handled by container gradient
+          elevation: 0,
+          highlightElevation: 0,
+          hoverElevation: 0,
+          focusElevation: 0,
+          icon: const Icon(Icons.auto_awesome_rounded, color: _darkText),
+          label: const Text('Ask AI Coach',
+              style: TextStyle(color: _darkText, fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: -0.5)),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       appBar: AppBar(
@@ -125,35 +143,64 @@ class SessionsScreen extends StatelessWidget {
 
   Widget _buildPhaseCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
-        color: _pastelPurple,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.85), // Frosted white effect
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: [
-          BoxShadow(color: _pastelPurple.withValues(alpha: 0.5), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(color: _pastelPurple.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Module 2',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black87)), // text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Module 2',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.8)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: _pastelPurple, borderRadius: BorderRadius.circular(20)),
+                child: const Text('In Progress', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _darkText)),
+              )
+            ],
+          ),
           const SizedBox(height: 2),
-          const Text('Session 6',
-              style: TextStyle(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w500)), 
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: const LinearProgressIndicator(
-              value: 0.68,
-              minHeight: 10,
-              backgroundColor: Colors.white, 
-              color: _darkText, // progress bar
+          Text('Session 6',
+              style: TextStyle(fontSize: 15, color: _darkText.withValues(alpha: 0.7), fontWeight: FontWeight.w600)), 
+          const SizedBox(height: 16),
+          // Upgraded Pill-styled gradient progress bar
+          Container(
+            height: 12,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Stack(
+              children: [
+                FractionallySizedBox(
+                  widthFactor: 0.68,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(
+                        colors: [_pastelBlue, _pastelPurple],
+                      ),
+                      boxShadow: [
+                        BoxShadow(color: _pastelPurple.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           const Text('68% Completed',
-              style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500)), 
+              style: TextStyle(fontSize: 14, color: _darkText, fontWeight: FontWeight.w700)), 
         ],
       ),
     );
@@ -163,31 +210,32 @@ class SessionsScreen extends StatelessWidget {
 
   Widget _buildCurrentSessionCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6)),
+          BoxShadow(color: _pastelBlue.withValues(alpha: 0.15), blurRadius: 24, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Session 6',
-            style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+          Text(
+            'SESSION 6',
+            style: TextStyle(fontSize: 12, color: _darkText.withValues(alpha: 0.6), fontWeight: FontWeight.w800, letterSpacing: 1.0),
           ),
           const SizedBox(height: 4),
           const Text(
             'Being Active as a Way of Life',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.black87),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _ActionButton(icon: Icons.play_circle_fill_rounded, label: 'Watch Video', color: _pastelPeach, onTap: () {})),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(child: _ActionButton(icon: Icons.quiz_rounded, label: 'Take Quiz', color: _pastelGreen, onTap: () {})),
             ],
           ),
@@ -208,7 +256,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(text,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87));
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5));
   }
 }
 
@@ -226,32 +274,37 @@ class _ResourceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8), // Increased padding
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20), // Increased radius
+        border: Border.all(color: Colors.white, width: 1.5), // Inner glow border
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 8)), // Soft Neumorphic wide shadow
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 56, // Slightly larger icon container
+            height: 56,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.4), // tinted bg, increased opacity for visibility on pastel
+              gradient: LinearGradient( // Soft gradient icon background
+                colors: [color.withValues(alpha: 0.6), color.withValues(alpha: 0.2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
             ),
             child: Center(child: icon),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             label,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black87, height: 1.3,
+              fontSize: 13, fontWeight: FontWeight.w800, color: _darkText, height: 1.2, letterSpacing: -0.3,
             ),
           ),
         ],
@@ -272,17 +325,27 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18, color: Colors.black87),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.black87)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,  // dynamic now
-        foregroundColor: Colors.black87,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 3,
-        shadowColor: color.withValues(alpha: 0.5),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 18, color: _darkText),
+        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _darkText, letterSpacing: -0.3)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,  // dynamic now
+          foregroundColor: _darkText,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Colors.white, width: 1.5), // Glossy edge
+          ),
+          elevation: 0, // Handled by Container box shadow
+        ),
       ),
     );
   }
