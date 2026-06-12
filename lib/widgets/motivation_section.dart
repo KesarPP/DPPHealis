@@ -109,14 +109,7 @@ class _MotivationSectionState extends State<MotivationSection>
                 borderRadius: GelatoTheme.cardRadius,
                 border: GelatoTheme.cardBorder,
                 boxShadow: GelatoTheme.cardShadow,
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF1E1B4B), // Deep indigo (muted dark color)
-                    Color(0xFF0F172A), // Dark slate
-                  ],
-                ),
+                color: GelatoTheme.orange,
               ),
               child: Column(
                 children: [
@@ -142,7 +135,7 @@ class _MotivationSectionState extends State<MotivationSection>
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                              color: GelatoTheme.textDark,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -151,20 +144,18 @@ class _MotivationSectionState extends State<MotivationSection>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
+                          color: GelatoTheme.green,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF334155)),
+                          border: Border.all(color: Colors.black87, width: 1.5),
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.auto_awesome_rounded, size: 10, color: Color(0xFFFBBF24)),
-                            SizedBox(width: 4),
                             Text(
                               'Level 3',
                               style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFCBD5E1),
+                                color: GelatoTheme.textDark,
                               ),
                             ),
                           ],
@@ -175,21 +166,37 @@ class _MotivationSectionState extends State<MotivationSection>
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Color(0xFFF97316), Color(0xFFF59E0B), Color(0xFFFFE066)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ).createShader(bounds),
-                        child: const Text(
-                          '12',
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1,
+                      Stack(
+                        children: [
+                          Text(
+                            '12',
+                            style: TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                              foreground: Paint()
+                                ..style = PaintingStyle.stroke
+                                ..strokeWidth = 2.0
+                                ..color = GelatoTheme.orangeDark,
+                            ),
                           ),
-                        ),
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFFF97316), Color(0xFFF59E0B), Color(0xFFFFE066)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ).createShader(bounds),
+                            child: const Text(
+                              '12',
+                              style: TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -201,14 +208,14 @@ class _MotivationSectionState extends State<MotivationSection>
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,
-                                color: Colors.white,
+                                color: GelatoTheme.textDark,
                               ),
                             ),
                             Text(
                               "You're on fire! Keep logging your progress.",
                               style: TextStyle(
                                 fontSize: 11,
-                                color: const Color(0xFF94A3B8),
+                                color: GelatoTheme.textLight,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -246,10 +253,10 @@ class _MotivationSectionState extends State<MotivationSection>
                                     ],
                                   )
                                 : BoxDecoration(
-                                    color: const Color(0xFF1E293B),
+                                    color: Colors.white,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: const Color(0xFF334155),
+                                      color: Colors.black87,
                                       width: 1.5,
                                     ),
                                   ),
@@ -259,7 +266,7 @@ class _MotivationSectionState extends State<MotivationSection>
                                     ? Icons.local_fire_department_rounded
                                     : Icons.radio_button_unchecked_rounded,
                                 size: active ? 16 : 12,
-                                color: active ? Colors.white : const Color(0xFF475569),
+                                color: active ? Colors.white : GelatoTheme.textMuted,
                               ),
                             ),
                           ),
@@ -268,7 +275,7 @@ class _MotivationSectionState extends State<MotivationSection>
                             entry.value,
                             style: TextStyle(
                               fontSize: 10,
-                              color: active ? const Color(0xFFF97316) : const Color(0xFF64748B),
+                              color: active ? GelatoTheme.orangeBright : GelatoTheme.textLight,
                               fontWeight: active ? FontWeight.w900 : FontWeight.w600,
                             ),
                           ),
@@ -283,20 +290,23 @@ class _MotivationSectionState extends State<MotivationSection>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '2 days remaining to hit milestone',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF64748B),
+                        Expanded(
+                          child: Text(
+                            '2 days remaining to hit milestone',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: GelatoTheme.textLight,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 4),
                         Text(
                           '+150 XP PENDING',
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFFEA580C),
+                            color: GelatoTheme.orangeBright,
                           ),
                         ),
                       ],
