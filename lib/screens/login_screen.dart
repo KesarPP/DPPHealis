@@ -107,41 +107,39 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.only(bottom: 24.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Hero Banner (Replacing text and illustration with the single uploaded image)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        'assets/images/login_hero.jpg',
-                        width: double.infinity,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 180,
-                            color: Colors.white,
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'Welcome to DiaPrevent',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E1E50),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                  // Hero Banner (Occupying the entire width as a true full-width banner)
+                  Image.asset(
+                    'assets/images/login_hero.jpg',
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180,
+                        color: Colors.white,
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Welcome to DiaPrevent',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E1E50),
+                          ),
+                        ),
+                      );
+                    },
                   ),
+                  const SizedBox(height: 24),
 
-                // Form Container Card
-                Container(
-                  padding: const EdgeInsets.all(20.0),
+                  // Form Container Card
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: _isPatientSelected ? GelatoTheme.cardRadius : BorderRadius.circular(28),
@@ -644,8 +642,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
           ),
         ),
       ),
