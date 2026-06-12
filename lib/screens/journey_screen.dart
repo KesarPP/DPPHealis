@@ -1,14 +1,6 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../data/journey_data.dart';
-
-// Pastel Color Palette "GELATO DAYS"
-const Color _pastelPink = Color(0xFFFFCBE1);
-const Color _pastelGreen = Color(0xFFD6E5BD);
-const Color _pastelYellow = Color(0xFFF9E1A8);
-const Color _pastelBlue = Color(0xFFBCD8EC);
-const Color _pastelPurple = Color(0xFFDCCCEC);
-const Color _pastelPeach = Color(0xFFFFDAB4);
-const Color _darkText = Color(0xFF2E3A59);
 
 class JourneyMap extends StatefulWidget {
   const JourneyMap({super.key});
@@ -17,637 +9,422 @@ class JourneyMap extends StatefulWidget {
   State<JourneyMap> createState() => _JourneyMapState();
 }
 
-class _JourneyMapState extends State<JourneyMap> with TickerProviderStateMixin {
-  int? _expandedModule;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateMixin {
+  late AnimationController _flowController;
+
+  // Exact colors from the Gelato Days pastel palette
+  final Color cPink = const Color(0xFFFFCBE1);
+  final Color cGreen = const Color(0xFFD6E5BD);
+  final Color cYellow = const Color(0xFFF9E1A8);
+  final Color cBlue = const Color(0xFFBCD8EC);
+  final Color cPurple = const Color(0xFFDCCCEC);
+  final Color cOrange = const Color(0xFFFFDAB4);
+
+  // Slightly darker versions of the pastel colors for text/icons to ensure readability
+  final Color cPinkDark = const Color(0xFFE2A6C0);
+  final Color cGreenDark = const Color(0xFFB1C494);
+  final Color cYellowDark = const Color(0xFFD5BB7F);
+  final Color cBlueDark = const Color(0xFF9CB8CC);
+  final Color cPurpleDark = const Color(0xFFBCABCC);
+  final Color cOrangeDark = const Color(0xFFDFBA92);
+
+  late final List<Color> colors;
+  late final List<Color> darkColors;
+  late final List<IconData> icons;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
+    colors = [cPink, cGreen, cYellow, cBlue, cPurple, cOrange];
+    darkColors = [cPinkDark, cGreenDark, cYellowDark, cBlueDark, cPurpleDark, cOrangeDark];
+    
+    icons = [
+      Icons.restaurant,
+      Icons.directions_run_rounded,
+      Icons.water_drop_rounded,
+      Icons.apple_rounded,
+      Icons.spa_rounded,
+      Icons.my_location_rounded,
+    ];
+
+    _flowController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
+      duration: const Duration(seconds: 3),
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
+    _flowController.dispose();
     super.dispose();
   }
 
-  // Fun colors for each module
-  static const List<Color> _moduleColors = [
-    _pastelPink,
-    _pastelBlue,
-    _pastelPurple,
-    _pastelPeach,
-    _pastelGreen,
-  ];
-
-  static const List<IconData> _moduleIcons = [
-    Icons.local_dining,
-    Icons.directions_run,
-    Icons.psychology,
-    Icons.self_improvement,
-    Icons.emoji_events,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(journeyModules.length, (i) {
-        final module = journeyModules[i];
-        final isExpanded = _expandedModule == i;
-        final isRight = i.isOdd;
-        final isLast = i == journeyModules.length - 1;
-        final color = _moduleColors[i % _moduleColors.length];
-        final icon = _moduleIcons[i % _moduleIcons.length];
-
-        return Column(
-          crossAxisAlignment: isRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.topCenter,
+      child: SizedBox(
+        width: 400,
+        height: 1150,
+        child: Stack(
           children: [
-            // Module bubble
-            Padding(
-                padding: EdgeInsets.only(
-                  left: isRight ? 0 : 16,
-                  right: isRight ? 16 : 0,
-                ),
-                child: GestureDetector(
-                  onTap: module.state != ModuleState.locked
-                      ? () => setState(
-                          () => _expandedModule = isExpanded ? null : i)
-                      : null,
-                  child: _ModuleBubble(
-                module: module,
-                color: color,
-                icon: icon,
-                isExpanded: isExpanded,
-                pulseAnimation: _pulseAnimation,
-                  ),
-                ),
-            ),
-
-            // Expanded session path
-            if (isExpanded) ...[
-              const SizedBox(height: 12),
-              _SessionPath(
-                sessions: module.sessions,
-                color: color,
-                pulseAnimation: _pulseAnimation,
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Curved connector to next module
-            if (!isLast)
-              SizedBox(
-                width: double.infinity,
-                height: 70,
-                child: CustomPaint(
-                  painter: _WindyPathPainter(
-                    startRight: isExpanded ? (module.sessions.length - 1).isOdd : isRight,
-                    endRight: (i + 1).isOdd,
-                    color: _moduleColors[(i + 1) % _moduleColors.length],
-                    xOffset: 61,
-                  ),
-                ),
-              ),
-          ],
-        );
-      }),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-// Module bubble
-// ══════════════════════════════════════════════════════════════
-
-class _ModuleBubble extends StatelessWidget {
-  final ModuleNode module;
-  final Color color;
-  final IconData icon;
-  final bool isExpanded;
-  final Animation<double> pulseAnimation;
-
-  const _ModuleBubble({
-    required this.module,
-    required this.color,
-    required this.icon,
-    required this.isExpanded,
-    required this.pulseAnimation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isLocked = module.state == ModuleState.locked;
-    final isCurrent = module.state == ModuleState.current;
-    final bubbleColor = isLocked ? const Color(0xFFCFD8DC) : color;
-
-    Widget bubble = Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bubbleColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black87, width: 1.5), // Thin black border
-        boxShadow: [
-          BoxShadow(
-            color: bubbleColor,
-            blurRadius: 16,
-            spreadRadius: 2,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isLocked ? Icons.lock_outline : icon,
-                  color: _darkText,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'MODULE ${module.number}',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                    color: _darkText,
-                  ),
-                ),
-              ),
-              if (!isLocked)
-                Icon(
-                  isExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: _darkText,
-                  size: 18,
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            module.title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: isLocked
-                  ? const Color(0xFF78909C)
-                  : _darkText,
-              height: 1.3,
-            ),
-          ),
-          if (!isLocked) ...[
-            const SizedBox(height: 12),
-            if (module.state == ModuleState.completed) ...[
-              const Text('✓ Sessions Completed', style: TextStyle(color: _darkText, fontSize: 11, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              const Text('✓ Module Quiz Passed', style: TextStyle(color: _darkText, fontSize: 11, fontWeight: FontWeight.w700)),
-            ] else if (module.state == ModuleState.pendingQuiz) ...[
-              const Text('✓ Sessions Completed', style: TextStyle(color: _darkText, fontSize: 11, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.quiz_rounded, size: 16),
-                label: const Text('Take Module Quiz', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: _darkText,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 4,
-                  shadowColor: color,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '⚠️ Next module locked until quiz passed.',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: _darkText,
-                  fontWeight: FontWeight.w600,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '▶ In Progress',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _darkText,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-
-    // Pulse animation for current module
-    if (isCurrent) {
-      bubble = AnimatedBuilder(
-        animation: pulseAnimation,
-        builder: (_, child) => Transform.scale(
-          scale: pulseAnimation.value,
-          child: child,
-        ),
-        child: bubble,
-      );
-    }
-
-    return bubble;
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-// Session path
-// ══════════════════════════════════════════════════════════════
-
-class _SessionPath extends StatelessWidget {
-  final List<SessionNode> sessions;
-  final Color color;
-  final Animation<double> pulseAnimation;
-
-  const _SessionPath({
-    required this.sessions,
-    required this.color,
-    required this.pulseAnimation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const double verticalStride = 90.0;
-    final double totalHeight = (sessions.isNotEmpty ? (sessions.length - 1) * verticalStride : 0) + 110.0;
-
-    return Container(
-      width: double.infinity,
-      color: Colors.transparent, // Background now handled globally
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: totalHeight,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _ContinuousPathPainter(
-                    count: sessions.length,
-                    color: color,
-                    verticalStride: verticalStride,
-                    xOffset: 45,
-                    dotCenterY: 32,
-                  ),
-                ),
-              ),
-              // Quiz checkpoints halfway between sessions
-              ...List.generate(sessions.length - 1, (i) {
-                return Positioned(
-                  top: i * verticalStride + 32 + 45 - 12, // 32 is dotCenterY, 45 is half stride, 12 is half height
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4, spreadRadius: 1),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.quiz_rounded, size: 12, color: Colors.white),
-                      ),
+            // Path Layer
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _flowController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: _ExactPathPainter(
+                      colors: colors,
+                      animationValue: _flowController.value,
                     ),
-                  ),
-                );
-              }),
-              ...List.generate(sessions.length, (i) {
-                final session = sessions[i];
-                final nodeOnRight = i.isOdd;
-
-                return Positioned(
-                  top: i * verticalStride,
-                  left: nodeOnRight ? null : 0,
-                  right: nodeOnRight ? 0 : null,
-                  child: _SessionNode(
-                    session: session,
-                    color: color,
-                    pulseAnimation: pulseAnimation,
-                  ),
-                );
-              }),
-            ],
-          ),
+                  );
+                }
+              ),
+            ),
+            
+            // Cards Layer
+            _buildInteractiveCard(x: 90, y: 50, module: journeyModules[0], color: colors[0], darkColor: darkColors[0], icon: icons[0]),
+            _buildInteractiveCard(x: 160, y: 220, module: journeyModules[1], color: colors[1], darkColor: darkColors[1], icon: icons[1]),
+            _buildInteractiveCard(x: 20, y: 370, module: journeyModules[2], color: colors[2], darkColor: darkColors[2], icon: icons[2]),
+            _buildInteractiveCard(x: 160, y: 520, module: journeyModules[3], color: colors[3], darkColor: darkColors[3], icon: icons[3]),
+            _buildInteractiveCard(x: 20, y: 670, module: journeyModules[4], color: colors[4], darkColor: darkColors[4], icon: icons[4]),
+            _buildInteractiveCard(x: 160, y: 820, module: journeyModules[5], color: colors[5], darkColor: darkColors[5], icon: icons[5]),
+            
+            // Nodes Layer
+            _buildNode(x: 120, y: 170, color: colors[0]),
+            _buildNode(x: 160, y: 280, color: colors[1]),
+            _buildNode(x: 240, y: 430, color: colors[2]),
+            _buildNode(x: 160, y: 580, color: colors[3]),
+            _buildNode(x: 240, y: 730, color: colors[4]),
+            _buildNode(x: 160, y: 880, color: colors[5]),
+            
+            // Start Flag Layer
+            Positioned(
+              left: 36,
+              top: 146, 
+              child: _buildStartIcon(colors[0], darkColors[0]),
+            ),
+            
+            // End Treasure Layer (Full Width Blended Image)
+            Positioned(
+              left: 0, 
+              top: 850,
+              child: _buildEndTreasure(colors[5]),
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
-// ══════════════════════════════════════════════════════════════
-// Session node
-// ══════════════════════════════════════════════════════════════
+  Widget _buildNode({required double x, required double y, required Color color}) {
+    return Positioned(
+      left: x - 10,
+      top: y - 10,
+      child: Container(
+        width: 20, height: 20,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: 5),
+          boxShadow: [
+            BoxShadow(color: color.withOpacity(0.8), blurRadius: 10, spreadRadius: 2),
+          ]
+        ),
+      ),
+    );
+  }
 
-class _SessionNode extends StatelessWidget {
-  final SessionNode session;
-  final Color color;
-  final Animation<double> pulseAnimation;
-
-  const _SessionNode({
-    required this.session,
-    required this.color,
-    required this.pulseAnimation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isCompleted = session.state == SessionState.completed;
-    final isCurrent = session.state == SessionState.current;
-    final isLocked = session.state == SessionState.locked;
-
-    Widget dot = Container(
-      width: 64,
-      height: 64,
+  Widget _buildStartIcon(Color color, Color darkColor) {
+    return Container(
+      width: 48, height: 48,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: isCompleted
-            ? LinearGradient(
-          colors: [color, color.withValues(alpha: 0.7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        )
-            : isCurrent
-            ? LinearGradient(
-          colors: [Colors.white, color.withValues(alpha: 0.08)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        )
-            : null,
-        color: isLocked ? const Color(0xFFECEFF1) : null,
-        border: Border.all(
-          color: isLocked ? const Color(0xFFB0BEC5) : color,
-          width: isCurrent ? 3.5 : 2.5,
-        ),
-        boxShadow: isCompleted
-            ? [BoxShadow(color: color, blurRadius: 16, spreadRadius: 4)]
-            : isCurrent
-            ? [BoxShadow(color: color, blurRadius: 16, spreadRadius: 4)]
-            : null,
+        color: Colors.white,
+        border: Border.all(color: color, width: 2),
+        boxShadow: [BoxShadow(color: color, blurRadius: 24, spreadRadius: 4)]
       ),
-      child: Center(
-        child: isCompleted
-            ? const Icon(Icons.check_rounded, color: _darkText, size: 28)
-            : isCurrent
-            ? Icon(Icons.play_arrow_rounded, color: _darkText, size: 30)
-            : Text(
-          '${session.number}',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFFB0BEC5),
+      child: Center(child: Icon(Icons.flag_rounded, color: darkColor, size: 24)),
+    );
+  }
+
+  Widget _buildEndTreasure(Color glowColor) {
+    return Container(
+      width: 400, height: 400,
+      alignment: Alignment.center,
+      child: Container(
+        width: 180, height: 180,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFFFD700), width: 6),
+          boxShadow: [
+            BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.6), blurRadius: 60, spreadRadius: 20),
+            BoxShadow(color: glowColor.withValues(alpha: 0.5), blurRadius: 100, spreadRadius: 40),
+          ]
+        ),
+        child: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color(0xFFFFF200), Color(0xFFD4AF37), Color(0xFFB8860B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: const Icon(
+            Icons.emoji_events_rounded,
+            size: 120,
+            color: Colors.white,
           ),
         ),
       ),
     );
+  }
 
-    if (isCurrent) {
-      dot = AnimatedBuilder(
-        animation: pulseAnimation,
-        builder: (_, child) =>
-            Transform.scale(scale: pulseAnimation.value, child: child),
-        child: dot,
-      );
-    }
-
-    return Column(
-      children: [
-        dot,
-        const SizedBox(height: 4),
-        SizedBox(
-          width: 90,
-          child: Text(
-            session.title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: isLocked
-                  ? const Color(0xFFB0BEC5)
-                  : _darkText,   // changed to _darkText
-            ),
-          ),
-        ),
-      ],
+  Widget _buildInteractiveCard({
+    required double x, required double y, 
+    required ModuleNode module, required Color color, required Color darkColor, required IconData icon
+  }) {
+    return Positioned(
+      left: x, top: y,
+      child: _InteractiveModuleCard(
+        module: module,
+        color: color,
+        darkColor: darkColor,
+        icon: icon,
+      ),
     );
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// Windy curved path painter
-// ══════════════════════════════════════════════════════════════
-
-class _WindyPathPainter extends CustomPainter {
-  final bool startRight;
-  final bool endRight;
+class _InteractiveModuleCard extends StatefulWidget {
+  final ModuleNode module;
   final Color color;
-  final double xOffset;
+  final Color darkColor;
+  final IconData icon;
 
-  const _WindyPathPainter({
-    required this.startRight,
-    required this.endRight,
+  const _InteractiveModuleCard({
+    required this.module,
     required this.color,
-    this.xOffset = 61,
+    required this.darkColor,
+    required this.icon,
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.4)
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final dotPaint = Paint()
-      ..color = color.withValues(alpha: 0.6)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    final startX = startRight ? size.width - xOffset : xOffset;
-    final endX = endRight ? size.width - xOffset : xOffset;
-
-    path.moveTo(startX, 0);
-    path.lineTo(startX, 15);
-    path.cubicTo(
-      startX, size.height * 0.5,
-      endX, size.height * 0.5,
-      endX, size.height - 15,
-    );
-    path.lineTo(endX, size.height);
-
-    canvas.drawPath(path, paint);
-
-    final metrics = path.computeMetrics().first;
-    final totalLength = metrics.length;
-    double distance = 0;
-    const dashLength = 8.0;
-    const gapLength = 6.0;
-    bool drawing = true;
-
-    while (distance < totalLength) {
-      final end = distance + (drawing ? dashLength : gapLength);
-      if (drawing) {
-        final extractPath = metrics.extractPath(distance, end.clamp(0, totalLength));
-        canvas.drawPath(extractPath, dotPaint);
-      }
-      distance = end;
-      drawing = !drawing;
-    }
-
-    // Ensure path visually anchors into the module card edge
-    final anchorPath = metrics.extractPath(totalLength - 4, totalLength);
-    canvas.drawPath(anchorPath, dotPaint);
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
+  State<_InteractiveModuleCard> createState() => _InteractiveModuleCardState();
 }
 
-// ══════════════════════════════════════════════════════════════
-// Map Grid Pattern Painter
-// ══════════════════════════════════════════════════════════════
-class MapGridPainter extends CustomPainter {
-  final Color color;
-  const MapGridPainter({required this.color});
+class _InteractiveModuleCardState extends State<_InteractiveModuleCard> with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    const double gridSize = 20.0;
-    final dotPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-      
-    for (double x = 0; x <= size.width; x += gridSize) {
-      for (double y = 0; y <= size.height; y += gridSize) {
-        canvas.drawCircle(Offset(x, y), 1.2, dotPaint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant MapGridPainter oldDelegate) => oldDelegate.color != color;
-}
-
-// ══════════════════════════════════════════════════════════════
-// Continuous Path Painter
-// ══════════════════════════════════════════════════════════════
-class _ContinuousPathPainter extends CustomPainter {
-  final int count;
-  final Color color;
-  final double verticalStride;
-  final double xOffset;
-  final double dotCenterY;
-
-  _ContinuousPathPainter({
-    required this.count,
-    required this.color,
-    required this.verticalStride,
-    required this.xOffset,
-    required this.dotCenterY,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (count <= 1) return;
-
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.4)
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final dotPaint = Paint()
-      ..color = color.withValues(alpha: 0.6)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
+  Widget build(BuildContext context) {
+    final isLocked = widget.module.state == ModuleState.locked;
     
-    for (int i = 0; i < count - 1; i++) {
-      final startRight = i.isOdd;
-      final endRight = (i + 1).isOdd;
+    Widget cardContent = Container(
+      width: 220, 
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isLocked ? Colors.grey.shade100 : Color.lerp(Colors.white, widget.color, 0.2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black87, width: 2.0),
+        boxShadow: [
+          BoxShadow(
+            color: isLocked ? Colors.transparent : widget.color.withOpacity(0.6), 
+            blurRadius: 20, 
+            spreadRadius: 2
+          ),
+        ]
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Icon
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isLocked ? Colors.grey.shade200 : Colors.white,
+              boxShadow: isLocked ? null : [BoxShadow(color: widget.color.withOpacity(0.5), blurRadius: 8)]
+            ),
+            child: Icon(widget.icon, color: isLocked ? Colors.grey.shade400 : widget.darkColor, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Badge
+                Row(
+                  children: [
+                    Container(
+                      width: 18, height: 18,
+                      decoration: BoxDecoration(
+                        color: isLocked ? Colors.grey.shade200 : Colors.white, 
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black87, width: 1.0),
+                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]
+                      ),
+                      alignment: Alignment.center,
+                      child: Text('${widget.module.number}', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10)),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text('MODULE', style: TextStyle(color: Colors.black87, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                // Title
+                Text(widget.module.title, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w900, height: 1.3)),
+                const SizedBox(height: 8),
+                // Status
+                Row(
+                  children: [
+                    Icon(isLocked ? Icons.lock_rounded : Icons.check_rounded, size: 14, color: Colors.black87),
+                    const SizedBox(width: 4),
+                    Text(isLocked ? 'Locked' : 'Completed', style: const TextStyle(color: Colors.black87, fontSize: 11, fontWeight: FontWeight.w800)),
+                  ]
+                )
+              ]
+            )
+          )
+        ]
+      )
+    );
 
-      final startX = startRight ? size.width - xOffset : xOffset;
-      final endX = endRight ? size.width - xOffset : xOffset;
-      
-      final startY = i * verticalStride + dotCenterY;
-      final endY = (i + 1) * verticalStride + dotCenterY;
-
-      path.moveTo(startX, startY);
-      
-      path.cubicTo(
-        startX, startY + (endY - startY) * 0.5,
-        endX, startY + (endY - startY) * 0.5,
-        endX, endY,
+    // If locked, overlay a large lock and reduce opacity
+    if (isLocked) {
+      cardContent = Opacity(
+        opacity: 0.7,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            cardContent,
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16)
+              ),
+              width: 220,
+              height: 100,
+            ),
+            Icon(Icons.lock_rounded, size: 48, color: Colors.black.withOpacity(0.1)),
+          ],
+        ),
       );
     }
 
-    canvas.drawPath(path, paint);
+    return GestureDetector(
+      onTapDown: isLocked ? null : (_) => setState(() => _isPressed = true),
+      onTapUp: isLocked ? null : (_) => setState(() => _isPressed = false),
+      onTapCancel: isLocked ? null : () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: cardContent,
+      ),
+    );
+  }
+}
 
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      final totalLength = metric.length;
-      double distance = 0;
-      const dashLength = 8.0;
-      const gapLength = 6.0;
-      bool drawing = true;
+class _ExactPathPainter extends CustomPainter {
+  final List<Color> colors;
+  final double animationValue;
 
-      while (distance < totalLength) {
-        final end = distance + (drawing ? dashLength : gapLength);
-        if (drawing) {
-          final extractPath = metric.extractPath(distance, end.clamp(0, totalLength));
-          canvas.drawPath(extractPath, dotPaint);
+  _ExactPathPainter({required this.colors, required this.animationValue});
+
+  Path dashPath(Path source, {required double dashArray}) {
+    final Path dest = Path();
+    for (final ui.PathMetric metric in source.computeMetrics()) {
+      double distance = 0.0;
+      bool draw = true;
+      while (distance < metric.length) {
+        final double len = dashArray;
+        if (draw) {
+          dest.addPath(metric.extractPath(distance, distance + len), Offset.zero);
         }
-        distance = end;
-        drawing = !drawing;
+        distance += len;
+        draw = !draw;
+      }
+    }
+    return dest;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final mainPath = Path();
+    mainPath.moveTo(60, 170); // From Flag Center
+    mainPath.cubicTo(60, 170, 80, 170, 120, 170); // to Node 1
+    mainPath.cubicTo(160, 170, 100, 280, 160, 280); // to Node 2
+    mainPath.cubicTo(120, 280, 280, 430, 240, 430); // to Node 3
+    mainPath.cubicTo(280, 430, 120, 580, 160, 580); // to Node 4
+    mainPath.cubicTo(120, 580, 280, 730, 240, 730); // to Node 5
+    mainPath.cubicTo(280, 730, 120, 880, 160, 880); // to Node 6
+
+    final dashedPath = Path();
+    dashedPath.moveTo(160, 880);
+    dashedPath.cubicTo(160, 950, 200, 950, 200, 1040); // to Treasure
+
+    final realDashedPath = dashPath(dashedPath, dashArray: 8.0);
+
+    final Rect bounds = const Rect.fromLTRB(0, 0, 400, 1150);
+    final LinearGradient gradient = LinearGradient(
+      colors: colors,
+      stops: const [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+
+    // 1. Massive Glossy Blur Glow
+    final glowPaint = Paint()
+      ..shader = gradient.createShader(bounds)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 35
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+    canvas.drawPath(mainPath, glowPaint);
+    canvas.drawPath(realDashedPath, glowPaint);
+
+    // 2. Thick White Inner Core
+    final corePaint = Paint()
+      ..color = Colors.white.withOpacity(0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(mainPath, corePaint);
+    canvas.drawPath(realDashedPath, corePaint);
+    
+    // 3. Flowing magical particles on main path
+    final metrics = mainPath.computeMetrics();
+    if (metrics.isEmpty) return;
+    final metric = metrics.first;
+    final totalLength = metric.length;
+
+    // Draw larger glowing orbs that travel along the path
+    for (int i = 0; i < 8; i++) {
+      double progress = (animationValue + (i / 8.0)) % 1.0;
+      double distance = progress * totalLength;
+      final tangent = metric.getTangentForOffset(distance);
+      if (tangent != null) {
+        // Outer glow of orb
+        final orbGlowPaint = Paint()
+          ..color = Colors.white.withOpacity(0.9)
+          ..style = PaintingStyle.fill
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12.0);
+        canvas.drawCircle(tangent.position, 20.0, orbGlowPaint);
+        
+        // Inner core of orb
+        final orbCorePaint = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(tangent.position, 10.0, orbCorePaint);
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ContinuousPathPainter oldDelegate) => 
-      oldDelegate.count != count || oldDelegate.color != color;
+  bool shouldRepaint(covariant _ExactPathPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
+  }
 }

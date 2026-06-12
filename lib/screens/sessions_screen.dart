@@ -9,13 +9,11 @@ import '../data/gelato_theme.dart';
 // Pastel Color Palette "GELATO DAYS" mapped to GelatoTheme
 const Color _pastelGreen = GelatoTheme.green;
 const Color _pastelBlue = GelatoTheme.blue;
-const Color _pastelPurple = GelatoTheme.purple;
 const Color _pastelPeach = GelatoTheme.orange;
 const Color _darkText = GelatoTheme.textDark;
 
 const Color _greenDark = GelatoTheme.greenDark;
 const Color _blueDark = GelatoTheme.blueDark;
-const Color _purpleDark = GelatoTheme.purpleDark;
 const Color _peachDark = GelatoTheme.orangeDark;
 
 class SessionsScreen extends StatelessWidget {
@@ -24,8 +22,7 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Color.lerp(_pastelBlue, Colors.white, 0.85), // Soft pastel wash
+      backgroundColor: Colors.transparent,
       floatingActionButton: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -75,36 +72,29 @@ class SessionsScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter:
-                  _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
-            ),
-          ),
-          ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            children: [
-              _buildHeroBanner(),
-              const SizedBox(height: 20),
-              const _SectionLabel('Resource Library'),
-              const SizedBox(height: 10),
-              _buildResourceLibrary(context),
-              const SizedBox(height: 20),
-              _buildPhaseCard(),
-              const SizedBox(height: 20),
-              const _SectionLabel('Current Session'),
-              const SizedBox(height: 10),
-              _buildCurrentSessionCard(),
-              const SizedBox(height: 20),
-              const _SectionLabel('Session Timeline'),
-              const SizedBox(height: 12),
-              const JourneyMap(),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ],
+      body: Container(
+        color: const Color(0xFFFCF6F6), // Warm white background from image
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          children: [
+            _buildHeroBanner(),
+            const SizedBox(height: 20),
+            const _SectionLabel('Resource Library'),
+            const SizedBox(height: 10),
+            _buildResourceLibrary(context),
+            const SizedBox(height: 20),
+            _buildPhaseCard(),
+            const SizedBox(height: 20),
+            const _SectionLabel('Current Session'),
+            const SizedBox(height: 10),
+            _buildCurrentSessionCard(),
+            const SizedBox(height: 20),
+            const _SectionLabel('Session Timeline'),
+            const SizedBox(height: 12),
+            const JourneyMap(),
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }
@@ -176,12 +166,12 @@ class SessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
-        color: _pastelPurple,
+        color: GelatoTheme.purple,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black87, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 2.0),
         boxShadow: [
           BoxShadow(
-              color: _pastelPurple.withValues(alpha: 0.25),
+              color: GelatoTheme.purple.withValues(alpha: 0.6),
               blurRadius: 24,
               offset: const Offset(0, 8)),
         ],
@@ -196,19 +186,19 @@ class SessionsScreen extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      color: _darkText,
+                      color: Colors.black,
                       letterSpacing: -0.8)),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.45),
+                    color: Colors.white.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20)),
                 child: const Text('In Progress',
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: _darkText)),
+                        color: Colors.black)),
               )
             ],
           ),
@@ -216,7 +206,7 @@ class SessionsScreen extends StatelessWidget {
           Text('Session 6',
               style: TextStyle(
                   fontSize: 15,
-                  color: _darkText.withValues(alpha: 0.7),
+                  color: Colors.black.withOpacity(0.8),
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
           // Upgraded Pill-styled gradient progress bar
@@ -235,11 +225,11 @@ class SessionsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       gradient: const LinearGradient(
-                        colors: [_pastelPurple, _purpleDark],
+                        colors: [Colors.white, GelatoTheme.purple],
                       ),
                       boxShadow: [
                         BoxShadow(
-                            color: _pastelPurple.withValues(alpha: 0.5),
+                            color: Colors.white.withValues(alpha: 0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 2)),
                       ],
@@ -252,7 +242,7 @@ class SessionsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           const Text('68% Completed',
               style: TextStyle(
-                  fontSize: 14, color: _darkText, fontWeight: FontWeight.w700)),
+                  fontSize: 14, color: Colors.black, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -262,12 +252,12 @@ class SessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
-        color: _pastelBlue,
+        color: GelatoTheme.blue,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black87, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 2.0),
         boxShadow: [
           BoxShadow(
-              color: _pastelBlue.withValues(alpha: 0.15),
+              color: GelatoTheme.blue.withValues(alpha: 0.6),
               blurRadius: 24,
               offset: const Offset(0, 8)),
         ],
@@ -279,7 +269,7 @@ class SessionsScreen extends StatelessWidget {
             'SESSION 6',
             style: TextStyle(
                 fontSize: 12,
-                color: _darkText.withValues(alpha: 0.6),
+                color: Colors.black.withOpacity(0.7),
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.0),
           ),
@@ -289,7 +279,7 @@ class SessionsScreen extends StatelessWidget {
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: _darkText,
+                color: Colors.black,
                 letterSpacing: -0.5),
           ),
           const SizedBox(height: 16),
@@ -458,28 +448,36 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// Subtle Dotted Grid Background
+// ══════════════════════════════════════════════════════════════
 
-
-
-class _DotsPainter extends CustomPainter {
-  final Color color;
-  const _DotsPainter({required this.color});
+class DottedGridBackground extends StatelessWidget {
+  const DottedGridBackground({super.key});
 
   @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DottedGridPainter(),
+    );
+  }
+}
+
+class _DottedGridPainter extends CustomPainter {
+  @override
   void paint(Canvas canvas, Size size) {
-    const double gridSize = 16.0;
-    final dotPaint = Paint()
-      ..color = color
+    final paint = Paint()
+      ..color = const Color(0xFF94A3B8).withOpacity(0.18) // subtle slate dots
       ..style = PaintingStyle.fill;
 
-    for (double x = 0; x <= size.width; x += gridSize) {
-      for (double y = 0; y <= size.height; y += gridSize) {
-        canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
+    const double spacing = 18.0;
+    for (double x = spacing; x < size.width; x += spacing) {
+      for (double y = spacing; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 0.9, paint);
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DotsPainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
