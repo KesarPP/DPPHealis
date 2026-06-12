@@ -36,7 +36,7 @@ class SessionsScreen extends StatelessWidget {
                 offset: const Offset(0, 8)),
           ],
           border: Border.all(
-              color: Colors.black87, width: 0.5), // Thin black border
+              color: Colors.black87, width: 1.5), // Thin black border
         ),
         child: FloatingActionButton.extended(
           onPressed: () {},
@@ -172,7 +172,7 @@ class SessionsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85), // Frosted white effect
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black87, width: 0.5),
+        border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
           BoxShadow(
               color: _pastelPurple.withValues(alpha: 0.25),
@@ -258,7 +258,7 @@ class SessionsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black87, width: 0.5),
+        border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
           BoxShadow(
               color: _pastelBlue.withValues(alpha: 0.15),
@@ -350,7 +350,7 @@ class _ResourceTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20), // Increased radius
         border:
-            Border.all(color: Colors.black87, width: 0.5), // Thin black border
+            Border.all(color: Colors.black87, width: 1.5), // Thin black border
         boxShadow: [
           BoxShadow(
               color: color.withValues(alpha: 0.35),
@@ -438,7 +438,7 @@ class _ActionButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: const BorderSide(
-                color: Colors.black87, width: 0.5), // Thin black edge
+                color: Colors.black87, width: 1.5), // Thin black edge
           ),
           elevation: 0, // Handled by Container box shadow
         ),

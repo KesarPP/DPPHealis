@@ -155,7 +155,7 @@ class _ModuleBubble extends StatelessWidget {
       decoration: BoxDecoration(
         color: bubbleColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black87, width: 0.5), // Thin black border
+        border: Border.all(color: Colors.black87, width: 1.5), // Thin black border
         boxShadow: [
           BoxShadow(
             color: bubbleColor,
@@ -314,6 +314,7 @@ class _SessionPath extends StatelessWidget {
         child: SizedBox(
           height: totalHeight,
           child: Stack(
+            clipBehavior: Clip.none,
             children: [
               Positioned.fill(
                 child: CustomPaint(
