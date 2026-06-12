@@ -22,7 +22,6 @@ class _MotivationSectionState extends State<MotivationSection>
 
   // Vibrant streak colors (popping red-orange)
   static const Color streakColor = Color(0xFFFF4D00);
-  static const Color streakBg = Color(0xFFFFE5D9);
   static const Color streakColorSecondary = Color(0xFFFF1A40);
 
   @override

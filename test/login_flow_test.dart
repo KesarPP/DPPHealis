@@ -115,8 +115,8 @@ void main() {
 
     // Verify that we navigated to ClinicianProfileScreen
     expect(find.byType(ClinicianProfileScreen), findsOneWidget);
-    expect(find.text('Dr. Alexander Ross'), findsOneWidget);
-    expect(find.text('Clinician Profile'), findsOneWidget);
+    expect(find.text('Dr. Sarah Mitchell'), findsOneWidget);
+    expect(find.text('Senior Health Coach & Nutritionist'), findsOneWidget);
 
     // Tap the 'Sign Out' button
     final signOutButton = find.widgetWithText(OutlinedButton, 'Sign Out');

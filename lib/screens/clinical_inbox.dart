@@ -280,6 +280,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                   _buildNavDestination(
                     0,
                     Icons.people_outline_rounded,
+                    Icons.people_rounded,
                     'Patients',
                     onTap: () {
                       Navigator.pushReplacement(
@@ -291,6 +292,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                   ),
                   _buildNavDestination(
                     1,
+                    Icons.home_outlined,
                     Icons.home_rounded,
                     'Home',
                     onTap: () {
@@ -301,7 +303,12 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                       );
                     },
                   ),
-                  _buildNavDestination(2, Icons.mail_outline_rounded, 'Inbox'),
+                  _buildNavDestination(
+                    2,
+                    Icons.mail_outline_rounded,
+                    Icons.mail_rounded,
+                    'Inbox',
+                  ),
                 ],
               ),
             ),
@@ -416,6 +423,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
   Widget _buildNavDestination(
     int index,
     IconData icon,
+    IconData selectedIcon,
     String label, {
     VoidCallback? onTap,
   }) {
@@ -425,35 +433,32 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
           () {
             setState(() => _currentTabIndex = index);
           },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFF69F0AE).withValues(alpha: 0.3)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              icon,
-              color: isSelected ? const Color(0xFF00B0FF) : _slateGrey,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? _brandColor.withValues(alpha: 0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected ? _brandColor : _slateGrey,
               size: 24,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? _brandColor : _slateGrey,
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? _brandColor : _slateGrey,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

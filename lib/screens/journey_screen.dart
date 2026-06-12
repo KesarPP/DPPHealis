@@ -4,7 +4,6 @@ import '../data/journey_data.dart';
 // Pastel Color Palette "GELATO DAYS"
 const Color _pastelPink = Color(0xFFFFCBE1);
 const Color _pastelGreen = Color(0xFFD6E5BD);
-const Color _pastelYellow = Color(0xFFF9E1A8);
 const Color _pastelBlue = Color(0xFFBCD8EC);
 const Color _pastelPurple = Color(0xFFDCCCEC);
 const Color _pastelPeach = Color(0xFFFFDAB4);
