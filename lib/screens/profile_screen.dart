@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
-// Pastel Color Palette "GELATO DAYS"
-const Color _pastelPink = Color(0xFFFFCBE1);
-const Color _pastelGreen = Color(0xFFD6E5BD);
-const Color _pastelYellow = Color(0xFFF9E1A8);
-const Color _pastelBlue = Color(0xFFBCD8EC);
-const Color _pastelPurple = Color(0xFFDCCCEC);
-const Color _pastelPeach = Color(0xFFFFDAB4);
-const Color _darkText = Color(0xFF2E3A59);
+import '../data/gelato_theme.dart';
+
+// Pastel Color Palette "GELATO DAYS" mapped to GelatoTheme
+const Color _pastelPink = GelatoTheme.pink;
+const Color _pastelGreen = GelatoTheme.green;
+const Color _pastelYellow = GelatoTheme.yellow;
+const Color _pastelBlue = GelatoTheme.blue;
+const Color _pastelPurple = GelatoTheme.purple;
+const Color _pastelPeach = GelatoTheme.orange;
+const Color _darkText = GelatoTheme.textDark;
+
+const Color _pinkDark = GelatoTheme.pinkDark;
+const Color _greenDark = GelatoTheme.greenDark;
+const Color _yellowDark = GelatoTheme.yellowDark;
+const Color _blueDark = GelatoTheme.blueDark;
+const Color _purpleDark = GelatoTheme.purpleDark;
+const Color _peachDark = GelatoTheme.orangeDark;
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -59,7 +68,7 @@ class ProfileScreen extends StatelessWidget {
                     progress: 0.4, 
                     icon: Icons.monitor_weight_rounded,
                     color: _pastelBlue,
-                    gradientColors: [_pastelBlue, _pastelPurple],
+                    darkColor: _blueDark,
                   )),
                   SizedBox(width: 12),
                   Expanded(child: _GoalCard(
@@ -69,7 +78,7 @@ class ProfileScreen extends StatelessWidget {
                     progress: 0.6, 
                     icon: Icons.directions_run_rounded,
                     color: _pastelGreen,
-                    gradientColors: [_pastelGreen, _pastelBlue],
+                    darkColor: _greenDark,
                   )),
                 ],
               ),
@@ -80,11 +89,11 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const Row(
               children: [
-                Expanded(child: _StatCard(title: 'Current Phase', value: 'Phase 1', icon: Icons.emoji_events_rounded, color: _pastelBlue)),
+                Expanded(child: _StatCard(title: 'Current Phase', value: 'Phase 1', icon: Icons.emoji_events_rounded, color: _pastelBlue, darkColor: _blueDark)),
                 SizedBox(width: 12),
-                Expanded(child: _StatCard(title: 'Sessions', value: '12 / 16', icon: Icons.menu_book_rounded, color: _pastelPurple)),
+                Expanded(child: _StatCard(title: 'Sessions', value: '12 / 16', icon: Icons.menu_book_rounded, color: _pastelPurple, darkColor: _purpleDark)),
                 SizedBox(width: 12),
-                Expanded(child: _StatCard(title: 'Streak', value: '14 Days', icon: Icons.local_fire_department_rounded, color: _pastelPeach)),
+                Expanded(child: _StatCard(title: 'Streak', value: '14 Days', icon: Icons.local_fire_department_rounded, color: _pastelPeach, darkColor: _peachDark)),
               ],
             ),
             const SizedBox(height: 32),
@@ -232,16 +241,16 @@ class _GoalCard extends StatelessWidget {
   final double progress;
   final IconData icon;
   final Color color;
-  final List<Color> gradientColors;
+  final Color darkColor;
 
-  const _GoalCard({required this.title, required this.target, required this.current, required this.progress, required this.icon, required this.color, required this.gradientColors});
+  const _GoalCard({required this.title, required this.target, required this.current, required this.progress, required this.icon, required this.color, required this.darkColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
@@ -256,14 +265,11 @@ class _GoalCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color.withValues(alpha: 0.6), color.withValues(alpha: 0.2)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: Colors.white.withValues(alpha: 0.55),
                   shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black87, width: 1.2),
                 ),
-                child: Icon(icon, color: _darkText, size: 24),
+                child: Icon(icon, color: darkColor, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5))),
@@ -272,14 +278,14 @@ class _GoalCard extends StatelessWidget {
           const SizedBox(height: 20),
           Text(target, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _darkText)),
           const SizedBox(height: 4),
-          Text(current, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _darkText.withValues(alpha: 0.7))),
+          Text(current, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: darkColor)),
           const SizedBox(height: 16),
           // Pill styled gradient progress bar
           Container(
             height: 10,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.white.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Stack(
@@ -289,9 +295,9 @@ class _GoalCard extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      gradient: LinearGradient(colors: gradientColors),
+                      color: darkColor,
                       boxShadow: [
-                        BoxShadow(color: gradientColors[0].withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2)),
+                        BoxShadow(color: darkColor.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2)),
                       ],
                     ),
                   ),
@@ -310,15 +316,16 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final Color darkColor;
 
-  const _StatCard({required this.title, required this.value, required this.icon, required this.color});
+  const _StatCard({required this.title, required this.value, required this.icon, required this.color, required this.darkColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
@@ -330,14 +337,11 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color.withValues(alpha: 0.6), color.withValues(alpha: 0.2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: Colors.white.withValues(alpha: 0.55),
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.black87, width: 1.2),
             ),
-            child: Icon(icon, color: _darkText, size: 28),
+            child: Icon(icon, color: darkColor, size: 28),
           ),
           const SizedBox(height: 16),
           Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5)),
@@ -357,7 +361,7 @@ class _JourneyProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85), // Frosted glass effect
+        color: _pastelPurple,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
@@ -381,7 +385,7 @@ class _JourneyProgressCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: _pastelPurple.withValues(alpha: 0.5),
+                  color: Colors.white.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.black87, width: 1.5),
                 ),
@@ -397,7 +401,7 @@ class _JourneyProgressCard extends StatelessWidget {
                 height: 12,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.white.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Stack(
@@ -407,9 +411,7 @@ class _JourneyProgressCard extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          gradient: const LinearGradient(
-                            colors: [_pastelPurple, _pastelPink],
-                          ),
+                          color: _purpleDark,
                           boxShadow: [
                             BoxShadow(color: _pastelPurple.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2)),
                           ],
@@ -431,7 +433,7 @@ class _JourneyProgressCard extends StatelessWidget {
                       BoxShadow(color: _pastelPeach.withValues(alpha: 0.5), blurRadius: 8, offset: const Offset(0, 4)),
                     ],
                   ),
-                  child: const Icon(Icons.star_rounded, color: _pastelPeach, size: 20),
+                  child: const Icon(Icons.star_rounded, color: _purpleDark, size: 20),
                 ),
               ),
             ],

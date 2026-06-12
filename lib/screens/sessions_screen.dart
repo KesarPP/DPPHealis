@@ -4,14 +4,19 @@ import 'handouts_screen.dart';
 import '../data/handouts_data.dart';
 import 'journey_screen.dart';
 
-// Pastel Color Palette "GELATO DAYS"
-const Color _pastelPink = Color(0xFFFFCBE1);
-const Color _pastelGreen = Color(0xFFD6E5BD);
-const Color _pastelYellow = Color(0xFFF9E1A8);
-const Color _pastelBlue = Color(0xFFBCD8EC);
-const Color _pastelPurple = Color(0xFFDCCCEC);
-const Color _pastelPeach = Color(0xFFFFDAB4);
-const Color _darkText = Color(0xFF2E3A59);
+import '../data/gelato_theme.dart';
+
+// Pastel Color Palette "GELATO DAYS" mapped to GelatoTheme
+const Color _pastelGreen = GelatoTheme.green;
+const Color _pastelBlue = GelatoTheme.blue;
+const Color _pastelPurple = GelatoTheme.purple;
+const Color _pastelPeach = GelatoTheme.orange;
+const Color _darkText = GelatoTheme.textDark;
+
+const Color _greenDark = GelatoTheme.greenDark;
+const Color _blueDark = GelatoTheme.blueDark;
+const Color _purpleDark = GelatoTheme.purpleDark;
+const Color _peachDark = GelatoTheme.orangeDark;
 
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
@@ -121,7 +126,7 @@ class SessionsScreen extends StatelessWidget {
       // added Color
       (
         const FaIcon(FontAwesomeIcons.utensils,
-            color: _darkText, size: 24), // orange
+            color: _peachDark, size: 24), // orange
         'Food\nHandouts',
         _pastelPeach,
         () => Navigator.push(
@@ -132,7 +137,7 @@ class SessionsScreen extends StatelessWidget {
       ),
       (
         const FaIcon(FontAwesomeIcons.personWalking,
-            color: _darkText, size: 24), // green
+            color: _greenDark, size: 24), // green
         'Activity\nHandouts',
         _pastelGreen,
         () => Navigator.push(
@@ -143,7 +148,7 @@ class SessionsScreen extends StatelessWidget {
       ),
       (
         const FaIcon(FontAwesomeIcons.bookOpen,
-            color: _darkText, size: 24), // blue
+            color: _blueDark, size: 24), // blue
         'NDPP\nHandouts',
         _pastelBlue,
         () => Navigator.push(
@@ -170,7 +175,7 @@ class SessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85), // Frosted white effect
+        color: _pastelPurple,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
@@ -196,7 +201,7 @@ class SessionsScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                    color: _pastelPurple,
+                    color: Colors.white.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(20)),
                 child: const Text('In Progress',
                     style: TextStyle(
@@ -218,7 +223,7 @@ class SessionsScreen extends StatelessWidget {
             height: 12,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.white.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Stack(
@@ -229,7 +234,7 @@ class SessionsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       gradient: const LinearGradient(
-                        colors: [_pastelBlue, _pastelPurple],
+                        colors: [_pastelPurple, _purpleDark],
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -256,7 +261,7 @@ class SessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _pastelBlue,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
@@ -294,6 +299,7 @@ class SessionsScreen extends StatelessWidget {
                       icon: Icons.play_circle_fill_rounded,
                       label: 'Watch Video',
                       color: _pastelPeach,
+                      darkColor: _peachDark,
                       onTap: () {})),
               const SizedBox(width: 12),
               Expanded(
@@ -301,6 +307,7 @@ class SessionsScreen extends StatelessWidget {
                       icon: Icons.quiz_rounded,
                       label: 'Take Quiz',
                       color: _pastelGreen,
+                      darkColor: _greenDark,
                       onTap: () {})),
             ],
           ),
@@ -347,7 +354,7 @@ class _ResourceTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
           vertical: 20, horizontal: 8), // Increased padding
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color,
         borderRadius: BorderRadius.circular(20), // Increased radius
         border:
             Border.all(color: Colors.black87, width: 1.5), // Thin black border
@@ -365,16 +372,9 @@ class _ResourceTile extends StatelessWidget {
             width: 56, // Slightly larger icon container
             height: 56,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                // Soft gradient icon background
-                colors: [
-                  color.withValues(alpha: 0.6),
-                  color.withValues(alpha: 0.2)
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: Colors.white.withValues(alpha: 0.55),
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.black87, width: 1.2),
             ),
             child: Center(child: icon),
           ),
@@ -404,11 +404,13 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final Color color; // added
+  final Color darkColor;
   const _ActionButton(
       {required this.icon,
       required this.label,
       required this.onTap,
-      required this.color}); //
+      required this.color,
+      required this.darkColor}); //
 
   @override
   Widget build(BuildContext context) {
@@ -424,7 +426,15 @@ class _ActionButton extends StatelessWidget {
       ),
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon, size: 18, color: _darkText),
+        icon: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.55),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.black87, width: 1.0),
+          ),
+          child: Icon(icon, size: 16, color: darkColor),
+        ),
         label: Text(label,
             style: const TextStyle(
                 fontWeight: FontWeight.w800,
@@ -447,31 +457,7 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-class _CoachButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _CoachButton({required this.onTap});
 
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: const Icon(Icons.auto_awesome_rounded,
-          size: 16, color: Colors.black87),
-      label: const Text('Ask Session Coach',
-          style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: Colors.black87)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _pastelGreen,
-        foregroundColor: Colors.black87,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 0,
-      ),
-    );
-  }
-}
 
 class _DotsPainter extends CustomPainter {
   final Color color;
