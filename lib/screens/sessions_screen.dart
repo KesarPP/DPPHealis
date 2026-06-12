@@ -31,7 +31,7 @@ class SessionsScreen extends StatelessWidget {
           boxShadow: [
             BoxShadow(color: _pastelBlue.withValues(alpha: 0.5), blurRadius: 16, offset: const Offset(0, 8)),
           ],
-          border: Border.all(color: Colors.white, width: 1.5), // Inner white glow effect
+          border: Border.all(color: Colors.black87, width: 0.5), // Thin black border
         ),
         child: FloatingActionButton.extended(
           onPressed: () {},
@@ -147,7 +147,7 @@ class SessionsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85), // Frosted white effect
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
           BoxShadow(color: _pastelPurple.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, 8)),
         ],
@@ -214,7 +214,7 @@ class SessionsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: Colors.black87, width: 0.5),
         boxShadow: [
           BoxShadow(color: _pastelBlue.withValues(alpha: 0.15), blurRadius: 24, offset: const Offset(0, 8)),
         ],
@@ -278,7 +278,7 @@ class _ResourceTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20), // Increased radius
-        border: Border.all(color: Colors.white, width: 1.5), // Inner glow border
+        border: Border.all(color: Colors.black87, width: 0.5), // Thin black border
         boxShadow: [
           BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 8)), // Soft Neumorphic wide shadow
         ],
@@ -342,7 +342,7 @@ class _ActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Colors.white, width: 1.5), // Glossy edge
+            side: const BorderSide(color: Colors.black87, width: 0.5), // Thin black edge
           ),
           elevation: 0, // Handled by Container box shadow
         ),

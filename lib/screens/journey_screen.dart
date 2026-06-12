@@ -155,6 +155,7 @@ class _ModuleBubble extends StatelessWidget {
       decoration: BoxDecoration(
         color: bubbleColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black87, width: 0.5), // Thin black border
         boxShadow: [
           BoxShadow(
             color: bubbleColor,
@@ -462,7 +463,7 @@ class _SessionNode extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: isLocked
                   ? const Color(0xFFB0BEC5)
-                  : color,   // 👈 label now matches the node color
+                  : _darkText,   // changed to _darkText
             ),
           ),
         ),
