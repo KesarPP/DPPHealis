@@ -94,12 +94,12 @@ class _MainShellState extends State<MainShell> {
         activeTextColor = GelatoTheme.orangeDark;
         break;
       case 3:
-        indicatorColor = GelatoTheme.purple;
-        activeTextColor = GelatoTheme.purpleDark;
-        break;
-      case 4:
         indicatorColor = GelatoTheme.blue;
         activeTextColor = GelatoTheme.blueDark;
+        break;
+      case 4:
+        indicatorColor = GelatoTheme.purple;
+        activeTextColor = GelatoTheme.purpleDark;
         break;
       default:
         indicatorColor = Colors.grey[300]!;

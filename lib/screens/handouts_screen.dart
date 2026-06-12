@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/handouts_data.dart';
+import '../data/gelato_theme.dart';
 
 class HandoutsScreen extends StatelessWidget {
   final String title;
@@ -7,8 +8,8 @@ class HandoutsScreen extends StatelessWidget {
 
   const HandoutsScreen({super.key, required this.title, required this.handouts});
 
-  static const Color _navy = Color(0xFF1A3A5C);
-  static const Color _pageBg = Color(0xFFF5F5F5);
+  static const Color _navy = GelatoTheme.textDark;
+  static const Color _pageBg = GelatoTheme.bg;
 
   @override
   Widget build(BuildContext context) {
@@ -48,19 +49,23 @@ class _ModuleCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF00897B),
-            borderRadius: BorderRadius.circular(12),
+            color: GelatoTheme.blue,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black87, width: 1.5),
+            boxShadow: [
+              BoxShadow(color: GelatoTheme.blue.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(2, 2)),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('MODULE ${module.moduleNumber}',
                   style: const TextStyle(
-                      color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                      color: GelatoTheme.blueDark, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
               const SizedBox(height: 2),
               Text(module.moduleName,
                   style: const TextStyle(
-                      color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                      color: GelatoTheme.textDark, fontSize: 15, fontWeight: FontWeight.w900)),
             ],
           ),
         ),
@@ -90,9 +95,10 @@ class _SessionCardState extends State<_SessionCard> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black87, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 0, offset: const Offset(2, 2)),
         ],
       ),
       child: Column(
@@ -105,15 +111,15 @@ class _SessionCardState extends State<_SessionCard> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
-                  const Icon(Icons.folder_outlined, color: Color(0xFF00897B), size: 20),
+                  const Icon(Icons.folder_outlined, color: GelatoTheme.blueDark, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(widget.session.sessionName,
                         style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A3A5C))),
+                            fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
                   ),
                   Icon(_expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: const Color(0xFF78909C)),
+                      color: GelatoTheme.textLight),
                 ],
               ),
             ),
@@ -134,18 +140,20 @@ class _SessionCardState extends State<_SessionCard> {
                     children: [
                       Container(
                         width: 24, height: 24,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFFE0F2F1), shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                            color: GelatoTheme.blue,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black87, width: 1.0)),
                         child: Center(
                           child: Text('${item.number}',
                               style: const TextStyle(
-                                  fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF00897B))),
+                                  fontSize: 11, fontWeight: FontWeight.w800, color: GelatoTheme.blueDark)),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(item.title,
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF1A3A5C))),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GelatoTheme.textDark)),
                       ),
                       const Icon(Icons.chevron_right, color: Color(0xFFB0BEC5), size: 18),
                     ],

@@ -26,51 +26,15 @@ class SessionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor:
           Color.lerp(_pastelBlue, Colors.white, 0.85), // Soft pastel wash
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            colors: [_pastelGreen, _pastelBlue],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-                color: _pastelBlue.withValues(alpha: 0.5),
-                blurRadius: 16,
-                offset: const Offset(0, 8)),
-          ],
-          border: Border.all(
-              color: Colors.black87, width: 1.5), // Thin black border
-        ),
-        child: FloatingActionButton.extended(
-          onPressed: () {},
-          backgroundColor: Colors.transparent, // Handled by container gradient
-          elevation: 0,
-          highlightElevation: 0,
-          hoverElevation: 0,
-          focusElevation: 0,
-          icon: const Icon(Icons.auto_awesome_rounded, color: _darkText),
-          label: const Text('Ask AI Coach',
-              style: TextStyle(
-                  color: _darkText,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  letterSpacing: -0.5)),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.maybePop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: const Text(
-          'DPP Journey',
+          'SESSION BOARD',
           style: TextStyle(
-              color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 18),
+              color: Colors.black87, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.2),
         ),
         centerTitle: true,
       ),

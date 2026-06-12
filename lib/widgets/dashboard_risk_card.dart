@@ -148,50 +148,54 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              Row(
-                                textBaseline: TextBaseline.alphabetic,
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                children: [
-                                  AnimatedBuilder(
-                                    animation: _counterAnim,
-                                    builder: (context, _) {
-                                      return Text(
-                                        _counterAnim.value.toStringAsFixed(0),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 44,
-                                          fontWeight: FontWeight.w900,
-                                          height: 1,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  Text(
-                                    ' /100',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
+                              FittedBox(
+                                alignment: Alignment.centerLeft,
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  textBaseline: TextBaseline.alphabetic,
+                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  children: [
+                                    AnimatedBuilder(
+                                      animation: _counterAnim,
+                                      builder: (context, _) {
+                                        return Text(
+                                          _counterAnim.value.toStringAsFixed(0),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 44,
+                                            fontWeight: FontWeight.w900,
+                                            height: 1,
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: GelatoTheme.orange,
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                                    ),
-                                    child: const Text(
-                                      'Moderate Risk',
+                                    Text(
+                                      ' /100',
                                       style: TextStyle(
-                                        color: GelatoTheme.orangeDark,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: GelatoTheme.orange,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                                      ),
+                                      child: const Text(
+                                        'Moderate Risk',
+                                        style: TextStyle(
+                                          color: GelatoTheme.orangeDark,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Row(
