@@ -48,11 +48,13 @@ class _ActivityHeaderState extends State<ActivityHeader>
               children: [
                 Text(
                   'Activity & Fitness',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: GelatoTheme.textDark,
-                        letterSpacing: -0.5,
-                      ),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: GelatoTheme.textDark,
+                    letterSpacing: -0.5,
+                    height: 1.1,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(

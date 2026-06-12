@@ -12,9 +12,7 @@ const Color _pastelPurple = GelatoTheme.purple;
 const Color _pastelPeach = GelatoTheme.orange;
 const Color _darkText = GelatoTheme.textDark;
 
-const Color _pinkDark = GelatoTheme.pinkDark;
 const Color _greenDark = GelatoTheme.greenDark;
-const Color _yellowDark = GelatoTheme.yellowDark;
 const Color _blueDark = GelatoTheme.blueDark;
 const Color _purpleDark = GelatoTheme.purpleDark;
 const Color _peachDark = GelatoTheme.orangeDark;

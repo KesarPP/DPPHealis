@@ -2,6 +2,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../data/journey_data.dart';
 
+// Pastel Color Palette "GELATO DAYS"
+const Color _pastelPink = Color(0xFFFFCBE1);
+const Color _pastelGreen = Color(0xFFD6E5BD);
+const Color _pastelBlue = Color(0xFFBCD8EC);
+const Color _pastelPurple = Color(0xFFDCCCEC);
+const Color _pastelPeach = Color(0xFFFFDAB4);
+const Color _darkText = Color(0xFF2E3A59);
 class JourneyMap extends StatefulWidget {
   const JourneyMap({super.key});
 

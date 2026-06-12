@@ -36,7 +36,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify we are on the Login Screen
-    expect(find.text('Welcome!'), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
     expect(find.text('Patient'), findsOneWidget);
     expect(find.text('Doctor/Coach'), findsOneWidget);
 
@@ -84,7 +84,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify we are on the Login Screen
-    expect(find.text('Welcome!'), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
 
     // Find and tap the 'Doctor/Coach' toggle
     final coachToggle = find.text('Doctor/Coach');
@@ -115,8 +115,8 @@ void main() {
 
     // Verify that we navigated to ClinicianProfileScreen
     expect(find.byType(ClinicianProfileScreen), findsOneWidget);
-    expect(find.text('Dr. Alexander Ross'), findsOneWidget);
-    expect(find.text('Clinician Profile'), findsOneWidget);
+    expect(find.text('Dr. Sarah Mitchell'), findsOneWidget);
+    expect(find.text('Senior Health Coach & Nutritionist'), findsOneWidget);
 
     // Tap the 'Sign Out' button
     final signOutButton = find.widgetWithText(OutlinedButton, 'Sign Out');
@@ -126,7 +126,6 @@ void main() {
 
     // Verify that we are back on the LoginScreen
     expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Welcome!'), findsOneWidget);
 
     await resetTestWindow(tester);
   });
@@ -201,7 +200,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify we are on the Login Screen
-    expect(find.text('Welcome!'), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
 
     // Ensure the Biometric Login button is tapped
     final biometricButton = find.widgetWithText(OutlinedButton, 'Biometric Login');

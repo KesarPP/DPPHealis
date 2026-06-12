@@ -4,7 +4,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/food_tracking_screen.dart';
 import 'screens/activity_fitness_screen.dart';
 import 'screens/sessions_screen.dart';
-import 'screens/profile_screen.dart';
+import 'screens/coach_chat_screen.dart';
 import 'data/gelato_theme.dart';
 
 void main() {
@@ -45,7 +45,7 @@ class _MainShellState extends State<MainShell> {
     FoodTrackingScreen(),
     ActivityFitnessScreen(),
     SessionsScreen(),
-    ProfileScreen(),
+    CoachChatScreen(),
   ];
 
   final List<NavigationDestination> _destinations = const [
@@ -70,9 +70,9 @@ class _MainShellState extends State<MainShell> {
       label: 'Sessions',
     ),
     NavigationDestination(
-      icon: Icon(Icons.person_outline),
-      selectedIcon: Icon(Icons.person),
-      label: 'Profile',
+      icon: Icon(Icons.chat_bubble_outline),
+      selectedIcon: Icon(Icons.chat_bubble),
+      label: 'Coach',
     ),
   ];
 
@@ -94,12 +94,12 @@ class _MainShellState extends State<MainShell> {
         activeTextColor = GelatoTheme.orangeDark;
         break;
       case 3:
-        indicatorColor = GelatoTheme.purple;
-        activeTextColor = GelatoTheme.purpleDark;
-        break;
-      case 4:
         indicatorColor = GelatoTheme.blue;
         activeTextColor = GelatoTheme.blueDark;
+        break;
+      case 4:
+        indicatorColor = GelatoTheme.purple;
+        activeTextColor = GelatoTheme.purpleDark;
         break;
       default:
         indicatorColor = Colors.grey[300]!;

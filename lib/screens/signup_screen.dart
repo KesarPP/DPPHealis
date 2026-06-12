@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import '../main.dart'; // MainShell
 import 'clinician_dashboard_screen.dart';
 import 'risk_assessment_step1_screen.dart';
 import '../data/gelato_theme.dart';

@@ -12,7 +12,7 @@ class RiskAssessmentStep1Screen extends StatefulWidget {
 }
 
 class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
-  int _age = 30;
+  final _ageController = TextEditingController(text: '30');
   bool _isMan = true; // true = Man, false = Woman
   final _heightController = TextEditingController(text: '0');
   final _weightController = TextEditingController(text: '0');
@@ -20,6 +20,7 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
 
   @override
   void dispose() {
+    _ageController.dispose();
     _heightController.dispose();
     _weightController.dispose();
     _waistController.dispose();
@@ -118,12 +119,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '1. What is your current age?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '1. What is your current age?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               Text(
@@ -145,21 +148,27 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                                 _buildCircleButton(
                                   icon: Icons.remove,
                                   onPressed: () {
-                                    if (_age > 1) {
-                                      setState(() => _age--);
+                                    final val = int.tryParse(_ageController.text) ?? 30;
+                                    if (val > 1) {
+                                      _ageController.text = '${val - 1}';
                                     }
                                   },
                                 ),
                                 const SizedBox(width: 16),
                                 SizedBox(
-                                  width: 40,
-                                  child: Text(
-                                    '$_age',
+                                  width: 50,
+                                  child: TextField(
+                                    controller: _ageController,
+                                    keyboardType: TextInputType.number,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900,
                                       color: GelatoTheme.textDark,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
                                     ),
                                   ),
                                 ),
@@ -167,7 +176,8 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                                 _buildCircleButton(
                                   icon: Icons.add,
                                   onPressed: () {
-                                    setState(() => _age++);
+                                    final val = int.tryParse(_ageController.text) ?? 30;
+                                    _ageController.text = '${val + 1}';
                                   },
                                 ),
                               ],
@@ -230,12 +240,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '3. What is your height?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '3. What is your height?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               Row(
@@ -293,12 +305,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '4. What is your current weight?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '4. What is your current weight?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               Row(
@@ -356,12 +370,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '5. What is your waist circumference?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
+                              const Expanded(
+                                child: Text(
+                                  '5. What is your waist circumference?',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: GelatoTheme.textDark,
+                                  ),
                                 ),
                               ),
                               const Icon(
