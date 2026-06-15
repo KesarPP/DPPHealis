@@ -22,7 +22,7 @@ class FoodTrackingScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildHeader(context),
-                const SizedBox(height: 40),
+                const SizedBox(height: 120),
                 const _WeeklyCalendar(),
                 const SizedBox(height: 24),
                 _buildCalorieGoalCard(),
@@ -43,20 +43,27 @@ class FoodTrackingScreen extends StatelessWidget {
       children: [
         // Background Gradient
         Container(
-          height: 240,
+          height: 360,
           width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [GelatoTheme.blue, GelatoTheme.green],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(32),
               bottomRight: Radius.circular(32),
             ),
-            border: Border(
+            border: const Border(
               bottom: BorderSide(color: Colors.black87, width: 1.5),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: 0.15),
+                Colors.black.withValues(alpha: 0.05),
+              ],
+            ),
+            image: const DecorationImage(
+              image: AssetImage('assets/images/meals_banner.png'),
+              fit: BoxFit.cover,
             ),
           ),
           child: SafeArea(
@@ -67,36 +74,19 @@ class FoodTrackingScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Food Tracking',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: GelatoTheme.textDark,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
                     ],
                   ),
                 ),
                 // Decorative circles (to capture the soft vibe of the food images without actual assets)
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildHeaderCircle(GelatoTheme.orange.withValues(alpha: 0.5)),
-                      _buildHeaderCircle(GelatoTheme.pink.withValues(alpha: 0.5)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40), // Space for overlapping quick actions
+
+                const SizedBox(height: 60), // Space for overlapping quick actions
               ],
             ),
           ),
         ),
         // Overlapping Quick Actions Row
         Positioned(
-          bottom: -20,
+          bottom: -60,
           left: 16,
           right: 16,
           child: Row(
@@ -137,7 +127,7 @@ class FoodTrackingScreen extends StatelessWidget {
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(16),
@@ -149,12 +139,12 @@ class FoodTrackingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 28, color: GelatoTheme.textDark),
+              Icon(icon, size: 34, color: GelatoTheme.textDark),
               const SizedBox(height: 8),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: GelatoTheme.textDark),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark),
               ),
             ],
           ),

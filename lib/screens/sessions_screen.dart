@@ -96,8 +96,7 @@ class SessionsScreen extends StatelessWidget {
           ],
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildHeroBanner() {
