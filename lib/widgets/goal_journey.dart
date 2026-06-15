@@ -25,7 +25,9 @@ class _GoalJourneyState extends State<GoalJourney>
   late Animation<double> _glowAnim;
 
   late AnimationController _rotationController;
+  bool _isPressed = false;
 
+  // Exact milestones mapping from the mockup image
   final List<_MilestoneData> milestones = const [
     _MilestoneData(
       steps: 25000,
@@ -34,7 +36,6 @@ class _GoalJourneyState extends State<GoalJourney>
       icon: Icons.directions_walk_rounded,
       isCompleted: true,
       isToday: false,
-      colorTheme: 'green',
     ),
     _MilestoneData(
       steps: 50000,
@@ -43,7 +44,6 @@ class _GoalJourneyState extends State<GoalJourney>
       icon: Icons.directions_run_rounded,
       isCompleted: true,
       isToday: false,
-      colorTheme: 'pink',
     ),
     _MilestoneData(
       steps: 75000,
@@ -52,7 +52,6 @@ class _GoalJourneyState extends State<GoalJourney>
       icon: Icons.directions_run_rounded,
       isCompleted: true,
       isToday: false,
-      colorTheme: 'pink',
     ),
     _MilestoneData(
       steps: 102450,
@@ -61,7 +60,6 @@ class _GoalJourneyState extends State<GoalJourney>
       icon: Icons.directions_walk_rounded,
       isCompleted: false,
       isToday: true,
-      colorTheme: 'golden',
     ),
     _MilestoneData(
       steps: 125000,
@@ -70,7 +68,6 @@ class _GoalJourneyState extends State<GoalJourney>
       icon: Icons.eco_rounded,
       isCompleted: false,
       isToday: false,
-      colorTheme: 'blue',
     ),
     _MilestoneData(
       steps: 150000,
@@ -79,7 +76,6 @@ class _GoalJourneyState extends State<GoalJourney>
       icon: Icons.terrain_rounded,
       isCompleted: false,
       isToday: false,
-      colorTheme: 'golden',
     ),
   ];
 
@@ -121,55 +117,72 @@ class _GoalJourneyState extends State<GoalJourney>
     super.dispose();
   }
 
+  // Get Y offset for wave curve path based on index
   double _getYOffset(int idx) {
-    // Shifted down by 20px to prevent the glow effect from getting cut off at the top
-    final offsets = [52.0, 68.0, 62.0, 44.0, 58.0, 52.0];
+    // Wave pattern similar to mockups: down, up, down, up
+    final offsets = [32.0, 48.0, 42.0, 24.0, 38.0, 32.0];
     if (idx >= 0 && idx < offsets.length) {
       return offsets[idx];
     }
-    return 50.0;
+    return 30.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF8EE), 
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFD6C6B5), width: 8), // Thicker pastel brown border
-        boxShadow: GelatoTheme.cardShadow,
-      ),
-      child: CustomPaint(
-        painter: _DashedBorderPainter(),
-        child: Padding(
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFFFFCBE1),
+                Color(0xFFD6E5BD),
+                Color(0xFFF9E1A8),
+                Color(0xFFBCD8EC),
+                Color(0xFFDCCCEC),
+                Color(0xFFFFDAB4),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: GelatoTheme.cardRadius,
+            border: GelatoTheme.cardBorder,
+            boxShadow: GelatoTheme.cardShadow,
+          ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row (Matches mockup exactly)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Row(
                   children: [
+                    // Green running background circle
                     Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDBEAFE),
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFDCFCE7),
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
                       ),
                       child: const Center(
                         child: Icon(
                           Icons.directions_run_rounded,
-                          color: Color(0xFF2563EB),
-                          size: 28,
+                          color: Color(0xFF22C55E),
+                          size: 22,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,21 +190,20 @@ class _GoalJourneyState extends State<GoalJourney>
                           Text(
                             'Journey to Your Goal',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 15.5,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF1E293B),
-                              letterSpacing: -0.5,
+                              color: Color(0xFF0F172A),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 2),
+                          SizedBox(height: 1),
                           Text(
                             "You're doing great! Keep going!",
                             style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFFD97706), 
-                              fontWeight: FontWeight.w700,
+                              fontSize: 10.5,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -204,36 +216,38 @@ class _GoalJourneyState extends State<GoalJourney>
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
+          // Milestones Path + Trophy Card Row
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Milestones Path (Left)
                 SizedBox(
                   width: 380,
                   child: AnimatedBuilder(
-                  animation: Listenable.merge([_progressAnim, _glowAnim, _rotationController]),
+                  animation: Listenable.merge([_progressAnim, _glowAnim]),
                   builder: (context, _) {
                     return SizedBox(
-                      height: 185, // Increased height to accommodate the shifted path
+                      height: 165,
                       child: Stack(
-                        clipBehavior: Clip.none, // Prevent clipping of the path connecting to trophy
                         children: [
+                          // 1. Curved dashed connector line
                           Positioned.fill(
                             child: CustomPaint(
                               painter: _PathLinePainter(
-                                completedCount: 3, 
+                                completedCount: 3, // completed 25k, 50k, 75k
                                 totalCount: 6,
                                 yOffsets: List.generate(6, (i) => _getYOffset(i)),
                                 animValue: _progressAnim.value,
-                                flowValue: _rotationController.value,
                               ),
                             ),
                           ),
 
+                          // 2. Node elements and highlight background
                           Positioned.fill(
                             child: LayoutBuilder(
                               builder: (context, constraints) {
@@ -241,7 +255,6 @@ class _GoalJourneyState extends State<GoalJourney>
                                 final segmentWidth = totalWidth / 5;
 
                                 return Stack(
-                                  clipBehavior: Clip.none, // Prevent any node glow clipping
                                   children: milestones.asMap().entries.map((entry) {
                                     final idx = entry.key;
                                     final m = entry.value;
@@ -249,48 +262,50 @@ class _GoalJourneyState extends State<GoalJourney>
                                     final double posY = _getYOffset(idx);
                                     final isCompleted = m.isCompleted;
 
-                                    if (idx == 5) return const SizedBox(); // Don't draw Goal node to avoid overlapping trophy
-
                                     return Stack(
-                                      clipBehavior: Clip.none,
                                       children: [
+                                        // Removed Today node background vertical pill highlight
+
+                                        // Node Pedestal Circle
                                         Positioned(
-                                          left: posX - (m.isToday ? 28 : 22),
-                                          top: posY - (m.isToday ? 28 : 22),
+                                          left: posX - 21,
+                                          top: posY - 21,
                                           child: _buildMilestoneNode(m, isCompleted),
                                         ),
 
+                                        // Values ("25K", etc.)
                                         Positioned(
                                           left: posX - 35,
-                                          top: posY + (m.isToday ? 36 : 28),
+                                          top: posY + 28,
                                           width: 70,
                                           child: Text(
                                             m.displaySteps,
                                             style: TextStyle(
-                                              fontSize: m.isToday ? 12 : 11,
+                                              fontSize: m.isToday ? 10.5 : 9.5,
                                               fontWeight: FontWeight.w900,
                                               color: m.isToday
-                                                  ? const Color(0xFFD97706) 
-                                                  : const Color(0xFF334155),
+                                                  ? const Color(0xFFD97706) // Golden
+                                                  : const Color(0xFF0F172A),
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
                                         ),
 
+                                        // Labels ("First Step", etc.)
                                         Positioned(
                                           left: posX - 40,
-                                          top: posY + (m.isToday ? 51 : 43),
+                                          top: posY + 43,
                                           width: 80,
                                           child: Text(
                                             m.label,
                                             style: TextStyle(
-                                              fontSize: 9.5,
+                                              fontSize: 8.5,
                                               fontWeight: m.isToday
                                                   ? FontWeight.w800
-                                                  : FontWeight.w700,
+                                                  : FontWeight.w600,
                                               color: m.isToday
-                                                  ? const Color(0xFFD97706) 
-                                                  : const Color(0xFF475569),
+                                                  ? const Color(0xFFD97706) // Golden
+                                                  : const Color(0xFF64748B),
                                             ),
                                             textAlign: TextAlign.center,
                                             maxLines: 1,
@@ -298,9 +313,10 @@ class _GoalJourneyState extends State<GoalJourney>
                                           ),
                                         ),
 
+                                        // Checkmark green circle below completed nodes
                                         Positioned(
-                                          left: posX - 8,
-                                          top: posY + (m.isToday ? 70 : 62),
+                                          left: posX - 7,
+                                          top: posY + 62,
                                           child: _buildStatusCheckIndicator(m, isCompleted),
                                         ),
                                       ],
@@ -319,7 +335,7 @@ class _GoalJourneyState extends State<GoalJourney>
 
               const SizedBox(width: 8),
 
-              // Trophy Card (Right)
+              // Trophy Card (Right) - Confetti theme matches mockup
               Container(
                 width: 90,
                 height: 155,
@@ -332,9 +348,11 @@ class _GoalJourneyState extends State<GoalJourney>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Confetti and Trophy stack
                     Stack(
                       alignment: Alignment.center,
                       children: [
+                        // Rotating sunburst rays behind trophy
                         AnimatedBuilder(
                           animation: _rotationController,
                           builder: (context, child) {
@@ -342,11 +360,12 @@ class _GoalJourneyState extends State<GoalJourney>
                               size: const Size(60, 60),
                               painter: _SunburstPainter(
                                 rotationAngle: _rotationController.value * 2 * math.pi,
-                                color: const Color(0xFFB45309).withValues(alpha: 0.12),
+                                color: const Color(0xFFB45309).withOpacity(0.12),
                               ),
                             );
                           },
                         ),
+                        // Confetti sparkles
                         ...List.generate(6, (i) {
                           final angles = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
                           final radius = [18.0, 22.0, 20.0, 18.0, 22.0, 20.0];
@@ -377,7 +396,7 @@ class _GoalJourneyState extends State<GoalJourney>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFBBF24).withValues(alpha: 0.35),
+                                color: const Color(0xFFFBBF24).withOpacity(0.35),
                                 blurRadius: 10,
                                 spreadRadius: 2,
                               ),
@@ -404,7 +423,7 @@ class _GoalJourneyState extends State<GoalJourney>
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF1E3A8A), 
+                        color: Color(0xFF1E3A8A), // Indigo
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -413,7 +432,7 @@ class _GoalJourneyState extends State<GoalJourney>
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A), 
+                        color: Color(0xFF0F172A), // Black
                       ),
                     ),
                     const Text(
@@ -432,84 +451,74 @@ class _GoalJourneyState extends State<GoalJourney>
           ),
         ],
       ),
-        ),
-      ),
+    ),
+    ),
     );
   }
 
   Widget _buildMilestoneNode(_MilestoneData m, bool isCompleted) {
-    Color bgColor;
-    Color iconColor;
-    Color borderColor;
-
-    switch (m.colorTheme) {
-      case 'pink':
-        bgColor = const Color(0xFFFCE7F3);
-        iconColor = const Color(0xFFDB2777);
-        borderColor = const Color(0xFFFBCFE8);
-        break;
-      case 'green':
-        bgColor = const Color(0xFFDCFCE7);
-        iconColor = const Color(0xFF16A34A);
-        borderColor = const Color(0xFFBBF7D0);
-        break;
-      case 'blue':
-        bgColor = const Color(0xFFDBEAFE);
-        iconColor = const Color(0xFF2563EB);
-        borderColor = const Color(0xFFBFDBFE);
-        break;
-      case 'golden':
-      default:
-        bgColor = const Color(0xFFFEF3C7);
-        iconColor = const Color(0xFFD97706);
-        borderColor = const Color(0xFFFDE68A);
-        break;
-    }
-
     if (m.isToday) {
+      // Today Node: double border and bright pulsing glow
       return Container(
-        width: 56, 
-        height: 56,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
-          color: bgColor,
+          color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: borderColor, width: 5.0), // Thicker icon border
+          border: Border.all(
+            color: const Color(0xFFF59E0B), // Bright golden
+            width: 2.2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 4,
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 3,
               offset: const Offset(0, 3),
             ),
             BoxShadow(
-              color: iconColor.withValues(alpha: 0.6 * _glowAnim.value),
-              blurRadius: 18,
-              spreadRadius: 5,
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.4 * _glowAnim.value),
+              blurRadius: 10,
+              spreadRadius: 2.5,
             ),
           ],
         ),
         child: Center(
-          child: Icon(m.icon, color: iconColor, size: 28),
+          child: Icon(
+            m.icon,
+            color: const Color(0xFFF59E0B),
+            size: 16,
+          ),
         ),
       );
     }
 
+    final activeColor = isCompleted ? const Color(0xFF22C55E) : const Color(0xFFCBD5E1);
+
     return Container(
-      width: 44,
-      height: 44,
+      width: 30,
+      height: 30,
       decoration: BoxDecoration(
-        color: bgColor,
+        color: Colors.white,
         shape: BoxShape.circle,
-        border: Border.all(color: borderColor, width: 3.5), // Thicker icon border
+        border: Border.all(
+          color: isCompleted ? const Color(0xFF4ADE80) : const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
         boxShadow: [
+          // 3D bottom depth shadow
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 3,
+            blurRadius: 2,
             offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Center(
-        child: Icon(m.icon, color: iconColor, size: 22),
+        child: Icon(
+          m.icon,
+          color: activeColor,
+          size: 14,
+        ),
       ),
     );
   }
@@ -517,34 +526,27 @@ class _GoalJourneyState extends State<GoalJourney>
   Widget _buildStatusCheckIndicator(_MilestoneData m, bool isCompleted) {
     if (m.isToday) {
       return Container(
-        height: 16,
-        width: 16,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF59E0B),
+        height: 12,
+        width: 12,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF59E0B), // Golden dot for today
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
-              blurRadius: 4,
-              spreadRadius: 1,
-            )
-          ]
         ),
       );
     }
 
     if (isCompleted) {
       return Container(
-        width: 16,
-        height: 16,
+        width: 14,
+        height: 14,
         decoration: const BoxDecoration(
-          color: Color(0xFF22C55E),
+          color: Color(0xFF22C55E), // Bright Green Circle
           shape: BoxShape.circle,
         ),
         child: const Icon(
           Icons.check,
           color: Colors.white,
-          size: 11,
+          size: 9.5,
         ),
       );
     }
@@ -558,14 +560,12 @@ class _PathLinePainter extends CustomPainter {
   final int totalCount;
   final List<double> yOffsets;
   final double animValue;
-  final double flowValue;
 
   _PathLinePainter({
     required this.completedCount,
     required this.totalCount,
     required this.yOffsets,
     required this.animValue,
-    required this.flowValue,
   });
 
   @override
@@ -574,10 +574,7 @@ class _PathLinePainter extends CustomPainter {
     final List<Offset> points = [];
 
     for (int i = 0; i < totalCount; i++) {
-      double x = 32 + i * segmentWidth;
-      if (i == totalCount - 1) {
-        x = size.width + 25; // Extend path out of bounds so it connects beautifully to the Trophy
-      }
+      final double x = 32 + i * segmentWidth;
       final double y = yOffsets[i];
       points.add(Offset(x, y));
     }
@@ -586,19 +583,12 @@ class _PathLinePainter extends CustomPainter {
 
     final paintCompleted = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
+      ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
-
-    final paintCompletedGlow = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7.0
-      ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF4ADE80).withValues(alpha: 0.4)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
 
     final paintIncomplete = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
+      ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < points.length - 1; i++) {
@@ -608,44 +598,32 @@ class _PathLinePainter extends CustomPainter {
       final segmentPath = Path();
       segmentPath.moveTo(p1.dx, p1.dy);
 
+      // Create a smooth spline dip/curve between nodes
       final double cpX = (p1.dx + p2.dx) / 2;
-      final double cpY = (p1.dy + p2.dy) / 2 + (i % 2 == 0 ? 8 : -8);
+      final double cpY = (p1.dy + p2.dy) / 2 + (i % 2 == 0 ? 6 : -6);
       segmentPath.quadraticBezierTo(cpX, cpY, p2.dx, p2.dy);
 
       final isSegmentCompleted = i < completedCount;
 
-      final double segmentStart = i / (totalCount - 1);
-      final double segmentEnd = (i + 1) / (totalCount - 1);
-      final double segmentProgress = ((animValue - segmentStart) / (segmentEnd - segmentStart)).clamp(0.0, 1.0);
-
-      if (segmentProgress > 0) {
-        if (isSegmentCompleted) {
-          paintCompleted.color = const Color(0xFF4ADE80); 
-          double flowOffset = flowValue * 250; // Speed of marching ants
-          _drawDashedPath(canvas, segmentPath, paintCompletedGlow, 6.0, 5.0, flowOffset: flowOffset, progress: segmentProgress);
-          _drawDashedPath(canvas, segmentPath, paintCompleted, 6.0, 5.0, flowOffset: flowOffset, progress: segmentProgress);
-        } else {
-          paintIncomplete.color = const Color(0xFF94A3B8).withValues(alpha: 0.5); 
-          _drawDashedPath(canvas, segmentPath, paintIncomplete, 4.0, 6.0, progress: segmentProgress);
-        }
+      if (isSegmentCompleted) {
+        paintCompleted.color = const Color(0xFF22C55E); // Bright Green path
+        _drawDashedPath(canvas, segmentPath, paintCompleted, 4.0, 3.0);
+      } else {
+        paintIncomplete.color = const Color(0xFFCBD5E1); // Grey path
+        _drawDashedPath(canvas, segmentPath, paintIncomplete, 3.0, 4.0);
       }
     }
   }
 
-  void _drawDashedPath(Canvas canvas, Path path, Paint paint, double dashWidth, double dashSpace, {double flowOffset = 0.0, double progress = 1.0}) {
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint, double dashWidth, double dashSpace) {
     final metrics = path.computeMetrics();
     for (final metric in metrics) {
-      double totalLength = metric.length * progress;
-      final dashCycle = dashWidth + dashSpace;
-      double distance = (flowOffset % dashCycle) - dashCycle;
-      while (distance < totalLength) {
-        final double start = math.max(0.0, distance);
-        final double end = math.min(totalLength, distance + dashWidth);
-        if (start < end) {
-          final Path extract = metric.extractPath(start, end);
-          canvas.drawPath(extract, paint);
-        }
-        distance += dashCycle;
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final double length = dashWidth;
+        final Path extract = metric.extractPath(distance, distance + length);
+        canvas.drawPath(extract, paint);
+        distance += length + dashSpace;
       }
     }
   }
@@ -661,7 +639,6 @@ class _MilestoneData {
   final IconData icon;
   final bool isCompleted;
   final bool isToday;
-  final String colorTheme;
 
   const _MilestoneData({
     required this.steps,
@@ -670,7 +647,6 @@ class _MilestoneData {
     required this.icon,
     required this.isCompleted,
     required this.isToday,
-    required this.colorTheme,
   });
 }
 
@@ -688,8 +664,8 @@ class _SunburstPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    const int rayCount = 14;
-    const double angleStep = 2 * math.pi / rayCount;
+    final int rayCount = 14;
+    final double angleStep = 2 * math.pi / rayCount;
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
@@ -715,33 +691,4 @@ class _SunburstPainter extends CustomPainter {
   bool shouldRepaint(covariant _SunburstPainter oldDelegate) {
     return oldDelegate.rotationAngle != rotationAngle || oldDelegate.color != color;
   }
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-          Rect.fromLTWH(6, 6, size.width - 12, size.height - 12),
-          const Radius.circular(18)));
-          
-    final paint = Paint()
-      ..color = const Color(0xFFB48A66) // Dark pastel brown
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      double distance = 0.0;
-      while (distance < metric.length) {
-        final double length = 4.0;
-        final Path extract = metric.extractPath(distance, distance + length);
-        canvas.drawPath(extract, paint);
-        distance += length + 5.0;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
