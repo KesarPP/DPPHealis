@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/gelato_theme.dart';
+import '../screens/weigh_in_screen.dart';
+import '../main.dart';
 
 class DashboardProgressSnapshot extends StatefulWidget {
   const DashboardProgressSnapshot({super.key});
@@ -42,19 +44,19 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       history: [30, 45, 15, 35, 28],
       insight: 'Almost there! A quick 2-minute walk will complete your daily circle.',
     ),
-    'water': _MetricData(
-      key: 'water',
-      label: 'Water Intake',
-      icon: Icons.local_drink_rounded,
-      value: 6.0,
-      max: 8.0,
-      unit: 'classes',
+    'weigh_in': _MetricData(
+      key: 'weigh_in',
+      label: 'Weekly Weigh-In',
+      icon: Icons.scale_rounded,
+      value: 78.4,
+      max: 72.0,
+      unit: 'kg',
       color: GelatoTheme.blue,
       colorDark: GelatoTheme.blueDark,
       bgLight: const Color(0xFFF2F6FA),
       bgTint: const Color(0x2BBCD8EC),
-      history: [8, 7, 8, 6, 6],
-      insight: 'Hydration is looking steady. Sip some water now to maintain momentum.',
+      history: [82.5, 81.8, 81.2, 80.5, 79.8],
+      insight: 'Your weight is trending down! Tap to log or view weight progress.',
     ),
     'sleep': _MetricData(
       key: 'sleep',
@@ -168,7 +170,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
   }
 
   List<Widget> _buildCardLayout() {
-    final List<String> keys = ['meals', 'activity', 'water', 'sleep'];
+    final List<String> keys = ['meals', 'activity', 'weigh_in', 'sleep'];
     final List<List<String>> rows = [];
     List<String> currentRow = [];
     int currentSpan = 0;
@@ -220,7 +222,10 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
   Widget _buildCard(String key) {
     final m = _metrics[key]!;
     final isExpanded = _expandedKey == key;
-    final pct = ((m.value / m.max) * 100).round();
+    final progressRatio = key == 'weigh_in'
+        ? ((82.5 - m.value) / (82.5 - m.max)).clamp(0.0, 1.0)
+        : (m.value / m.max);
+    final pct = (progressRatio * 100).round();
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 250),
@@ -228,9 +233,20 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
-          setState(() {
-            _expandedKey = isExpanded ? null : key;
-          });
+          if (key == 'weigh_in') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WeighInScreen()),
+            );
+          } else if (key == 'meals') {
+            MainShell.of(context)?.selectedIndex = 1;
+          } else if (key == 'activity') {
+            MainShell.of(context)?.selectedIndex = 2;
+          } else {
+            setState(() {
+              _expandedKey = isExpanded ? null : key;
+            });
+          }
         },
         child: Container(
           padding: const EdgeInsets.all(12),
@@ -255,7 +271,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                       alignment: Alignment.center,
                       children: [
                         TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: m.value / m.max),
+                          tween: Tween(begin: 0, end: progressRatio),
                           duration: const Duration(milliseconds: 700),
                           builder: (context, value, _) {
                             return CustomPaint(
@@ -343,7 +359,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      '$pct% MET',
+                      key == 'weigh_in' ? '$pct% GOAL' : '$pct% MET',
                       style: TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w900,
@@ -352,7 +368,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                     ),
                   ),
                   Text(
-                    isExpanded ? 'COLLAPSE' : 'LOG',
+                    isExpanded ? 'COLLAPSE' : (key == 'weigh_in' ? 'VIEW' : 'LOG'),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,

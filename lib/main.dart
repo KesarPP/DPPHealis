@@ -33,12 +33,22 @@ class DPPApp extends StatelessWidget {
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
+  static MainShellState? of(BuildContext context) {
+    return context.findAncestorStateOfType<MainShellState>();
+  }
+
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+
+  set selectedIndex(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   final List<Widget> _screens = const [
     DashboardScreen(),

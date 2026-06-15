@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../screens/profile_screen.dart';
+import '../screens/weigh_in_screen.dart';
 
 class DashboardHeader extends StatefulWidget {
   const DashboardHeader({super.key});
@@ -16,6 +17,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
   late Animation<double> _bellAngle;
   late AnimationController _pulseController;
   late Animation<double> _pulseScale;
+  bool _hasNotification = true;
 
   @override
   void initState() {
@@ -186,7 +188,17 @@ class _DashboardHeaderState extends State<DashboardHeader>
 
           // Bell button
           GestureDetector(
-            onTap: () {},
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const WeighInScreen()),
+              );
+              if (mounted) {
+                setState(() {
+                  _hasNotification = false;
+                });
+              }
+            },
             child: Container(
               width: 44,
               height: 44,
@@ -213,26 +225,27 @@ class _DashboardHeaderState extends State<DashboardHeader>
                     },
                   ),
                   // Notification red dot badge
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(3.5),
-                      decoration: BoxDecoration(
-                        color: GelatoTheme.pink,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: const Text(
-                        '1',
-                        style: TextStyle(
-                          color: GelatoTheme.pinkDark,
-                          fontSize: 7,
-                          fontWeight: FontWeight.bold,
+                  if (_hasNotification)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(3.5),
+                        decoration: BoxDecoration(
+                          color: GelatoTheme.pink,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: const Text(
+                          '1',
+                          style: TextStyle(
+                            color: GelatoTheme.pinkDark,
+                            fontSize: 7,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
