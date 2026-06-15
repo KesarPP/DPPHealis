@@ -137,7 +137,7 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
           shape: BoxShape.circle,
           border: Border.all(color: color, width: 5),
           boxShadow: [
-            BoxShadow(color: color.withOpacity(0.8), blurRadius: 10, spreadRadius: 2),
+            BoxShadow(color: color.withValues(alpha: 0.8), blurRadius: 10, spreadRadius: 2),
           ]
         ),
       ),
@@ -237,7 +237,7 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> with Sin
         border: Border.all(color: Colors.black87, width: 2.0),
         boxShadow: [
           BoxShadow(
-            color: isLocked ? Colors.transparent : widget.color.withOpacity(0.6), 
+            color: isLocked ? Colors.transparent : widget.color.withValues(alpha: 0.6), 
             blurRadius: 20, 
             spreadRadius: 2
           ),
@@ -252,7 +252,7 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> with Sin
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isLocked ? Colors.grey.shade200 : Colors.white,
-              boxShadow: isLocked ? null : [BoxShadow(color: widget.color.withOpacity(0.5), blurRadius: 8)]
+              boxShadow: isLocked ? null : [BoxShadow(color: widget.color.withValues(alpha: 0.5), blurRadius: 8)]
             ),
             child: Icon(widget.icon, color: isLocked ? Colors.grey.shade400 : widget.darkColor, size: 24),
           ),
@@ -309,13 +309,13 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> with Sin
             cardContent,
             Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16)
               ),
               width: 220,
               height: 100,
             ),
-            Icon(Icons.lock_rounded, size: 48, color: Colors.black.withOpacity(0.1)),
+            Icon(Icons.lock_rounded, size: 48, color: Colors.black.withValues(alpha: 0.1)),
           ],
         ),
       );
@@ -375,7 +375,7 @@ class _ExactPathPainter extends CustomPainter {
 
     final realDashedPath = dashPath(dashedPath, dashArray: 8.0);
 
-    final Rect bounds = const Rect.fromLTRB(0, 0, 400, 1150);
+    const Rect bounds = Rect.fromLTRB(0, 0, 400, 1150);
     final LinearGradient gradient = LinearGradient(
       colors: colors,
       stops: const [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
@@ -395,7 +395,7 @@ class _ExactPathPainter extends CustomPainter {
 
     // 2. Thick White Inner Core
     final corePaint = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+      ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10
       ..strokeCap = StrokeCap.round;
@@ -416,7 +416,7 @@ class _ExactPathPainter extends CustomPainter {
       if (tangent != null) {
         // Outer glow of orb
         final orbGlowPaint = Paint()
-          ..color = Colors.white.withOpacity(0.9)
+          ..color = Colors.white.withValues(alpha: 0.9)
           ..style = PaintingStyle.fill
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12.0);
         canvas.drawCircle(tangent.position, 20.0, orbGlowPaint);

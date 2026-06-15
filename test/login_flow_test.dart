@@ -8,7 +8,6 @@ import 'package:dpp_app/screens/clinician_dashboard_screen.dart';
 import 'package:dpp_app/screens/clinician_profile_screen.dart';
 import 'package:dpp_app/screens/coach_profile_screen.dart';
 import 'package:dpp_app/screens/dashboard_screen.dart';
-import 'package:dpp_app/screens/coach_chat_screen.dart';
 import 'package:dpp_app/screens/risk_assessment_step1_screen.dart';
 import 'package:dpp_app/screens/risk_assessment_step2_screen.dart';
 import 'package:dpp_app/screens/gpaq_step1_screen.dart';

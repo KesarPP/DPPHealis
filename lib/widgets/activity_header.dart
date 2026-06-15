@@ -46,9 +46,9 @@ class _ActivityHeaderState extends State<ActivityHeader>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Activity & Fitness',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                     color: GelatoTheme.textDark,

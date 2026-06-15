@@ -69,11 +69,20 @@ class FoodTrackingScreen extends StatelessWidget {
           child: SafeArea(
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Text(
+                        'Food Tracking',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: GelatoTheme.textDark,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
                     ],
                   ),
                 ),

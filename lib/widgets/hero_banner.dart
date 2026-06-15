@@ -50,11 +50,12 @@ class _HeroBannerState extends State<HeroBanner>
           borderRadius: BorderRadius.circular(18),
           child: Stack(
             children: [
-              // Real background picture loaded from assets/images/banner_run.png
+              // Real background picture loaded from assets/images/banner_run.jpg
               Positioned.fill(
                 child: Image.asset(
-                  'assets/images/banner_run.png',
+                  'assets/images/banner_run.jpg',
                   fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
                 ),
               ),
               // Gradient overlay for text readability

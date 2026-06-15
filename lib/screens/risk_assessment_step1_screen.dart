@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../main.dart'; // MainShell
+// MainShell
 import 'risk_assessment_step2_screen.dart';
 import '../data/gelato_theme.dart';
 
@@ -123,10 +123,10 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   '1. What is your current age?',
                                   style: TextStyle(
@@ -244,10 +244,10 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   '3. What is your height?',
                                   style: TextStyle(
@@ -259,12 +259,12 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                               ),
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.straighten,
                                     size: 14,
                                     color: GelatoTheme.blueDark,
                                   ),
-                                  const SizedBox(width: 4),
+                                  SizedBox(width: 4),
                                   Text(
                                     'Measurement',
                                     style: TextStyle(
@@ -433,10 +433,10 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   '4. What is your current weight?',
                                   style: TextStyle(
@@ -448,12 +448,12 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                               ),
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.monitor_weight_outlined,
                                     size: 14,
                                     color: GelatoTheme.orangeDark,
                                   ),
-                                  const SizedBox(width: 4),
+                                  SizedBox(width: 4),
                                   Text(
                                     'Weight',
                                     style: TextStyle(
@@ -498,10 +498,10 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   '5. What is your waist circumference?',
                                   style: TextStyle(
@@ -511,7 +511,7 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                                   ),
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.info_outline,
                                 size: 18,
                                 color: GelatoTheme.greenDark,
@@ -795,7 +795,7 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
     required Color activeColor,
     required Color darkColor,
   }) {
-    final borderColor = Colors.black;
+    const borderColor = Colors.black;
     final bgColor = isSelected ? activeColor : Colors.white;
 
     return GestureDetector(

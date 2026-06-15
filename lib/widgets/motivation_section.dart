@@ -198,11 +198,11 @@ class _MotivationSectionState extends State<MotivationSection>
                         ],
                       ),
                       const SizedBox(width: 8),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Days Active',
                               style: TextStyle(
                                 fontSize: 15,
@@ -245,7 +245,7 @@ class _MotivationSectionState extends State<MotivationSection>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFEA580C).withOpacity(0.4),
+                                        color: const Color(0xFFEA580C).withValues(alpha: 0.4),
                                         blurRadius: 8,
                                         spreadRadius: 1,
                                       )
@@ -299,7 +299,7 @@ class _MotivationSectionState extends State<MotivationSection>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           '+150 XP PENDING',
                           style: TextStyle(

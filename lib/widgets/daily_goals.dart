@@ -295,7 +295,7 @@ class _DailyGoalsState extends State<DailyGoals>
                                       size: const Size(50, 50),
                                       painter: _SunburstPainter(
                                         rotationAngle: _rotationController.value * 2 * math.pi,
-                                        color: const Color(0xFFB45309).withOpacity(isAllCompleted ? 0.22 : 0.06),
+                                        color: const Color(0xFFB45309).withValues(alpha: isAllCompleted ? 0.22 : 0.06),
                                       ),
                                     );
                                   },
@@ -305,7 +305,7 @@ class _DailyGoalsState extends State<DailyGoals>
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFBBF24).withOpacity(isAllCompleted ? 0.6 : 0.3),
+                                        color: const Color(0xFFFBBF24).withValues(alpha: isAllCompleted ? 0.6 : 0.3),
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),
@@ -394,12 +394,12 @@ class _GoalRow extends StatelessWidget {
               color: isDone ? Colors.white : goal.bgColor,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isDone ? Colors.black : goal.color.withOpacity(0.2),
+                color: isDone ? Colors.black : goal.color.withValues(alpha: 0.2),
                 width: 1.5,
               ),
               boxShadow: isDone ? [
                 BoxShadow(
-                  color: goal.color.withOpacity(0.3),
+                  color: goal.color.withValues(alpha: 0.3),
                   blurRadius: 4,
                   spreadRadius: 0.5,
                 )
@@ -452,7 +452,7 @@ class _GoalRow extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: goal.progress * animValue,
                     minHeight: 5,
-                    backgroundColor: goal.bgColor.withOpacity(0.3),
+                    backgroundColor: goal.bgColor.withValues(alpha: 0.3),
                     valueColor: AlwaysStoppedAnimation(isDone ? const Color(0xFF22C55E) : goal.color),
                   ),
                 ),
@@ -514,7 +514,7 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
       final paint = Paint()
-        ..color = p.color.withOpacity(p.life)
+        ..color = p.color.withValues(alpha: p.life)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(p.x, p.y), p.size * p.life, paint);
     }
@@ -538,8 +538,8 @@ class _SunburstPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    final int rayCount = 14;
-    final double angleStep = 2 * math.pi / rayCount;
+    const int rayCount = 14;
+    const double angleStep = 2 * math.pi / rayCount;
 
     canvas.save();
     canvas.translate(center.dx, center.dy);

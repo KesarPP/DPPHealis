@@ -146,7 +146,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                   border: Border.all(color: Colors.black, width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       offset: const Offset(1.5, 1.5),
                       blurRadius: 0,
                     ),
@@ -216,7 +216,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                     ),
                     boxShadow: selected ? [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         offset: const Offset(2.0, 2.0),
                         blurRadius: 0,
                       )
@@ -341,7 +341,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                     border: Border.all(color: Colors.black, width: 1.5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.15),
+                                        color: Colors.black.withValues(alpha: 0.15),
                                         offset: const Offset(1.5, 1.5),
                                         blurRadius: 0,
                                       ),
@@ -393,7 +393,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                             boxShadow: isSelected
                                                 ? [
                                                     BoxShadow(
-                                                      color: barColor.withOpacity(0.4),
+                                                      color: barColor.withValues(alpha: 0.4),
                                                       blurRadius: 10,
                                                       spreadRadius: 2,
                                                       offset: const Offset(0, 3),
@@ -401,7 +401,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                                   ]
                                                 : [
                                                     BoxShadow(
-                                                      color: Colors.black.withOpacity(0.1),
+                                                      color: Colors.black.withValues(alpha: 0.1),
                                                       blurRadius: 4,
                                                       offset: const Offset(0, 2),
                                                     )
@@ -441,8 +441,8 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                                         begin: Alignment.centerLeft,
                                                         end: Alignment.centerRight,
                                                         colors: [
-                                                          Colors.white.withOpacity(isSelected ? 0.7 : 0.5),
-                                                          Colors.white.withOpacity(0.0),
+                                                          Colors.white.withValues(alpha: isSelected ? 0.7 : 0.5),
+                                                          Colors.white.withValues(alpha: 0.0),
                                                         ],
                                                       ),
                                                     ),
@@ -455,7 +455,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                                   bottom: 0,
                                                   width: 3,
                                                   child: Container(
-                                                    color: Colors.black.withOpacity(0.05),
+                                                    color: Colors.black.withValues(alpha: 0.05),
                                                   ),
                                                 ),
                                                 // 4. Glossy Highlight - Top Cap Reflection (3D rounded cylinder shine)
@@ -474,8 +474,8 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                                         begin: Alignment.topCenter,
                                                         end: Alignment.bottomCenter,
                                                         colors: [
-                                                          Colors.white.withOpacity(isSelected ? 0.8 : 0.5),
-                                                          Colors.white.withOpacity(0.0),
+                                                          Colors.white.withValues(alpha: isSelected ? 0.8 : 0.5),
+                                                          Colors.white.withValues(alpha: 0.0),
                                                         ],
                                                       ),
                                                     ),
@@ -489,7 +489,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                                   width: 3,
                                                   child: Container(
                                                     decoration: BoxDecoration(
-                                                      color: Colors.white.withOpacity(isSelected ? 0.25 : 0.15),
+                                                      color: Colors.white.withValues(alpha: isSelected ? 0.25 : 0.15),
                                                       borderRadius: BorderRadius.circular(1),
                                                     ),
                                                   ),

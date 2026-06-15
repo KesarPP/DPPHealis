@@ -4,7 +4,6 @@ import '../widgets/dashboard_risk_card.dart';
 import '../widgets/dashboard_progress_snapshot.dart';
 import '../widgets/dashboard_timeline.dart';
 import '../widgets/dashboard_analytics.dart';
-import '../data/gelato_theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

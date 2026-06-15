@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart'; // MainShell
+// MainShell
 import '../data/gelato_theme.dart';
 import 'gpaq_step2_screen.dart';
 

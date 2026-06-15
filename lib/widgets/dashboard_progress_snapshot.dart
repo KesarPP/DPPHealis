@@ -262,7 +262,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                               painter: _CircularProgressPainter(
                                 value: value.clamp(0.0, 1.0),
                                 color: m.colorDark,
-                                trackColor: Colors.white.withOpacity(0.45),
+                                trackColor: Colors.white.withValues(alpha: 0.45),
                                 strokeWidth: 5.0,
                               ),
                             );
@@ -339,7 +339,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.55),
+                      color: Colors.white.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -356,7 +356,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
-                      color: m.colorDark.withOpacity(0.75),
+                      color: m.colorDark.withValues(alpha: 0.75),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -492,7 +492,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.55),
+                    color: Colors.white.withValues(alpha: 0.55),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.black, width: 1.2),
                   ),

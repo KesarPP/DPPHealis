@@ -80,7 +80,7 @@ class DashboardAnalytics extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: GelatoTheme.blueDark.withOpacity(0.8),
+                          color: GelatoTheme.blueDark.withValues(alpha: 0.8),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -99,7 +99,7 @@ class DashboardAnalytics extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: 5 / 16,
                           minHeight: 6,
-                          backgroundColor: Colors.white.withOpacity(0.45),
+                          backgroundColor: Colors.white.withValues(alpha: 0.45),
                           color: GelatoTheme.blueDark,
                         ),
                       ),
@@ -146,7 +146,7 @@ class DashboardAnalytics extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: GelatoTheme.greenDark.withOpacity(0.8),
+                          color: GelatoTheme.greenDark.withValues(alpha: 0.8),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -165,7 +165,7 @@ class DashboardAnalytics extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: 0.75,
                           minHeight: 6,
-                          backgroundColor: Colors.white.withOpacity(0.45),
+                          backgroundColor: Colors.white.withValues(alpha: 0.45),
                           color: GelatoTheme.greenDark,
                         ),
                       ),
@@ -269,15 +269,15 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.bar_chart_rounded,
                 color: GelatoTheme.purpleDark,
                 size: 20,
               ),
-              const SizedBox(width: 8),
-              const Expanded(
+              SizedBox(width: 8),
+              Expanded(
                 child: Text(
                   'Weekly Calorie Overview',
                   style: TextStyle(
@@ -289,7 +289,7 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'Avg: 2,015 kcal',
                 style: TextStyle(
@@ -406,7 +406,7 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                                     border: Border.all(color: Colors.black, width: 1.5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.15),
+                                        color: Colors.black.withValues(alpha: 0.15),
                                         offset: const Offset(1.5, 1.5),
                                         blurRadius: 0,
                                       ),
@@ -458,7 +458,7 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                                             boxShadow: isSelected
                                                 ? [
                                                     BoxShadow(
-                                                      color: barColor.withOpacity(0.4),
+                                                      color: barColor.withValues(alpha: 0.4),
                                                       blurRadius: 10,
                                                       spreadRadius: 2,
                                                       offset: const Offset(0, 3),
@@ -466,7 +466,7 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                                                   ]
                                                 : [
                                                     BoxShadow(
-                                                      color: Colors.black.withOpacity(0.1),
+                                                      color: Colors.black.withValues(alpha: 0.1),
                                                       blurRadius: 4,
                                                       offset: const Offset(0, 2),
                                                     )
@@ -506,8 +506,8 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                                                         begin: Alignment.centerLeft,
                                                         end: Alignment.centerRight,
                                                         colors: [
-                                                          Colors.white.withOpacity(isSelected ? 0.7 : 0.5),
-                                                          Colors.white.withOpacity(0.0),
+                                                          Colors.white.withValues(alpha: isSelected ? 0.7 : 0.5),
+                                                          Colors.white.withValues(alpha: 0.0),
                                                         ],
                                                       ),
                                                     ),
@@ -520,7 +520,7 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                                                   bottom: 0,
                                                   width: 3,
                                                   child: Container(
-                                                    color: Colors.black.withOpacity(0.05),
+                                                    color: Colors.black.withValues(alpha: 0.05),
                                                   ),
                                                 ),
                                                 // 4. Glossy Highlight - Top Cap Reflection (3D rounded cylinder shine)
@@ -539,8 +539,8 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                                                         begin: Alignment.topCenter,
                                                         end: Alignment.bottomCenter,
                                                         colors: [
-                                                          Colors.white.withOpacity(isSelected ? 0.8 : 0.5),
-                                                          Colors.white.withOpacity(0.0),
+                                                          Colors.white.withValues(alpha: isSelected ? 0.8 : 0.5),
+                                                          Colors.white.withValues(alpha: 0.0),
                                                         ],
                                                       ),
                                                     ),
@@ -554,7 +554,7 @@ class _DashboardCalorieChartState extends State<_DashboardCalorieChart>
                                                   width: 3,
                                                   child: Container(
                                                     decoration: BoxDecoration(
-                                                      color: Colors.white.withOpacity(isSelected ? 0.25 : 0.15),
+                                                      color: Colors.white.withValues(alpha: isSelected ? 0.25 : 0.15),
                                                       borderRadius: BorderRadius.circular(1),
                                                     ),
                                                   ),

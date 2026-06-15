@@ -205,7 +205,7 @@ class SessionsScreen extends StatelessWidget {
           Text('Session 6',
               style: TextStyle(
                   fontSize: 15,
-                  color: Colors.black.withOpacity(0.8),
+                  color: Colors.black.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
           // Upgraded Pill-styled gradient progress bar
@@ -268,7 +268,7 @@ class SessionsScreen extends StatelessWidget {
             'SESSION 6',
             style: TextStyle(
                 fontSize: 12,
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.0),
           ),
@@ -466,7 +466,7 @@ class _DottedGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF94A3B8).withOpacity(0.18) // subtle slate dots
+      ..color = const Color(0xFF94A3B8).withValues(alpha: 0.18) // subtle slate dots
       ..style = PaintingStyle.fill;
 
     const double spacing = 18.0;

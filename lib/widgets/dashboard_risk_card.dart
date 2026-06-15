@@ -368,7 +368,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                 // 1. Weekly Progress (Circular Ring)
                 Column(
                   children: [
-                    Text(
+                    const Text(
                       'Weekly Progress',
                       style: TextStyle(
                         fontSize: 12,
@@ -414,7 +414,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Program Progress',
                         style: TextStyle(
                           fontSize: 12,
@@ -454,10 +454,10 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                           ),
                         ],
                       ),
-                      SizedBox(height: 8),
-                      Row(
+                      const SizedBox(height: 8),
+                      const Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: _ProgressBarWidget(
                               pct: 31,
                               height: 6,

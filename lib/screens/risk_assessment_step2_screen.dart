@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart'; // MainShell
+// MainShell
 import '../data/gelato_theme.dart';
 import 'gpaq_step1_screen.dart';
 
@@ -618,7 +618,7 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
     required Color darkColor,
   }) {
     final isSelected = _exerciseLevel == value;
-    final borderColor = Colors.black;
+    const borderColor = Colors.black;
     final bgColor = isSelected ? color : Colors.white;
 
     return GestureDetector(
