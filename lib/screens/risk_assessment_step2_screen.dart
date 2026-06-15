@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import '../main.dart'; // MainShell
 import '../data/gelato_theme.dart';
+import 'gpaq_step1_screen.dart';
 
 class RiskAssessmentStep2Screen extends StatefulWidget {
-  const RiskAssessmentStep2Screen({super.key});
+  final int age;
+  final bool isMan;
+  final double waist;
+
+  const RiskAssessmentStep2Screen({
+    super.key,
+    required this.age,
+    required this.isMan,
+    required this.waist,
+  });
 
   @override
   State<RiskAssessmentStep2Screen> createState() => _RiskAssessmentStep2ScreenState();
@@ -297,13 +307,8 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          // Action to calculate risk score
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Calculating your risk score...'),
-                              backgroundColor: GelatoTheme.purpleDark,
-                            ),
-                          );
+                          final score = _calculateIdrsScore();
+                          _showRiskResultBottomSheet(score);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: GelatoTheme.purple,
@@ -390,10 +395,10 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const MainShell(),
+                            builder: (_) => const GPAQStep1Screen(),
                           ),
                         );
                       },
@@ -579,15 +584,15 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.white,
+          color: isSelected ? Colors.white : activeColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.black, width: 1.5),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: activeColor.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 0,
+                    offset: const Offset(2.0, 2.0),
                   ),
                 ]
               : null,
@@ -596,7 +601,7 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? darkColor : GelatoTheme.textLight,
+            color: isSelected ? darkColor : darkColor.withValues(alpha: 0.7),
             fontWeight: FontWeight.w900,
             fontSize: 14,
           ),
@@ -655,6 +660,222 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
           ],
         ),
       ),
+    );
+  }
+
+  int _calculateIdrsScore() {
+    int score = 0;
+
+    // 1. Age
+    if (widget.age < 35) {
+      score += 0;
+    } else if (widget.age >= 35 && widget.age <= 49) {
+      score += 20;
+    } else {
+      score += 30;
+    }
+
+    // 2. Waist circumference
+    if (widget.isMan) {
+      if (widget.waist >= 90) {
+        score += 10;
+      }
+    } else {
+      if (widget.waist >= 80) {
+        score += 10;
+      }
+    }
+
+    // 3. Physical Activity (exercise)
+    // 1 = Regular, 2 = Mild/occasional, 3 = No exercise
+    if (_exerciseLevel == 1) {
+      score += 0;
+    } else if (_exerciseLevel == 2) {
+      score += 10;
+    } else {
+      score += 30;
+    }
+
+    // 4. Family history
+    int familyScore = 0;
+    if (_parentDiabetic == 1) {
+      familyScore += 10;
+    }
+    if (_siblingDiabetic == 1) {
+      familyScore += 10;
+    }
+    if (familyScore > 20) {
+      familyScore = 20;
+    }
+    score += familyScore;
+
+    return score;
+  }
+
+  void _showRiskResultBottomSheet(int score) {
+    String riskLevel;
+    Color levelBg;
+    Color levelDark;
+    String description;
+
+    if (score < 30) {
+      riskLevel = 'Low Risk';
+      levelBg = GelatoTheme.green;
+      levelDark = GelatoTheme.greenDark;
+      description = 'Great news! Your Indian Diabetes Risk Score is low. Keep maintaining a healthy lifestyle to prevent any future risk.';
+    } else if (score >= 30 && score <= 50) {
+      riskLevel = 'Moderate Risk';
+      levelBg = GelatoTheme.yellow;
+      levelDark = GelatoTheme.yellowDark;
+      description = 'You have a moderate risk score. Adopting dietary improvements and increasing physical activity can help lower this score.';
+    } else {
+      riskLevel = 'High Risk';
+      levelBg = GelatoTheme.pink;
+      levelDark = GelatoTheme.pinkDark;
+      description = 'Your risk score is high. It is highly recommended to seek medical advice and implement structured lifestyle interventions.';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        side: BorderSide(color: Colors.black, width: 2.5),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Center(
+                child: Text(
+                  'IDRS ASSESSMENT RESULT',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: GelatoTheme.textLight,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '$score',
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      color: GelatoTheme.textDark,
+                    ),
+                  ),
+                  const Text(
+                    ' /90',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: GelatoTheme.textLight,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: levelBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.black, width: 1.5),
+                  ),
+                  child: Text(
+                    riskLevel,
+                    style: TextStyle(
+                      color: levelDark,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: GelatoTheme.textDark,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 0,
+                      offset: const Offset(3.5, 3.5),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close bottom sheet
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const GPAQStep1Screen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GelatoTheme.purple,
+                    foregroundColor: GelatoTheme.purpleDark,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      side: const BorderSide(color: Colors.black, width: 2.0),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Proceed to Physical Activity (GPAQ)',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
     );
   }
 }

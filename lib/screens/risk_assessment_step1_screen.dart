@@ -476,10 +476,16 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
+                        final ageVal = int.tryParse(_ageController.text) ?? 30;
+                        final waistVal = double.tryParse(_waistController.text) ?? 0.0;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const RiskAssessmentStep2Screen(),
+                            builder: (_) => RiskAssessmentStep2Screen(
+                              age: ageVal,
+                              isMan: _isMan,
+                              waist: waistVal,
+                            ),
                           ),
                         );
                       },
@@ -506,27 +512,6 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           SizedBox(width: 8),
                           Icon(Icons.arrow_forward, size: 18),
                         ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MainShell(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Skip for now',
-                        style: TextStyle(
-                          color: GelatoTheme.textLight,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
                       ),
                     ),
                   ),

@@ -9,6 +9,11 @@ import 'package:dpp_app/screens/clinician_profile_screen.dart';
 import 'package:dpp_app/screens/dashboard_screen.dart';
 import 'package:dpp_app/screens/risk_assessment_step1_screen.dart';
 import 'package:dpp_app/screens/risk_assessment_step2_screen.dart';
+import 'package:dpp_app/screens/gpaq_step1_screen.dart';
+import 'package:dpp_app/screens/gpaq_step2_screen.dart';
+import 'package:dpp_app/screens/gpaq_step3_screen.dart';
+import 'package:dpp_app/screens/gpaq_step4_screen.dart';
+import 'package:dpp_app/screens/gpaq_results_screen.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
 void main() {
@@ -65,6 +70,66 @@ void main() {
       matching: find.widgetWithText(ElevatedButton, 'Continue'),
     );
     await tester.tap(continueButton2);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep1Screen
+    expect(find.byType(GPAQStep1Screen), findsOneWidget);
+    expect(find.text('Risk Assessment (Step 4/7)'), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 1 Screen
+    final continueGPAQ1 = find.descendant(
+      of: find.byType(GPAQStep1Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(continueGPAQ1);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep2Screen
+    expect(find.byType(GPAQStep2Screen), findsOneWidget);
+    expect(find.text('Risk Assessment (Step 5/7)'), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 2 Screen
+    final continueGPAQ2 = find.descendant(
+      of: find.byType(GPAQStep2Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(continueGPAQ2);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep3Screen
+    expect(find.byType(GPAQStep3Screen), findsOneWidget);
+    expect(find.text('Risk Assessment (Step 6/7)'), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 3 Screen
+    final continueGPAQ3 = find.descendant(
+      of: find.byType(GPAQStep3Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(continueGPAQ3);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep4Screen
+    expect(find.byType(GPAQStep4Screen), findsOneWidget);
+    expect(find.text('Risk Assessment (Step 7/7)'), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 4 Screen
+    final calculateActivityScoreButton = find.descendant(
+      of: find.byType(GPAQStep4Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(calculateActivityScoreButton);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQResultsScreen
+    expect(find.byType(GPAQResultsScreen), findsOneWidget);
+    expect(find.text('Activity Results'), findsOneWidget);
+
+    // Tap Go to Dashboard on GPAQResultsScreen
+    final goToDashboardButton = find.descendant(
+      of: find.byType(GPAQResultsScreen),
+      matching: find.widgetWithText(ElevatedButton, 'Go to Dashboard'),
+    );
+    await tester.tap(goToDashboardButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
@@ -225,6 +290,61 @@ void main() {
       matching: find.widgetWithText(ElevatedButton, 'Continue'),
     );
     await tester.tap(continueButton2);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep1Screen
+    expect(find.byType(GPAQStep1Screen), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 1 Screen
+    final continueGPAQ1 = find.descendant(
+      of: find.byType(GPAQStep1Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(continueGPAQ1);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep2Screen
+    expect(find.byType(GPAQStep2Screen), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 2 Screen
+    final continueGPAQ2 = find.descendant(
+      of: find.byType(GPAQStep2Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(continueGPAQ2);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep3Screen
+    expect(find.byType(GPAQStep3Screen), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 3 Screen
+    final continueGPAQ3 = find.descendant(
+      of: find.byType(GPAQStep3Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(continueGPAQ3);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQStep4Screen
+    expect(find.byType(GPAQStep4Screen), findsOneWidget);
+
+    // Tap Continue on GPAQ Step 4 Screen
+    final calculateActivityScoreButton = find.descendant(
+      of: find.byType(GPAQStep4Screen),
+      matching: find.widgetWithText(ElevatedButton, 'Continue'),
+    );
+    await tester.tap(calculateActivityScoreButton);
+    await tester.pumpAndSettle();
+
+    // Verify we are on GPAQResultsScreen
+    expect(find.byType(GPAQResultsScreen), findsOneWidget);
+
+    // Tap Go to Dashboard on GPAQResultsScreen
+    final goToDashboardButton = find.descendant(
+      of: find.byType(GPAQResultsScreen),
+      matching: find.widgetWithText(ElevatedButton, 'Go to Dashboard'),
+    );
+    await tester.tap(goToDashboardButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
