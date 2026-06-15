@@ -16,50 +16,13 @@ class ActivityFitnessScreen extends StatefulWidget {
   State<ActivityFitnessScreen> createState() => _ActivityFitnessScreenState();
 }
 
-class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> with SingleTickerProviderStateMixin {
+class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
   final ScrollController _scrollController = ScrollController();
-  late AnimationController _animController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-    _animController.forward();
-  }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _animController.dispose();
     super.dispose();
-  }
-
-  Widget _buildAnimatedSliver(Widget child, int index) {
-    final start = (index * 0.1).clamp(0.0, 1.0);
-    final end = (start + 0.4).clamp(0.0, 1.0);
-    final animation = CurvedAnimation(
-      parent: _animController,
-      curve: Interval(start, end, curve: Curves.easeOutCubic),
-    );
-
-    return SliverToBoxAdapter(
-      child: AnimatedBuilder(
-        animation: animation,
-        builder: (context, childWidget) {
-          return Opacity(
-            opacity: animation.value,
-            child: Transform.translate(
-              offset: Offset(0, 40 * (1 - animation.value)),
-              child: childWidget,
-            ),
-          );
-        },
-        child: child,
-      ),
-    );
   }
 
   @override
@@ -78,27 +41,30 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> with Sing
               controller: _scrollController,
               physics: const BouncingScrollPhysics(),
               slivers: [
-                _buildAnimatedSliver(
-                  const Column(
+                // Fixed header
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       SizedBox(height: 12),
                       ActivityHeader(),
                       SizedBox(height: 12),
                     ],
                   ),
-                  0,
                 ),
-                _buildAnimatedSliver(
-                  const Column(
+
+                // Hero Banner
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       HeroBanner(),
                       SizedBox(height: 16),
                     ],
                   ),
-                  1,
                 ),
-                _buildAnimatedSliver(
-                  const Column(
+
+                // Journey to Goal
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       GoalJourney(
                         currentSteps: 102450,
@@ -107,10 +73,11 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> with Sing
                       SizedBox(height: 16),
                     ],
                   ),
-                  2,
                 ),
-                _buildAnimatedSliver(
-                  Padding(
+
+                // Today's Overview section header
+                SliverToBoxAdapter(
+                  child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,53 +122,59 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> with Sing
                       ],
                     ),
                   ),
-                  3,
                 ),
-                _buildAnimatedSliver(
-                  const Column(
+
+                // Overview Cards
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       OverviewCards(),
                       SizedBox(height: 16),
                     ],
                   ),
-                  4,
                 ),
-                _buildAnimatedSliver(
-                  const Column(
+
+                // Weekly Progress
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       WeeklyProgress(),
                       SizedBox(height: 16),
                     ],
                   ),
-                  5,
                 ),
-                _buildAnimatedSliver(
-                  const Column(
+
+                // Daily Goals
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       DailyGoals(),
                       SizedBox(height: 16),
                     ],
                   ),
-                  6,
                 ),
-                _buildAnimatedSliver(
-                  const Column(
+
+                // Activity Feed
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       ActivityFeed(),
                       SizedBox(height: 16),
                     ],
                   ),
-                  7,
                 ),
-                _buildAnimatedSliver(
-                  const Column(
+
+                // Motivation + Streak
+                const SliverToBoxAdapter(
+                  child: Column(
                     children: [
                       MotivationSection(),
                       SizedBox(height: 16),
                     ],
                   ),
-                  8,
                 ),
+
+                // Bottom padding for navigation bar and floating button
                 const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
               ],
             ),
