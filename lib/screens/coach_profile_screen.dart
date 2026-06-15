@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
 
-class ClinicianProfileScreen extends StatelessWidget {
-  final bool isViewOnly;
-  const ClinicianProfileScreen({super.key, this.isViewOnly = false});
+class CoachProfileScreen extends StatelessWidget {
+  const CoachProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -162,35 +160,6 @@ class ClinicianProfileScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-
-                      if (!isViewOnly) ...[
-                        const SizedBox(height: 24),
-                        // Sign Out Button
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.logout_rounded, color: Color(0xFFD32F2F)),
-                          label: const Text(
-                            'Sign Out',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Color(0xFFD32F2F),
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (_) => const LoginScreen()),
-                              (_) => false,
-                            );
-                          },
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -221,27 +190,13 @@ class ClinicianProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: _brandColor,
-                ),
-              ),
-              if (!isViewOnly)
-                GestureDetector(
-                  onTap: () {},
-                  child: const Icon(
-                    Icons.edit_rounded,
-                    color: Color(0xFF1A73E8),
-                    size: 20,
-                  ),
-                ),
-            ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: _brandColor,
+            ),
           ),
           const SizedBox(height: 16),
           child,

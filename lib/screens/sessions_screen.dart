@@ -92,7 +92,6 @@ class SessionsScreen extends StatelessWidget {
             const _SectionLabel('Session Timeline'),
             const SizedBox(height: 12),
             const JourneyMap(),
-            const SizedBox(height: 32),
           ],
         ),
       ),
