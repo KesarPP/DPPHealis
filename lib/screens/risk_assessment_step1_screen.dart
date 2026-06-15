@@ -14,14 +14,21 @@ class RiskAssessmentStep1Screen extends StatefulWidget {
 class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
   final _ageController = TextEditingController(text: '30');
   bool _isMan = true; // true = Man, false = Woman
-  final _heightController = TextEditingController(text: '0');
+  String _heightUnit = 'inches'; // 'cm', 'inches', 'ft_in'
+  final _heightCmController = TextEditingController(text: '170');
+  final _heightInchesController = TextEditingController(text: '67');
+  final _heightFtController = TextEditingController(text: '5');
+  final _heightInController = TextEditingController(text: '7');
   final _weightController = TextEditingController(text: '0');
   final _waistController = TextEditingController(text: '0');
 
   @override
   void dispose() {
     _ageController.dispose();
-    _heightController.dispose();
+    _heightCmController.dispose();
+    _heightInchesController.dispose();
+    _heightFtController.dispose();
+    _heightInController.dispose();
     _weightController.dispose();
     _waistController.dispose();
     super.dispose();
@@ -271,27 +278,151 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildInputRow(
-                            color: GelatoTheme.blue,
-                            label: 'Height (inches)',
-                            valueWidget: SizedBox(
-                              width: 80,
-                              child: TextField(
-                                controller: _heightController,
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.right,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: GelatoTheme.textDark,
-                                ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
+                          Row(
+                            children: [
+                              _buildUnitTab('inches', 'Inches'),
+                              const SizedBox(width: 8),
+                              _buildUnitTab('cm', 'cm'),
+                              const SizedBox(width: 8),
+                              _buildUnitTab('ft_in', 'Feet & Inches'),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          if (_heightUnit == 'inches')
+                            _buildInputRow(
+                              color: GelatoTheme.blue,
+                              label: 'Height',
+                              valueWidget: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 60,
+                                    child: TextField(
+                                      controller: _heightInchesController,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: GelatoTheme.textDark,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'in',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: GelatoTheme.textDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else if (_heightUnit == 'cm')
+                            _buildInputRow(
+                              color: GelatoTheme.blue,
+                              label: 'Height',
+                              valueWidget: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 60,
+                                    child: TextField(
+                                      controller: _heightCmController,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: GelatoTheme.textDark,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'cm',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: GelatoTheme.textDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else if (_heightUnit == 'ft_in')
+                            _buildInputRow(
+                              color: GelatoTheme.blue,
+                              label: 'Height',
+                              valueWidget: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 35,
+                                    child: TextField(
+                                      controller: _heightFtController,
+                                      keyboardType: TextInputType.number,
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: GelatoTheme.textDark,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'ft',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: GelatoTheme.textDark,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  SizedBox(
+                                    width: 35,
+                                    child: TextField(
+                                      controller: _heightInController,
+                                      keyboardType: TextInputType.number,
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: GelatoTheme.textDark,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'in',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: GelatoTheme.textDark,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -519,6 +650,76 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _onHeightUnitChanged(String newUnit) {
+    if (_heightUnit == newUnit) return;
+
+    double inches = 0.0;
+    
+    // Parse current value to inches
+    if (_heightUnit == 'cm') {
+      final cm = double.tryParse(_heightCmController.text) ?? 0.0;
+      inches = cm / 2.54;
+    } else if (_heightUnit == 'inches') {
+      inches = double.tryParse(_heightInchesController.text) ?? 0.0;
+    } else if (_heightUnit == 'ft_in') {
+      final ft = double.tryParse(_heightFtController.text) ?? 0.0;
+      final inchVal = double.tryParse(_heightInController.text) ?? 0.0;
+      inches = (ft * 12) + inchVal;
+    }
+
+    // Convert and set new unit values
+    setState(() {
+      _heightUnit = newUnit;
+      if (newUnit == 'cm') {
+        final cmVal = inches * 2.54;
+        _heightCmController.text = cmVal == 0.0 ? '0' : cmVal.toStringAsFixed(1);
+      } else if (newUnit == 'inches') {
+        _heightInchesController.text = inches == 0.0 ? '0' : inches.toStringAsFixed(1);
+      } else if (newUnit == 'ft_in') {
+        final totalInches = inches.round();
+        final ft = totalInches ~/ 12;
+        final inchVal = totalInches % 12;
+        _heightFtController.text = '$ft';
+        _heightInController.text = '$inchVal';
+      }
+    });
+  }
+
+  Widget _buildUnitTab(String unit, String label) {
+    final isSelected = _heightUnit == unit;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onHeightUnitChanged(unit),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? GelatoTheme.blue : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black, width: isSelected ? 2.0 : 1.0),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: GelatoTheme.blueDark.withValues(alpha: 0.3),
+                      offset: const Offset(2, 2),
+                      blurRadius: 0,
+                    )
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: isSelected ? GelatoTheme.textDark : GelatoTheme.textLight,
+            ),
+          ),
         ),
       ),
     );
