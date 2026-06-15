@@ -519,7 +519,7 @@ class _ExactPathPainter extends CustomPainter {
     canvas.drawPath(dashPath(dashedPath, dashArray: 10.0), treasureDashPaint);
 
     // 4. Energy Flow & Ambient Particle System
-    final metrics = mainPath.computeMetrics();
+    final metrics = mainPath.computeMetrics().toList();
     if (metrics.isEmpty) return;
     final metric = metrics.first;
     final totalLength = metric.length;
