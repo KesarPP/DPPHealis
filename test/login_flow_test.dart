@@ -6,6 +6,7 @@ import 'package:dpp_app/screens/login_screen.dart';
 import 'package:dpp_app/screens/signup_screen.dart';
 import 'package:dpp_app/screens/clinician_dashboard_screen.dart';
 import 'package:dpp_app/screens/clinician_profile_screen.dart';
+import 'package:dpp_app/screens/coach_profile_screen.dart';
 import 'package:dpp_app/screens/dashboard_screen.dart';
 import 'package:dpp_app/screens/coach_chat_screen.dart';
 import 'package:dpp_app/screens/risk_assessment_step1_screen.dart';
@@ -157,10 +158,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    // Verify we are on ClinicianProfileScreen
-    expect(find.byType(ClinicianProfileScreen), findsOneWidget);
+    // Verify we are on CoachProfileScreen
+    expect(find.byType(CoachProfileScreen), findsOneWidget);
     expect(find.text('Dr. Sarah Mitchell'), findsOneWidget);
-    // Verify that Sign Out and edit options are hidden in patient view
+    // Verify that Sign Out and edit options are not present
     expect(find.text('Sign Out'), findsNothing);
     expect(find.byIcon(Icons.edit_rounded), findsNothing);
 

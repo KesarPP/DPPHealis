@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
-import 'clinician_profile_screen.dart';
+import 'coach_profile_screen.dart';
 
 class CoachChatScreen extends StatefulWidget {
   const CoachChatScreen({super.key});
@@ -57,7 +57,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ClinicianProfileScreen(isViewOnly: true)),
+                  MaterialPageRoute(builder: (_) => const CoachProfileScreen()),
                 );
               },
               child: Container(
