@@ -22,7 +22,7 @@ class FoodTrackingScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildHeader(context),
-                const SizedBox(height: 120),
+                const SizedBox(height: 180),
                 const _WeeklyCalendar(),
                 const SizedBox(height: 24),
                 _buildCalorieGoalCard(),
@@ -88,14 +88,14 @@ class FoodTrackingScreen extends StatelessWidget {
                 ),
                 // Decorative circles (to capture the soft vibe of the food images without actual assets)
 
-                const SizedBox(height: 60), // Space for overlapping quick actions
+                const SizedBox(height: 70), // Space for overlapping quick actions
               ],
             ),
           ),
         ),
         // Overlapping Quick Actions Row
         Positioned(
-          bottom: -60,
+          bottom: -130,
           left: 16,
           right: 16,
           child: Row(
