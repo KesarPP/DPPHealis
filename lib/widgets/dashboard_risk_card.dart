@@ -19,7 +19,6 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
   late Animation<double> _ecgOffset;
 
   final int _targetScore = 42;
-  bool _isPressed = false;
 
   @override
   void initState() {
@@ -74,23 +73,16 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.98 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: GelatoTheme.cardRadius,
-            border: GelatoTheme.cardBorder,
-            boxShadow: GelatoTheme.cardShadow,
-          ),
-          child: Column(
-            children: [
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
+      ),
+      child: Column(
+        children: [
           // ─── TOP CONTAINER (SOLID PASTEL PINK) ───
           Container(
             padding: const EdgeInsets.all(20),
@@ -230,37 +222,14 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
                           builder: (context, _) {
                             return Transform.scale(
                               scale: _heartScale.value,
-                              child: SizedBox(
+                              child: Container(
                                 width: 88,
                                 height: 88,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Flawless golden glow layer using RadialGradient
-                                    Container(
-                                      width: 88 * _heartScale.value,
-                                      height: 88 * _heartScale.value,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: RadialGradient(
-                                          colors: [
-                                            Colors.white.withValues(alpha: 0.9), // Bright white center
-                                            const Color(0xFFE2E8F0).withValues(alpha: 0.6), // Silverish fade
-                                            const Color(0xFFE2E8F0).withValues(alpha: 0.0), // Transparent edge
-                                          ],
-                                          stops: const [0.3, 0.6, 1.0],
-                                        ),
-                                      ),
-                                    ),
-                                    // Beating heart layer
-                                    SizedBox(
-                                      width: 88,
-                                      height: 88,
-                                      child: CustomPaint(
-                                        painter: _ECGHeartPainter(ecgProgress: _ecgOffset.value),
-                                      ),
-                                    ),
-                                  ],
+                                decoration: const BoxDecoration(
+                                  color: Colors.transparent,
+                                ),
+                                child: CustomPaint(
+                                  painter: _ECGHeartPainter(ecgProgress: _ecgOffset.value),
                                 ),
                               ),
                             );
@@ -543,8 +512,6 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
           ),
         ],
       ),
-    ),
-    ),
     );
   }
 }
