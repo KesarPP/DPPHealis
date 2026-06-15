@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import 'clinician_profile_screen.dart';
 
 class CoachChatScreen extends StatefulWidget {
   const CoachChatScreen({super.key});
@@ -52,14 +53,22 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: GelatoTheme.purple,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black87, width: 1.2),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ClinicianProfileScreen(isViewOnly: true)),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: GelatoTheme.purple,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black87, width: 1.2),
+                ),
+                child: const Icon(Icons.auto_awesome_rounded, color: GelatoTheme.textDark, size: 20),
               ),
-              child: const Icon(Icons.auto_awesome_rounded, color: GelatoTheme.textDark, size: 20),
             ),
             const SizedBox(width: 12),
             const Column(

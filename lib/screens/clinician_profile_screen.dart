@@ -5,7 +5,8 @@ const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
 
 class ClinicianProfileScreen extends StatelessWidget {
-  const ClinicianProfileScreen({super.key});
+  final bool isViewOnly;
+  const ClinicianProfileScreen({super.key, this.isViewOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -162,33 +163,34 @@ class ClinicianProfileScreen extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 24),
-
-                      // Sign Out Button
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.logout_rounded, color: Color(0xFFD32F2F)),
-                        label: const Text(
-                          'Sign Out',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Color(0xFFD32F2F),
+                      if (!isViewOnly) ...[
+                        const SizedBox(height: 24),
+                        // Sign Out Button
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.logout_rounded, color: Color(0xFFD32F2F)),
+                          label: const Text(
+                            'Sign Out',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFFD32F2F),
+                            ),
                           ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                              (_) => false,
+                            );
+                          },
                         ),
-                        onPressed: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
-                            (_) => false,
-                          );
-                        },
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -230,14 +232,15 @@ class ClinicianProfileScreen extends StatelessWidget {
                   color: _brandColor,
                 ),
               ),
-              GestureDetector(
-                onTap: () {},
-                child: const Icon(
-                  Icons.edit_rounded,
-                  color: Color(0xFF1A73E8),
-                  size: 20,
+              if (!isViewOnly)
+                GestureDetector(
+                  onTap: () {},
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    color: Color(0xFF1A73E8),
+                    size: 20,
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
