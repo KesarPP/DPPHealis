@@ -141,27 +141,7 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
   }
 
   Widget _buildNode({required double x, required double y, required Color color}) {
-    // Breathing glow for nodes
-    double breath = (math.sin(_time * 3 + y) + 1) / 2; // 0 to 1
-    return Positioned(
-      left: x - 12,
-      top: y - 12,
-      child: Container(
-        width: 24, height: 24,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: color, width: 6),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.6 + (0.4 * breath)), 
-              blurRadius: 10 + (8 * breath), 
-              spreadRadius: 2 + (4 * breath)
-            ),
-          ]
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildStartIcon(Color color, Color darkColor) {
@@ -532,8 +512,8 @@ class _ExactPathPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
     
-    // Use negative time offset so the dashes flow downwards (forward)
-    canvas.drawPath(dashPath(mainPath, dashArray: 18.0, dashOffset: -time * 120.0), energyStreamPaint);
+    // Use positive time offset so the dashes flow downwards
+    canvas.drawPath(dashPath(mainPath, dashArray: 18.0, dashOffset: time * 120.0), energyStreamPaint);
   }
 
   @override
