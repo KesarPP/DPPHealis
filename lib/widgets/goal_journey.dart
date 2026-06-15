@@ -138,8 +138,11 @@ class _GoalJourneyState extends State<GoalJourney>
         duration: const Duration(milliseconds: 150),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
+          child: CustomPaint(
+            foregroundPainter: _DashedBorderPainter(),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [
                 Color(0xFFFFCBE1),
@@ -453,6 +456,8 @@ class _GoalJourneyState extends State<GoalJourney>
       ),
     ),
     ),
+    ),
+    ),
     );
   }
 
@@ -691,4 +696,33 @@ class _SunburstPainter extends CustomPainter {
   bool shouldRepaint(covariant _SunburstPainter oldDelegate) {
     return oldDelegate.rotationAngle != rotationAngle || oldDelegate.color != color;
   }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+          Rect.fromLTWH(6, 6, size.width - 12, size.height - 12),
+          const Radius.circular(18)));
+          
+    final paint = Paint()
+      ..color = const Color(0xFFB48A66) // Dark pastel brown
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final metrics = path.computeMetrics();
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final double length = 4.0;
+        final Path extract = metric.extractPath(distance, distance + length);
+        canvas.drawPath(extract, paint);
+        distance += length + 5.0;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
