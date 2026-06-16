@@ -8,12 +8,16 @@ class RiskAssessmentStep2Screen extends StatefulWidget {
   final int age;
   final bool isMan;
   final double waist;
+  final double height;
+  final double weight;
 
   const RiskAssessmentStep2Screen({
     super.key,
     required this.age,
     required this.isMan,
     required this.waist,
+    this.height = 170.0,
+    this.weight = 70.0,
   });
 
   @override
@@ -667,52 +671,90 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
   }
 
   int _calculateIdrsScore() {
-    int score = 0;
-
-    // 1. Age
-    if (widget.age < 35) {
-      score += 0;
-    } else if (widget.age >= 35 && widget.age <= 49) {
-      score += 20;
-    } else {
-      score += 30;
+    // 1. Calculate BMI (widget.height in cm, widget.weight in kg)
+    double heightInM = widget.height / 100.0;
+    double bmi = 0.0;
+    if (heightInM > 0) {
+      bmi = widget.weight / (heightInM * heightInM);
     }
 
-    // 2. Waist circumference
+    int rawScore = 0;
+
+    // --- Rules from Image 1 (FINDRISC) ---
+    // Age (years)
+    if (widget.age >= 45 && widget.age <= 54) {
+      rawScore += 2;
+    } else if (widget.age >= 55) {
+      rawScore += 3;
+    }
+
+    // BMI (Kg/m2)
+    if (bmi > 25 && bmi <= 30) {
+      rawScore += 1;
+    } else if (bmi > 30) {
+      rawScore += 3;
+    }
+
+    // Waist circumference (cm)
     if (widget.isMan) {
-      if (widget.waist >= 90) {
-        score += 10;
+      if (widget.waist >= 94 && widget.waist < 102) {
+        rawScore += 3;
+      } else if (widget.waist >= 102) {
+        rawScore += 4;
       }
     } else {
-      if (widget.waist >= 80) {
-        score += 10;
+      if (widget.waist >= 80 && widget.waist < 88) {
+        rawScore += 3;
+      } else if (widget.waist >= 88) {
+        rawScore += 4;
       }
     }
 
-    // 3. Physical Activity (exercise)
+    // Have you ever used drugs for high blood pressure? (High BP follow-up medication)
+    if (_hasHighBP == 1 && _prescribedBPMedication == 1) {
+      rawScore += 2;
+    }
+
+    // Exercise (Do you exercise at least 30 minutes on most days?)
     // 1 = Regular, 2 = Mild/occasional, 3 = No exercise
-    if (_exerciseLevel == 1) {
-      score += 0;
-    } else if (_exerciseLevel == 2) {
-      score += 10;
-    } else {
-      score += 30;
+    if (_exerciseLevel == 1 || _exerciseLevel == 2) {
+      rawScore += 2;
     }
 
-    // 4. Family history
-    int familyScore = 0;
-    if (_parentDiabetic == 1) {
-      familyScore += 10;
+    // --- Rules from Image 2 (ADA) ---
+    // Weight is equal to or above that listed in the BMI chart
+    if (bmi >= 25) {
+      rawScore += 5;
     }
+
+    // Under 65 years of age and get little or no exercise during a usual day
+    if (widget.age < 65 && _exerciseLevel == 3) {
+      rawScore += 5;
+    }
+
+    // Age 45-64
+    if (widget.age >= 45 && widget.age <= 64) {
+      rawScore += 5;
+    }
+
+    // Age >= 65
+    if (widget.age >= 65) {
+      rawScore += 9;
+    }
+
+    // Sibling with diabetes
     if (_siblingDiabetic == 1) {
-      familyScore += 10;
+      rawScore += 1;
     }
-    if (familyScore > 20) {
-      familyScore = 20;
-    }
-    score += familyScore;
 
-    return score;
+    // Parent with diabetes
+    if (_parentDiabetic == 1) {
+      rawScore += 1;
+    }
+
+    // Scale rawScore (max 35) to be out of 90
+    int finalScore = ((rawScore / 35.0) * 90).round();
+    return finalScore;
   }
 
   void _showRiskResultBottomSheet(int score) {

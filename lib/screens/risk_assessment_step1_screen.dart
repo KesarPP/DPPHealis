@@ -609,6 +609,21 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                       onPressed: () {
                         final ageVal = int.tryParse(_ageController.text) ?? 30;
                         final waistVal = double.tryParse(_waistController.text) ?? 0.0;
+                        
+                        double heightInCm = 170.0;
+                        if (_heightUnit == 'cm') {
+                          heightInCm = double.tryParse(_heightCmController.text) ?? 170.0;
+                        } else if (_heightUnit == 'inches') {
+                          final inches = double.tryParse(_heightInchesController.text) ?? 67.0;
+                          heightInCm = inches * 2.54;
+                        } else if (_heightUnit == 'ft_in') {
+                          final ft = double.tryParse(_heightFtController.text) ?? 5.0;
+                          final inches = double.tryParse(_heightInController.text) ?? 7.0;
+                          heightInCm = ((ft * 12) + inches) * 2.54;
+                        }
+                        
+                        final weightInKg = double.tryParse(_weightController.text) ?? 70.0;
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -616,6 +631,8 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                               age: ageVal,
                               isMan: _isMan,
                               waist: waistVal,
+                              height: heightInCm,
+                              weight: weightInKg,
                             ),
                           ),
                         );
