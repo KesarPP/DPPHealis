@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/app_state.dart';
 // MainShell
 import '../data/gelato_theme.dart';
 import 'gpaq_step1_screen.dart';
@@ -308,6 +309,8 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                       child: ElevatedButton(
                         onPressed: () {
                           final score = _calculateIdrsScore();
+                          AppState.idrsScore = score;
+                          AppState.hasIdrsResult = true;
                           _showRiskResultBottomSheet(score);
                         },
                         style: ElevatedButton.styleFrom(

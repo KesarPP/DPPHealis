@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/gelato_theme.dart';
+import '../data/app_state.dart';
 import '../screens/weigh_in_screen.dart';
 import '../main.dart';
 
@@ -58,19 +59,19 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
       history: [82.5, 81.8, 81.2, 80.5, 79.8],
       insight: 'Your weight is trending down! Tap to log or view weight progress.',
     ),
-    'sleep': _MetricData(
-      key: 'sleep',
-      label: 'Sleep',
-      icon: Icons.bedtime_rounded,
-      value: 7.5,
-      max: 8.0,
-      unit: 'hours',
+    'results': _MetricData(
+      key: 'results',
+      label: 'Results',
+      icon: Icons.assignment_turned_in_rounded,
+      value: 42.0,
+      max: 90.0,
+      unit: 'IDRS',
       color: GelatoTheme.purple,
       colorDark: GelatoTheme.purpleDark,
       bgLight: const Color(0xFFF6F2FA),
       bgTint: const Color(0x2BDCCCEC),
-      history: [8.0, 7.0, 7.8, 8.2, 7.5],
-      insight: 'Great deep sleep percentage (22%) recorded last night. You are well recovered.',
+      history: [42.0, 42.0, 42.0, 42.0, 42.0],
+      insight: 'Your IDRS and GPAQ assessment results. Keep active to improve your scores!',
     ),
   };
 
@@ -86,6 +87,9 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
 
   @override
   Widget build(BuildContext context) {
+    if (_metrics.containsKey('results')) {
+      _metrics['results']!.value = AppState.idrsScore.toDouble();
+    }
     final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     final days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     final now = DateTime.now();
@@ -170,7 +174,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
   }
 
   List<Widget> _buildCardLayout() {
-    final List<String> keys = ['meals', 'activity', 'weigh_in', 'sleep'];
+    final List<String> keys = ['meals', 'activity', 'weigh_in', 'results'];
     final List<List<String>> rows = [];
     List<String> currentRow = [];
     int currentSpan = 0;
@@ -359,7 +363,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      key == 'weigh_in' ? '$pct% GOAL' : '$pct% MET',
+                      key == 'weigh_in' ? '$pct% GOAL' : (key == 'results' ? 'RESULTS' : '$pct% MET'),
                       style: TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w900,
@@ -368,7 +372,7 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                     ),
                   ),
                   Text(
-                    isExpanded ? 'COLLAPSE' : (key == 'weigh_in' ? 'VIEW' : 'LOG'),
+                    isExpanded ? 'COLLAPSE' : (key == 'weigh_in' || key == 'results' ? 'VIEW' : 'LOG'),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -384,157 +388,254 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
                 const SizedBox(height: 12),
                 const Divider(height: 1, color: Colors.black12),
                 const SizedBox(height: 12),
-
-                // Quick Log Controls
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black, width: 1.2),
+                if (key == 'results') ...[
+                  // IDRS Row
+                  _buildResultRow(
+                    context: context,
+                    title: 'IDRS Risk Score',
+                    value: '${AppState.idrsScore} / 90',
+                    subtitle: AppState.idrsScore < 30
+                        ? 'Low Risk'
+                        : (AppState.idrsScore <= 50 ? 'Moderate Risk' : 'High Risk'),
+                    color: AppState.idrsScore < 30
+                        ? GelatoTheme.greenDark
+                        : (AppState.idrsScore <= 50 ? GelatoTheme.yellowDark : GelatoTheme.pinkDark),
+                    bgColor: AppState.idrsScore < 30
+                        ? GelatoTheme.green
+                        : (AppState.idrsScore <= 50 ? GelatoTheme.yellow : GelatoTheme.pink),
+                    icon: Icons.assignment_turned_in_rounded,
                   ),
-                  child: Row(
+                  const SizedBox(height: 10),
+                  // GPAQ Row
+                  _buildResultRow(
+                    context: context,
+                    title: 'GPAQ Activity',
+                    value: '${AppState.gpaqMetMinutes} MET-min',
+                    subtitle: AppState.gpaqLevel,
+                    color: AppState.gpaqLevel.contains('High')
+                        ? GelatoTheme.greenDark
+                        : (AppState.gpaqLevel.contains('Moderate') ? GelatoTheme.yellowDark : GelatoTheme.pinkDark),
+                    bgColor: AppState.gpaqLevel.contains('High')
+                        ? GelatoTheme.green
+                        : (AppState.gpaqLevel.contains('Moderate') ? GelatoTheme.yellow : GelatoTheme.pink),
+                    icon: Icons.directions_run_rounded,
+                  ),
+                ] else ...[
+                  // Quick Log Controls
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black, width: 1.2),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.auto_awesome_rounded, size: 14, color: m.colorDark),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Quick Log ${m.unit}',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: GelatoTheme.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _increment(key, key == 'sleep' ? -0.5 : -1.0),
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.remove, size: 14, color: GelatoTheme.textLight),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              '${m.value}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: GelatoTheme.textDark,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: () => _increment(key, key == 'sleep' ? 0.5 : 1.0),
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.add, size: 14, color: GelatoTheme.textLight),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Sparkline
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.auto_awesome_rounded, size: 14, color: m.colorDark),
-                          const SizedBox(width: 4),
+                          const Text(
+                            'LAST 5 DAYS',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: GelatoTheme.textLight,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
                           Text(
-                            'Quick Log ${m.unit}',
+                            'Average: ${(m.history.reduce((a, b) => a + b) / m.history.length).toStringAsFixed(1)} ${m.unit}',
                             style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: GelatoTheme.textDark,
+                              fontSize: 9.5,
+                              color: GelatoTheme.textMuted,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => _increment(key, key == 'sleep' ? -0.5 : -1.0),
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.remove, size: 14, color: GelatoTheme.textLight),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.black, width: 1.2),
+                        ),
+                        child: SizedBox(
+                          width: 80,
+                          height: 24,
+                          child: CustomPaint(
+                            painter: _SparklinePainter(
+                              data: [...m.history, m.value],
+                              color: m.colorDark,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Text(
-                            '${m.value}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              color: GelatoTheme.textDark,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: () => _increment(key, key == 'sleep' ? 0.5 : 1.0),
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.add, size: 14, color: GelatoTheme.textLight),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // Sparkline
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
+                  // Insight box
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black, width: 1.2),
+                    ),
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'LAST 5 DAYS',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w800,
-                            color: GelatoTheme.textLight,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Average: ${(m.history.reduce((a, b) => a + b) / m.history.length).toStringAsFixed(1)} ${m.unit}',
-                          style: const TextStyle(
-                            fontSize: 9.5,
-                            color: GelatoTheme.textMuted,
-                            fontWeight: FontWeight.w600,
+                        Icon(Icons.lightbulb_outline_rounded, size: 14, color: m.colorDark),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            m.insight,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: m.colorDark,
+                              height: 1.35,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black, width: 1.2),
-                      ),
-                      child: SizedBox(
-                        width: 80,
-                        height: 24,
-                        child: CustomPaint(
-                          painter: _SparklinePainter(
-                            data: [...m.history, m.value],
-                            color: m.colorDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Insight box
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black, width: 1.2),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.lightbulb_outline_rounded, size: 14, color: m.colorDark),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          m.insight,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: m.colorDark,
-                            height: 1.35,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildResultRow({
+    required BuildContext context,
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color color,
+    required Color bgColor,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black, width: 1.2),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: GelatoTheme.textDark,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: GelatoTheme.textDark,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -133,20 +133,6 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                       color: _brandColor,
                     ),
                   ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: const Icon(
-                      Icons.notifications_none_rounded,
-                      color: _brandColor,
-                      size: 24,
-                    ),
-                  ),
                 ],
               ),
             ),

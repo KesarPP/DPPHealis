@@ -181,16 +181,6 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             'DPP Connect',
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _navy),
           ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _pageBg,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: const Icon(Icons.notifications_none_rounded, color: _navy, size: 22),
-          ),
         ],
       ),
     );

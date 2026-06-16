@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../data/app_state.dart';
 
 class DashboardRiskCard extends StatefulWidget {
   const DashboardRiskCard({super.key});
@@ -18,7 +19,7 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
   late AnimationController _ecgController;
   late Animation<double> _ecgOffset;
 
-  final int _targetScore = 42;
+  int get _targetScore => AppState.idrsScore;
   bool _isPressed = false;
 
   @override

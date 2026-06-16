@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/app_state.dart';
 import '../main.dart'; // MainShell
 import '../data/gelato_theme.dart';
 
@@ -84,6 +85,11 @@ class GPAQResultsScreen extends StatelessWidget {
       levelIcon = Icons.warning_amber_rounded;
       levelDescription = 'Sedentary or low activity. Increasing daily physical activity will help you manage and lower your prediabetes risk.';
     }
+
+    // Save to AppState
+    AppState.gpaqMetMinutes = totalMetMinutes;
+    AppState.gpaqLevel = activityLevel;
+    AppState.hasGpaqResult = true;
 
     final double sedentaryHours = sedentaryMinutes / 60.0;
 
