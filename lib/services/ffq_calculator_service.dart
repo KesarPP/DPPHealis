@@ -1,11 +1,10 @@
 import '../screens/food_analysis_screen.dart';
+import '../data/nutrition_database.dart';
 
 class FfqCalculatorService {
   static final FfqCalculatorService _instance = FfqCalculatorService._internal();
 
-  factory FfqCalculatorService() {
-    return _instance;
-  }
+  factory FfqCalculatorService() => _instance;
 
   FfqCalculatorService._internal();
 
@@ -15,27 +14,24 @@ class FfqCalculatorService {
     _responses[foodName] = answer;
   }
 
-  FfqAnswer? getAnswer(String foodName) {
-    return _responses[foodName];
-  }
+  FfqAnswer? getAnswer(String foodName) => _responses[foodName];
 
-  Map<String, FfqAnswer> getAllResponses() {
-    return _responses;
-  }
+  Map<String, FfqAnswer> getAllResponses() => _responses;
 
-  void clear() {
-    _responses.clear();
-  }
+  void clear() => _responses.clear();
+
+  // ── Main calculation ──────────────────────────────────────────────────────
 
   double calculateDailyCalories() {
     double totalCalories = 0.0;
 
-    for (var entry in _responses.entries) {
+    for (final entry in _responses.entries) {
       final name = entry.key;
       final answer = entry.value;
 
       if (answer.frequency == 'Never') continue;
 
+      // Step 1 – Frequency factor
       double freqFactor = 0.0;
       if (answer.frequency == 'Daily') {
         freqFactor = 1.0;
@@ -45,17 +41,18 @@ class FfqCalculatorService {
         freqFactor = 1.0 / 30.0;
       }
 
-      double eatenPerDay = answer.timesPerDay * freqFactor;
+      // Step 2 – Times eaten per day
+      final double eatenPerDay = answer.timesPerDay * freqFactor;
 
-      double portionGrams = _extractGrams(answer.size);
+      // Step 3 – Portion size in grams
+      final double portionGrams = _extractGrams(answer.size);
 
-      // The answer.quantityAtTime represents the number of portion units (e.g., 2 cups, 1.5 rotis)
-      // or the number of pieces (if size == 'piece').
-      double gramsPerServing = portionGrams * answer.quantityAtTime;
-      double gramsPerDay = gramsPerServing * eatenPerDay;
+      // Step 4 – Total grams per day
+      final double gramsPerDay = portionGrams * answer.quantityAtTime * eatenPerDay;
 
-      double calPer100g = _getMockCalories(name);
-      double calPerDay = (calPer100g / 100.0) * gramsPerDay;
+      // Step 5 – Calories from nutrition database
+      final double calPer100g = _getCaloriesFromDb(name);
+      final double calPerDay = (calPer100g / 100.0) * gramsPerDay;
 
       totalCalories += calPerDay;
     }
@@ -63,32 +60,184 @@ class FfqCalculatorService {
     return totalCalories;
   }
 
+  // ── Portion-to-grams converter ──────────────────────────────────────────
+
   double _extractGrams(String size) {
-    // 1. Check if it's F1-F8 (Chapati/Roti sizes)
-    if (size.startsWith('F')) {
-      final match = RegExp(r'F(\d+)').firstMatch(size);
-      if (match != null) {
-        int index = int.tryParse(match.group(1)!) ?? 1;
-        // Mocking F weights based on user prompt (F4 = 60g)
-        // Let's assume F1=30, F2=40, F3=50, F4=60, F5=70, F6=80, F7=90, F8=100
-        return 20.0 + (10.0 * index);
+    // F1–F9: Chapati/Roti sizes (exact weight table from FFQ toolkit)
+    if (RegExp(r'^F\d$').hasMatch(size.trim())) {
+      final int index = int.tryParse(size.trim().substring(1)) ?? 4;
+      const List<double> rotiWeights = [
+        93.8, // F1
+        81.7, // F2
+        70.4, // F3
+        60.0, // F4
+        47.4, // F5
+        38.9, // F6
+        24.5, // F7
+        11.9, // F8
+        3.0,  // F9
+      ];
+      if (index >= 1 && index <= 9) return rotiWeights[index - 1];
+      return 60.0; // fallback to F4
+    }
+
+    // Cup/Bowl/Glass/Spoon with explicit ml or g in parentheses
+    // e.g. "C2 (100 ml)" → 100g,  "S1 (5 ml)" → 5g,  "N2 (50 g)" → 50g
+    final metricMatch = RegExp(r'\(([\d.]+)\s*(g|ml)\)').firstMatch(size);
+    if (metricMatch != null) {
+      return double.tryParse(metricMatch.group(1)!) ?? 100.0;
+    }
+
+    // Fallback for descriptive sizes like "Small", "Medium", "Large"
+    final lower = size.toLowerCase();
+    if (lower.contains('small')) return 50.0;
+    if (lower.contains('medium')) return 100.0;
+    if (lower.contains('large')) return 150.0;
+
+    return 100.0; // ultimate fallback
+  }
+
+  // ── Nutrition database lookup with fuzzy matching ─────────────────────────
+
+  /// Maps FFQ item names to the closest matching dish in kNutritionDatabase.
+  static const Map<String, String> _ffqToDbKeyMap = {
+    // Beverages
+    'Tea': 'Hot tea (Garam Chai)',
+    'Coffee': 'Instant coffee',
+    'Fruit juice': 'Fruit Punch (with fresh juices)',
+    'Vegetable juice': 'Mixed vegetable soup',
+    'Sweetened soft drinks': 'Lemonade',
+    'Unsweetened (diet) soft drinks': 'Lemonade',
+    'Wine': 'Lem-o-gin',
+    'Other alcoholic drinks': 'Lem-o-gin',
+
+    // Dairy & Milk Products
+    'Milk': 'Flavoured milkshake',
+    'Curd': 'Lassi (salted)',
+    'Kadi': 'Besan kadhi with pakodies',
+    'Raita': 'Tomato onion raita (Tamatar aur pyaaz ka raita)',
+    'Buttermilk': 'Lassi (salted)',
+    'Khoa / milk sweets (solid)': 'Plain burfi (Burfi)',
+    'Milk sweets (liquid)': 'Milk cake',
+    'Ice creams': 'Vanilla ice cream without egg',
+
+    // Cereals, Breads & Preparations
+    'Biscuits': 'Sweet plain biscuit',
+    'White bread': 'Cheese and chilli sandwich ',
+    'Whole wheat bread': 'Cheese and chilli sandwich ',
+    'Pav': 'Cheese and chilli sandwich ',
+    'Pav bhaji': 'Pea potato curry (Aloo matar)',
+    'Sandwich': 'Cheese and chilli sandwich ',
+    'Nan': 'Naan',
+    'Chapati': 'Chapati/Roti',
+    'Stuffed paratha': 'Potato parantha/paratha (Aloo ka parantha/paratha)',
+    'Deep fried wheat breads': 'Poori',
+    'Bhakri (jowar, bajra, nachni)': 'Chapati/Roti',
+    'Rice bhakri': 'Chapati/Roti',
+    'Idli': 'Idli',
+    'Dosa': 'Masala dosa',
+    'Papad': 'Chapati/Roti',
+    'Rice (plain)': 'Boiled rice (Uble chawal)',
+    'Rice preparations': 'Plain pulao',
+    'Poha': 'Poha',
+    'Upma': 'Semolina upma (Suji/Rava upma)',
+
+    // Pulses & Legumes
+    'Dal preparations': 'Washed moong dal (Dhuli moong ki dal)',
+    'Wet pulses (dry curry)': 'Black channa curry/Bengal gram curry (Kale chane ki curry)',
+    'Wet pulses (gravy curry)': 'Kidney bean curry (Rajmah curry)',
+
+    // Vegetables
+    'Green leafy vegetables (dry)': 'Spinach paneer (Palak paneer)',
+    'Green leafy vegetables (wet)': 'Spinach paneer (Palak paneer)',
+    'Gourd (dry)': 'Dry potato (Sookhe aloo)',
+    'Gourd (wet)': 'Pea potato curry (Aloo matar)',
+    'Brinjal (dry)': 'Brinjal bhartha (Baingan ka bhartha)',
+    'Brinjal (wet)': 'Brinjal bhartha (Baingan ka bhartha)',
+    'Cauliflower (dry)': 'Potato cauliflower (Aloo gobhi)',
+    'Cauliflower (wet)': 'Potato cauliflower (Aloo gobhi)',
+    'Drumsticks (dry)': 'Dry potato (Sookhe aloo)',
+    'Drumsticks (wet)': 'Pea potato curry (Aloo matar)',
+    'Green peas (dry)': 'Dry potato (Sookhe aloo)',
+    'Green peas (wet)': 'Pea curry (Matar ki sabzi)',
+    'Potato (dry)': 'Dry potato (Sookhe aloo)',
+    'Potato (wet)': 'Pea potato curry (Aloo matar)',
+    'Yams (dry)': 'Dry potato (Sookhe aloo)',
+    'Green beans': 'Cabbage and peas (Pattagobhi aur matar)',
+    'Lady finger': 'Stuffed okra (Bharwa bhindi)',
+    'Other vegetables (dry)': 'Dry potato (Sookhe aloo)',
+    'Other vegetables (wet)': 'Pea potato curry (Aloo matar)',
+    'Onion bhaji': 'Onion pakora/pakoda (Pyaaz ke pakode)',
+    'Green chillies(Raw/Fried)': 'Stuffed capsicum (Bharwa shimla mirch)',
+    'Garlic ': 'Mint and coriander chutney (Pudinay aur dhaniye ki chutney)',
+    'Onion (raw)': 'Tossed salad',
+    'Carrot (raw)': 'Tossed salad',
+    'Cabbage (raw)': 'Tossed salad',
+
+    // Meat, Fish & Eggs
+    'Egg (dry)': 'Scrambled egg (Ande ki bhurji)',
+    'Egg (wet/curry)': 'Egg curry (Anda curry)',
+    'Chicken (dry)': 'Tandoori chicken',
+    'Chicken (wet/curry)': 'Chicken curry',
+    'Mutton (dry)': 'Dry masala chops',
+    'Mutton (wet/curry)': 'Roghan josh',
+    'Fresh Fish/prawns (dry)': 'Tandoori fish',
+    'Fresh Fish/prawns (wet/curry)': 'Fish curry (Machli curry)',
+    'Crab (dry)': 'Tandoori fish',
+    'Crab (wet/curry)': 'Fish curry (Machli curry)',
+    'Dry fish/prawns (dry)': 'Fish tikka',
+    'Dry fish/prawns (wet/curry)': 'Fish curry (Machli curry)',
+
+    // Condiments & Side Items
+    'Salad': 'Tossed salad',
+    'Pickle': 'Dry mango chutney (Sookhe aam ki chutney)',
+    'Chutney': 'Coconut chutney (Nariyal ki chutney)',
+
+    // Snacks & Sweets
+    'Namkeen': 'Mathri',
+    'Deep fried snacks (Vada/Samosa)': 'Potato samosa (Aloo ka samosa)',
+    'Chaat (Pani puri / Bhel puri)': 'Sprouted moong dal chat',
+    'Puranpoli': 'Sweet split chickpea roti (Sweet channa dal roti/Puranpoli)',
+    'Other sweets (solid)': 'Plain burfi (Burfi)',
+    'Other sweets (liquid/soft)': 'Gulab Jamun with khoya',
+    'Nuts': 'Peanut brittle (Moongfali ki chikki)',
+    'Puffed grains / Popcorn': 'Murmura (Puffed rice)',
+
+    // Fruits (all fresh fruits ~50–80 kcal/100g, use fruit salad as proxy)
+    'Orange': 'Fruit salad (Phalon ka salaad)',
+    'Mango': 'Fruit salad (Phalon ka salaad)',
+    'Guava': 'Fruit salad (Phalon ka salaad)',
+    'Sweet lime': 'Fruit salad (Phalon ka salaad)',
+    'Banana': 'Fruit salad (Phalon ka salaad)',
+    'Apple': 'Fruit salad (Phalon ka salaad)',
+    'Papaya': 'Fruit salad (Phalon ka salaad)',
+    'Grapes': 'Fruit salad (Phalon ka salaad)',
+    'Pomegranate': 'Fruit salad (Phalon ka salaad)',
+    'Pineapple': 'Fruit salad (Phalon ka salaad)',
+    'Watermelon / Melon': 'Fruit salad (Phalon ka salaad)',
+    'Chikoo': 'Fruit salad (Phalon ka salaad)',
+    'Lemon (sour)': 'Fruit salad (Phalon ka salaad)',
+    'Other fruits': 'Fruit salad (Phalon ka salaad)',
+  };
+
+  double _getCaloriesFromDb(String foodName) {
+    // 1. Direct lookup via the explicit mapping
+    final mapped = _ffqToDbKeyMap[foodName];
+    if (mapped != null) {
+      final cal = kNutritionDatabase[mapped];
+      if (cal != null) return cal;
+    }
+
+    // 2. Case-insensitive substring search as fallback
+    final lower = foodName.toLowerCase();
+    for (final entry in kNutritionDatabase.entries) {
+      if (entry.key.toLowerCase().contains(lower) ||
+          lower.contains(entry.key.toLowerCase().split(' ').first)) {
+        return entry.value;
       }
     }
 
-    // 2. Try to extract from parentheses e.g., "C1 (50 ml)", "N1 (25 g)"
-    final match = RegExp(r'\(([\d\.]+)\s*(g|ml)\)').firstMatch(size);
-    if (match != null) {
-      return double.tryParse(match.group(1)!) ?? 100.0;
-    }
-
-    // 3. For piece units without explicit grams in parentheses (e.g., "Small (1 piece)")
-    // Mock default of 50g per piece unit if unspecified.
-    return 50.0;
-  }
-
-  double _getMockCalories(String foodName) {
-    // TODO: Replace with actual values from Nutrition Database CSV when provided.
-    // For now, we return 100 calories per 100g for everything.
+    // 3. Absolute fallback – generic average (~100 kcal/100g)
     return 100.0;
   }
 }
