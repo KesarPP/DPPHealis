@@ -69,12 +69,13 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
           border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
           gradient: const RadialGradient(
             center: Alignment.center,
-            radius: 3.0,
+            radius: 2.5,
             colors: [
-              Color(0xFFE6E6FA), // Lavender in center
-              Color(0xFF5A315D), // Deep Plum Purple towards edges
+              Color(0xFFFFD6E0), // Soft Pastel Pink in the center
+              Color(0xFFDB6A83), // Mixed hue blending pastel and raspberry
+              Color(0xFFA42A41), // Deep Raspberry towards the edges and ends
             ],
-            stops: [0.0, 1.0],
+            stops: [0.0, 0.5, 1.0],
           ),
           boxShadow: [
             BoxShadow(
@@ -331,20 +332,24 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
     Widget cardContent = Container(
       width: 220, 
       decoration: BoxDecoration(
-        color: isLocked ? Colors.grey.shade100 : widget.color, // Normal red color instead of lerp
+        color: isLocked ? Colors.grey.shade100 : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.black, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12, // Normal shadow instead of glowing
-            blurRadius: 8, 
-            spreadRadius: 0,
+            color: isLocked ? Colors.black12 : Colors.white.withValues(alpha: 0.6), // Silver white glow
+            blurRadius: 16, 
+            spreadRadius: 6,
             offset: const Offset(0, 4),
           ),
         ]
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: CustomPaint(
+          painter: isLocked ? null : _CardPatternPainter(moduleNumber: widget.module.number),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
         child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -353,10 +358,10 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
                 width: 44, height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isLocked ? Colors.grey.shade200 : Colors.white,
-                  boxShadow: isLocked ? null : [BoxShadow(color: widget.color.withValues(alpha: 0.5), blurRadius: 8)]
+                  color: isLocked ? Colors.grey.shade200 : Colors.red.shade50,
+                  boxShadow: isLocked ? null : [BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 8)]
                 ),
-                child: Icon(widget.icon, color: isLocked ? Colors.grey.shade400 : widget.darkColor, size: 24),
+                child: Icon(widget.icon, color: isLocked ? Colors.grey.shade400 : Colors.red.shade900, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -372,25 +377,25 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
                           decoration: BoxDecoration(
                             color: isLocked ? Colors.grey.shade200 : Colors.white, 
                             shape: BoxShape.circle,
-                            border: Border.all(color: isLocked ? Colors.black87 : Colors.transparent, width: 1.0),
+                            border: Border.all(color: isLocked ? Colors.black87 : Colors.red.shade900, width: 1.0),
                           ),
                           alignment: Alignment.center,
-                          child: Text('${widget.module.number}', style: TextStyle(color: isLocked ? Colors.black : widget.darkColor, fontWeight: FontWeight.bold, fontSize: 10)),
+                          child: Text('${widget.module.number}', style: TextStyle(color: isLocked ? Colors.black : Colors.red.shade900, fontWeight: FontWeight.bold, fontSize: 10)),
                         ),
                         const SizedBox(width: 6),
-                        Text('SESSION', style: TextStyle(color: isLocked ? Colors.black87 : Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        Text('SESSION', style: TextStyle(color: isLocked ? Colors.black87 : Colors.red.shade900, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       ],
                     ),
                     const SizedBox(height: 6),
                     // Title
-                    Text(widget.module.title, style: TextStyle(color: isLocked ? Colors.black : Colors.white, fontSize: 13, fontWeight: FontWeight.w900, height: 1.3)),
+                    Text(widget.module.title, style: TextStyle(color: isLocked ? Colors.black : Colors.red.shade900, fontSize: 13, fontWeight: FontWeight.w900, height: 1.3)),
                     const SizedBox(height: 8),
                     // Status
                     Row(
                       children: [
-                        Icon(isLocked ? Icons.lock_rounded : Icons.check_circle_rounded, size: 14, color: isLocked ? Colors.grey : Colors.white),
+                        Icon(isLocked ? Icons.lock_rounded : Icons.check_circle_rounded, size: 14, color: isLocked ? Colors.grey : Colors.red.shade900),
                         const SizedBox(width: 4),
-                        Text(isLocked ? 'Locked' : 'Completed', style: TextStyle(color: isLocked ? Colors.grey : Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                        Text(isLocked ? 'Locked' : 'Completed', style: TextStyle(color: isLocked ? Colors.grey : Colors.red.shade900, fontSize: 11, fontWeight: FontWeight.w800)),
                       ]
                     )
                   ]
@@ -399,7 +404,9 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
             ]
           )
         )
-    );
+      )
+    )
+  );
 
     if (isLocked) {
       cardContent = Opacity(
@@ -419,6 +426,32 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
         child: cardContent,
       ),
     );
+  }
+}
+
+class _CardPatternPainter extends CustomPainter {
+  final int moduleNumber;
+  _CardPatternPainter({required this.moduleNumber});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFFFEBF0) // Very light powder pink
+      ..style = PaintingStyle.fill;
+    
+    // Checkered (squares) pattern for all tabs
+    for (double x = 0; x < size.width; x += 20) {
+      for (double y = 0; y < size.height; y += 20) {
+        if (((x / 20).floor() + (y / 20).floor()) % 2 == 0) {
+          canvas.drawRect(Rect.fromLTWH(x, y, 20, 20), paint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CardPatternPainter oldDelegate) {
+    return oldDelegate.moduleNumber != moduleNumber;
   }
 }
 
