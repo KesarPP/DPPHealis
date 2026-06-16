@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../screens/ai_chatbot_screen.dart';
 
 class AiCoachCard extends StatefulWidget {
   const AiCoachCard({super.key});
@@ -135,7 +137,14 @@ class _AiCoachCardState extends State<AiCoachCard>
               const SizedBox(height: 20),
               GestureDetector(
                 onTapDown: (_) => setState(() => _buttonPressed = true),
-                onTapUp: (_) => setState(() => _buttonPressed = false),
+                onTapUp: (_) {
+                  setState(() => _buttonPressed = false);
+                  HapticFeedback.mediumImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AiChatbotScreen()),
+                  );
+                },
                 onTapCancel: () => setState(() => _buttonPressed = false),
                 child: AnimatedScale(
                   scale: _buttonPressed ? 0.97 : 1.0,

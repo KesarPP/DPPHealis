@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../screens/ai_chatbot_screen.dart';
 
 class DashboardAICoachCard extends StatefulWidget {
   const DashboardAICoachCard({super.key});
@@ -148,6 +149,10 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
             onTapUp: (_) {
               setState(() => _buttonScale = 1.0);
               HapticFeedback.mediumImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AiChatbotScreen()),
+              );
             },
             onTapCancel: () {
               setState(() => _buttonScale = 1.0);
