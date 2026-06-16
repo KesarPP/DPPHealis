@@ -5,6 +5,7 @@ import 'screens/food_tracking_screen.dart';
 import 'screens/activity_fitness_screen.dart';
 import 'screens/sessions_screen.dart';
 import 'screens/coach_chat_screen.dart';
+import 'screens/ai_chatbot_screen.dart';
 import 'data/gelato_theme.dart';
 
 void main() {
@@ -126,7 +127,14 @@ class MainShellState extends State<MainShell> {
               margin: const EdgeInsets.only(bottom: 16),
               child: FloatingActionButton.extended(
                 heroTag: null,
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AiChatbotScreen(),
+                    ),
+                  );
+                },
                 backgroundColor: const Color(0xFFDCCCEC),
                 elevation: 4,
                 shape: RoundedRectangleBorder(
