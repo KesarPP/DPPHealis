@@ -11,115 +11,70 @@ class FoodTrackingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF2FFF7), // very light green
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+              ),
             ),
-          ),
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 120),
-                const _WeeklyCalendar(),
-                const SizedBox(height: 24),
-                _buildCalorieGoalCard(),
-                const SizedBox(height: 24),
-                _buildMealCards(),
-                const SizedBox(height: 32),
-              ],
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  _buildBanner(context),
+                  const SizedBox(height: 24),
+                  _buildQuickActionsRow(context),
+                  const SizedBox(height: 24),
+                  const _WeeklyCalendar(),
+                  const SizedBox(height: 24),
+                  _buildCalorieGoalCard(),
+                  const SizedBox(height: 24),
+                  _buildMealCards(),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // Background Gradient
-        Container(
-          height: 360,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(32),
-              bottomRight: Radius.circular(32),
-            ),
-            border: const Border(
-              bottom: BorderSide(color: Colors.black87, width: 1.5),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white.withValues(alpha: 0.15),
-                Colors.black.withValues(alpha: 0.05),
-              ],
-            ),
-            image: const DecorationImage(
-              image: AssetImage('assets/images/meals_banner.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Food Tracking',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: GelatoTheme.textDark,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Decorative circles (to capture the soft vibe of the food images without actual assets)
-
-                const SizedBox(height: 60), // Space for overlapping quick actions
-              ],
-            ),
+  Widget _buildBanner(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        height: 150,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black87, width: 1.5),
+          boxShadow: [
+            BoxShadow(color: GelatoTheme.green.withValues(alpha: 0.2), blurRadius: 0, offset: const Offset(4, 4)),
+          ],
+          image: const DecorationImage(
+            image: AssetImage('assets/images/meals_banner.png'),
+            fit: BoxFit.cover,
           ),
         ),
-        // Overlapping Quick Actions Row
-        Positioned(
-          bottom: -60,
-          left: 16,
-          right: 16,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildQuickActionCard(context, 'Insight', Icons.show_chart_rounded, GelatoTheme.purple),
-              const SizedBox(width: 8),
-              _buildQuickActionCard(context, 'Barcode Scanner', Icons.qr_code_scanner_rounded, GelatoTheme.yellow),
-              const SizedBox(width: 8),
-              _buildQuickActionCard(context, 'Resources', Icons.menu_book_rounded, GelatoTheme.blue),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildHeaderCircle(Color color) {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
+  Widget _buildQuickActionsRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildQuickActionCard(context, 'Insight', Icons.show_chart_rounded, GelatoTheme.purple),
+          const SizedBox(width: 8),
+          _buildQuickActionCard(context, 'Barcode Scanner', Icons.qr_code_scanner_rounded, GelatoTheme.yellow),
+          const SizedBox(width: 8),
+          _buildQuickActionCard(context, 'Resources', Icons.menu_book_rounded, GelatoTheme.blue),
+        ],
       ),
     );
   }
@@ -135,8 +90,7 @@ class FoodTrackingScreen extends StatelessWidget {
           }
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(16),
@@ -148,12 +102,12 @@ class FoodTrackingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 34, color: GelatoTheme.textDark),
+              Icon(icon, size: 28, color: GelatoTheme.textDark),
               const SizedBox(height: 8),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: GelatoTheme.textDark),
               ),
             ],
           ),
