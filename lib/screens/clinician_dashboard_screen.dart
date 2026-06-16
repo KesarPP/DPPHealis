@@ -111,15 +111,26 @@ const _mockPatients = <Patient>[
 // Main Screen
 // ─────────────────────────────────────────────────────────────────────────────
 class ClinicianDashboardScreen extends StatefulWidget {
-  const ClinicianDashboardScreen({super.key});
+  final int initialTabIndex;
+
+  const ClinicianDashboardScreen({
+    super.key,
+    this.initialTabIndex = 1,
+  });
 
   @override
   State<ClinicianDashboardScreen> createState() => _ClinicianDashboardScreenState();
 }
 
 class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
-  int _currentTabIndex = 1;
+  late int _currentTabIndex;
   Patient? _selectedPatient;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTabIndex = widget.initialTabIndex;
+  }
 
   @override
   Widget build(BuildContext context) {

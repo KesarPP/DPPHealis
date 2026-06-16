@@ -272,7 +272,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const ClinicianDashboardScreen()),
+                            builder: (_) => const ClinicianDashboardScreen(initialTabIndex: 0)),
                       );
                     },
                   ),
@@ -285,7 +285,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const ClinicianDashboardScreen()),
+                            builder: (_) => const ClinicianDashboardScreen(initialTabIndex: 1)),
                       );
                     },
                   ),
