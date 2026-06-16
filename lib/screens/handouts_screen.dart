@@ -134,34 +134,100 @@ class _SessionCardState extends State<_SessionCard> {
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, i) {
                 final item = widget.session.items[i];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 24, height: 24,
-                        decoration: BoxDecoration(
-                            color: GelatoTheme.blue,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black87, width: 1.0)),
-                        child: Center(
-                          child: Text('${item.number}',
-                              style: const TextStyle(
-                                  fontSize: 11, fontWeight: FontWeight.w800, color: GelatoTheme.blueDark)),
+                return InkWell(
+                  onTap: () {
+                    // Extract session number to determine which image to show
+                    final match = RegExp(r'(?:Session|Module)\s+(\d+)').firstMatch(widget.session.sessionName);
+                    int sessionNum = 1;
+                    if (match != null) {
+                      sessionNum = int.tryParse(match.group(1) ?? '1') ?? 1;
+                    }
+                    int imageIndex = ((sessionNum - 1) % 4) + 1;
+                    String imagePath = 'assets/images/session_bg_$imageIndex.png';
+                    
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => _HandoutImageScreen(
+                          imagePath: imagePath,
+                          title: item.title,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(item.title,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GelatoTheme.textDark)),
-                      ),
-                      const Icon(Icons.chevron_right, color: Color(0xFFB0BEC5), size: 18),
-                    ],
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 24, height: 24,
+                          decoration: BoxDecoration(
+                              color: GelatoTheme.blue,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black87, width: 1.0)),
+                          child: Center(
+                            child: Text('${item.number}',
+                                style: const TextStyle(
+                                    fontSize: 11, fontWeight: FontWeight.w800, color: GelatoTheme.blueDark)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(item.title,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GelatoTheme.textDark)),
+                        ),
+                        const Icon(Icons.chevron_right, color: Color(0xFFB0BEC5), size: 18),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _HandoutImageScreen extends StatelessWidget {
+  final String imagePath;
+  final String title;
+
+  const _HandoutImageScreen({required this.imagePath, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: GelatoTheme.bg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: GelatoTheme.textDark),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Text(title,
+            style: const TextStyle(color: GelatoTheme.textDark, fontWeight: FontWeight.w700, fontSize: 16)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.asset(
+            imagePath,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text('Image not found:\n$imagePath', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 8),
+                  const Text('Please add the image to the assets folder', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }

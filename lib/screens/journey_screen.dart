@@ -16,7 +16,7 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
   double _time = 0.0;
 
   // Sunset Theme Pastel Colors
-  final Color cRed = const Color(0xFFFF8B8B); // Sunset Red
+  final Color cRed = const Color(0xFFFFA6A6); // Lighter Pastel Red
   final Color cOrange = const Color(0xFFFFDAB4); // Soft Orange
   final Color cYellow = const Color(0xFFF9E1A8); // Golden Yellow
 
@@ -326,20 +326,20 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
     final isCompleted = widget.module.state == ModuleState.completed;
     
     // Brighter border glow for completed cards
-    double completionPulse = isCompleted ? (math.sin(widget.time * 4) + 1) / 2 : 0;
+    // Removed completionPulse as per request to remove glow
     
     Widget cardContent = Container(
       width: 220, 
       decoration: BoxDecoration(
-        color: isLocked ? Colors.grey.shade100 : Color.lerp(Colors.white, widget.color, 0.2),
+        color: isLocked ? Colors.grey.shade100 : widget.color, // Normal red color instead of lerp
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.black, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: isLocked ? Colors.black12 : widget.color.withValues(alpha: 0.8), 
-            blurRadius: 30 + (30 * completionPulse), 
-            spreadRadius: 8 + (12 * completionPulse),
-            offset: const Offset(0, 8),
+            color: Colors.black12, // Normal shadow instead of glowing
+            blurRadius: 8, 
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
           ),
         ]
       ),
@@ -372,25 +372,25 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
                           decoration: BoxDecoration(
                             color: isLocked ? Colors.grey.shade200 : Colors.white, 
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black87, width: 1.0),
+                            border: Border.all(color: isLocked ? Colors.black87 : Colors.transparent, width: 1.0),
                           ),
                           alignment: Alignment.center,
-                          child: Text('${widget.module.number}', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10)),
+                          child: Text('${widget.module.number}', style: TextStyle(color: isLocked ? Colors.black : widget.darkColor, fontWeight: FontWeight.bold, fontSize: 10)),
                         ),
                         const SizedBox(width: 6),
-                        const Text('SESSION', style: TextStyle(color: Colors.black87, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        Text('SESSION', style: TextStyle(color: isLocked ? Colors.black87 : Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       ],
                     ),
                     const SizedBox(height: 6),
                     // Title
-                    Text(widget.module.title, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w900, height: 1.3)),
+                    Text(widget.module.title, style: TextStyle(color: isLocked ? Colors.black : Colors.white, fontSize: 13, fontWeight: FontWeight.w900, height: 1.3)),
                     const SizedBox(height: 8),
                     // Status
                     Row(
                       children: [
-                        Icon(isLocked ? Icons.lock_rounded : Icons.check_circle_rounded, size: 14, color: isLocked ? Colors.grey : widget.darkColor),
+                        Icon(isLocked ? Icons.lock_rounded : Icons.check_circle_rounded, size: 14, color: isLocked ? Colors.grey : Colors.white),
                         const SizedBox(width: 4),
-                        Text(isLocked ? 'Locked' : 'Completed', style: TextStyle(color: isLocked ? Colors.grey : widget.darkColor, fontSize: 11, fontWeight: FontWeight.w800)),
+                        Text(isLocked ? 'Locked' : 'Completed', style: TextStyle(color: isLocked ? Colors.grey : Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
                       ]
                     )
                   ]
