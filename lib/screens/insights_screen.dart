@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../data/gelato_theme.dart';
+import '../widgets/analytics_widgets.dart';
 
 class InsightsScreen extends StatelessWidget {
   const InsightsScreen({super.key});
@@ -8,7 +8,7 @@ class InsightsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2FFF7), // very light green
+      backgroundColor: GelatoTheme.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -44,13 +44,13 @@ class InsightsScreen extends StatelessWidget {
             const HorizontalInsightsCarousel(),
             const SizedBox(height: 30),
             _buildSectionTitle('Weekly Calories Trend'),
-            _buildWeeklyTrendChart(),
+            const WeeklyTrendChartCard(),
             const SizedBox(height: 24),
             _buildSectionTitle('Macros Breakdown'),
-            _buildMacrosBreakdown(),
+            const MacrosBreakdownCard(),
             const SizedBox(height: 24),
             _buildSectionTitle('Nutrition Score'),
-            _buildNutritionScoreCard(),
+            const NutritionScoreCard(),
             const SizedBox(height: 40),
           ],
         ),
@@ -75,337 +75,6 @@ class InsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeeklyTrendChart() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      height: 240,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: GelatoTheme.cardRadius,
-        border: Border.all(color: Colors.black87, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: GelatoTheme.orange.withValues(alpha: 0.5),
-            blurRadius: 0,
-            offset: const Offset(4, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Avg: 2,150 kcal',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: GelatoTheme.textMuted,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 500,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.grey.withValues(alpha: 0.15),
-                      strokeWidth: 1,
-                      dashArray: [5, 5],
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 35,
-                      interval: 1000,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${(value / 1000).toStringAsFixed(1)}k',
-                          style: const TextStyle(
-                            color: GelatoTheme.textMuted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 22,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        if (value.toInt() >= 0 && value.toInt() < days.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              days[value.toInt()],
-                              style: const TextStyle(
-                                color: GelatoTheme.textMuted,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 0,
-                maxY: 3000,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 1800),
-                      FlSpot(1, 2100),
-                      FlSpot(2, 1950),
-                      FlSpot(3, 2000),
-                      FlSpot(4, 2500), 
-                      FlSpot(5, 2800), 
-                      FlSpot(6, 1900),
-                    ],
-                    isCurved: true,
-                    color: GelatoTheme.orangeBright,
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: GelatoTheme.orangeBright.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ],
-                extraLinesData: ExtraLinesData(
-                  horizontalLines: [
-                    HorizontalLine(
-                      y: 2000, 
-                      color: GelatoTheme.greenBright.withValues(alpha: 0.8),
-                      strokeWidth: 2,
-                      dashArray: [4, 4],
-                      label: HorizontalLineLabel(
-                        show: true,
-                        alignment: Alignment.topRight,
-                        padding: const EdgeInsets.only(right: 5, bottom: 5),
-                        style: const TextStyle(
-                          color: GelatoTheme.greenBright,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        labelResolver: (line) => 'GOAL',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMacrosBreakdown() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: GelatoTheme.cardRadius,
-        border: Border.all(color: Colors.black87, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: GelatoTheme.green.withValues(alpha: 0.5),
-            blurRadius: 0,
-            offset: const Offset(4, 4),
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildMacroBar('Protein', 110, 150, GelatoTheme.blueBright, '30%'),
-          const SizedBox(height: 16),
-          _buildMacroBar('Carbs', 220, 250, GelatoTheme.yellowBright, '45%'),
-          const SizedBox(height: 16),
-          _buildMacroBar('Fats', 65, 70, GelatoTheme.pinkBright, '25%'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMacroBar(String name, int current, int target, Color color, String percentage) {
-    double progress = (current / target).clamp(0.0, 1.0);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: GelatoTheme.textDark,
-              ),
-            ),
-            Text(
-              '${current}g / ${target}g  ($percentage)',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: GelatoTheme.textMuted,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Stack(
-          children: [
-            Container(
-              height: 10,
-              decoration: BoxDecoration(
-                color: GelatoTheme.bg,
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            FractionallySizedBox(
-              widthFactor: progress,
-              child: Container(
-                height: 10,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNutritionScoreCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: GelatoTheme.cardRadius,
-        border: Border.all(color: Colors.black87, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: GelatoTheme.blue.withValues(alpha: 0.5),
-            blurRadius: 0,
-            offset: const Offset(4, 4),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 100,
-            height: 100,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CircularProgressIndicator(
-                  value: 0.85, 
-                  strokeWidth: 10,
-                  backgroundColor: GelatoTheme.bg,
-                  color: GelatoTheme.greenBright,
-                  strokeCap: StrokeCap.round,
-                ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '85',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: GelatoTheme.textDark,
-                          letterSpacing: -1,
-                        ),
-                      ),
-                      Text(
-                        '/100',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: GelatoTheme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Great Balance!',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: GelatoTheme.textDark,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildScoreFactor('Consistency', true),
-                const SizedBox(height: 6),
-                _buildScoreFactor('Macro Balance', true),
-                const SizedBox(height: 6),
-                _buildScoreFactor('Goal Adherence', false),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScoreFactor(String factor, bool isGood) {
-    return Row(
-      children: [
-        Icon(
-          isGood ? Icons.check_circle_rounded : Icons.info_rounded,
-          size: 16,
-          color: isGood ? GelatoTheme.greenBright : GelatoTheme.yellowBright,
-        ),
-        const SizedBox(width: 8),
-        Text(
-          factor,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: GelatoTheme.textLight,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class HorizontalInsightsCarousel extends StatefulWidget {
@@ -422,21 +91,21 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
       'desc': 'Your calorie intake tends to spike after 8 PM. Consider lighter dinners to improve your rest.',
       'icon': Icons.nightlight_round,
       'color': GelatoTheme.purple,
-      'iconColor': GelatoTheme.purpleBright,
+      'iconColor': GelatoTheme.purple,
     },
     {
       'title': 'Protein is Inconsistent',
       'desc': 'You hit your protein goal 4 out of 7 days this week. Try adding a shake on weekends.',
       'icon': Icons.fitness_center_rounded,
       'color': GelatoTheme.blue,
-      'iconColor': GelatoTheme.blueBright,
+      'iconColor': GelatoTheme.blue,
     },
     {
       'title': 'Great Hydration!',
       'desc': 'You\'ve consistently hit your water goal all week. Keep up the excellent work!',
       'icon': Icons.water_drop_rounded,
       'color': GelatoTheme.green,
-      'iconColor': GelatoTheme.greenBright,
+      'iconColor': GelatoTheme.green,
     },
   ];
 
@@ -490,7 +159,7 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
                 alignment: Alignment.center,
                 transform: Matrix4.identity()
                   ..setEntry(3, 2, 0.0015) // Perspective
-                  ..translate(0.0, translateY, 0.0) // Gentle arc drop
+                  ..setTranslationRaw(0.0, translateY, 0.0) // Gentle arc drop
                   ..rotateY(rotationY), // Inward rotation
                 child: Transform.scale(
                   scale: scale,
@@ -535,22 +204,22 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color, // Filled with color
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.black87, width: 1.5),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            Color.lerp(Colors.white, color, 0.15)!, // Fully opaque blend
-          ],
-        ),
+        border: Border.all(color: Colors.black87, width: 2.0),
         boxShadow: [
+          // Glow
           BoxShadow(
-            color: color.withValues(alpha: 0.6),
+            color: color,
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 0),
+          ),
+          // Hard shadow
+          const BoxShadow(
+            color: Colors.black87,
             blurRadius: 0,
-            offset: const Offset(4, 6),
+            offset: Offset(4, 6),
           )
         ],
       ),
@@ -562,10 +231,11 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.4),
+                  color: Colors.white,
                   shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black87, width: 1.5),
                 ),
-                child: Icon(icon, color: iconColor, size: 22),
+                child: Icon(icon, color: Colors.black87, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(

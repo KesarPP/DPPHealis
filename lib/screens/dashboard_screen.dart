@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_risk_card.dart';
 import '../widgets/dashboard_progress_snapshot.dart';
@@ -24,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF5FF), // very light purple
+      backgroundColor: GelatoTheme.bg,
       body: SafeArea(
         child: Stack(
           children: [

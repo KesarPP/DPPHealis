@@ -28,7 +28,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF0E5), // very light orange
+      backgroundColor: GelatoTheme.bg,
       body: SafeArea(
         child: Stack(
           children: [
