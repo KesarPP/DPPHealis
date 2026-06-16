@@ -25,15 +25,13 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
   final Color cOrangeDark = const Color(0xFFDFBA92);
   final Color cYellowDark = const Color(0xFFD5BB7F);
 
-  late final List<Color> colors;
-  late final List<Color> darkColors;
+  List<Color> get colors => [cRed, cRed, cRed, cRed, cRed, cRed];
+  List<Color> get darkColors => [cRedDark, cRedDark, cRedDark, cRedDark, cRedDark, cRedDark];
   late final List<IconData> icons;
 
   @override
   void initState() {
     super.initState();
-    colors = [cRed, cOrange, cYellow, cRed, cOrange, cYellow];
-    darkColors = [cRedDark, cOrangeDark, cYellowDark, cRedDark, cOrangeDark, cYellowDark];
     
     icons = [
       Icons.restaurant,
@@ -338,9 +336,9 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
         border: Border.all(color: Colors.black, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: isLocked ? Colors.black12 : widget.color.withValues(alpha: 0.6 + (0.3 * completionPulse)), 
-            blurRadius: 20 + (10 * completionPulse), 
-            spreadRadius: 2 + (4 * completionPulse),
+            color: isLocked ? Colors.black12 : widget.color.withValues(alpha: 0.8), 
+            blurRadius: 30 + (30 * completionPulse), 
+            spreadRadius: 8 + (12 * completionPulse),
             offset: const Offset(0, 8),
           ),
         ]
@@ -536,7 +534,7 @@ class _ExactPathPainter extends CustomPainter {
     
     // 3. Elegant dashed inner line
     final innerDash = Paint()
-      ..color = Colors.white.withValues(alpha: 0.5) // subtle white
+      ..color = const Color(0xFFDFBA92).withValues(alpha: 0.8) // Soft Orange dark
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
@@ -559,7 +557,7 @@ class _ExactPathPainter extends CustomPainter {
 
     // A. Flowing dots/dashes traveling along the entire path
     final energyStreamPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
+      ..color = const Color(0xFFFFD700).withValues(alpha: 0.95) // Bright Gold/Yellow
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10
       ..strokeCap = StrokeCap.round
