@@ -116,15 +116,15 @@ class _WeeklyProgressState extends State<WeeklyProgress>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.bar_chart_rounded,
                 color: GelatoTheme.purpleDark,
                 size: 20,
               ),
-              const SizedBox(width: 8),
-              const Expanded(
+              SizedBox(width: 8),
+              Expanded(
                 child: Text(
                   'Weekly Progress',
                   style: TextStyle(

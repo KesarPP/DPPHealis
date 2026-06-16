@@ -27,3 +27,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/ffq/beverages/
+    - assets/images/ffq/cereals_breads_prep/
+    - assets/images/ffq/condiments_sideitems/
+    - assets/images/ffq/dairy_milk/
+    - assets/images/ffq/fruits_seasonal_regular/
+    - assets/images/ffq/meat_fish_eggs/
+    - assets/images/ffq/pulses_legumes/
+    - assets/images/ffq/snacks_sweets/
+    - assets/images/ffq/vegetables/
