@@ -408,7 +408,6 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Progress bar ──────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
               child: Column(
@@ -417,14 +416,19 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Food Analysis of last 30 days',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: GelatoTheme.textDark,
+                      const Expanded(
+                        child: Text(
+                          'Food Analysis of last 30 days',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: GelatoTheme.textDark,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '$_totalAnswered / $_totalItems',
                         style: const TextStyle(
@@ -496,12 +500,13 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
 
             // ── Bottom bar ────────────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               decoration: const BoxDecoration(
                 color: GelatoTheme.bg,
                 border: Border(top: BorderSide(color: Colors.black12, width: 1.0)),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
                     onPressed: _finishFFQ,
@@ -510,38 +515,47 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                       style: TextStyle(
                         color: GelatoTheme.textLight,
                         fontWeight: FontWeight.w800,
-                        fontSize: 15,
+                        fontSize: 14,
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: GelatoTheme.cardShadow,
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _completeAnalysis,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: GelatoTheme.purple,
-                        foregroundColor: GelatoTheme.purpleDark,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(30),
-                          side: const BorderSide(color: Colors.black, width: 2.0),
+                          boxShadow: GelatoTheme.cardShadow,
                         ),
-                        elevation: 0,
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Complete Analysis',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                        child: ElevatedButton(
+                          onPressed: _completeAnalysis,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: GelatoTheme.purple,
+                            foregroundColor: GelatoTheme.purpleDark,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              side: const BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            elevation: 0,
                           ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, size: 16),
-                        ],
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Complete Analysis',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward, size: 16),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

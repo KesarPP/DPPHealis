@@ -15,31 +15,23 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
   late Ticker _ticker;
   double _time = 0.0;
 
-  // Exact colors from the Gelato Days pastel palette
-  final Color cPink = const Color(0xFFFFCBE1);
-  final Color cGreen = const Color(0xFFD6E5BD);
-  final Color cYellow = const Color(0xFFF9E1A8);
-  final Color cBlue = const Color(0xFFBCD8EC);
-  final Color cPurple = const Color(0xFFDCCCEC);
-  final Color cOrange = const Color(0xFFFFDAB4);
+  // Sunset Theme Pastel Colors
+  final Color cRed = const Color(0xFFFF8B8B); // Sunset Red
+  final Color cOrange = const Color(0xFFFFDAB4); // Soft Orange
+  final Color cYellow = const Color(0xFFF9E1A8); // Golden Yellow
 
   // Slightly darker versions for text/icons
-  final Color cPinkDark = const Color(0xFFE2A6C0);
-  final Color cGreenDark = const Color(0xFFB1C494);
-  final Color cYellowDark = const Color(0xFFD5BB7F);
-  final Color cBlueDark = const Color(0xFF9CB8CC);
-  final Color cPurpleDark = const Color(0xFFBCABCC);
+  final Color cRedDark = const Color(0xFFD65C5C);
   final Color cOrangeDark = const Color(0xFFDFBA92);
+  final Color cYellowDark = const Color(0xFFD5BB7F);
 
-  late final List<Color> colors;
-  late final List<Color> darkColors;
+  List<Color> get colors => [cRed, cRed, cRed, cRed, cRed, cRed];
+  List<Color> get darkColors => [cRedDark, cRedDark, cRedDark, cRedDark, cRedDark, cRedDark];
   late final List<IconData> icons;
 
   @override
   void initState() {
     super.initState();
-    colors = [cPink, cGreen, cYellow, cBlue, cPurple, cOrange];
-    darkColors = [cPinkDark, cGreenDark, cYellowDark, cBlueDark, cPurpleDark, cOrangeDark];
     
     icons = [
       Icons.restaurant,
@@ -71,18 +63,18 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
       alignment: Alignment.topCenter,
       child: Container(
         width: 400,
-        height: 1600,
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(32)),
-          gradient: LinearGradient(
+        height: 1750,
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.all(Radius.circular(32)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+          gradient: const RadialGradient(
+            center: Alignment.center,
+            radius: 3.0,
             colors: [
-              Color(0xFFFDE1E6), // Pale sky pink
-              Color(0xFFFFF0E5), // Soft peach
-              Color(0xFFE8F5E9), // Pastel grass green
+              Color(0xFFE6E6FA), // Lavender in center
+              Color(0xFF5A315D), // Deep Plum Purple towards edges
             ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.4, 1.0],
+            stops: [0.0, 1.0],
           ),
           boxShadow: [
             BoxShadow(
@@ -95,6 +87,13 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
+            // Pattern Layer
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _PatternPainter(color: Colors.white.withValues(alpha: 0.15)),
+              ),
+            ),
+            
             // Path Layer
             Positioned.fill(
               child: CustomPaint(
@@ -106,7 +105,7 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
             ),
             
             // Cards Layer
-            _buildInteractiveCard(x: 20, y: 50, module: journeyModules[0], color: colors[0], darkColor: darkColors[0], icon: icons[0]),
+            _buildInteractiveCard(x: 20, y: 76, module: journeyModules[0], color: colors[0], darkColor: darkColors[0], icon: icons[0]),
             _buildInteractiveCard(x: 160, y: 250, module: journeyModules[1], color: colors[1], darkColor: darkColors[1], icon: icons[1]),
             _buildInteractiveCard(x: 20, y: 450, module: journeyModules[2], color: colors[2], darkColor: darkColors[2], icon: icons[2]),
             _buildInteractiveCard(x: 160, y: 650, module: journeyModules[3], color: colors[3], darkColor: darkColors[3], icon: icons[3]),
@@ -124,7 +123,7 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
             // Start Flag Layer
             Positioned(
               left: 106,
-              top: -24, 
+              top: 16, 
               child: _buildStartIcon(colors[0], darkColors[0]),
             ),
             
@@ -158,63 +157,126 @@ class _JourneyMapState extends State<JourneyMap> with SingleTickerProviderStateM
   }
 
   Widget _buildEndTreasure() {
-    double haloPulse = (math.sin(_time * 4) + 1) / 2; // 0 to 1
+    double pulse = (math.sin(_time * 3) + 1) / 2;
     
     return Container(
-      width: 400, height: 350,
-      alignment: Alignment.center,
-      child: Stack(
-        alignment: Alignment.center,
+      width: 400,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Radiating Halo Pulse
-          Container(
-            width: 160, height: 160,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.3 + 0.2 * haloPulse),
-                  blurRadius: 60 + 40 * haloPulse,
-                  spreadRadius: 20 + 20 * haloPulse,
-                )
-              ]
-            ),
+          // 1. Trophy Emoji with Glow
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 120, height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.6 + 0.4 * pulse),
+                      blurRadius: 80 + 40 * pulse,
+                      spreadRadius: 20 + 20 * pulse,
+                    )
+                  ]
+                ),
+              ),
+              Transform.scale(
+                scale: 1.0 + 0.05 * pulse,
+                child: const Text(
+                  '🏆',
+                  style: TextStyle(fontSize: 100, height: 1.0),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 24),
           
-          // Premium Fireworks (Gold Particle Blooms & Starbursts)
-          Transform.rotate(
-            angle: _time * 0.2, // slow rotation
-            child: CustomPaint(
-              size: const Size(350, 350),
-              painter: _FireworksPainter(time: _time),
-            ),
+          // 2. Wrap of Achievements
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 12,
+            children: [
+              _buildAchievementChip('A1C Normalized'),
+              _buildAchievementChip('Weight Goal'),
+              _buildAchievementChip('Energy Restored'),
+              _buildAchievementChip('Mindset Shifted'),
+              _buildAchievementChip('Eating Mastered'),
+              _buildAchievementChip('Active Lifestyle'),
+            ],
           ),
-
-          // Luxury Trophy
-          Transform.scale(
-            scale: 1.0 + 0.06 * math.sin(_time * 1.5).abs(), // Very slow Heartbeat animation
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 220, height: 220,
-                  alignment: Alignment.center,
-                  child: Image.asset(
-                    'assets/images/custom_trophy.png',
-                    fit: BoxFit.contain,
-                  ),
+          const SizedBox(height: 32),
+          
+          // 3. You Did It! text
+          Stack(
+            children: [
+              // Black Border
+              Text(
+                'You Did It! ✨',
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900,
+                  foreground: Paint()
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = 3.0
+                    ..color = Colors.black,
+                  letterSpacing: -0.5,
                 ),
-                // Light sweeps across the trophy
-                SizedBox(
-                  width: 350, height: 350,
-                  child: CustomPaint(
-                    painter: _ShineSweepPainter(time: _time),
-                  ),
+              ),
+              // Fill text
+              const Text(
+                'You Did It! ✨',
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFFBEBB5),
+                  letterSpacing: -0.5,
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // 4. Final text
+          const Text(
+            '16 weeks. One powerful choice. A lifetime of vibrant,\nhealthy living starts now.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFFBEBB5), // Soft pale gold to pop on navy
+              height: 1.4,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAchievementChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          )
+        ],
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF6A5D2E),
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -271,23 +333,19 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
       decoration: BoxDecoration(
         color: isLocked ? Colors.grey.shade100 : Color.lerp(Colors.white, widget.color, 0.2),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: isLocked ? Colors.black12 : widget.color.withValues(alpha: 0.6 + (0.3 * completionPulse)), 
-            blurRadius: 20 + (10 * completionPulse), 
-            spreadRadius: 2 + (4 * completionPulse),
+            color: isLocked ? Colors.black12 : widget.color.withValues(alpha: 0.8), 
+            blurRadius: 30 + (30 * completionPulse), 
+            spreadRadius: 8 + (12 * completionPulse),
             offset: const Offset(0, 8),
           ),
         ]
       ),
-      child: CustomPaint(
-        painter: _DottedBorderPainter(
-          color: Colors.black, 
-          strokeWidth: isCompleted ? 2.5 : 1.5
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Icon
@@ -341,7 +399,6 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
             ]
           )
         )
-      )
     );
 
     if (isLocked) {
@@ -477,7 +534,7 @@ class _ExactPathPainter extends CustomPainter {
     
     // 3. Elegant dashed inner line
     final innerDash = Paint()
-      ..color = const Color(0xFFDCCCEC).withValues(alpha: 0.8) // subtle purple
+      ..color = const Color(0xFFDFBA92).withValues(alpha: 0.8) // Soft Orange dark
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
@@ -500,7 +557,7 @@ class _ExactPathPainter extends CustomPainter {
 
     // A. Flowing dots/dashes traveling along the entire path
     final energyStreamPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
+      ..color = const Color(0xFFFFD700).withValues(alpha: 0.95) // Bright Gold/Yellow
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10
       ..strokeCap = StrokeCap.round
@@ -658,4 +715,48 @@ class _ShineSweepPainter extends CustomPainter {
   bool shouldRepaint(covariant _ShineSweepPainter oldDelegate) {
     return oldDelegate.time != time;
   }
+}
+
+class _PatternPainter extends CustomPainter {
+  final Color color;
+  _PatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+      
+    final centerPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+    
+    const spacing = 40.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        // Shift alternate rows for a staggered pattern
+        double offsetX = (y / spacing) % 2 == 0 ? 0 : spacing / 2;
+        
+        double cx = x + offsetX;
+        double cy = y;
+        
+        // Draw a tiny star
+        Path starPath = Path();
+        double r1 = 3.0; // outer radius
+        double r2 = 1.2; // inner radius
+        for (int j = 0; j < 10; j++) {
+          double r = j % 2 == 0 ? r1 : r2;
+          double a = (j / 10) * 2 * math.pi - math.pi / 2;
+          Offset p = Offset(cx + math.cos(a) * r, cy + math.sin(a) * r);
+          if (j == 0) starPath.moveTo(p.dx, p.dy);
+          else starPath.lineTo(p.dx, p.dy);
+        }
+        starPath.close();
+        canvas.drawPath(starPath, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _PatternPainter oldDelegate) => oldDelegate.color != color;
 }
