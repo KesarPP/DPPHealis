@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../screens/profile_screen.dart';
+import '../screens/food_analysis_screen.dart';
 
 class DashboardHeader extends StatefulWidget {
   const DashboardHeader({super.key});
@@ -192,6 +193,10 @@ class _DashboardHeaderState extends State<DashboardHeader>
                 setState(() {
                   _hasNotification = false;
                 });
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FoodAnalysisScreen()),
+                );
               }
             },
             child: Container(

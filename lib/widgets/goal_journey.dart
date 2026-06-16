@@ -734,7 +734,7 @@ class _DashedBorderPainter extends CustomPainter {
     for (final metric in metrics) {
       double distance = 0.0;
       while (distance < metric.length) {
-        final double length = 4.0;
+        const double length = 4.0;
         final Path extract = metric.extractPath(distance, distance + length);
         canvas.drawPath(extract, paint);
         distance += length + 5.0;

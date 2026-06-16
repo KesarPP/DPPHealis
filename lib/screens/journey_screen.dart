@@ -387,7 +387,7 @@ class _DottedBorderPainter extends CustomPainter {
       double distance = 0.0;
       bool draw = true;
       while (distance < metric.length) {
-        final len = 8.0;
+        const len = 8.0;
         if (draw) dashPath.addPath(metric.extractPath(distance, distance + len), Offset.zero);
         distance += len;
         draw = !draw;
@@ -445,13 +445,7 @@ class _ExactPathPainter extends CustomPainter {
     dashedPath.moveTo(270, 1170);
     dashedPath.cubicTo(270, 1260, 200, 1260, 200, 1350); // to Treasure
 
-    final Rect bounds = const Rect.fromLTRB(0, 0, 400, 1600);
-    final LinearGradient gradient = LinearGradient(
-      colors: colors,
-      stops: const [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    );
+    // Unused variables bounds and gradient removed
 
     // 1. Breathing Golden Glow (Expands and Contracts)
     double breath = (math.sin(time * 2) + 1) / 2; // 0.0 to 1.0
@@ -502,7 +496,7 @@ class _ExactPathPainter extends CustomPainter {
     final metrics = mainPath.computeMetrics().toList();
     if (metrics.isEmpty) return;
     final metric = metrics.first;
-    final totalLength = metric.length;
+
 
     // A. Flowing dots/dashes traveling along the entire path
     final energyStreamPaint = Paint()
@@ -587,8 +581,11 @@ class _FireworksPainter extends CustomPainter {
             double r = j % 2 == 0 ? r1 : r2;
             double a = (j / 8) * 2 * math.pi + (time * 2);
             Offset p = pos + Offset(math.cos(a) * r, math.sin(a) * r);
-            if (j == 0) starPath.moveTo(p.dx, p.dy);
-            else starPath.lineTo(p.dx, p.dy);
+            if (j == 0) {
+              starPath.moveTo(p.dx, p.dy);
+            } else {
+              starPath.lineTo(p.dx, p.dy);
+            }
           }
           starPath.close();
           canvas.drawPath(starPath, particlePaint);

@@ -319,7 +319,7 @@ class InsightsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(
+          const SizedBox(
             width: 100,
             height: 100,
             child: Stack(
@@ -332,7 +332,7 @@ class InsightsScreen extends StatelessWidget {
                   color: GelatoTheme.greenBright,
                   strokeCap: StrokeCap.round,
                 ),
-                const Center(
+                Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
