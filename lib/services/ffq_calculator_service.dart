@@ -23,7 +23,12 @@ class FfqCalculatorService {
   // ── Main calculation ──────────────────────────────────────────────────────
 
   double calculateDailyCalories() {
+    return calculateDailyCaloriesWithBreakdown().totalCalories;
+  }
+
+  CalorieResult calculateDailyCaloriesWithBreakdown() {
     double totalCalories = 0.0;
+    final List<FoodCalorieEntry> breakdown = [];
 
     for (final entry in _responses.entries) {
       final name = entry.key;
@@ -55,9 +60,20 @@ class FfqCalculatorService {
       final double calPerDay = (calPer100g / 100.0) * gramsPerDay;
 
       totalCalories += calPerDay;
+      breakdown.add(FoodCalorieEntry(
+        name: name,
+        frequency: '${answer.frequency} × ${answer.timesPerDay}x',
+        size: answer.size,
+        quantity: answer.quantityAtTime,
+        gramsPerDay: gramsPerDay,
+        caloriesPerDay: calPerDay,
+      ));
     }
 
-    return totalCalories;
+    // Sort by highest calorie contributor first
+    breakdown.sort((a, b) => b.caloriesPerDay.compareTo(a.caloriesPerDay));
+
+    return CalorieResult(totalCalories: totalCalories, breakdown: breakdown);
   }
 
   // ── Portion-to-grams converter ──────────────────────────────────────────
@@ -148,8 +164,8 @@ class FfqCalculatorService {
     'Wet pulses (gravy curry)': 'Kidney bean curry (Rajmah curry)',
 
     // Vegetables
-    'Green leafy vegetables (dry)': 'Spinach paneer (Palak paneer)',
-    'Green leafy vegetables (wet)': 'Spinach paneer (Palak paneer)',
+    'Green leafy vegetables (dry)': 'Spinach',
+    'Green leafy vegetables (wet)': 'Spinach',
     'Gourd (dry)': 'Dry potato (Sookhe aloo)',
     'Gourd (wet)': 'Pea potato curry (Aloo matar)',
     'Brinjal (dry)': 'Brinjal bhartha (Baingan ka bhartha)',
@@ -183,8 +199,8 @@ class FfqCalculatorService {
     'Mutton (wet/curry)': 'Roghan josh',
     'Fresh Fish/prawns (dry)': 'Tandoori fish',
     'Fresh Fish/prawns (wet/curry)': 'Fish curry (Machli curry)',
-    'Crab (dry)': 'Tandoori fish',
-    'Crab (wet/curry)': 'Fish curry (Machli curry)',
+    'Crab (dry)': 'Crab',
+    'Crab (wet/curry)': 'Crab',
     'Dry fish/prawns (dry)': 'Fish tikka',
     'Dry fish/prawns (wet/curry)': 'Fish curry (Machli curry)',
 
@@ -203,20 +219,20 @@ class FfqCalculatorService {
     'Nuts': 'Peanut brittle (Moongfali ki chikki)',
     'Puffed grains / Popcorn': 'Murmura (Puffed rice)',
 
-    // Fruits (all fresh fruits ~50–80 kcal/100g, use fruit salad as proxy)
-    'Orange': 'Fruit salad (Phalon ka salaad)',
-    'Mango': 'Fruit salad (Phalon ka salaad)',
-    'Guava': 'Fruit salad (Phalon ka salaad)',
-    'Sweet lime': 'Fruit salad (Phalon ka salaad)',
-    'Banana': 'Fruit salad (Phalon ka salaad)',
-    'Apple': 'Fruit salad (Phalon ka salaad)',
-    'Papaya': 'Fruit salad (Phalon ka salaad)',
-    'Grapes': 'Fruit salad (Phalon ka salaad)',
-    'Pomegranate': 'Fruit salad (Phalon ka salaad)',
-    'Pineapple': 'Fruit salad (Phalon ka salaad)',
-    'Watermelon / Melon': 'Fruit salad (Phalon ka salaad)',
-    'Chikoo': 'Fruit salad (Phalon ka salaad)',
-    'Lemon (sour)': 'Fruit salad (Phalon ka salaad)',
+    // Fruits (now mapped to accurate IFCT 2017 dataset items)
+    'Orange': 'Orange',
+    'Mango': 'Mango, ripe, kesar',
+    'Guava': 'Guava',
+    'Sweet lime': 'Sweet lime',
+    'Banana': 'Banana',
+    'Apple': 'Apple, big',
+    'Papaya': 'Papaya',
+    'Grapes': 'Grapes, pale green',
+    'Pomegranate': 'Pomegranate',
+    'Pineapple': 'Pineapple',
+    'Watermelon / Melon': 'Watermelon',
+    'Chikoo': 'Sapota',
+    'Lemon (sour)': 'Lemon, juice',
     'Other fruits': 'Fruit salad (Phalon ka salaad)',
   };
 

@@ -3,6 +3,32 @@ import '../data/gelato_theme.dart';
 import '../main.dart'; // MainShell
 import '../services/ffq_calculator_service.dart';
 
+// ── FFQ Calorie breakdown result ─────────────────────────────────────────────
+class FoodCalorieEntry {
+  final String name;
+  final String frequency;
+  final String size;
+  final double quantity;
+  final double gramsPerDay;
+  final double caloriesPerDay;
+
+  const FoodCalorieEntry({
+    required this.name,
+    required this.frequency,
+    required this.size,
+    required this.quantity,
+    required this.gramsPerDay,
+    required this.caloriesPerDay,
+  });
+}
+
+class CalorieResult {
+  final double totalCalories;
+  final List<FoodCalorieEntry> breakdown;
+
+  const CalorieResult({required this.totalCalories, required this.breakdown});
+}
+
 // ── Data model ──────────────────────────────────────────────────────────────
 
 class FfqItem {
@@ -342,8 +368,112 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
     );
   }
 
+  /// Quick validation test — pre-fills 3 known items and checks the formula.
+  /// Expected total: ~845 kcal (see comments below).
+  void _runQuickTest() {
+    final svc = FfqCalculatorService();
+    svc.clear();
+
+    // Test item 1: Rice (plain)
+    // Daily × 1 time × K1 (100g) × qty 1
+    // Expected: (117.19/100) × 100 × 1 × 1 = 117.19 kcal
+    svc.saveAnswer('Rice (plain)', FfqAnswer(
+      frequency: 'Daily',
+      timesPerDay: 1,
+      size: 'K1 (100 ml)',
+      quantityAtTime: 1.0,
+    ));
+
+    // Test item 2: Chapati
+    // Daily × 3 times × F4 (60g) × qty 2
+    // Expected: (202.31/100) × 60 × 2 × 3 = 728.3 kcal
+    svc.saveAnswer('Chapati', FfqAnswer(
+      frequency: 'Daily',
+      timesPerDay: 3,
+      size: 'F4',
+      quantityAtTime: 2.0,
+    ));
+
+    // Test item 3: Tea
+    // Per Week × 7 times × C2 (100g) × qty 1
+    // Expected: (16.14/100) × 100 × 1 × (7/7) = 16.14 kcal
+    svc.saveAnswer('Tea', FfqAnswer(
+      frequency: 'Per Week',
+      timesPerDay: 7,
+      size: 'C2 (100 ml)',
+      quantityAtTime: 1.0,
+    ));
+
+    // Expected total: 117.19 + 728.3 + 16.14 = ~861.6 kcal
+    final CalorieResult result = svc.calculateDailyCaloriesWithBreakdown();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('🧪 Quick Validation Test', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _testRow('Rice (plain)',    'Expected: 117 kcal', result.breakdown.firstWhere((e) => e.name == 'Rice (plain)', orElse: () => const FoodCalorieEntry(name:'',frequency:'',size:'',quantity:0,gramsPerDay:0,caloriesPerDay:0)).caloriesPerDay),
+            _testRow('Chapati',         'Expected: 728 kcal', result.breakdown.firstWhere((e) => e.name == 'Chapati', orElse: () => const FoodCalorieEntry(name:'',frequency:'',size:'',quantity:0,gramsPerDay:0,caloriesPerDay:0)).caloriesPerDay),
+            _testRow('Tea',             'Expected: 16 kcal',  result.breakdown.firstWhere((e) => e.name == 'Tea', orElse: () => const FoodCalorieEntry(name:'',frequency:'',size:'',quantity:0,gramsPerDay:0,caloriesPerDay:0)).caloriesPerDay),
+            const Divider(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Total (Expected ~862):', style: TextStyle(fontWeight: FontWeight.w900)),
+                Text('${result.totalCalories.toStringAsFixed(1)} kcal',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: (result.totalCalories - 861.6).abs() < 5 ? Colors.green : Colors.red,
+                    )),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              (result.totalCalories - 861.6).abs() < 5 ? '✅ Formula is CORRECT!' : '❌ Formula output is unexpected!',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: (result.totalCalories - 861.6).abs() < 5 ? Colors.green : Colors.red,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold, color: GelatoTheme.purpleDark)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _testRow(String name, String expected, double actual) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+              Text(expected, style: const TextStyle(fontSize: 10, color: GelatoTheme.textLight)),
+            ],
+          )),
+          Text('${actual.toStringAsFixed(1)} kcal',
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
   void _completeAnalysis() {
-    double totalCalories = FfqCalculatorService().calculateDailyCalories();
+    final CalorieResult result = FfqCalculatorService().calculateDailyCaloriesWithBreakdown();
+    final double totalCalories = result.totalCalories;
+    final List<FoodCalorieEntry> topItems = result.breakdown.take(5).toList();
     
     showDialog(
       context: context,
@@ -351,16 +481,55 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text('Analysis Complete', style: TextStyle(fontWeight: FontWeight.w900)),
-          content: Text(
-            'Estimated Daily Caloric Intake:\n\n${totalCalories.toStringAsFixed(0)} kcal',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${totalCalories.toStringAsFixed(0)} kcal / day',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: GelatoTheme.purpleDark),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Estimated Daily Caloric Intake',
+                  style: TextStyle(fontSize: 12, color: GelatoTheme.textLight, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                const Divider(height: 24),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Top Contributors:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                ),
+                const SizedBox(height: 8),
+                ...topItems.map((item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12), overflow: TextOverflow.ellipsis),
+                            Text('${item.frequency}  •  ${item.size}  •  ×${item.quantity.toStringAsFixed(1)}',
+                                style: const TextStyle(fontSize: 10, color: GelatoTheme.textLight)),
+                          ],
+                        ),
+                      ),
+                      Text('${item.caloriesPerDay.toStringAsFixed(0)} kcal',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: GelatoTheme.purpleDark)),
+                    ],
+                  ),
+                )),
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // close dialog
-                _finishFFQ(); // go back to shell
+                Navigator.pop(context);
+                _finishFFQ();
               },
               child: const Text('OK', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: GelatoTheme.purpleDark)),
             ),
@@ -519,7 +688,6 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Expanded(
                     child: Align(
                       alignment: Alignment.centerRight,
