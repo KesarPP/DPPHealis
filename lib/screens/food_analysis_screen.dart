@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../main.dart'; // MainShell
 import '../services/ffq_calculator_service.dart';
+import 'taste_preferences_screen.dart';
 
 // ── FFQ Calorie breakdown result ─────────────────────────────────────────────
 class FoodCalorieEntry {
@@ -351,9 +352,23 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                   _openItemQuestionnaire(nextEntry.key, nextEntry.value);
                 });
               } else {
-                _completeAnalysis();
+                _openTastePreferences();
               }
             }
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openTastePreferences() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TastePreferencesScreen(
+          onComplete: () {
+            Navigator.pop(context); // Pop TastePreferencesScreen
+            _completeAnalysis();
           },
         ),
       ),
@@ -704,7 +719,7 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                           boxShadow: GelatoTheme.cardShadow,
                         ),
                         child: ElevatedButton(
-                          onPressed: _completeAnalysis,
+                          onPressed: _openTastePreferences,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: GelatoTheme.purple,
                             foregroundColor: GelatoTheme.purpleDark,
