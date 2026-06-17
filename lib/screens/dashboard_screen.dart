@@ -25,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GelatoTheme.bg,
+      backgroundColor: GelatoTheme.purple.withValues(alpha: 0.4),
       body: SafeArea(
         child: Stack(
           children: [

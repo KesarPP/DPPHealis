@@ -544,9 +544,9 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
     final pct = _totalAnswered / _totalItems;
 
     return Scaffold(
-      backgroundColor: GelatoTheme.bg,
+      backgroundColor: GelatoTheme.green.withValues(alpha: 0.3),
       appBar: AppBar(
-        backgroundColor: GelatoTheme.bg,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text(
@@ -575,8 +575,15 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+              ),
+            ),
+            Column(
+              children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
               child: Column(
@@ -730,11 +737,35 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                 ],
               ),
             ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+class _DotsPainter extends CustomPainter {
+  final Color color;
+  const _DotsPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double gridSize = 16.0;
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    for (double x = 0; x <= size.width; x += gridSize) {
+      for (double y = 0; y <= size.height; y += gridSize) {
+        canvas.drawCircle(Offset(x, y), 1.0, dotPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotsPainter oldDelegate) => oldDelegate.color != color;
 }
 
 // ── Category Card (expandable) ────────────────────────────────────────────────

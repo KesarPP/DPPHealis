@@ -10,7 +10,7 @@ class FoodTrackingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GelatoTheme.bg,
+      backgroundColor: GelatoTheme.green.withValues(alpha: 0.4),
       body: SafeArea(
         child: Stack(
           children: [
