@@ -267,18 +267,7 @@ class _HandoutImageScreenState extends State<_HandoutImageScreen> {
                             ),
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                              child: Text(
-                                _displayPages[index],
-                                textAlign: TextAlign.left,
-                                style: const TextStyle(
-                                  fontFamily: 'serif',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.3,
-                                  color: Color(0xFF2C3E50),
-                                  height: 1.6,
-                                ),
-                              ),
+                              child: _buildPageContent(widget.title, _displayPages[index]),
                             ),
                           );
                         },
@@ -307,6 +296,195 @@ class _HandoutImageScreenState extends State<_HandoutImageScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPageContent(String title, String text) {
+    if (title == 'Understanding Prediabetes') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Text(
+                  "Welcome to your Diabetes Prevention Journey! This program is designed to help you take small, meaningful steps toward a healthier life.",
+                  style: const TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                    color: Color(0xFF2C3E50),
+                    height: 1.6,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 4,
+                child: Container(
+                  margin: const EdgeInsets.only(top: 40),
+                  height: 110,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CustomPaint(painter: _GinghamPainter(0, isMixed: true)),
+                        Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset('assets/images/Image 1.jpg', fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[300], child: const Center(child: Text('Image 1', style: TextStyle(fontSize: 10))),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Over the coming weeks, you'll learn about nutrition, movement, and habits that can make a real difference — one session at a time. Let's get started!",
+            style: TextStyle(
+              fontFamily: 'serif',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
+              color: Color(0xFF2C3E50),
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 4,
+                child: Container(
+                  height: 110,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CustomPaint(painter: _GinghamPainter(0, isMixed: true)),
+                        Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset('assets/images/Image 2.jpg', fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[300], child: const Center(child: Text('Image 2', style: TextStyle(fontSize: 10))),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                flex: 5,
+                child: Text(
+                  "Prediabetes means that blood sugar is high but not yet high enough to be type 2 diabetes.",
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                    color: Color(0xFF2C3E50),
+                    height: 1.6,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 50),
+          Container(
+            width: double.infinity,
+            height: 140,
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(2, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CustomPaint(painter: _GinghamPainter(0, isMixed: true)),
+                  Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset('assets/images/Image 3.png', fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300], child: const Center(child: Text('Image 3 (Chart)', style: TextStyle(fontSize: 12))),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Default layout for other pages
+    return Text(
+      text,
+      textAlign: TextAlign.left,
+      style: const TextStyle(
+        fontFamily: 'serif',
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.3,
+        color: Color(0xFF2C3E50),
+        height: 1.6,
       ),
     );
   }
