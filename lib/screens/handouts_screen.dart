@@ -137,20 +137,14 @@ class _SessionCardState extends State<_SessionCard> {
                 return InkWell(
                   onTap: () {
                     // Extract session number to determine which image to show
-                    final match = RegExp(r'(?:Session|Module)\s+(\d+)').firstMatch(widget.session.sessionName);
-                    int sessionNum = 1;
-                    if (match != null) {
-                      sessionNum = int.tryParse(match.group(1) ?? '1') ?? 1;
-                    }
-                    int imageIndex = ((sessionNum - 1) % 4) + 1;
-                    String imagePath = 'assets/images/session_bg_$imageIndex.png';
-                    
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => _HandoutImageScreen(
-                          imagePath: imagePath,
                           title: item.title,
+                          content: item.content,
+                          pages: item.pages,
+                          colorIndex: item.number,
                         ),
                       ),
                     );
@@ -189,16 +183,40 @@ class _SessionCardState extends State<_SessionCard> {
   }
 }
 
-class _HandoutImageScreen extends StatelessWidget {
-  final String imagePath;
+class _HandoutImageScreen extends StatefulWidget {
   final String title;
+  final String? content;
+  final List<String>? pages;
+  final int colorIndex;
 
-  const _HandoutImageScreen({required this.imagePath, required this.title});
+  const _HandoutImageScreen({required this.title, this.content, this.pages, this.colorIndex = 0});
+
+  @override
+  State<_HandoutImageScreen> createState() => _HandoutImageScreenState();
+}
+
+class _HandoutImageScreenState extends State<_HandoutImageScreen> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  List<String> get _displayPages => widget.pages ?? (widget.content != null && widget.content!.isNotEmpty ? [widget.content!] : ['']);
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GelatoTheme.bg,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -206,29 +224,144 @@ class _HandoutImageScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: GelatoTheme.textDark),
           onPressed: () => Navigator.maybePop(context),
         ),
-        title: Text(title,
+        title: Text(widget.title,
             style: const TextStyle(color: GelatoTheme.textDark, fontWeight: FontWeight.w700, fontSize: 16)),
       ),
-      body: Center(
-        child: InteractiveViewer(
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text('Image not found:\n$imagePath', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 8),
-                  const Text('Please add the image to the assets folder', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              );
-            },
+      body: Stack(
+        children: [
+          // Background Pattern
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _GinghamPainter(
+                widget.colorIndex,
+                isMixed: widget.title == 'Understanding Prediabetes',
+              ),
+            ),
           ),
-        ),
+          if (_displayPages.isEmpty)
+            const SizedBox.shrink()
+          else
+            Positioned.fill(
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (idx) => setState(() => _currentPage = idx),
+                        itemCount: _displayPages.length,
+                        itemBuilder: (context, index) {
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F5F0), // Paper-like color
+                              borderRadius: BorderRadius.circular(40),
+                              border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                              child: Text(
+                                _displayPages[index],
+                                textAlign: TextAlign.left,
+                                style: const TextStyle(
+                                  fontFamily: 'serif',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.3,
+                                  color: Color(0xFF2C3E50),
+                                  height: 1.6,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (_displayPages.length > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 24.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(_displayPages.length, (index) {
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _currentPage == index ? GelatoTheme.textDark : Colors.grey.withValues(alpha: 0.3),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
+}
+
+class _GinghamPainter extends CustomPainter {
+  final int colorIndex;
+  final bool isMixed;
+  _GinghamPainter(this.colorIndex, {this.isMixed = false});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFFAF9F6)); // Off-white base
+    
+    const double stripeWidth = 30.0;
+
+    if (isMixed) {
+      // Light pink vertical stripes
+      final pinkPaint = Paint()..color = const Color(0xFFF5D0D6).withValues(alpha: 0.4);
+      for (double x = 0; x < size.width; x += stripeWidth * 2) {
+        canvas.drawRect(Rect.fromLTWH(x, 0, stripeWidth, size.height), pinkPaint);
+      }
+      
+      // Light green horizontal stripes
+      final greenPaint = Paint()..color = const Color(0xFFD3E4CD).withValues(alpha: 0.4);
+      for (double y = 0; y < size.height; y += stripeWidth * 2) {
+        canvas.drawRect(Rect.fromLTWH(0, y, size.width, stripeWidth), greenPaint);
+      }
+      return;
+    }
+    
+    Color stripeColor;
+    int index = colorIndex % 3;
+    if (index == 2) {
+      stripeColor = const Color(0xFFDCA6A6); // Pink
+    } else if (index == 0) {
+      stripeColor = const Color(0xFF8F9779); // Green
+    } else {
+      stripeColor = const Color(0xFF85A1C1); // Blue
+    }
+    
+    final paint = Paint()..color = stripeColor.withValues(alpha: 0.4);
+    
+    // Vertical stripes
+    for (double x = 0; x < size.width; x += stripeWidth * 2) {
+      canvas.drawRect(Rect.fromLTWH(x, 0, stripeWidth, size.height), paint);
+    }
+    
+    // Horizontal stripes
+    for (double y = 0; y < size.height; y += stripeWidth * 2) {
+      canvas.drawRect(Rect.fromLTWH(0, y, size.width, stripeWidth), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GinghamPainter oldDelegate) => 
+      oldDelegate.colorIndex != colorIndex || oldDelegate.isMixed != isMixed;
 }

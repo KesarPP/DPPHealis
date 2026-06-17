@@ -22,7 +22,7 @@ class SessionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: GelatoTheme.blue.withValues(alpha: 0.3),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -38,9 +38,14 @@ class SessionsScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: Container(
-        color: const Color(0xFFFCF6F6), // Warm white background from image
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            const Positioned.fill(
+              child: DottedGridBackground(),
+            ),
+            ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           children: [
             _buildHeroBanner(),
             const SizedBox(height: 20),
@@ -57,6 +62,8 @@ class SessionsScreen extends StatelessWidget {
             const _SectionLabel('Session Timeline'),
             const SizedBox(height: 12),
             const JourneyMap(),
+          ],
+            ),
           ],
         ),
       ),
