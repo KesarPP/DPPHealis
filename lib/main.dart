@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'screens/splash_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/food_tracking_screen.dart';
@@ -8,8 +9,10 @@ import 'screens/coach_chat_screen.dart';
 import 'screens/ai_chatbot_screen.dart';
 import 'data/gelato_theme.dart';
 
-void main() {
-  runApp(const DPPApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const DPPApp());    // use DPPApp, not DPP()
 }
 
 class DPPApp extends StatelessWidget {
