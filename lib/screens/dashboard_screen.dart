@@ -5,6 +5,7 @@ import '../widgets/dashboard_risk_card.dart';
 import '../widgets/dashboard_progress_snapshot.dart';
 import '../widgets/dashboard_timeline.dart';
 import '../widgets/dashboard_analytics.dart';
+import '../widgets/dashboard_ai_coach_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -43,6 +44,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: DashboardHeader(),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // AI Coach Card
+                SliverToBoxAdapter(
+                  child: DashboardAICoachCard(),
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 16)),
 
                 // 2. Prediabetes Risk Card
                 SliverToBoxAdapter(
