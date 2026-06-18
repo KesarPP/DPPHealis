@@ -62,6 +62,22 @@ class AuthService {
     return null;
   }
 
+  /// Removes the local profile image.
+  Future<void> removeLocalProfileImage() async {
+    final email = currentUser?.email ?? (await SharedPreferences.getInstance()).getString('last_user_email');
+    if (email == null || email.isEmpty) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('local_pfp_$email');
+
+      if (currentUser != null) {
+        await currentUser!.updatePhotoURL(null);
+        await currentUser!.reload();
+      }
+    } catch (_) {}
+  }
+
   /// Returns the Gravatar URL for a given email address.
   String getGravatarUrl(String email) {
     final cleanedEmail = email.trim().toLowerCase();

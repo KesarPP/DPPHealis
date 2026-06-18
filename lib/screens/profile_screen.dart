@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import '../services/auth_service.dart';
 import '../data/gelato_theme.dart';
+import 'crop_image_screen.dart';
 
 // Pastel Color Palette "GELATO DAYS" mapped to GelatoTheme
 const Color _pastelPink = GelatoTheme.pink;
@@ -212,12 +213,24 @@ class _ProfileHeader extends StatelessWidget {
     final user = AuthService().currentUser;
     final nameController = TextEditingController(text: profile.displayName);
     final ImagePicker picker = ImagePicker();
+    String? localImagePath = profile.localImagePath;
+
+    String getInitials(String name) {
+      if (name.isEmpty) return 'JP';
+      final parts = name.trim().split(' ');
+      if (parts.length > 1) {
+        return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      }
+      return parts[0][0].toUpperCase();
+    }
 
     showDialog(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final hasPhoto = localImagePath != null && File(localImagePath!).existsSync();
+
             return AlertDialog(
               backgroundColor: GelatoTheme.bg,
               shape: RoundedRectangleBorder(
@@ -231,52 +244,158 @@ class _ProfileHeader extends StatelessWidget {
                   color: GelatoTheme.textDark,
                 ),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Full Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.black, width: 1.5),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Avatar Preview
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black54, width: 2.0),
+                        ),
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundColor: GelatoTheme.pink,
+                          foregroundImage: hasPhoto
+                              ? FileImage(File(localImagePath!))
+                              : null,
+                          child: Text(
+                            getInitials(nameController.text),
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: GelatoTheme.pinkDark,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: GelatoTheme.blue,
-                      foregroundColor: Colors.black87,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Colors.black, width: 1.5),
+                    const SizedBox(height: 20),
+                    
+                    TextField(
+                      controller: nameController,
+                      onChanged: (_) => setDialogState(() {}),
+                      decoration: InputDecoration(
+                        labelText: 'Full Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                        ),
                       ),
                     ),
-                    onPressed: () async {
-                      try {
-                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                        if (image != null) {
-                          final File file = File(image.path);
-                          await AuthService().saveLocalProfileImage(file);
-                          setDialogState(() {});
-                          onUpdate();
+                    const SizedBox(height: 20),
+
+                    // Photo Customization Options
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black87,
+                        backgroundColor: GelatoTheme.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.black, width: 1.5),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      onPressed: () async {
+                        try {
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            final File file = File(image.path);
+                            if (context.mounted) {
+                              final File? croppedFile = await Navigator.push<File>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CropImageScreen(imageFile: file),
+                                ),
+                              );
+                              if (croppedFile != null) {
+                                final savedPath = await AuthService().saveLocalProfileImage(croppedFile);
+                                setDialogState(() {
+                                  localImagePath = savedPath;
+                                });
+                                onUpdate();
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error picking image: $e')),
+                            );
+                          }
                         }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error picking image: $e')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.photo_library_rounded),
-                    label: const Text('Choose Photo'),
-                  ),
-                ],
+                      },
+                      icon: const Icon(Icons.photo_library_rounded, size: 20),
+                      label: Text(hasPhoto ? 'Change Photo' : 'Choose Photo'),
+                    ),
+                    
+                    if (hasPhoto) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Crop current photo
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.black87,
+                              side: const BorderSide(color: Colors.black, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            ),
+                            onPressed: () async {
+                              final File currentFile = File(localImagePath!);
+                              final File? croppedFile = await Navigator.push<File>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CropImageScreen(imageFile: currentFile),
+                                ),
+                              );
+                              if (croppedFile != null) {
+                                final savedPath = await AuthService().saveLocalProfileImage(croppedFile);
+                                setDialogState(() {
+                                  localImagePath = savedPath;
+                                });
+                                onUpdate();
+                              }
+                            },
+                            icon: const Icon(Icons.crop_rounded, size: 18),
+                            label: const Text('Crop'),
+                          ),
+                          const SizedBox(width: 12),
+                          // Remove photo
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red[700],
+                              side: BorderSide(color: Colors.red[700]!, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            ),
+                            onPressed: () async {
+                              await AuthService().removeLocalProfileImage();
+                              setDialogState(() {
+                                localImagePath = null;
+                              });
+                              onUpdate();
+                            },
+                            icon: const Icon(Icons.delete_rounded, size: 18),
+                            label: const Text('Remove'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
