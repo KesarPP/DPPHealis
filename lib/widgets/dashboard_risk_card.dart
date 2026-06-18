@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../data/app_state.dart';
@@ -10,36 +9,19 @@ class DashboardRiskCard extends StatefulWidget {
   State<DashboardRiskCard> createState() => _DashboardRiskCardState();
 }
 
-class _DashboardRiskCardState extends State<DashboardRiskCard>
-    with TickerProviderStateMixin {
-  late AnimationController _counterController;
-  late Animation<double> _counterAnim;
+class _DashboardRiskCardState extends State<DashboardRiskCard> with TickerProviderStateMixin {
   late AnimationController _heartController;
   late Animation<double> _heartScale;
-  late AnimationController _ecgController;
-  late Animation<double> _ecgOffset;
-
-  int get _targetScore => AppState.idrsScore;
-  bool _isPressed = false;
 
   @override
   void initState() {
     super.initState();
-
-    // 1. Counter animation (from 0 to 42)
-    _counterController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _counterAnim = Tween<double>(begin: 0.0, end: _targetScore.toDouble()).animate(
-      CurvedAnimation(parent: _counterController, curve: Curves.easeOutQuart),
-    );
-
-    // 2. Beating Heart animation (scales up/down)
+    // Beating Heart animation (scales up/down)
     _heartController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1300),
     )..repeat();
+    
     _heartScale = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.15).chain(CurveTween(curve: Curves.easeInOut)), weight: 20),
       TweenSequenceItem(tween: Tween(begin: 1.15, end: 0.95).chain(CurveTween(curve: Curves.easeInOut)), weight: 15),
@@ -47,493 +29,141 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
       TweenSequenceItem(tween: Tween(begin: 1.05, end: 1.0).chain(CurveTween(curve: Curves.easeInOut)), weight: 10),
       TweenSequenceItem(tween: ConstantTween(1.0), weight: 40),
     ]).animate(_heartController);
-
-    // 3. ECG wave trace animation (DashOffset drawing from left to right)
-    _ecgController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2600),
-    )..repeat();
-    _ecgOffset = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _ecgController, curve: Curves.easeInOut),
-    );
-
-    // Trigger animations after mount
-    Future.delayed(const Duration(milliseconds: 250), () {
-      if (mounted) {
-        _counterController.forward();
-      }
-    });
   }
 
   @override
   void dispose() {
-    _counterController.dispose();
     _heartController.dispose();
-    _ecgController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.98 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: GelatoTheme.cardRadius,
-            border: GelatoTheme.cardBorder,
-            boxShadow: GelatoTheme.cardShadow,
-          ),
-          child: Column(
-            children: [
-          // ─── TOP CONTAINER (SOLID PASTEL PINK) ───
+    int score = AppState.idrsScore; // e.g. 42
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDE8F0), // Very light pink
+        borderRadius: GelatoTheme.cardRadius,
+        border: GelatoTheme.cardBorder,
+        boxShadow: GelatoTheme.cardShadow,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 1. Glossy Heart Badge
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFEF4444),
-                  Color(0xFFDC2626),
-                  Color(0xFFB91C1C),
-                ],
-              ),
-            ),
-            child: Stack(
-              children: [
-                // Diagonal faint rings decoration
-                Positioned(
-                  top: -30,
-                  right: -30,
-                  child: Opacity(
-                    opacity: 0.12,
-                    child: SizedBox(
-                      width: 150,
-                      height: 150,
-                      child: CustomPaint(
-                        painter: _FaintCirclesPainter(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-                
-                // Main content
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'YOUR PREDIABETES RISK',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Reducing Nicely!',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              FittedBox(
-                                alignment: Alignment.centerLeft,
-                                fit: BoxFit.scaleDown,
-                                child: Row(
-                                  textBaseline: TextBaseline.alphabetic,
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  children: [
-                                    AnimatedBuilder(
-                                      animation: _counterAnim,
-                                      builder: (context, _) {
-                                        return Text(
-                                          _counterAnim.value.toStringAsFixed(0),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 44,
-                                            fontWeight: FontWeight.w900,
-                                            height: 1,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    Text(
-                                      ' /100',
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.7),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: GelatoTheme.orange,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                                      ),
-                                      child: const Text(
-                                        'Moderate Risk',
-                                        style: TextStyle(
-                                          color: GelatoTheme.orangeDark,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.arrow_downward_rounded, size: 14, color: GelatoTheme.pinkDark),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '6 points improved this week',
-                                    style: TextStyle(
-                                      color: GelatoTheme.pinkDark.withValues(alpha: 0.9),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                        // Beating ECG Heart widget
-                        AnimatedBuilder(
-                          animation: Listenable.merge([_heartScale, _ecgOffset]),
-                          builder: (context, _) {
-                            return Transform.scale(
-                              scale: _heartScale.value,
-                              child: SizedBox(
-                                width: 88,
-                                height: 88,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Flawless golden glow layer using RadialGradient
-                                    Container(
-                                      width: 88 * _heartScale.value,
-                                      height: 88 * _heartScale.value,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: RadialGradient(
-                                          colors: [
-                                            Colors.white.withValues(alpha: 0.9), // Bright white center
-                                            const Color(0xFFE2E8F0).withValues(alpha: 0.6), // Silverish fade
-                                            const Color(0xFFE2E8F0).withValues(alpha: 0.0), // Transparent edge
-                                          ],
-                                          stops: const [0.3, 0.6, 1.0],
-                                        ),
-                                      ),
-                                    ),
-                                    // Beating heart layer
-                                    SizedBox(
-                                      width: 88,
-                                      height: 88,
-                                      child: CustomPaint(
-                                        painter: _ECGHeartPainter(ecgProgress: _ecgOffset.value),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Risk slider meter
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final totalWidth = constraints.maxWidth;
-                        
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            // Slider Track
-                            Container(
-                              height: 8,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: GelatoTheme.pinkDark.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: FractionallySizedBox(
-                                  alignment: Alignment.centerLeft,
-                                  widthFactor: 1.0,
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      color: Colors.transparent,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(child: Container(color: GelatoTheme.green)),
-                                        Expanded(child: Container(color: GelatoTheme.yellow)),
-                                        Expanded(child: Container(color: GelatoTheme.orange)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Pointer
-                            AnimatedBuilder(
-                              animation: _counterAnim,
-                              builder: (context, _) {
-                                final currentPointerX = totalWidth * (_counterAnim.value / 100.0);
-                                return Positioned(
-                                  left: currentPointerX - 10,
-                                  top: -6,
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.15),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                      border: Border.all(color: Colors.white, width: 2),
-                                    ),
-                                    child: Center(
-                                      child: Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: GelatoTheme.purpleDark,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    
-                    // Risk intervals label text
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          children: [
-                            const Text('Low Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                            Text('0 – 30', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            const Text('Moderate Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                            Text('31 – 60', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            const Text('High Risk', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                            Text('61 – 100', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFFDA4AF), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFDA4AF).withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  spreadRadius: 2,
                 ),
               ],
             ),
-          ),
-          
-          // ─── BOTTOM CONTAINER (WHITE BACKGROUND) ───
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFEFF6FF), // var(--tint-sapphire) equivalent
-                  Colors.white,
-                ],
+            child: Center(
+              child: AnimatedBuilder(
+                animation: _heartScale,
+                builder: (context, _) {
+                  return Transform.scale(
+                    scale: _heartScale.value,
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: CustomPaint(
+                        painter: _StaticGlossyHeartPainter(),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-            child: Row(
+          ),
+          const SizedBox(width: 12),
+          
+          // 2. Score info
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // 1. Weekly Progress (Circular Ring)
-                Column(
-                  children: [
-                    const Text(
-                      'Weekly Progress',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        color: GelatoTheme.textDark,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const _CircularProgressWidget(
-                      pct: 78,
-                      size: 68,
-                      color: GelatoTheme.blueBright,
-                      trackColor: Color(0x123B82F6),
-                      gradientColors: [GelatoTheme.blueBright, GelatoTheme.purpleBright],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFDBEAFE)),
-                      ),
-                      child: const Text(
-                        'ON TRACK',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          color: GelatoTheme.blueDark,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
+                const Text(
+                  'Risk Score',
+                  style: TextStyle(
+                    color: Color(0xFF1E293B),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                
-                const SizedBox(width: 24),
-                
-                // 2. Program Progress (Horizontal Bar)
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
-                      const Text(
-                        'Program Progress',
-                        style: TextStyle(
-                          fontSize: 12,
+                      Text(
+                        '$score',
+                        style: const TextStyle(
+                          color: Color(0xFFE11D48), // Deep Red
+                          fontSize: 26,
                           fontWeight: FontWeight.w900,
-                          color: GelatoTheme.textDark,
-                          letterSpacing: -0.2,
+                          height: 1,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Text(
-                            'Session 5',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: GelatoTheme.textDark,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: const Text(
-                              'of 16',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: GelatoTheme.textLight,
-                              ),
-                            ),
-                          ),
-                        ],
+                      const Text(
+                        ' /100',
+                        style: TextStyle(
+                          color: Color(0xFF9F1239),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      const Row(
-                        children: [
-                          Expanded(
-                            child: _ProgressBarWidget(
-                              pct: 31,
-                              height: 6,
-                              color: GelatoTheme.purpleBright,
-                              trackColor: Color(0x188B5CF6),
-                              gradientColors: [GelatoTheme.blueBright, GelatoTheme.purpleBright],
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            '31%',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              color: GelatoTheme.blueDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(width: 8),
+                      // Moderate Risk Pill
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBEB),
+                          color: const Color(0xFFFFF7ED), // Light orange
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFEF3C7)),
+                          border: Border.all(color: const Color(0xFFFDBA74), width: 1),
                         ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.star_rounded, size: 16, color: GelatoTheme.yellowBright),
-                            SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Great consistency this week!',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: GelatoTheme.yellowDark,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                        child: const Text(
+                          'Moderate Risk',
+                          style: TextStyle(
+                            color: Color(0xFFEA580C),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: const [
+                      Icon(Icons.arrow_downward_rounded, color: GelatoTheme.greenDark, size: 12),
+                      SizedBox(width: 2),
+                      Text(
+                        '6 points improved this week',
+                        style: TextStyle(
+                          color: GelatoTheme.greenDark,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -542,61 +172,140 @@ class _DashboardRiskCardState extends State<DashboardRiskCard>
               ],
             ),
           ),
+          
+          const SizedBox(width: 12),
+          
+          // 3. Slider
+          Expanded(
+            flex: 4,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 20,
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      // Gradient track
+                      Container(
+                        height: 6,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(3),
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF22C55E), // Green
+                              Color(0xFFEAB308), // Yellow
+                              Color(0xFFEF4444), // Red
+                            ],
+                            stops: [0.1, 0.5, 0.9],
+                          ),
+                        ),
+                      ),
+                      // Thumb
+                      FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: score / 100, // e.g. 0.42
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFE11D48),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Labels
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      _RiskLabel(title: 'Low', range: '0-30'),
+                      SizedBox(width: 8),
+                      _RiskLabel(title: 'Moderate', range: '31-60'),
+                      SizedBox(width: 8),
+                      _RiskLabel(title: 'High', range: '61-100'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // 4. Chevron
+          const Padding(
+            padding: EdgeInsets.only(left: 4),
+            child: Icon(Icons.chevron_right_rounded, color: Color(0xFFE11D48), size: 24),
+          ),
         ],
       ),
-    ),
-    ),
     );
   }
 }
 
-class _FaintCirclesPainter extends CustomPainter {
-  final Color color;
-  _FaintCirclesPainter({required this.color});
+class _RiskLabel extends StatelessWidget {
+  final String title;
+  final String range;
+  const _RiskLabel({required this.title, required this.range});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.15)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-      
-    canvas.drawCircle(center, 35, paint);
-    canvas.drawCircle(center, 58, paint);
-    canvas.drawCircle(center, 80, paint);
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(title, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+        Text(range, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: GelatoTheme.textLight)),
+      ],
+    );
   }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
-class _ECGHeartPainter extends CustomPainter {
-  final double ecgProgress;
-  _ECGHeartPainter({required this.ecgProgress});
-
+// Static painter matching the exact visual of the requested heart
+class _StaticGlossyHeartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final width = size.width;
     final height = size.height;
+    final s = width / 64.0; 
 
     // 1. Draw shiny glossy heart with radial gradient
     final rect = Rect.fromLTWH(0, 0, width, height);
     final paintHeart = Paint()
       ..shader = const RadialGradient(
         center: Alignment(-0.3, -0.4),
-        radius: 0.7,
+        radius: 0.8,
         colors: [
-          Color(0xFFFFB4B4),
-          Color(0xFFEF4444),
-          Color(0xFFB91C1C),
+          Color(0xFFFFB4B4), // light pink
+          Color(0xFFF43F5E), // rose
+          Color(0xFF9F1239), // dark red
         ],
       ).createShader(rect)
       ..style = PaintingStyle.fill;
 
     final heartPath = Path();
-    // Path calculation matching svg: "M32 56 C 10 40, 4 26, 14 17 C 22 10, 30 14, 32 20 C 34 14, 42 10, 50 17 C 60 26, 54 40, 32 56 Z" scaled to 88x88
-    final s = width / 64.0; // scale factor
     heartPath.moveTo(32 * s, 56 * s);
     heartPath.cubicTo(10 * s, 40 * s, 4 * s, 26 * s, 14 * s, 17 * s);
     heartPath.cubicTo(22 * s, 10 * s, 30 * s, 14 * s, 32 * s, 20 * s);
@@ -606,9 +315,9 @@ class _ECGHeartPainter extends CustomPainter {
 
     canvas.drawPath(heartPath, paintHeart);
 
-    // 2. Draw glossy white highlight curve at the top-left lobe
+    // 2. Glossy white highlight curve at the top-left lobe
     final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.3)
+      ..color = Colors.white.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
     final highlightPath = Path();
     highlightPath.moveTo(18 * s, 18 * s);
@@ -618,26 +327,15 @@ class _ECGHeartPainter extends CustomPainter {
     highlightPath.close();
     canvas.drawPath(highlightPath, highlightPaint);
 
-    // 3. Draw ECG plaque (white rectangle in center)
-    final plaquePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    final plaqueRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(10 * s, 26 * s, 44 * s, 14 * s),
-      Radius.circular(3.0 * s),
-    );
-    canvas.drawRRect(plaqueRect, plaquePaint);
-
-    // 4. Draw Beating ECG line inside the plaque
+    // 3. Static ECG line (drawn directly on heart)
     final ecgPoints = [
       Offset(11 * s, 33 * s),
       Offset(18 * s, 33 * s),
-      Offset(21 * s, 28 * s),
-      Offset(25 * s, 38 * s),
-      Offset(29 * s, 24 * s),
-      Offset(33 * s, 40 * s),
-      Offset(37 * s, 30 * s),
-      Offset(42 * s, 33 * s),
+      Offset(21 * s, 26 * s),
+      Offset(26 * s, 40 * s),
+      Offset(32 * s, 20 * s),
+      Offset(38 * s, 44 * s),
+      Offset(43 * s, 33 * s),
       Offset(53 * s, 33 * s),
     ];
 
@@ -647,192 +345,25 @@ class _ECGHeartPainter extends CustomPainter {
       ecgPath.lineTo(ecgPoints[i].dx, ecgPoints[i].dy);
     }
 
+    // Shadow for ECG line to make it pop
+    final ecgShadow = Paint()
+      ..color = Colors.black.withValues(alpha: 0.3)
+      ..strokeWidth = 2.5 * s
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(ecgPath.shift(Offset(0, 1.5 * s)), ecgShadow);
+
     final ecgPaint = Paint()
-      ..color = const Color(0xFFDC2626)
+      ..color = Colors.white
       ..strokeWidth = 2.0 * s
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
 
-    final activePath = Path();
-    for (final metric in ecgPath.computeMetrics()) {
-      final drawLength = metric.length * (1.0 - ecgProgress);
-      activePath.addPath(metric.extractPath(0.0, drawLength), Offset.zero);
-    }
-    canvas.drawPath(activePath, ecgPaint);
+    canvas.drawPath(ecgPath, ecgPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _ECGHeartPainter oldDelegate) {
-    return oldDelegate.ecgProgress != ecgProgress;
-  }
-}
-
-class _CircularProgressWidget extends StatelessWidget {
-  final int pct;
-  final double size;
-  final Color color;
-  final Color trackColor;
-  final List<Color>? gradientColors;
-
-  const _CircularProgressWidget({
-    required this.pct,
-    required this.size,
-    required this.color,
-    required this.trackColor,
-    this.gradientColors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned.fill(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: pct / 100.0),
-              duration: const Duration(milliseconds: 1000),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, _) {
-                return CustomPaint(
-                  painter: _CircularProgressPainter(
-                    value: value,
-                    color: color,
-                    trackColor: trackColor,
-                    strokeWidth: 6.5,
-                    gradientColors: gradientColors,
-                  ),
-                );
-              },
-            ),
-          ),
-          Text(
-            '$pct%',
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w900,
-              color: gradientColors != null ? gradientColors!.first : color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CircularProgressPainter extends CustomPainter {
-  final double value;
-  final Color color;
-  final Color trackColor;
-  final double strokeWidth;
-  final List<Color>? gradientColors;
-
-  _CircularProgressPainter({
-    required this.value,
-    required this.color,
-    required this.trackColor,
-    required this.strokeWidth,
-    this.gradientColors,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - strokeWidth) / 2;
-
-    // Track
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-    canvas.drawCircle(center, radius, trackPaint);
-
-    // Active Arc
-    final activePaint = Paint()
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    if (gradientColors != null && gradientColors!.length >= 2) {
-      final rect = Rect.fromCircle(center: center, radius: radius);
-      activePaint.shader = SweepGradient(
-        colors: gradientColors!,
-        stops: const [0.0, 1.0],
-        transform: const GradientRotation(-math.pi / 2),
-      ).createShader(rect);
-    } else {
-      activePaint.color = color;
-    }
-
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      2 * math.pi * value,
-      false,
-      activePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) {
-    return oldDelegate.value != value || oldDelegate.gradientColors != gradientColors;
-  }
-}
-
-class _ProgressBarWidget extends StatelessWidget {
-  final int pct;
-  final double height;
-  final Color color;
-  final Color trackColor;
-  final List<Color>? gradientColors;
-
-  const _ProgressBarWidget({
-    required this.pct,
-    required this.height,
-    required this.color,
-    required this.trackColor,
-    this.gradientColors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: trackColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final totalWidth = constraints.maxWidth;
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: pct / 100.0),
-            duration: const Duration(milliseconds: 1000),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, _) {
-              return Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  width: totalWidth * value,
-                  height: height,
-                  decoration: BoxDecoration(
-                    color: gradientColors == null ? color : null,
-                    gradient: gradientColors != null
-                        ? LinearGradient(
-                            colors: gradientColors!,
-                          )
-                        : null,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
+  bool shouldRepaint(covariant _StaticGlossyHeartPainter oldDelegate) => false;
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../widgets/dashboard_header.dart';
-import '../widgets/dashboard_risk_card.dart';
-import '../widgets/dashboard_progress_snapshot.dart';
+import '../widgets/dashboard_hero_cards.dart';
 import '../widgets/dashboard_timeline.dart';
-import '../widgets/dashboard_analytics.dart';
-import '../widgets/dashboard_ai_coach_card.dart';
+import '../widgets/dashboard_risk_card.dart';
+import '../widgets/dashboard_momentum.dart';
+import '../widgets/dashboard_achievements.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -26,13 +26,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GelatoTheme.purple.withValues(alpha: 0.4),
+      backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5), // Soft lavender from Gelato theme to highlight white cards
       body: SafeArea(
         child: Stack(
           children: [
             Positioned.fill(
               child: CustomPaint(
-                painter: _DotsPainter(color: Colors.black87.withValues(alpha: 0.04)),
+                painter: _DotsPainter(color: GelatoTheme.purpleDark.withValues(alpha: 0.05)),
               ),
             ),
             CustomScrollView(
@@ -45,37 +45,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                // AI Coach Card
+                // 2. Hero Progress Area (Weight & Activity)
                 SliverToBoxAdapter(
-                  child: DashboardAICoachCard(),
+                  child: DashboardHeroCards(),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                // 2. Prediabetes Risk Card
+                // 3. Today's Mission (Timeline)
+                SliverToBoxAdapter(
+                  child: DashboardTimeline(),
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                // 4. Prediabetes Risk Card (Compact)
                 SliverToBoxAdapter(
                   child: DashboardRiskCard(),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                // 3. Sessions & Meals Analytics
+                // 5. Your Momentum
                 SliverToBoxAdapter(
-                  child: DashboardAnalytics(),
+                  child: DashboardMomentum(),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                // 4. Today's Progress Snapshot
+                // 6. Achievement Showcase
                 SliverToBoxAdapter(
-                  child: DashboardProgressSnapshot(),
-                ),
-                SliverToBoxAdapter(child: SizedBox(height: 16)),
-                
-                // 5. Today's Timeline Journey
-                SliverToBoxAdapter(
-                  child: DashboardTimeline(),
+                  child: DashboardAchievements(),
                 ),
                 
                 // Bottom Padding for BottomNavigationBar
-                SliverPadding(padding: EdgeInsets.only(bottom: 96)),
+                SliverPadding(padding: EdgeInsets.only(bottom: 120)),
               ],
             ),
           ],
