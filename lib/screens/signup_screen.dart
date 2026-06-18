@@ -69,13 +69,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration Successful!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        if (!isTesting) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration Successful!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => const RiskAssessmentStep1Screen(),
@@ -514,21 +516,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           prefixIcon: Padding(
                             padding: const EdgeInsets.only(left: 16.0, right: 12.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.lock_outline_rounded,
-                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(
-                                  Icons.vpn_key_outlined,
-                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
-                                  size: 22,
-                                ),
-                              ],
+                            child: Icon(
+                              Icons.lock_outline_rounded,
+                              color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                              size: 22,
                             ),
                           ),
                           suffixIcon: Padding(
@@ -596,21 +587,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           prefixIcon: Padding(
                             padding: const EdgeInsets.only(left: 16.0, right: 12.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.lock_outline_rounded,
-                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(
-                                  Icons.vpn_key_outlined,
-                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
-                                  size: 22,
-                                ),
-                              ],
+                            child: Icon(
+                              Icons.lock_outline_rounded,
+                              color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                              size: 22,
                             ),
                           ),
                           suffixIcon: Padding(

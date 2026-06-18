@@ -1,11 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/gelato_theme.dart';
 import '../data/handouts_data.dart';
 import 'insights_screen.dart';
 import 'handouts_screen.dart';
+import 'food_search_screen.dart';
+import '../providers/food_notifiers.dart';
+import '../models/food_log.dart';
 
-class FoodTrackingScreen extends StatelessWidget {
+class FoodTrackingScreen extends StatefulWidget {
   const FoodTrackingScreen({super.key});
+
+  @override
+  State<FoodTrackingScreen> createState() => _FoodTrackingScreenState();
+}
+
+class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final today = DateTime.now().toIso8601String().split('T')[0];
+      context.read<FoodDiaryNotifier>().loadLogForDate(today);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +47,9 @@ class FoodTrackingScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   const _WeeklyCalendar(),
                   const SizedBox(height: 24),
-                  _buildCalorieGoalCard(),
+                  _buildCalorieGoalCard(context),
                   const SizedBox(height: 24),
-                  _buildMealCards(),
+                  _buildMealCards(context),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -116,124 +134,114 @@ class FoodTrackingScreen extends StatelessWidget {
     );
   }
 
-
-
-  Widget _buildCalorieGoalCard() {
+  Widget _buildCalorieGoalCard(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.black87, width: 1.5),
-          boxShadow: [
-            BoxShadow(color: GelatoTheme.yellow.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(4, 4)),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Today\'s Goal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
-                  const SizedBox(height: 8),
-                  Text('1,250 / 2,000 kcal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: GelatoTheme.textDark.withValues(alpha: 0.7))),
-                  const SizedBox(height: 12),
-                  const Text('Keep it up! You are doing great.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: GelatoTheme.textDark)),
-                ],
-              ),
+      child: Consumer<FoodDiaryNotifier>(
+        builder: (context, notifier, child) {
+          final totalCalories = notifier.dailyLog?.totalCalories ?? 0.0;
+          final goal = 2000.0;
+          final left = goal - totalCalories;
+          final progress = totalCalories / goal;
+          
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.black87, width: 1.5),
+              boxShadow: [
+                BoxShadow(color: GelatoTheme.yellow.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(4, 4)),
+              ],
             ),
-            SizedBox(
-              width: 80,
-              height: 80,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CircularProgressIndicator(
-                    value: 1250 / 2000,
-                    strokeWidth: 8,
-                    backgroundColor: GelatoTheme.green.withValues(alpha: 0.2),
-                    color: GelatoTheme.green,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Today\'s Goal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
+                      const SizedBox(height: 8),
+                      Text('${totalCalories.toStringAsFixed(0)} / ${goal.toStringAsFixed(0)} kcal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: GelatoTheme.textDark.withValues(alpha: 0.7))),
+                      const SizedBox(height: 12),
+                      const Text('Keep it up! You are doing great.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: GelatoTheme.textDark)),
+                    ],
                   ),
-                  Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('750', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
-                        Text('left', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
-                      ],
-                    ),
+                ),
+                SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CircularProgressIndicator(
+                        value: progress > 1 ? 1.0 : progress,
+                        strokeWidth: 8,
+                        backgroundColor: GelatoTheme.green.withValues(alpha: 0.2),
+                        color: GelatoTheme.green,
+                      ),
+                      Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(left > 0 ? left.toStringAsFixed(0) : '0', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
+                            Text('left', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildMealCards() {
+  Widget _buildMealCards(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        children: [
-          _ExpandableMealCard(
-            title: 'Breakfast',
-            color: GelatoTheme.yellow,
-            items: [
-              _FoodItem(name: 'Oatmeal (1 cup)', calories: 220, details: 'C:38g, P:18g, F:6g, Fi:8g'),
-              _FoodItem(name: 'Berries (0.5 cup)', calories: 40, details: 'C:10g, P:1g, F:0g, Fi:4g'),
+      child: Consumer<FoodDiaryNotifier>(
+        builder: (context, notifier, child) {
+          final log = notifier.dailyLog;
+          
+          List<LoggedFood> getItems(String mealType) {
+            return log?.entries.where((e) => e.mealType == mealType).toList() ?? [];
+          }
+
+          return Column(
+            children: [
+              _ExpandableMealCard(
+                title: 'Breakfast',
+                color: GelatoTheme.yellow,
+                items: getItems('Breakfast'),
+              ),
+              const SizedBox(height: 16),
+              _ExpandableMealCard(
+                title: 'Lunch',
+                color: GelatoTheme.green,
+                items: getItems('Lunch'),
+              ),
+              const SizedBox(height: 16),
+              _ExpandableMealCard(
+                title: 'Snack',
+                color: GelatoTheme.orange,
+                items: getItems('Snack'),
+              ),
+              const SizedBox(height: 16),
+              _ExpandableMealCard(
+                title: 'Dinner',
+                color: GelatoTheme.blue,
+                items: getItems('Dinner'),
+              ),
             ],
-          ),
-          const SizedBox(height: 16),
-          _ExpandableMealCard(
-            title: 'Snack 1',
-            color: GelatoTheme.orange,
-            items: [
-              _FoodItem(name: 'Apple', calories: 95, details: 'C:25g, P:0g, F:0g, Fi:4g'),
-              _FoodItem(name: 'Almonds (1 oz)', calories: 160, details: 'C:6g, P:6g, F:14g, Fi:3g'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _ExpandableMealCard(
-            title: 'Lunch',
-            color: GelatoTheme.green,
-            items: [
-              _FoodItem(name: 'Grilled Chicken Salad', calories: 350, details: 'C:25g, P:32g, F:21g, Fi:12g'),
-              _FoodItem(name: 'Quinoa (0.5 cup)', calories: 110, details: 'C:20g, P:4g, F:2g, Fi:3g'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _ExpandableMealCard(
-            title: 'Snack 2',
-            color: GelatoTheme.purple,
-            items: [
-              _FoodItem(name: 'Greek Yogurt (1 cup)', calories: 100, details: 'C:6g, P:17g, F:0g, Fi:0g'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _ExpandableMealCard(
-            title: 'Dinner',
-            color: GelatoTheme.blue,
-            items: [
-              _FoodItem(name: 'Salmon & Asparagus\n(6 oz)', calories: 480, details: 'C:15g, P:38g, F:28g, Fi:6g'),
-            ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
-
-}
-
-class _FoodItem {
-  final String name;
-  final int calories;
-  final String details;
-  _FoodItem({required this.name, required this.calories, required this.details});
 }
 
 class _WeeklyCalendar extends StatefulWidget {
@@ -427,7 +435,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
 class _ExpandableMealCard extends StatefulWidget {
   final String title;
   final Color color;
-  final List<_FoodItem> items;
+  final List<LoggedFood> items;
 
   const _ExpandableMealCard({
     required this.title,
@@ -442,31 +450,20 @@ class _ExpandableMealCard extends StatefulWidget {
 class _ExpandableMealCardState extends State<_ExpandableMealCard> {
   bool _isExpanded = false;
 
-  int _carbs = 0;
-  int _protein = 0;
-  int _fat = 0;
-  int _fiber = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _calculateMacros();
-  }
-
-  void _calculateMacros() {
-    for (var item in widget.items) {
-      var parts = item.details.split(', ');
-      for (var part in parts) {
-        if (part.startsWith('C:')) _carbs += int.tryParse(part.substring(2).replaceAll('g', '')) ?? 0;
-        if (part.startsWith('P:')) _protein += int.tryParse(part.substring(2).replaceAll('g', '')) ?? 0;
-        if (part.startsWith('F:')) _fat += int.tryParse(part.substring(2).replaceAll('g', '')) ?? 0;
-        if (part.startsWith('Fi:')) _fiber += int.tryParse(part.substring(3).replaceAll('g', '')) ?? 0;
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    double _carbs = 0;
+    double _protein = 0;
+    double _fat = 0;
+    double _fiber = 0;
+
+    for (var item in widget.items) {
+      _carbs += item.food.carbs * item.quantity;
+      _protein += item.food.protein * item.quantity;
+      _fat += item.food.fat * item.quantity;
+      _fiber += item.food.fiber * item.quantity;
+    }
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -508,26 +505,45 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
                     child: const Icon(Icons.camera_alt_outlined, size: 20, color: GelatoTheme.textDark),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: widget.color,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black87, width: 1.2),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FoodSearchScreen(mealType: widget.title),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: widget.color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black87, width: 1.2),
+                      ),
+                      child: const Icon(Icons.add, size: 20, color: GelatoTheme.textDark),
                     ),
-                    child: const Icon(Icons.add, size: 20, color: GelatoTheme.textDark),
                   ),
                 ],
               ),
             ),
             const Divider(color: Colors.black12, height: 1),
-            // Items
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: widget.items.map((item) => _buildFoodItemRow(item)).toList(),
+            
+            // Empty State
+            if (widget.items.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text('No food added yet.', style: TextStyle(color: GelatoTheme.textDark.withValues(alpha: 0.5), fontWeight: FontWeight.w600)),
+              )
+            else
+              // Items
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: widget.items.map((item) => _buildFoodItemRow(item)).toList(),
+                ),
               ),
-            ),
+              
             // Expandable Macros
             ClipRect(
               child: AnimatedAlign(
@@ -535,7 +551,7 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
                 curve: Curves.easeInOut,
                 alignment: Alignment.topCenter,
                 heightFactor: _isExpanded ? 1.0 : 0.0,
-                child: _buildMacros(),
+                child: _buildMacros(_carbs, _protein, _fat, _fiber),
               ),
             ),
           ],
@@ -544,7 +560,11 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
     );
   }
 
-  Widget _buildFoodItemRow(_FoodItem item) {
+  Widget _buildFoodItemRow(LoggedFood item) {
+    final food = item.food;
+    final qty = item.quantity;
+    final totalCals = food.calories * qty;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -554,7 +574,7 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                Text(qty > 1 ? '${food.name} (x$qty)' : food.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
               ],
             ),
           ),
@@ -562,9 +582,9 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${item.calories} kcal', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
+              Text('${totalCals.toStringAsFixed(0)} kcal', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
               const SizedBox(height: 2),
-              Text(item.details, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
+              Text('C:${(food.carbs * qty).toStringAsFixed(1)}g, P:${(food.protein * qty).toStringAsFixed(1)}g, F:${(food.fat * qty).toStringAsFixed(1)}g', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
             ],
           ),
         ],
@@ -572,24 +592,24 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
     );
   }
 
-  Widget _buildMacros() {
+  Widget _buildMacros(double carbs, double protein, double fat, double fiber) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
         children: [
           const Divider(color: Colors.black12, height: 1),
           const SizedBox(height: 12),
-          _buildProgressBar('Carbs', _carbs, 60, GelatoTheme.orange),
-          _buildProgressBar('Protein', _protein, 40, GelatoTheme.purple),
-          _buildProgressBar('Fat', _fat, 20, GelatoTheme.yellow),
-          _buildProgressBar('Fiber', _fiber, 15, GelatoTheme.green),
+          _buildProgressBar('Carbs', carbs, 60, GelatoTheme.orange),
+          _buildProgressBar('Protein', protein, 40, GelatoTheme.purple),
+          _buildProgressBar('Fat', fat, 20, GelatoTheme.yellow),
+          _buildProgressBar('Fiber', fiber, 15, GelatoTheme.green),
         ],
       ),
     );
   }
 
-  Widget _buildProgressBar(String label, int current, int limit, Color color) {
-    double progress = current / limit;
+  Widget _buildProgressBar(String label, double current, double limit, Color color) {
+    double progress = limit > 0 ? current / limit : 0;
     if (progress > 1.0) progress = 1.0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -609,7 +629,7 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(width: 55, child: Text('${current}g / ${limit}g', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GelatoTheme.textDark), textAlign: TextAlign.right)),
+          SizedBox(width: 65, child: Text('${current.toStringAsFixed(1)}g / ${limit.toStringAsFixed(0)}g', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GelatoTheme.textDark), textAlign: TextAlign.right)),
         ],
       ),
     );
@@ -636,4 +656,3 @@ class _DotsPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
