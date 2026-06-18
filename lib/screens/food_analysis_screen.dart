@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../main.dart'; // MainShell
 import '../services/ffq_calculator_service.dart';
+import '../services/auth_service.dart';
 import 'taste_preferences_screen.dart';
 
 // ── FFQ Calorie breakdown result ─────────────────────────────────────────────
@@ -575,16 +577,82 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: const CircleAvatar(
-                radius: 18,
-                backgroundColor: GelatoTheme.blue,
-                child: Icon(Icons.person, color: GelatoTheme.blueDark, size: 20),
-              ),
+            child: FutureBuilder<UserProfileData>(
+              future: AuthService().getUserProfileData(),
+              builder: (context, snapshot) {
+                final profile = snapshot.data;
+                final displayName = profile?.displayName ?? 'Janice Pattice';
+                final localPath = profile?.localImagePath;
+
+                ImageProvider? imageProvider;
+                if (localPath != null) {
+                  imageProvider = FileImage(File(localPath));
+                }
+
+                String getInitials(String name) {
+                  if (name.isEmpty) return 'JP';
+                  final parts = name.trim().split(' ');
+                  if (parts.length > 1) {
+                    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+                  }
+                  return parts[0][0].toUpperCase();
+                }
+                final initials = getInitials(displayName);
+
+                final String bgName = profile?.profileBgColor ?? 'pink';
+                Color avatarBgColor = GelatoTheme.pink;
+                Color avatarFgColor = GelatoTheme.pinkDark;
+
+                switch (bgName) {
+                  case 'pink':
+                    avatarBgColor = GelatoTheme.pink;
+                    avatarFgColor = GelatoTheme.pinkDark;
+                    break;
+                  case 'green':
+                    avatarBgColor = GelatoTheme.green;
+                    avatarFgColor = GelatoTheme.greenDark;
+                    break;
+                  case 'yellow':
+                    avatarBgColor = GelatoTheme.yellow;
+                    avatarFgColor = GelatoTheme.yellowDark;
+                    break;
+                  case 'blue':
+                    avatarBgColor = GelatoTheme.blue;
+                    avatarFgColor = GelatoTheme.blueDark;
+                    break;
+                  case 'purple':
+                    avatarBgColor = GelatoTheme.purple;
+                    avatarFgColor = GelatoTheme.purpleDark;
+                    break;
+                  case 'orange':
+                    avatarBgColor = GelatoTheme.orange;
+                    avatarFgColor = GelatoTheme.orangeDark;
+                    break;
+                }
+
+                return Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black, width: 1.5),
+                  ),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: avatarBgColor,
+                    foregroundImage: imageProvider,
+                    onForegroundImageError: imageProvider != null
+                        ? (exception, stackTrace) {}
+                        : null,
+                    child: Text(
+                      initials,
+                      style: TextStyle(
+                        color: avatarFgColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],

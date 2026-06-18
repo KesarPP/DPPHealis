@@ -93,6 +93,38 @@ class _DashboardHeaderState extends State<DashboardHeader>
           imageProvider = FileImage(File(profile!.localImagePath!));
         }
 
+        final String bgName = profile?.profileBgColor ?? 'pink';
+        
+        Color avatarBgColor = GelatoTheme.pink;
+        Color avatarFgColor = GelatoTheme.pinkDark;
+        
+        switch (bgName) {
+          case 'pink':
+            avatarBgColor = GelatoTheme.pink;
+            avatarFgColor = GelatoTheme.pinkDark;
+            break;
+          case 'green':
+            avatarBgColor = GelatoTheme.green;
+            avatarFgColor = GelatoTheme.greenDark;
+            break;
+          case 'yellow':
+            avatarBgColor = GelatoTheme.yellow;
+            avatarFgColor = GelatoTheme.yellowDark;
+            break;
+          case 'blue':
+            avatarBgColor = GelatoTheme.blue;
+            avatarFgColor = GelatoTheme.blueDark;
+            break;
+          case 'purple':
+            avatarBgColor = GelatoTheme.purple;
+            avatarFgColor = GelatoTheme.purpleDark;
+            break;
+          case 'orange':
+            avatarBgColor = GelatoTheme.orange;
+            avatarFgColor = GelatoTheme.orangeDark;
+            break;
+        }
+
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(
@@ -117,7 +149,10 @@ class _DashboardHeaderState extends State<DashboardHeader>
                       // Outer circle tracking progress/design
                       Positioned.fill(
                         child: CustomPaint(
-                          painter: _AvatarRingPainter(),
+                          painter: _AvatarRingPainter(
+                            baseColor: avatarBgColor,
+                            activeColor: avatarFgColor,
+                          ),
                         ),
                       ),
                       // Inner Avatar container
@@ -125,7 +160,7 @@ class _DashboardHeaderState extends State<DashboardHeader>
                         alignment: Alignment.center,
                         child: CircleAvatar(
                           radius: 19,
-                          backgroundColor: GelatoTheme.pink,
+                          backgroundColor: avatarBgColor,
                           foregroundImage: imageProvider,
                           onForegroundImageError: imageProvider != null
                               ? (exception, stackTrace) {
@@ -134,8 +169,8 @@ class _DashboardHeaderState extends State<DashboardHeader>
                               : null,
                           child: Text(
                             initials,
-                            style: const TextStyle(
-                              color: GelatoTheme.pinkDark,
+                            style: TextStyle(
+                              color: avatarFgColor,
                               fontSize: 13,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -0.2,
@@ -290,6 +325,11 @@ class _DashboardHeaderState extends State<DashboardHeader>
 }
 
 class _AvatarRingPainter extends CustomPainter {
+  final Color baseColor;
+  final Color activeColor;
+
+  _AvatarRingPainter({required this.baseColor, required this.activeColor});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -297,7 +337,7 @@ class _AvatarRingPainter extends CustomPainter {
 
     // Background circle (Pastel Pink trace)
     final bgPaint = Paint()
-      ..color = GelatoTheme.pink.withValues(alpha: 0.3)
+      ..color = baseColor.withValues(alpha: 0.3)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
     canvas.drawCircle(center, radius, bgPaint);
@@ -305,7 +345,7 @@ class _AvatarRingPainter extends CustomPainter {
     // Active arc (Solid Gelato Purple)
     final rect = Rect.fromCircle(center: center, radius: radius);
     final activePaint = Paint()
-      ..color = GelatoTheme.purple
+      ..color = activeColor
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -317,5 +357,6 @@ class _AvatarRingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _AvatarRingPainter oldDelegate) =>
+      oldDelegate.baseColor != baseColor || oldDelegate.activeColor != activeColor;
 }
