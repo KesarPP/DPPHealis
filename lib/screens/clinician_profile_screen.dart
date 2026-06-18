@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../services/auth_service.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -65,28 +66,20 @@ class ClinicianProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/clinician_avatar.png',
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Color(0xFFEBF3FC),
-                          child: Icon(Icons.person_rounded, size: 50, color: _brandColor),
-                        ),
-                      ),
+                    child: const CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Color(0xFFEBF3FC),
+                      child: Icon(Icons.person_rounded, size: 50, color: _brandColor),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // Name & Subtitle
-                const Center(
+                Center(
                   child: Text(
-                    'Dr. Sarah Mitchell',
-                    style: TextStyle(
+                    AuthService().currentUser?.displayName ?? 'Coach Profile',
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: _brandColor,

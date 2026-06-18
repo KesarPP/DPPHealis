@@ -172,19 +172,10 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           GestureDetector(
             onTap: () => Navigator.push(
                 context, MaterialPageRoute(builder: (_) => const ClinicianProfileScreen())),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'assets/images/clinician_avatar.png',
-                width: 42,
-                height: 42,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => CircleAvatar(
-                  radius: 21,
-                  backgroundColor: _navy.withValues(alpha: 0.1),
-                  child: const Icon(Icons.person_rounded, color: _navy, size: 20),
-                ),
-              ),
+            child: CircleAvatar(
+              radius: 21,
+              backgroundColor: _navy.withValues(alpha: 0.1),
+              child: const Icon(Icons.person_rounded, color: _navy, size: 24),
             ),
           ),
           const SizedBox(width: 12),
