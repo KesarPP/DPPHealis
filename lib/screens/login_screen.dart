@@ -5,6 +5,8 @@ import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
 import 'risk_assessment_step1_screen.dart';
 import '../data/gelato_theme.dart';
+import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -22,6 +24,79 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPatientSelected = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _handlePatientLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    final authService = AuthService();
+    final isTesting = !authService.isFirebaseInitialized;
+
+    if (!isTesting && (email.isEmpty || password.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email and password.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await authService.signInWithEmailAndPassword(email, password);
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const RiskAssessmentStep1Screen(),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Authentication failed. Please try again.';
+      if (e.code == 'user-not-found') {
+        message = 'No user found with this email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Incorrect password.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Invalid email address format.';
+      } else if (e.code == 'user-disabled') {
+        message = 'This user account has been disabled.';
+      } else if (e.code == 'invalid-credential') {
+        message = 'Invalid credentials provided.';
+      } else if (e.message != null) {
+        message = e.message!;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An unexpected error occurred: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -454,20 +529,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                         side: const BorderSide(color: Colors.black, width: 2.0),
                                       ),
                                     ),
-                                    onPressed: () {
-                                      Navigator.of(context).pushReplacement(
-                                        MaterialPageRoute(
-                                          builder: (_) => const RiskAssessmentStep1Screen(),
-                                        ),
-                                      );
-                                    },
-                                    child: const Text(
-                                      'Login',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
+                                    onPressed: _isLoading ? null : _handlePatientLogin,
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 3,
+                                              valueColor: AlwaysStoppedAnimation<Color>(GelatoTheme.purpleDark),
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Login',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
                                   ),
                                 )
                               : ElevatedButton(

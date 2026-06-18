@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-
+import '../services/auth_service.dart';
 import '../data/gelato_theme.dart';
 
 // Pastel Color Palette "GELATO DAYS" mapped to GelatoTheme
@@ -108,11 +108,14 @@ class ProfileScreen extends StatelessWidget {
 
             Center(
               child: TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (_) => false,
-                  );
+                onPressed: () async {
+                  await AuthService().signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (_) => false,
+                    );
+                  }
                 },
                 icon: const Icon(Icons.logout_rounded, color: Colors.white),
                 label: const Text(

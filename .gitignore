@@ -14,3 +14,4 @@ ios/Pods/
 
 # Ignore large PDFs to prevent GitHub push errors
 FFQ/FFQ picture book.pdf
+.env
