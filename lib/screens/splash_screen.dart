@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'clinician_dashboard_screen.dart';
+import '../main.dart';
+import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,15 +43,32 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animationController.forward();
 
-    // Schedule navigation to login screen after 2.6 seconds
-    Timer(const Duration(milliseconds: 2600), _navigateToLogin);
+    // Schedule navigation check after 2.6 seconds
+    Timer(const Duration(milliseconds: 2600), _navigateNext);
   }
 
-  void _navigateToLogin() {
+  Future<void> _navigateNext() async {
     if (!mounted) return;
+
+    Widget nextScreen = const LoginScreen();
+    
+    final authService = AuthService();
+    final user = authService.currentUser;
+
+    if (user != null) {
+      final role = await authService.getUserRole();
+      if (role == 'coach') {
+        nextScreen = const ClinicianDashboardScreen();
+      } else if (role == 'user') {
+        nextScreen = const MainShell();
+      }
+    }
+
+    if (!mounted) return;
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
