@@ -9,6 +9,8 @@ import 'screens/coach_chat_screen.dart';
 import 'screens/ai_chatbot_screen.dart';
 import 'data/gelato_theme.dart';
 
+import 'services/auth_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -47,6 +49,19 @@ class MainShell extends StatefulWidget {
 
 class MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = AuthService().currentUser;
+    if (user != null) {
+      user.reload().then((_) {
+        if (mounted) {
+          setState(() {});
+        }
+      }).catchError((_) {});
+    }
+  }
 
   set selectedIndex(int index) {
     setState(() {
