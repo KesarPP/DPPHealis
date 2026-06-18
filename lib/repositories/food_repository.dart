@@ -91,9 +91,12 @@ class FoodRepository {
   }
 
   Future<void> removeFoodFromLog(String userId, String date, LoggedFood itemToRemove) async {
-    final docRef = _db.collection('logs').doc(userId).collection('entries').doc(date);
+    final db = _db;
+    if (db == null) return;
     
-    return _db.runTransaction((transaction) async {
+    final docRef = db.collection('logs').doc(userId).collection('entries').doc(date);
+    
+    return db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
       if (!snapshot.exists) return;
 
