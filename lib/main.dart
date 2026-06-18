@@ -8,11 +8,23 @@ import 'screens/sessions_screen.dart';
 import 'screens/coach_chat_screen.dart';
 import 'screens/ai_chatbot_screen.dart';
 import 'data/gelato_theme.dart';
-
+import 'firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'providers/food_notifiers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const DPPApp());    // use DPPApp, not DPP()
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => FoodSearchNotifier()),
+        ChangeNotifierProvider(create: (_) => FoodDiaryNotifier()),
+      ],
+      child: const DPPApp(),
+    ),
+  );
 }
 
 class DPPApp extends StatelessWidget {
