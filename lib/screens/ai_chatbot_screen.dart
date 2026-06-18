@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
+import '../models/chat_message.dart';
+import '../repositories/chat_repository.dart';
 
 const _brandColor = Color(0xFF4A1E63); // Matches the AI button color
 const _slateGrey = Color(0xFF6B7C93);
-
-class ChatMessage {
-  final String text;
-  final bool isUser;
-  final String time;
-
-  ChatMessage({
-    required this.text,
-    required this.isUser,
-    required this.time,
-  });
-}
 
 class AiChatbotScreen extends StatefulWidget {
   const AiChatbotScreen({super.key});
@@ -25,20 +17,65 @@ class AiChatbotScreen extends StatefulWidget {
 class _AiChatbotScreenState extends State<AiChatbotScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = [];
+  final ChatRepository _chatRepository = ChatRepository();
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  
   bool _isTyping = false;
+  bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
-    // Initial greeting message
-    _messages.add(
-      ChatMessage(
-        text: 'Hello! I am your AI Chatbot. How can I assist you with your health and diet today?',
-        isUser: false,
-        time: _currentTime(),
-      ),
-    );
+  }
+
+  void _toggleListening() async {
+    if (_isListening) {
+      _stopListening();
+      return;
+    }
+
+    try {
+      var status = await Permission.microphone.request();
+      if (status.isGranted) {
+        bool available = await _speechToText.initialize(
+          onError: (val) => debugPrint('onError: $val'),
+          onStatus: (val) => debugPrint('onStatus: $val'),
+        );
+        if (available) {
+          setState(() => _isListening = true);
+          _speechToText.listen(
+            onResult: (result) {
+              setState(() {
+                _messageController.text = result.recognizedWords;
+              });
+            },
+          );
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Speech recognition is not available. Please check device settings.')),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission is required to use voice chat.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error starting microphone: $e')),
+        );
+      }
+    }
+  }
+
+  void _stopListening() {
+    _speechToText.stop();
+    setState(() => _isListening = false);
   }
 
   String _currentTime() {
@@ -49,38 +86,39 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     return '$hour:$minute $period';
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     
+    _messageController.clear();
+
+    final userMessage = ChatMessage(
+      text: text,
+      isUser: true,
+      time: _currentTime(),
+      timestamp: DateTime.now(),
+    );
+
     setState(() {
-      _messages.add(
-        ChatMessage(
-          text: text,
-          isUser: true,
-          time: _currentTime(),
-        ),
-      );
       _isTyping = true;
     });
-    
-    _messageController.clear();
-    _scrollToBottom();
+
+    await _chatRepository.saveMessage(userMessage);
 
     // Mock AI response
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 1), () async {
       if (mounted) {
+        final aiMessage = ChatMessage(
+          text: _getMockResponse(text),
+          isUser: false,
+          time: _currentTime(),
+          timestamp: DateTime.now(),
+        );
+        await _chatRepository.saveMessage(aiMessage);
+        
         setState(() {
           _isTyping = false;
-          _messages.add(
-            ChatMessage(
-              text: _getMockResponse(text),
-              isUser: false,
-              time: _currentTime(),
-            ),
-          );
         });
-        _scrollToBottom();
       }
     });
   }
@@ -98,22 +136,11 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     }
   }
 
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _speechToText.stop();
     super.dispose();
   }
 
@@ -225,22 +252,56 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
 
             // Messages area
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  final showDateLabel = index == 0;
-                  return Column(
-                    children: [
-                      if (showDateLabel) ...[
-                        _buildDateLabel('Today'),
-                        const SizedBox(height: 12),
-                      ],
-                      _buildBubble(msg),
-                      const SizedBox(height: 8),
-                    ],
+              child: StreamBuilder<List<ChatMessage>>(
+                stream: _chatRepository.getMessagesStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading messages'));
+                  }
+                  
+                  final messages = snapshot.data ?? [];
+                  
+                  // Add a welcome message locally if empty
+                  final displayMessages = messages.isEmpty 
+                    ? [
+                        ChatMessage(
+                          text: 'Hello! I am your AI Chatbot. How can I assist you with your health and diet today?',
+                          isUser: false,
+                          time: _currentTime(),
+                          timestamp: DateTime.now(),
+                        )
+                      ] 
+                    : messages;
+
+                  // Scroll to bottom when new messages arrive
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        _scrollController.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  });
+
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    itemCount: displayMessages.length,
+                    itemBuilder: (context, index) {
+                      final msg = displayMessages[index];
+                      final showDateLabel = index == 0;
+                      return Column(
+                        children: [
+                          if (showDateLabel) ...[
+                            _buildDateLabel('Today'),
+                            const SizedBox(height: 12),
+                          ],
+                          _buildBubble(msg),
+                          const SizedBox(height: 8),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -252,20 +313,6 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
               child: Row(
                 children: [
-                  // Attachment icon
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEBF2FA),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.attach_file_rounded,
-                      color: _brandColor,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   // Text input
                   Expanded(
                     child: Container(
@@ -274,26 +321,43 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: TextField(
-                        controller: _messageController,
-                        style: const TextStyle(
-                          color: _brandColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Ask me anything...',
-                          hintStyle: TextStyle(
-                            color: _slateGrey,
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _messageController,
+                              style: const TextStyle(
+                                color: _brandColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: 'Ask me anything...',
+                                hintStyle: TextStyle(
+                                  color: _slateGrey,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                              ),
+                              onSubmitted: (_) => _sendMessage(),
+                              textInputAction: TextInputAction.send,
+                            ),
                           ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                        ),
-                        onSubmitted: (_) => _sendMessage(),
-                        textInputAction: TextInputAction.send,
+                          GestureDetector(
+                            onTap: _toggleListening,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: Icon(
+                                _isListening ? Icons.mic : Icons.mic_none,
+                                color: _isListening ? Colors.red : _brandColor,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

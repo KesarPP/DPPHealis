@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _loadLoggedInStatus();
+
 
     // Configure Logo and Text entry animations
     _animationController = AnimationController(
@@ -48,8 +48,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animationController.forward();
 
-    // Schedule navigation check after 2.6 seconds
-    Timer(const Duration(milliseconds: 2600), _navigateNext);
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // Start a timer for the minimum splash duration (2.6 seconds)
+    final minDelay = Future.delayed(const Duration(milliseconds: 2600));
+    
+    // Concurrently load the logged-in status
+    await _loadLoggedInStatus();
+    
+    // Wait until the minimum splash duration has elapsed
+    await minDelay;
+    
+    // Navigate to the next screen
+    if (mounted) {
+      _navigateNext();
+    }
   }
 
   Future<void> _loadLoggedInStatus() async {
