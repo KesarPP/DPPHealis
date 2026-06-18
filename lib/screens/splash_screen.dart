@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../main.dart';
+import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -46,9 +48,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   void _navigateToLogin() {
     if (!mounted) return;
+
+    final authService = AuthService();
+    final user = authService.currentUser;
+    final Widget nextScreen = user != null ? const MainShell() : const LoginScreen();
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

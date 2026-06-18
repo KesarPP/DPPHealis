@@ -34,7 +34,7 @@ void main() {
     tester.view.resetDevicePixelRatio();
   }
 
-  testWidgets('Patient Login Flow Navigation Test', (WidgetTester tester) async {
+  testWidgets('Patient SignUp and Onboarding Flow Navigation Test', (WidgetTester tester) async {
     await setupTestWindow(tester);
     
     // Build our app and trigger a frame.
@@ -46,10 +46,22 @@ void main() {
     expect(find.text('Patient'), findsOneWidget);
     expect(find.text('Doctor/Coach'), findsOneWidget);
 
-    // Ensure login button is visible and tap it
-    final loginButton = find.widgetWithText(ElevatedButton, 'Login');
-    await tester.ensureVisible(loginButton);
-    await tester.tap(loginButton);
+    // Tap the "Sign Up" button on Login Screen
+    final signUpLink = find.widgetWithText(ElevatedButton, 'Sign Up');
+    await tester.ensureVisible(signUpLink);
+    await tester.tap(signUpLink);
+    await tester.pumpAndSettle();
+
+    // Verify we are on the SignUp Screen
+    expect(find.byType(SignUpScreen), findsOneWidget);
+
+    // Ensure the patient role is selected, tap Sign Up submit button
+    final signUpSubmit = find.descendant(
+      of: find.byType(SignUpScreen),
+      matching: find.widgetWithText(ElevatedButton, 'Sign Up'),
+    );
+    await tester.ensureVisible(signUpSubmit);
+    await tester.tap(signUpSubmit);
     await tester.pumpAndSettle();
 
     // Verify we are on RiskAssessmentStep1Screen
@@ -169,6 +181,35 @@ void main() {
     await tester.tap(backButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+
+    await resetTestWindow(tester);
+  });
+
+  testWidgets('Patient Login Flow Navigation Test', (WidgetTester tester) async {
+    await setupTestWindow(tester);
+    
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const DPPApp());
+    await tester.pumpAndSettle();
+
+    // Verify we are on the Login Screen
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    // Ensure login button is visible and tap it
+    final loginButton = find.widgetWithText(ElevatedButton, 'Login');
+    await tester.ensureVisible(loginButton);
+    await tester.tap(loginButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    
+    // Pump frames to complete the navigation transition
+    for (int i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    // Verify we are directly on MainShell and DashboardScreen
+    expect(find.byType(MainShell), findsOneWidget);
+    expect(find.byType(DashboardScreen), findsOneWidget);
 
     await resetTestWindow(tester);
   });
@@ -303,84 +344,14 @@ void main() {
     final biometricButton = find.widgetWithText(OutlinedButton, 'Biometric Login');
     await tester.ensureVisible(biometricButton);
     await tester.tap(biometricButton);
-    await tester.pumpAndSettle();
-
-    // Verify we are on RiskAssessmentStep1Screen
-    expect(find.byType(RiskAssessmentStep1Screen), findsOneWidget);
-
-    // Tap Continue on Step 1 Screen
-    final continueButton1 = find.widgetWithText(ElevatedButton, 'Continue');
-    await tester.tap(continueButton1);
-    await tester.pumpAndSettle();
-
-    // Verify we are on RiskAssessmentStep2Screen
-    expect(find.byType(RiskAssessmentStep2Screen), findsOneWidget);
-
-    // Tap Continue on Step 2 Screen
-    final continueButton2 = find.descendant(
-      of: find.byType(RiskAssessmentStep2Screen),
-      matching: find.widgetWithText(ElevatedButton, 'Continue'),
-    );
-    await tester.tap(continueButton2);
-    await tester.pumpAndSettle();
-
-    // Verify we are on GPAQStep1Screen
-    expect(find.byType(GPAQStep1Screen), findsOneWidget);
-
-    // Tap Continue on GPAQ Step 1 Screen
-    final continueGPAQ1 = find.descendant(
-      of: find.byType(GPAQStep1Screen),
-      matching: find.widgetWithText(ElevatedButton, 'Continue'),
-    );
-    await tester.tap(continueGPAQ1);
-    await tester.pumpAndSettle();
-
-    // Verify we are on GPAQStep2Screen
-    expect(find.byType(GPAQStep2Screen), findsOneWidget);
-
-    // Tap Continue on GPAQ Step 2 Screen
-    final continueGPAQ2 = find.descendant(
-      of: find.byType(GPAQStep2Screen),
-      matching: find.widgetWithText(ElevatedButton, 'Continue'),
-    );
-    await tester.tap(continueGPAQ2);
-    await tester.pumpAndSettle();
-
-    // Verify we are on GPAQStep3Screen
-    expect(find.byType(GPAQStep3Screen), findsOneWidget);
-
-    // Tap Continue on GPAQ Step 3 Screen
-    final continueGPAQ3 = find.descendant(
-      of: find.byType(GPAQStep3Screen),
-      matching: find.widgetWithText(ElevatedButton, 'Continue'),
-    );
-    await tester.tap(continueGPAQ3);
-    await tester.pumpAndSettle();
-
-    // Verify we are on GPAQStep4Screen
-    expect(find.byType(GPAQStep4Screen), findsOneWidget);
-
-    // Tap Continue on GPAQ Step 4 Screen
-    final calculateActivityScoreButton = find.descendant(
-      of: find.byType(GPAQStep4Screen),
-      matching: find.widgetWithText(ElevatedButton, 'Continue'),
-    );
-    await tester.tap(calculateActivityScoreButton);
-    await tester.pumpAndSettle();
-
-    // Verify we are on GPAQResultsScreen
-    expect(find.byType(GPAQResultsScreen), findsOneWidget);
-
-    // Tap Go to Dashboard on GPAQResultsScreen
-    final goToDashboardButton = find.descendant(
-      of: find.byType(GPAQResultsScreen),
-      matching: find.widgetWithText(ElevatedButton, 'Go to Dashboard'),
-    );
-    await tester.tap(goToDashboardButton);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
+    
+    // Pump frames to complete the navigation transition
+    for (int i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
-    // Since it was 'Patient' role selected by default, verify we navigated to the Patient MainShell
+    // Since it was 'Patient' role selected by default, verify we navigated directly to the Patient MainShell
     expect(find.byType(MainShell), findsOneWidget);
 
     // Reset the Mock handler
