@@ -124,7 +124,7 @@ class _DashboardMomentumState extends State<DashboardMomentum> with SingleTicker
           ),
           const SizedBox(height: 20),
           SizedBox(
-            height: 140, // Increased height for bouncing space
+            height: 180, // Increased height for bouncing space
             child: ListView.builder(
               physics: const BouncingScrollPhysics(),
               scrollDirection: Axis.horizontal,
@@ -144,7 +144,7 @@ class _DashboardMomentumState extends State<DashboardMomentum> with SingleTicker
                     );
                   },
                   child: Container(
-                    width: 100,
+                    width: 120,
                     margin: EdgeInsets.only(right: index == items.length - 1 ? 0 : 12),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
