@@ -57,12 +57,19 @@ class FoodDiaryNotifier extends ChangeNotifier {
     });
   }
 
-  Future<void> logFood(FoodItem food, String mealType, String date) async {
+  Future<void> logFood(FoodItem food, String mealType, String date, {int quantity = 1}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     
-    final entry = LoggedFood(food: food, mealType: mealType, quantity: 1);
+    final entry = LoggedFood(food: food, mealType: mealType, quantity: quantity);
     await _repository.addFoodToLog(user.uid, date, entry);
+  }
+
+  Future<void> removeFood(LoggedFood itemToRemove, String date) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    await _repository.removeFoodFromLog(user.uid, date, itemToRemove);
   }
 
   @override

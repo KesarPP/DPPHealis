@@ -540,7 +540,7 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  children: widget.items.map((item) => _buildFoodItemRow(item)).toList(),
+                  children: widget.items.map((item) => _buildFoodItemRow(context, item)).toList(),
                 ),
               ),
               
@@ -560,7 +560,7 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
     );
   }
 
-  Widget _buildFoodItemRow(LoggedFood item) {
+  Widget _buildFoodItemRow(BuildContext context, LoggedFood item) {
     final food = item.food;
     final qty = item.quantity;
     final totalCals = food.calories * qty;
@@ -575,6 +575,8 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(qty > 1 ? '${food.name} (x$qty)' : food.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                const SizedBox(height: 2),
+                Text('C:${(food.carbs * qty).toStringAsFixed(1)}g, P:${(food.protein * qty).toStringAsFixed(1)}g, F:${(food.fat * qty).toStringAsFixed(1)}g', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
               ],
             ),
           ),
@@ -583,8 +585,14 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text('${totalCals.toStringAsFixed(0)} kcal', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
-              const SizedBox(height: 2),
-              Text('C:${(food.carbs * qty).toStringAsFixed(1)}g, P:${(food.protein * qty).toStringAsFixed(1)}g, F:${(food.fat * qty).toStringAsFixed(1)}g', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () {
+                  final today = DateTime.now().toIso8601String().split('T')[0];
+                  context.read<FoodDiaryNotifier>().removeFood(item, today);
+                },
+                child: const Icon(Icons.remove_circle_outline, color: GelatoTheme.pinkDark, size: 20),
+              ),
             ],
           ),
         ],

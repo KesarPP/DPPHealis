@@ -76,4 +76,44 @@ class FoodRepository {
       }
     });
   }
+
+  Future<void> removeFoodFromLog(String userId, String date, LoggedFood itemToRemove) async {
+    final docRef = _db.collection('logs').doc(userId).collection('entries').doc(date);
+    
+    return _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+
+      final log = DailyFoodLog.fromFirestore(snapshot.data()!, snapshot.id);
+      
+      bool found = false;
+      for (var i = 0; i < log.entries.length; i++) {
+        if (log.entries[i].food.id == itemToRemove.food.id && log.entries[i].mealType == itemToRemove.mealType) {
+          final existing = log.entries[i];
+          if (existing.quantity > 1) {
+            log.entries[i] = LoggedFood(
+              food: existing.food, 
+              mealType: existing.mealType, 
+              quantity: existing.quantity - 1
+            );
+          } else {
+            log.entries.removeAt(i);
+          }
+          found = true;
+          break;
+        }
+      }
+
+      if (found) {
+        transaction.update(docRef, {
+          'entries': log.entries.map((e) => e.toMap()).toList(),
+          'totalCalories': (log.totalCalories - itemToRemove.food.calories).clamp(0.0, double.infinity),
+          'totalCarbs': (log.totalCarbs - itemToRemove.food.carbs).clamp(0.0, double.infinity),
+          'totalProtein': (log.totalProtein - itemToRemove.food.protein).clamp(0.0, double.infinity),
+          'totalFat': (log.totalFat - itemToRemove.food.fat).clamp(0.0, double.infinity),
+          'totalFiber': (log.totalFiber - itemToRemove.food.fiber).clamp(0.0, double.infinity),
+        });
+      }
+    });
+  }
 }

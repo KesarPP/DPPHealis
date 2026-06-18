@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../data/gelato_theme.dart';
 import '../providers/food_notifiers.dart';
 import '../models/food_item.dart';
+import 'food_detail_screen.dart';
 
 class FoodSearchScreen extends StatefulWidget {
   final String mealType;
@@ -24,21 +25,6 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
   String _getTodayDate() {
     return DateTime.now().toIso8601String().split('T')[0];
-  }
-
-  void _logFood(BuildContext context, FoodItem food) {
-    context.read<FoodDiaryNotifier>().logFood(food, widget.mealType, _getTodayDate());
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added ${food.name} to ${widget.mealType}!', style: const TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: GelatoTheme.greenDark,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-    
-    Navigator.pop(context); // Go back to the dashboard after adding
   }
 
   @override
@@ -165,7 +151,17 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                         ),
                         child: const Icon(Icons.add, color: GelatoTheme.greenDark, size: 20),
                       ),
-                      onTap: () => _logFood(context, food),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FoodDetailScreen(
+                              food: food,
+                              mealType: widget.mealType,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
