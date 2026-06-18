@@ -77,13 +77,19 @@ class ClinicianProfileScreen extends StatelessWidget {
 
                 // Name & Subtitle
                 Center(
-                  child: Text(
-                    AuthService().currentUser?.displayName ?? 'Coach Profile',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: _brandColor,
-                    ),
+                  child: FutureBuilder<UserProfileData>(
+                    future: AuthService().getUserProfileData(),
+                    builder: (context, snapshot) {
+                      final name = snapshot.data?.displayName ?? 'Coach Profile';
+                      return Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: _brandColor,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 4),

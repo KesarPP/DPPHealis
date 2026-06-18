@@ -301,6 +301,8 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
+      await prefs.setString('last_user_name', 'Dr. Sarah Mitchell');
+      await prefs.setString('last_user_email', email);
       return null;
     }
   }
@@ -346,6 +348,8 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
+      await prefs.setString('last_user_name', name);
+      await prefs.setString('last_user_email', email);
       return null;
     }
   }
