@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../screens/profile_screen.dart';
 import '../screens/food_analysis_screen.dart';
+import '../services/auth_service.dart';
 
 class DashboardHeader extends StatefulWidget {
   const DashboardHeader({super.key});
@@ -69,189 +71,226 @@ class _DashboardHeaderState extends State<DashboardHeader>
   Widget build(BuildContext context) {
     final greeting = _getGreeting();
     
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
-        children: [
-          // JP Avatar with Heartbeat ECG Ring
-          GestureDetector(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-            },
-            child: SizedBox(
-              width: 48,
-              height: 48,
-              child: Stack(
-                children: [
-                  // Outer circle tracking progress/design
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _AvatarRingPainter(),
-                    ),
-                  ),
-                  // Inner Avatar container
-                  Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: GelatoTheme.pink,
+    String getInitials(String name) {
+      if (name.isEmpty) return 'JP';
+      final parts = name.trim().split(' ');
+      if (parts.length > 1) {
+        return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      }
+      return parts[0][0].toUpperCase();
+    }
+
+    return FutureBuilder<UserProfileData>(
+      future: AuthService().getUserProfileData(),
+      builder: (context, snapshot) {
+        final profile = snapshot.data;
+        final displayName = profile?.displayName ?? 'Janice Pattice';
+        final firstName = displayName.split(' ').first;
+        final initials = getInitials(displayName);
+        
+        final profileImageUrl = profile != null && profile.email.isNotEmpty
+            ? AuthService().getGravatarUrl(profile.email)
+            : null;
+
+        ImageProvider? imageProvider;
+        if (profile?.localImagePath != null) {
+          imageProvider = FileImage(File(profile!.localImagePath!));
+        } else if (profileImageUrl != null) {
+          imageProvider = NetworkImage(profileImageUrl);
+        }
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              // JP Avatar with Heartbeat ECG Ring
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  });
+                },
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Stack(
+                    children: [
+                      // Outer circle tracking progress/design
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _AvatarRingPainter(),
+                        ),
                       ),
-                      child: const Center(
-                        child: Text(
-                          'JP',
-                          style: TextStyle(
-                            color: GelatoTheme.pinkDark,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.2,
+                      // Inner Avatar container
+                      Align(
+                        alignment: Alignment.center,
+                        child: CircleAvatar(
+                          radius: 19,
+                          backgroundColor: GelatoTheme.pink,
+                          foregroundImage: imageProvider,
+                          onForegroundImageError: imageProvider != null
+                              ? (exception, stackTrace) {
+                                  // Silently handle error and fallback to initials
+                                }
+                              : null,
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              color: GelatoTheme.pinkDark,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.2,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  // Pulse Dot container bottom-right
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Pulse glow ring
-                          ScaleTransition(
-                            scale: _pulseScale,
-                            child: FadeTransition(
-                              opacity: Tween<double>(begin: 0.8, end: 0.0).animate(_pulseController),
-                              child: Container(
-                                width: 10,
-                                height: 10,
-                                decoration: const BoxDecoration(
-                                  color: GelatoTheme.green,
-                                  shape: BoxShape.circle,
+                      // Pulse Dot container bottom-right
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Pulse glow ring
+                              ScaleTransition(
+                                scale: _pulseScale,
+                                child: FadeTransition(
+                                  opacity: Tween<double>(begin: 0.8, end: 0.0).animate(_pulseController),
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: GelatoTheme.green,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              // Inner solid white-ringed green dot
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: GelatoTheme.green,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 1.5),
+                                ),
+                              ),
+                            ],
                           ),
-                          // Inner solid white-ringed green dot
-                          Container(
-                            width: 8,
-                            height: 8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              
+              // Greetings
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$greeting, $firstName',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: GelatoTheme.textDark,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Your risk score improved again this week.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: GelatoTheme.textLight,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Bell button
+              GestureDetector(
+                onTap: () {
+                  if (mounted) {
+                    setState(() {
+                      _hasNotification = false;
+                    });
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const FoodAnalysisScreen()),
+                    );
+                  }
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Bell Icon with animated tilt
+                      AnimatedBuilder(
+                        animation: _bellAngle,
+                        builder: (context, child) {
+                          return Transform.rotate(
+                            angle: _bellAngle.value,
+                            origin: const Offset(0, -8),
+                            child: const Icon(
+                              Icons.notifications_rounded,
+                              size: 25,
+                              color: GelatoTheme.textDark,
+                            ),
+                          );
+                        },
+                      ),
+                      // Notification red dot badge
+                      if (_hasNotification)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(3.5),
                             decoration: BoxDecoration(
-                              color: GelatoTheme.green,
+                              color: GelatoTheme.pink,
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 1.5),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          
-          // Greetings
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$greeting, Janice',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: GelatoTheme.textDark,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Your risk score improved again this week.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: GelatoTheme.textLight,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Bell button
-          GestureDetector(
-            onTap: () {
-              if (mounted) {
-                setState(() {
-                  _hasNotification = false;
-                });
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FoodAnalysisScreen()),
-                );
-              }
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Bell Icon with animated tilt
-                  AnimatedBuilder(
-                    animation: _bellAngle,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: _bellAngle.value,
-                        origin: const Offset(0, -8),
-                        child: const Icon(
-                          Icons.notifications_rounded,
-                          size: 25,
-                          color: GelatoTheme.textDark,
-                        ),
-                      );
-                    },
-                  ),
-                  // Notification red dot badge
-                  if (_hasNotification)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(3.5),
-                        decoration: BoxDecoration(
-                          color: GelatoTheme.pink,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: const Text(
-                          '1',
-                          style: TextStyle(
-                            color: GelatoTheme.pinkDark,
-                            fontSize: 7,
-                            fontWeight: FontWeight.bold,
+                            child: const Text(
+                              '1',
+                              style: TextStyle(
+                                color: GelatoTheme.pinkDark,
+                                fontSize: 7,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

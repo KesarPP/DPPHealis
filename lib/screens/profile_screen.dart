@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import '../services/auth_service.dart';
@@ -17,9 +19,14 @@ const Color _blueDark = GelatoTheme.blueDark;
 const Color _purpleDark = GelatoTheme.purpleDark;
 const Color _peachDark = GelatoTheme.orangeDark;
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,7 +52,13 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _ProfileHeader(),
+            _ProfileHeader(
+              onUpdate: () {
+                if (mounted) {
+                  setState(() {});
+                }
+              },
+            ),
             const SizedBox(height: 32),
             
             const _SectionTitle('Journey Progress'),
@@ -177,60 +190,223 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+  final VoidCallback onUpdate;
+  const _ProfileHeader({required this.onUpdate});
+
+  void _showEditProfileDialog(BuildContext context, UserProfileData profile) {
+    final user = AuthService().currentUser;
+    final nameController = TextEditingController(text: profile.displayName);
+    final ImagePicker picker = ImagePicker();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: GelatoTheme.bg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: Colors.black, width: 2.0),
+              ),
+              title: const Text(
+                'Edit Profile',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: GelatoTheme.textDark,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: GelatoTheme.blue,
+                      foregroundColor: Colors.black87,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Colors.black, width: 1.5),
+                      ),
+                    ),
+                    onPressed: () async {
+                      try {
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          final File file = File(image.path);
+                          await AuthService().saveLocalProfileImage(file);
+                          setDialogState(() {});
+                          onUpdate();
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error picking image: $e')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.photo_library_rounded),
+                    label: const Text('Choose Photo'),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GelatoTheme.green,
+                    foregroundColor: GelatoTheme.greenDark,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Colors.black, width: 1.5),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final newName = nameController.text.trim();
+                    if (newName.isNotEmpty) {
+                      if (user != null) {
+                        await user.updateDisplayName(newName);
+                        await user.reload();
+                      }
+                      await AuthService().persistUserProfile(newName, profile.email);
+                      onUpdate();
+                    }
+                    if (context.mounted) {
+                      Navigator.pop(dialogContext);
+                    }
+                  },
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: _pastelPeach, width: 4), // Coral Orange Circle
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black87, width: 1.5),
+    return FutureBuilder<UserProfileData>(
+      future: AuthService().getUserProfileData(),
+      builder: (context, snapshot) {
+        final profile = snapshot.data;
+        final displayName = profile?.displayName ?? 'Janice Pattice';
+        final email = profile?.email ?? '';
+        final localPath = profile?.localImagePath;
+        
+        final profileImageUrl = email.isNotEmpty
+            ? AuthService().getGravatarUrl(email)
+            : null;
+
+        ImageProvider? imageProvider;
+        if (localPath != null) {
+          imageProvider = FileImage(File(localPath));
+        } else if (profileImageUrl != null) {
+          imageProvider = NetworkImage(profileImageUrl);
+        }
+
+        String getInitials(String name) {
+          if (name.isEmpty) return 'JP';
+          final parts = name.trim().split(' ');
+          if (parts.length > 1) {
+            return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+          }
+          return parts[0][0].toUpperCase();
+        }
+        final initials = getInitials(displayName);
+
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: _pastelPeach, width: 4), // Coral Orange Circle
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black87, width: 1.5),
+                ),
+                child: CircleAvatar(
+                  radius: 56,
+                  backgroundColor: _pastelYellow,
+                  foregroundImage: imageProvider,
+                  onForegroundImageError: imageProvider != null
+                      ? (exception, stackTrace) {
+                          // Silently handle error and fallback to initials
+                        }
+                      : null,
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: _pastelPeach,
+                    ),
+                  ),
+                ),
+              ),
             ),
-            child: const CircleAvatar(
-              radius: 56,
-              backgroundColor: _pastelYellow,
-              child: Icon(Icons.person_rounded, size: 56, color: _pastelPeach),
+            const SizedBox(height: 16),
+            Text(
+              displayName,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.8),
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Janice Pattice',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.8),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: _pastelYellow,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Text(
-            'On a 14-day winning streak!',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87),
-          ),
-        ),
-        const SizedBox(height: 16),
-        FilledButton.tonalIcon(
-          onPressed: () {},
-          icon: const Icon(Icons.edit_rounded, size: 16),
-          label: const Text('Edit Profile'),
-          style: FilledButton.styleFrom(
-            backgroundColor: _pastelBlue,
-            foregroundColor: Colors.black87,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 1.5)),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          ),
-        ),
-      ],
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: _pastelYellow,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'On a 14-day winning streak!',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                if (profile != null) {
+                  _showEditProfileDialog(context, profile);
+                }
+              },
+              icon: const Icon(Icons.edit_rounded, size: 16),
+              label: const Text('Edit Profile'),
+              style: FilledButton.styleFrom(
+                backgroundColor: _pastelBlue,
+                foregroundColor: Colors.black87,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 1.5)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

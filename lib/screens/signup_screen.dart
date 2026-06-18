@@ -69,13 +69,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration Successful!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        if (!isTesting) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration Successful!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => const RiskAssessmentStep1Screen(),

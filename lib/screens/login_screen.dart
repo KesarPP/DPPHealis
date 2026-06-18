@@ -7,6 +7,7 @@ import 'risk_assessment_step1_screen.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../main.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -53,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const RiskAssessmentStep1Screen(),
+            builder: (_) => const MainShell(),
           ),
         );
       }
@@ -144,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => _isPatientSelected
-                ? const RiskAssessmentStep1Screen()
+                ? const MainShell()
                 : const ClinicianDashboardScreen(),
           ),
         );
