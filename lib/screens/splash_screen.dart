@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'clinician_dashboard_screen.dart';
 import '../main.dart';
@@ -17,9 +18,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  bool _isLoggedIn = false;
+  String? _userRole;
+
   @override
   void initState() {
     super.initState();
+    _loadLoggedInStatus();
 
     // Configure Logo and Text entry animations
     _animationController = AnimationController(
@@ -47,24 +52,38 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     Timer(const Duration(milliseconds: 2600), _navigateNext);
   }
 
-  Future<void> _navigateNext() async {
+  Future<void> _loadLoggedInStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authService = AuthService();
+      final user = authService.currentUser;
+      
+      String? role;
+      if (user != null) {
+        role = await authService.getUserRole();
+      }
+      role ??= prefs.getString('user_role');
+
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = prefs.getBool('is_logged_in') ?? (user != null);
+          _userRole = role;
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _navigateNext() {
     if (!mounted) return;
 
     Widget nextScreen = const LoginScreen();
-    
-    final authService = AuthService();
-    final user = authService.currentUser;
-
-    if (user != null) {
-      final role = await authService.getUserRole();
-      if (role == 'coach') {
+    if (_isLoggedIn) {
+      if (_userRole == 'coach') {
         nextScreen = const ClinicianDashboardScreen();
-      } else if (role == 'user') {
+      } else {
         nextScreen = const MainShell();
       }
     }
-
-    if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(

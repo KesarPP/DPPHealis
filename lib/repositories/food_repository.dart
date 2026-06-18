@@ -1,16 +1,25 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/food_item.dart';
 import '../models/food_log.dart';
 
 class FoodRepository {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore? get _db {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        return FirebaseFirestore.instance;
+      }
+    } catch (_) {}
+    return null;
+  }
 
   Future<List<FoodItem>> searchFoods(String query) async {
-    if (query.isEmpty) return [];
+    final db = _db;
+    if (db == null || query.isEmpty) return [];
     final lowercaseQuery = query.toLowerCase();
     
     // Prefix query: >= lowercaseQuery and < lowercaseQuery + 'z'
-    final snapshot = await _db.collection('foods')
+    final snapshot = await db.collection('foods')
       .where('nameSearch', isGreaterThanOrEqualTo: lowercaseQuery)
       .where('nameSearch', isLessThan: lowercaseQuery + 'z')
       .limit(20)
@@ -20,16 +29,20 @@ class FoodRepository {
   }
 
   Stream<DailyFoodLog?> getDailyLog(String userId, String date) {
-    return _db.collection('logs').doc(userId).collection('entries').doc(date).snapshots().map((doc) {
+    final db = _db;
+    if (db == null) return Stream.value(null);
+    return db.collection('logs').doc(userId).collection('entries').doc(date).snapshots().map((doc) {
       if (!doc.exists) return null;
       return DailyFoodLog.fromFirestore(doc.data()!, doc.id);
     });
   }
 
   Future<void> addFoodToLog(String userId, String date, LoggedFood newEntry) async {
-    final docRef = _db.collection('logs').doc(userId).collection('entries').doc(date);
+    final db = _db;
+    if (db == null) return;
+    final docRef = db.collection('logs').doc(userId).collection('entries').doc(date);
     
-    return _db.runTransaction((transaction) async {
+    return db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
       
       if (!snapshot.exists) {

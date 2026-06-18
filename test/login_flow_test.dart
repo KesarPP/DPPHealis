@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dpp_app/main.dart';
 import 'package:dpp_app/screens/login_screen.dart';
 import 'package:dpp_app/screens/signup_screen.dart';
@@ -20,6 +21,10 @@ import 'package:webview_flutter_platform_interface/webview_flutter_platform_inte
 void main() {
   setUpAll(() {
     WebViewPlatform.instance = MockWebViewPlatform();
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
   // Helper to configure a larger screen size for mobile tests
   Future<void> setupTestWindow(WidgetTester tester) async {
@@ -230,6 +235,11 @@ void main() {
     await tester.tap(coachToggle);
     await tester.pumpAndSettle();
 
+    // Enter email and password
+    await tester.enterText(find.byType(TextField).at(0), 'coach@healis.org');
+    await tester.enterText(find.byType(TextField).at(1), 'password123');
+    await tester.pumpAndSettle();
+
     // Tap Login
     final loginButton = find.widgetWithText(ElevatedButton, 'Login');
     await tester.ensureVisible(loginButton);
@@ -292,6 +302,13 @@ void main() {
     );
     await tester.ensureVisible(coachToggle);
     await tester.tap(coachToggle);
+    await tester.pumpAndSettle();
+
+    // Enter details
+    await tester.enterText(find.byType(TextField).at(0), 'Dr. Sarah Mitchell');
+    await tester.enterText(find.byType(TextField).at(1), 'coach@healis.org');
+    await tester.enterText(find.byType(TextField).at(2), 'password123');
+    await tester.enterText(find.byType(TextField).at(3), 'password123');
     await tester.pumpAndSettle();
 
     // Tap SignUp button

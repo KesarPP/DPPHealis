@@ -19,6 +19,6 @@ def remove_white_bg(input_path, output_path):
 
 if __name__ == "__main__":
     remove_white_bg(
-        "C:/Users/thora/.gemini/antigravity-ide/brain/738ac016-1195-4944-9492-6a3fddcd0f3e/white_bg_trophy_1781516832161.png",
+        "C:/users/thora/.gemini/antigravity-ide/brain/738ac016-1195-4944-9492-6a3fddcd0f3e/white_bg_trophy_1781516832161.png",
         "c:/healis_work/DPPHealis/assets/images/custom_trophy.png"
     )

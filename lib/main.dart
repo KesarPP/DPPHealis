@@ -17,15 +17,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => FoodSearchNotifier()),
-        ChangeNotifierProvider(create: (_) => FoodDiaryNotifier()),
-      ],
-      child: const DPPApp(),
-    ),
-  );
+  runApp(const DPPApp());
 }
 
 class DPPApp extends StatelessWidget {
@@ -33,14 +25,20 @@ class DPPApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Diabetes Prevention Program',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => FoodSearchNotifier()),
+        ChangeNotifierProvider(create: (_) => FoodDiaryNotifier()),
+      ],
+      child: MaterialApp(
+        title: 'Diabetes Prevention Program',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
+          useMaterial3: true,
+        ),
+        home: const SplashScreen(),
       ),
-      home: const SplashScreen(),
     );
   }
 }

@@ -70,6 +70,7 @@ class AuthService {
     return 'https://www.gravatar.com/avatar/$hash?s=200&d=identicon';
   }
 
+
   /// Persists the user's profile details locally.
   Future<void> persistUserProfile(String name, String email) async {
     final prefs = await SharedPreferences.getInstance();
@@ -169,6 +170,7 @@ class AuthService {
   /// Throws a [FirebaseAuthException] or [Exception] on failure.
   Future<User?> signInWithEmailAndPassword(String email, String password) async {
     final auth = _auth;
+    final prefs = await SharedPreferences.getInstance();
     if (auth != null) {
       final credential = await auth.signInWithEmailAndPassword(
         email: email,
@@ -176,7 +178,6 @@ class AuthService {
       );
       final user = credential.user;
       if (user != null) {
-        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('last_user_name', user.displayName ?? '');
         await prefs.setString('last_user_email', user.email ?? '');
 
@@ -188,11 +189,15 @@ class AuthService {
             'This account is not registered as a patient. Please use the Doctor/Coach login.',
           );
         }
+        await prefs.setBool('is_logged_in', true);
+        await prefs.setString('user_role', 'user');
       }
       return user;
     } else {
       // Mock mode for testing/local-only runs.
       await Future.delayed(const Duration(milliseconds: 200));
+      await prefs.setBool('is_logged_in', true);
+      await prefs.setString('user_role', 'user');
       return null;
     }
   }
@@ -206,6 +211,7 @@ class AuthService {
     required String name,
   }) async {
     final auth = _auth;
+    final prefs = await SharedPreferences.getInstance();
     if (auth != null) {
       final credential = await auth.createUserWithEmailAndPassword(
         email: email,
@@ -216,7 +222,6 @@ class AuthService {
         await user.updateDisplayName(name);
         await user.reload();
         
-        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('last_user_name', name);
         await prefs.setString('last_user_email', email);
 
@@ -228,11 +233,15 @@ class AuthService {
           'role': 'user',
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await prefs.setBool('is_logged_in', true);
+        await prefs.setString('user_role', 'user');
       }
       return _auth!.currentUser;
     } else {
       // Mock mode for testing/local-only runs.
       await Future.delayed(const Duration(milliseconds: 200));
+      await prefs.setBool('is_logged_in', true);
+      await prefs.setString('user_role', 'user');
       return null;
     }
   }
@@ -254,6 +263,7 @@ class AuthService {
       String email, String password) async {
     _assertCoachEmail(email);
     final auth = _auth;
+    final prefs = await SharedPreferences.getInstance();
     if (auth != null) {
       final credential = await auth.signInWithEmailAndPassword(
         email: email,
@@ -261,7 +271,6 @@ class AuthService {
       );
       final user = credential.user;
       if (user != null) {
-        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('last_user_name', user.displayName ?? '');
         await prefs.setString('last_user_email', user.email ?? '');
 
@@ -273,11 +282,15 @@ class AuthService {
             'No coach account found. Please sign up first or use Patient login.',
           );
         }
+        await prefs.setBool('is_logged_in', true);
+        await prefs.setString('user_role', 'coach');
       }
       return user;
     } else {
       // Mock mode for testing/local-only runs.
       await Future.delayed(const Duration(milliseconds: 200));
+      await prefs.setBool('is_logged_in', true);
+      await prefs.setString('user_role', 'coach');
       return null;
     }
   }
@@ -292,6 +305,7 @@ class AuthService {
   }) async {
     _assertCoachEmail(email);
     final auth = _auth;
+    final prefs = await SharedPreferences.getInstance();
     if (auth != null) {
       final credential = await auth.createUserWithEmailAndPassword(
         email: email,
@@ -302,7 +316,6 @@ class AuthService {
         await user.updateDisplayName(name);
         await user.reload();
         
-        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('last_user_name', name);
         await prefs.setString('last_user_email', email);
 
@@ -314,11 +327,15 @@ class AuthService {
           'role': 'coach',
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await prefs.setBool('is_logged_in', true);
+        await prefs.setString('user_role', 'coach');
       }
       return _auth!.currentUser;
     } else {
       // Mock mode for testing/local-only runs.
       await Future.delayed(const Duration(milliseconds: 200));
+      await prefs.setBool('is_logged_in', true);
+      await prefs.setString('user_role', 'coach');
       return null;
     }
   }
@@ -329,6 +346,9 @@ class AuthService {
     if (auth != null) {
       await auth.signOut();
     }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', false);
+    await prefs.remove('user_role');
   }
 }
 

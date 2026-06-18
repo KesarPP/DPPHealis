@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
 import 'risk_assessment_step1_screen.dart';
@@ -212,6 +213,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (didAuthenticate && mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_logged_in', true);
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => _isPatientSelected
