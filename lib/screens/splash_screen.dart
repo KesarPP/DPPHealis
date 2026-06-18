@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
+import 'clinician_dashboard_screen.dart';
+import '../main.dart';
+import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,9 +18,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  bool _isLoggedIn = false;
+  String? _userRole;
+
   @override
   void initState() {
     super.initState();
+    _loadLoggedInStatus();
 
     // Configure Logo and Text entry animations
     _animationController = AnimationController(
@@ -40,15 +48,46 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animationController.forward();
 
-    // Schedule navigation to login screen after 2.6 seconds
-    Timer(const Duration(milliseconds: 2600), _navigateToLogin);
+    // Schedule navigation check after 2.6 seconds
+    Timer(const Duration(milliseconds: 2600), _navigateNext);
   }
 
-  void _navigateToLogin() {
+  Future<void> _loadLoggedInStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authService = AuthService();
+      final user = authService.currentUser;
+      
+      String? role;
+      if (user != null) {
+        role = await authService.getUserRole();
+      }
+      role ??= prefs.getString('user_role');
+
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = prefs.getBool('is_logged_in') ?? (user != null);
+          _userRole = role;
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _navigateNext() {
     if (!mounted) return;
+
+    Widget nextScreen = const LoginScreen();
+    if (_isLoggedIn) {
+      if (_userRole == 'coach') {
+        nextScreen = const ClinicianDashboardScreen();
+      } else {
+        nextScreen = const MainShell();
+      }
+    }
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
