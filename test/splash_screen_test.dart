@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dpp_app/main.dart';
 import 'package:dpp_app/screens/splash_screen.dart';
 import 'package:dpp_app/screens/login_screen.dart';
 
 void main() {
+  setUpAll(() {
+    SharedPreferences.setMockInitialValues({});
+  });
   // Helper to configure a larger screen size for mobile tests
   Future<void> setupTestWindow(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1080, 2400));

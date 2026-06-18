@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/food_item.dart';
 import '../models/food_log.dart';
@@ -48,6 +49,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
 
   void loadLogForDate(String date) {
     _subscription?.cancel();
+    if (Firebase.apps.isEmpty) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -58,6 +60,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
   }
 
   Future<void> logFood(FoodItem food, String mealType, String date, {int quantity = 1}) async {
+    if (Firebase.apps.isEmpty) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     
@@ -66,6 +69,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
   }
 
   Future<void> removeFood(LoggedFood itemToRemove, String date) async {
+    if (Firebase.apps.isEmpty) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     

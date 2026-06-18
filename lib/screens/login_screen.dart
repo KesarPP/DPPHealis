@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
 import 'risk_assessment_step1_screen.dart';
@@ -99,6 +100,76 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleCoachLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email and password.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final authService = AuthService();
+      await authService.signInCoachWithEmailAndPassword(email, password);
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const ClinicianDashboardScreen(),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Authentication failed. Please try again.';
+      if (e.code == 'user-not-found') {
+        message = 'No coach account found with this email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Incorrect password.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Invalid email address format.';
+      } else if (e.code == 'user-disabled') {
+        message = 'This account has been disabled.';
+      } else if (e.code == 'invalid-credential') {
+        message = 'Invalid credentials provided.';
+      } else if (e.message != null) {
+        message = e.message!;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -142,6 +213,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (didAuthenticate && mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_logged_in', true);
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => _isPatientSelected
@@ -538,20 +612,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                       borderRadius: BorderRadius.circular(24),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    Navigator.of(context).pushReplacement(
-                                      MaterialPageRoute(
-                                        builder: (_) => const ClinicianDashboardScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: const Text(
-                                    'Login',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  onPressed: _isLoading ? null : _handleCoachLogin,
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 3,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Login',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                 ),
                           const SizedBox(height: 20),
 
