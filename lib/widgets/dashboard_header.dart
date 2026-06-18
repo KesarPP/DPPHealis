@@ -88,15 +88,9 @@ class _DashboardHeaderState extends State<DashboardHeader>
         final firstName = displayName.split(' ').first;
         final initials = getInitials(displayName);
         
-        final profileImageUrl = profile != null && profile.email.isNotEmpty
-            ? AuthService().getGravatarUrl(profile.email)
-            : null;
-
         ImageProvider? imageProvider;
         if (profile?.localImagePath != null) {
           imageProvider = FileImage(File(profile!.localImagePath!));
-        } else if (profileImageUrl != null) {
-          imageProvider = NetworkImage(profileImageUrl);
         }
 
         return Padding(

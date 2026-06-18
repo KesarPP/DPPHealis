@@ -317,15 +317,9 @@ class _ProfileHeader extends StatelessWidget {
         final email = profile?.email ?? '';
         final localPath = profile?.localImagePath;
         
-        final profileImageUrl = email.isNotEmpty
-            ? AuthService().getGravatarUrl(email)
-            : null;
-
         ImageProvider? imageProvider;
         if (localPath != null) {
           imageProvider = FileImage(File(localPath));
-        } else if (profileImageUrl != null) {
-          imageProvider = NetworkImage(profileImageUrl);
         }
 
         String getInitials(String name) {
