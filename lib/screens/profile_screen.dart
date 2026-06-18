@@ -189,6 +189,21 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+class ProfileColorSet {
+  final Color bg;
+  final Color fg;
+  const ProfileColorSet({required this.bg, required this.fg});
+}
+
+const Map<String, ProfileColorSet> _profileColors = {
+  'pink': ProfileColorSet(bg: GelatoTheme.pink, fg: GelatoTheme.pinkDark),
+  'green': ProfileColorSet(bg: GelatoTheme.green, fg: GelatoTheme.greenDark),
+  'yellow': ProfileColorSet(bg: GelatoTheme.yellow, fg: GelatoTheme.yellowDark),
+  'blue': ProfileColorSet(bg: GelatoTheme.blue, fg: GelatoTheme.blueDark),
+  'purple': ProfileColorSet(bg: GelatoTheme.purple, fg: GelatoTheme.purpleDark),
+  'orange': ProfileColorSet(bg: GelatoTheme.orange, fg: GelatoTheme.orangeDark),
+};
+
 class _ProfileHeader extends StatelessWidget {
   final VoidCallback onUpdate;
   const _ProfileHeader({required this.onUpdate});
@@ -317,15 +332,9 @@ class _ProfileHeader extends StatelessWidget {
         final email = profile?.email ?? '';
         final localPath = profile?.localImagePath;
         
-        final profileImageUrl = email.isNotEmpty
-            ? AuthService().getGravatarUrl(email)
-            : null;
-
         ImageProvider? imageProvider;
         if (localPath != null) {
           imageProvider = FileImage(File(localPath));
-        } else if (profileImageUrl != null) {
-          imageProvider = NetworkImage(profileImageUrl);
         }
 
         String getInitials(String name) {
@@ -338,13 +347,16 @@ class _ProfileHeader extends StatelessWidget {
         }
         final initials = getInitials(displayName);
 
+        final String bgName = profile?.profileBgColor ?? 'pink';
+        final colorSet = _profileColors[bgName] ?? _profileColors['pink']!;
+
         return Column(
           children: [
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: _pastelPeach, width: 4), // Coral Orange Circle
+                border: Border.all(color: colorSet.fg, width: 4), // Matching Accent Circle
               ),
               child: Container(
                 decoration: BoxDecoration(
@@ -353,7 +365,7 @@ class _ProfileHeader extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 56,
-                  backgroundColor: _pastelYellow,
+                  backgroundColor: colorSet.bg,
                   foregroundImage: imageProvider,
                   onForegroundImageError: imageProvider != null
                       ? (exception, stackTrace) {
@@ -362,10 +374,10 @@ class _ProfileHeader extends StatelessWidget {
                       : null,
                   child: Text(
                     initials,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.w900,
-                      color: _pastelPeach,
+                      color: colorSet.fg,
                     ),
                   ),
                 ),
@@ -389,20 +401,74 @@ class _ProfileHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            FilledButton.tonalIcon(
-              onPressed: () {
-                if (profile != null) {
-                  _showEditProfileDialog(context, profile);
-                }
-              },
-              icon: const Icon(Icons.edit_rounded, size: 16),
-              label: const Text('Edit Profile'),
-              style: FilledButton.styleFrom(
-                backgroundColor: _pastelBlue,
-                foregroundColor: Colors.black87,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 1.5)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    if (profile != null) {
+                      _showEditProfileDialog(context, profile);
+                    }
+                  },
+                  icon: const Icon(Icons.edit_rounded, size: 16),
+                  label: const Text('Edit Profile'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _pastelBlue,
+                    foregroundColor: Colors.black87,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 1.5)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Customize Avatar Theme',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _darkText, letterSpacing: -0.5),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _profileColors.keys.map((colorName) {
+                final cSet = _profileColors[colorName]!;
+                final isSelected = bgName == colorName;
+                
+                return GestureDetector(
+                  onTap: () async {
+                    await AuthService().persistProfileBgColor(colorName);
+                    onUpdate();
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: cSet.bg,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? Colors.black : Colors.black26,
+                        width: isSelected ? 2.5 : 1.0,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: isSelected
+                        ? Icon(
+                            Icons.check_rounded,
+                            color: cSet.fg,
+                            size: 18,
+                          )
+                        : null,
+                  ),
+                );
+              }).toList(),
             ),
           ],
         );

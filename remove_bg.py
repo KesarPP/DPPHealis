@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from PIL import Image
 
 def remove_white_bg(input_path, output_path):

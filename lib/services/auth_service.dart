@@ -96,11 +96,21 @@ class AuthService {
       }
     }
 
+    final String bgColor = prefs.getString('profile_bg_color_$email') ?? 'pink';
+
     return UserProfileData(
       displayName: name.isNotEmpty ? name : 'Janice Pattice',
       email: email,
       localImagePath: localPath,
+      profileBgColor: bgColor,
     );
+  }
+
+  /// Persists the selected profile background color name.
+  Future<void> persistProfileBgColor(String colorName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = currentUser?.email ?? prefs.getString('last_user_email') ?? '';
+    await prefs.setString('profile_bg_color_$email', colorName);
   }
 
   /// Checks if Firebase is initialized.
@@ -291,6 +301,8 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
+      await prefs.setString('last_user_name', 'Dr. Sarah Mitchell');
+      await prefs.setString('last_user_email', email);
       return null;
     }
   }
@@ -336,6 +348,8 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
+      await prefs.setString('last_user_name', name);
+      await prefs.setString('last_user_email', email);
       return null;
     }
   }
@@ -356,10 +370,12 @@ class UserProfileData {
   final String displayName;
   final String email;
   final String? localImagePath;
+  final String profileBgColor;
 
   UserProfileData({
     required this.displayName,
     required this.email,
     this.localImagePath,
+    required this.profileBgColor,
   });
 }

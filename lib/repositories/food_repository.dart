@@ -93,7 +93,6 @@ class FoodRepository {
   Future<void> removeFoodFromLog(String userId, String date, LoggedFood itemToRemove) async {
     final db = _db;
     if (db == null) return;
-    
     final docRef = db.collection('logs').doc(userId).collection('entries').doc(date);
     
     return db.runTransaction((transaction) async {
