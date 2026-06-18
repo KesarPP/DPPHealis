@@ -350,8 +350,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontWeight: _isPatientSelected ? FontWeight.w700 : FontWeight.w500,
                             ),
                             decoration: InputDecoration(
-                              labelText: 'Email or Phone Number',
-                              hintText: 'Email or Phone Number',
+                              labelText: 'Email Address',
+                              hintText: 'Email Address',
                               floatingLabelBehavior: FloatingLabelBehavior.always,
                               labelStyle: TextStyle(
                                 color: _isPatientSelected ? GelatoTheme.textDark : _borderBlue,
@@ -364,21 +364,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               prefixIcon: Padding(
                                 padding: const EdgeInsets.only(left: 16.0, right: 12.0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.person_outline_rounded,
-                                      color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
-                                      size: 24,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Icon(
-                                      Icons.phone_android_rounded,
-                                      color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
-                                      size: 24,
-                                    ),
-                                  ],
+                                child: Icon(
+                                  Icons.mail_outline_rounded,
+                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                                  size: 24,
                                 ),
                               ),
                               contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
