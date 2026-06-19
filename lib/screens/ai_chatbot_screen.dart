@@ -3,6 +3,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../models/chat_message.dart';
 import '../repositories/chat_repository.dart';
+import 'chat_history_screen.dart';
 
 const _brandColor = Color(0xFF4A1E63); // Matches the AI button color
 const _slateGrey = Color(0xFF6B7C93);
@@ -31,9 +32,19 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     "What are the early symptoms of diabetes?": "Common early symptoms include frequent urination, excessive thirst, feeling very hungry, extreme fatigue, blurry vision, and cuts that are slow to heal.",
   };
 
+  final List<ChatMessage> _currentSessionMessages = [];
+
   @override
   void initState() {
     super.initState();
+    _currentSessionMessages.add(
+      ChatMessage(
+        text: 'Hello! I am your AI Chatbot. I can answer specific questions about diabetes prevention.',
+        isUser: false,
+        time: _currentTime(),
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   void _toggleListening() async {
@@ -66,7 +77,6 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
               });
               if (result.finalResult) {
                 if (mounted) setState(() => _isListening = false);
-                _sendMessage();
               }
             },
           );
@@ -120,8 +130,11 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     );
 
     setState(() {
+      _currentSessionMessages.add(userMessage);
       _isTyping = true;
     });
+    
+    _scrollToBottom();
 
     await _chatRepository.saveMessage(userMessage);
 
@@ -134,11 +147,27 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
           time: _currentTime(),
           timestamp: DateTime.now(),
         );
-        await _chatRepository.saveMessage(aiMessage);
         
         setState(() {
+          _currentSessionMessages.add(aiMessage);
           _isTyping = false;
         });
+        
+        _scrollToBottom();
+        
+        await _chatRepository.saveMessage(aiMessage);
+      }
+    });
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -253,11 +282,12 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                       ],
                     ),
                   ),
-                  // Info icon
+                  // History icon
                   GestureDetector(
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('This is a rules-based chatbot.')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ChatHistoryScreen()),
                       );
                     },
                     child: Container(
@@ -267,7 +297,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
-                        Icons.info_outline_rounded,
+                        Icons.history_rounded,
                         color: _brandColor,
                         size: 20,
                       ),
@@ -281,56 +311,22 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
 
             // Messages area
             Expanded(
-              child: StreamBuilder<List<ChatMessage>>(
-                stream: _chatRepository.getMessagesStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-                  
-                  final messages = snapshot.data ?? [];
-                  
-                  // Add a welcome message locally if empty
-                  final displayMessages = messages.isEmpty 
-                    ? [
-                        ChatMessage(
-                          text: 'Hello! I am your AI Chatbot. I can answer specific questions about diabetes prevention.',
-                          isUser: false,
-                          time: _currentTime(),
-                          timestamp: DateTime.now(),
-                        )
-                      ] 
-                    : messages;
-
-                  // Scroll to bottom when new messages arrive
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (_scrollController.hasClients) {
-                      _scrollController.animateTo(
-                        _scrollController.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  });
-
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    itemCount: displayMessages.length,
-                    itemBuilder: (context, index) {
-                      final msg = displayMessages[index];
-                      final showDateLabel = index == 0;
-                      return Column(
-                        children: [
-                          if (showDateLabel) ...[
-                            _buildDateLabel('Today'),
-                            const SizedBox(height: 12),
-                          ],
-                          _buildBubble(msg),
-                          const SizedBox(height: 8),
-                        ],
-                      );
-                    },
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                itemCount: _currentSessionMessages.length,
+                itemBuilder: (context, index) {
+                  final msg = _currentSessionMessages[index];
+                  final showDateLabel = index == 0;
+                  return Column(
+                    children: [
+                      if (showDateLabel) ...[
+                        _buildDateLabel('Today'),
+                        const SizedBox(height: 12),
+                      ],
+                      _buildBubble(msg),
+                      const SizedBox(height: 8),
+                    ],
                   );
                 },
               ),
