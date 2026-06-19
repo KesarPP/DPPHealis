@@ -51,6 +51,8 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                   const SizedBox(height: 24),
                   _buildMealCards(context),
                   const SizedBox(height: 32),
+                  _buildAchievementBox(context),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -220,15 +222,21 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
               ),
               const SizedBox(height: 16),
               _ExpandableMealCard(
+                title: 'Snack 1',
+                color: GelatoTheme.orange,
+                items: getItems('Snack 1')..addAll(getItems('Snack')),
+              ),
+              const SizedBox(height: 16),
+              _ExpandableMealCard(
                 title: 'Lunch',
                 color: GelatoTheme.green,
                 items: getItems('Lunch'),
               ),
               const SizedBox(height: 16),
               _ExpandableMealCard(
-                title: 'Snack',
-                color: GelatoTheme.orange,
-                items: getItems('Snack'),
+                title: 'Snack 2',
+                color: GelatoTheme.pink,
+                items: getItems('Snack 2'),
               ),
               const SizedBox(height: 16),
               _ExpandableMealCard(
@@ -240,6 +248,166 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildAchievementBox(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.0),
+          child: Text('Your Momentum!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 160,
+          child: PageView(
+            controller: PageController(viewportFraction: 0.95),
+            children: [
+              // Page 1: Weekly
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMinimalCard(context, 'Weekly\nConsistency', Icons.local_fire_department_rounded, GelatoTheme.green, 'Consistency Champion', 'Log 5 Days (Streak)', 2, 7, 50),
+                  _buildMinimalCard(context, 'Weekly\nCalorie', Icons.track_changes_rounded, GelatoTheme.blue, 'Calorie Crusher', 'Under Daily Goal 7/7 days', 2, 7, 60),
+                  _buildMinimalCard(context, 'Weekly\nNutrition', Icons.verified_rounded, GelatoTheme.purple, 'Nutrition Ninja', 'Balanced Macros 6/7 days', 2, 7, 70),
+                ],
+              ),
+              // Page 2: Monthly
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMinimalCard(context, 'Monthly\nConsistency', Icons.star_rounded, GelatoTheme.yellow, 'Consistency Champion', 'Log 21 Days (Month)', 2, 30, 200),
+                  _buildMinimalCard(context, 'Monthly\nCalorie', Icons.trending_down_rounded, GelatoTheme.orange, 'Calorie Crusher', 'Under Daily Goal 28/31 days', 2, 30, 250),
+                  _buildMinimalCard(context, 'Monthly\nNutrition', Icons.restaurant_rounded, GelatoTheme.greenDark, 'Nutrition Ninja', 'Balanced Macros 26/31 days', 2, 30, 300),
+                ],
+              ),
+              // Page 3: Yearly
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMinimalCard(context, 'Yearly\nConsistency', Icons.emoji_events_rounded, GelatoTheme.purple, 'Consistency Champion', 'Log 250 Days (Year)', 2, 365, 1000),
+                  _buildMinimalCard(context, 'Yearly\nCalorie', Icons.fitness_center_rounded, GelatoTheme.pink, 'Calorie Crusher', 'Under Daily Goal 330/365 days', 2, 365, 1500),
+                  _buildMinimalCard(context, 'Yearly\nNutrition', Icons.workspace_premium_rounded, GelatoTheme.blue, 'Nutrition Ninja', 'Balanced Macros 310/365 days', 2, 365, 2000),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMinimalCard(BuildContext context, String title, IconData icon, Color color, String fullTitle, String subtitle, int progress, int target, int xp) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          _showAchievementDetails(context, fullTitle, subtitle, icon, color, progress, target, xp);
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color, // Vibrant full color
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black87, width: 1.5),
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(3, 3)),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 28, color: Colors.white),
+              ),
+              const SizedBox(height: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8)
+                ),
+                child: const Text('ACHIEVED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAchievementDetails(BuildContext context, String title, String subtitle, IconData icon, Color color, int progress, int target, int xp) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 5),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 64, color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                const SizedBox(height: 8),
+                Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.9))),
+                const SizedBox(height: 32),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: LinearProgressIndicator(
+                    value: progress / target,
+                    backgroundColor: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.white,
+                    minHeight: 12,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('+$xp XP', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.yellowAccent)),
+                    Text('$progress / $target Days', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -281,10 +449,26 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
 
   @override
   Widget build(BuildContext context) {
+    final foodNotifier = context.watch<FoodDiaryNotifier>();
+    final log = foodNotifier.dailyLog;
+    bool todayHasAllMeals = false;
+    if (log != null) {
+      final types = log.entries.map((e) => e.mealType).toSet();
+      if (types.length >= 5) todayHasAllMeals = true;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        decoration: BoxDecoration(
+      child: GestureDetector(
+        onTap: () {
+          showDialog(
+            context: context,
+            barrierColor: Colors.black.withValues(alpha: 0.5),
+            builder: (context) => _MonthlyCalendarOverlay(todayHasAllMeals: todayHasAllMeals),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
           color: GelatoTheme.pink,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.black87, width: 1.5),
@@ -360,7 +544,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                 controller: _pageController,
                 itemBuilder: (context, index) {
                   DateTime weekStart = _getWeekStart(index);
-                  return _buildWeekRow(weekStart);
+                  return _buildWeekRow(weekStart, todayHasAllMeals);
                 },
               ),
             ),
@@ -368,19 +552,23 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
           ],
         ),
       ),
+    ),
     );
   }
 
-  Widget _buildWeekRow(DateTime weekStart) {
+  Widget _buildWeekRow(DateTime weekStart, bool todayHasAllMeals) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(7, (i) {
         DateTime date = weekStart.add(Duration(days: i));
         
         bool isToday = date.year == _today.year && date.month == _today.month && date.day == _today.day;
-        // Mocking complete/incomplete based on some deterministic logic
-        bool isComplete = date.isBefore(_today) && (date.day % 3 != 0); 
-        bool isIncomplete = date.isBefore(_today) && (date.day % 3 == 0); 
+        final yesterday = _today.subtract(const Duration(days: 1));
+        bool isYesterday = date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day;
+        bool isBeforeYesterday = date.isBefore(yesterday);
+        
+        // Mark yesterday as complete automatically, and today if 5 meals are tracked
+        bool isComplete = isYesterday || (isToday && todayHasAllMeals);
 
         return Container(
           width: 44,
@@ -403,7 +591,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
-                          color: isToday ? Colors.black87 : (isComplete ? GelatoTheme.textDark.withValues(alpha: 0.3) : GelatoTheme.textDark),
+                          color: isToday ? Colors.black87 : (isBeforeYesterday ? GelatoTheme.textDark.withValues(alpha: 0.3) : GelatoTheme.textDark),
                         ),
                       ),
                     ),
@@ -412,18 +600,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                     const Icon(Icons.check, size: 24, color: GelatoTheme.greenDark),
                 ],
               ),
-              const SizedBox(height: 4),
-              if (isIncomplete && !isToday)
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: GelatoTheme.orangeDark,
-                    shape: BoxShape.circle,
-                  ),
-                )
-              else
-                const SizedBox(height: 4),
+              const SizedBox(height: 8),
             ],
           ),
         );
@@ -663,4 +840,176 @@ class _DotsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MonthlyCalendarOverlay extends StatefulWidget {
+  final bool todayHasAllMeals;
+
+  const _MonthlyCalendarOverlay({required this.todayHasAllMeals});
+
+  @override
+  State<_MonthlyCalendarOverlay> createState() => _MonthlyCalendarOverlayState();
+}
+
+class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
+  late DateTime _currentMonth;
+  final DateTime _today = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _currentMonth = DateTime(_today.year, _today.month, 1);
+  }
+
+  final List<String> _months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          padding: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: GelatoTheme.pink,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.black87, width: 1.5),
+            boxShadow: [
+              BoxShadow(color: GelatoTheme.green.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(4, 4)),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                decoration: const BoxDecoration(
+                  color: GelatoTheme.green,
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(22), topRight: Radius.circular(22)),
+                  border: Border(bottom: BorderSide(color: Colors.black87, width: 1.5)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
+                        });
+                      },
+                      child: const Icon(Icons.chevron_left, color: GelatoTheme.textDark),
+                    ),
+                    Text(
+                      '${_months[_currentMonth.month - 1]} ${_currentMonth.year}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: GelatoTheme.textDark,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+                        });
+                      },
+                      child: const Icon(Icons.chevron_right, color: GelatoTheme.textDark),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Days Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => 
+                  Container(
+                    width: 40,
+                    alignment: Alignment.center,
+                    child: Text(
+                      day, 
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: GelatoTheme.textDark.withValues(alpha: 0.7)),
+                    ),
+                  )
+                ).toList(),
+              ),
+              const SizedBox(height: 12),
+              // Grid
+              _buildMonthGrid(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthGrid() {
+    int daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    int firstWeekday = DateTime(_currentMonth.year, _currentMonth.month, 1).weekday;
+    // Dart DateTime.weekday: 1=Mon, 7=Sun. We want Sun=0, Mon=1.
+    int emptyPrefixDays = firstWeekday == 7 ? 0 : firstWeekday;
+
+    List<Widget> dayWidgets = [];
+    for (int i = 0; i < emptyPrefixDays; i++) {
+      dayWidgets.add(const SizedBox(width: 40, height: 40));
+    }
+
+    final yesterday = _today.subtract(const Duration(days: 1));
+
+    for (int i = 1; i <= daysInMonth; i++) {
+      DateTime date = DateTime(_currentMonth.year, _currentMonth.month, i);
+      
+      bool isToday = date.year == _today.year && date.month == _today.month && date.day == _today.day;
+      bool isYesterday = date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day;
+      bool isBeforeYesterday = date.isBefore(yesterday);
+      
+      bool isComplete = isYesterday || (isToday && widget.todayHasAllMeals);
+
+      dayWidgets.add(
+        Container(
+          alignment: Alignment.center,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: isToday ? GelatoTheme.green : Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '$i',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
+                      color: isToday ? Colors.black87 : (isBeforeYesterday ? GelatoTheme.textDark.withValues(alpha: 0.3) : GelatoTheme.textDark),
+                    ),
+                  ),
+                ),
+              ),
+              if (isComplete && !isToday)
+                const Icon(Icons.check, size: 24, color: GelatoTheme.greenDark),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: GridView.count(
+        crossAxisCount: 7,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: dayWidgets,
+      ),
+    );
+  }
 }
