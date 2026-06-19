@@ -31,7 +31,7 @@ class _DashboardMomentumState extends State<DashboardMomentum> with SingleTicker
   Widget build(BuildContext context) {
     final List<_MomentumCardData> items = [
       _MomentumCardData(
-        title: "14",
+        title: "2",
         subtitle: "Day Streak",
         meta: "Keep it up!",
         iconData: Icons.local_fire_department_rounded,
@@ -193,22 +193,26 @@ class _DashboardMomentumState extends State<DashboardMomentum> with SingleTicker
                           textAlign: TextAlign.center,
                         ),
                         const Spacer(),
-                        if (item.title == "14")
+                        if (item.subtitle == "Day Streak")
                           // Draw dots for streak with black borders
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
                               7,
-                              (i) => Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                                width: 5,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: item.color,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.black, width: 0.5),
-                                ),
-                              ),
+                              (i) {
+                                int streak = int.tryParse(item.title) ?? 0;
+                                bool isFilled = i < streak;
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                                  width: 5,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    color: isFilled ? item.color : Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.black, width: 0.5),
+                                  ),
+                                );
+                              },
                             ),
                           )
                         else
