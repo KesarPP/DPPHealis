@@ -176,7 +176,7 @@ void main() {
 
     // Verify we are on CoachProfileScreen
     expect(find.byType(CoachProfileScreen), findsOneWidget);
-    expect(find.text('Kesar Parab'), findsOneWidget);
+    expect(find.text('Dr. Sarah Mitchell'), findsOneWidget);
     // Verify that Sign Out and edit options are not present
     expect(find.text('Sign Out'), findsNothing);
     expect(find.byIcon(Icons.edit_rounded), findsNothing);
@@ -263,7 +263,7 @@ void main() {
 
     // Verify that we navigated to ClinicianProfileScreen
     expect(find.byType(ClinicianProfileScreen), findsOneWidget);
-    expect(find.text('Kesar Parab'), findsOneWidget);
+    expect(find.text('Dr. Sarah Mitchell'), findsOneWidget);
     expect(find.text('Senior Health Coach & Nutritionist'), findsOneWidget);
 
     // Tap the 'Sign Out' button
@@ -305,7 +305,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Enter details
-    await tester.enterText(find.byType(TextField).at(0), 'Kesar Parab');
+    await tester.enterText(find.byType(TextField).at(0), 'Dr. Sarah Mitchell');
     await tester.enterText(find.byType(TextField).at(1), 'coach@healis.org');
     await tester.enterText(find.byType(TextField).at(2), 'password123');
     await tester.enterText(find.byType(TextField).at(3), 'password123');

@@ -320,7 +320,7 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
-      await prefs.setString('last_user_name', 'Kesar Parab');
+      await prefs.setString('last_user_name', 'Dr. Sarah Mitchell');
       await prefs.setString('last_user_email', email);
       return null;
     }
@@ -408,8 +408,8 @@ class AuthService {
   /// Retrieves a specific coach's profile by UID, falling back to SharedPreferences and defaults.
   Future<CoachProfile> getCoachProfile(String uid) async {
     try {
-      final defaultName = 'Kesar Parab';
-      final defaultEmail = 'coach@healis.org';
+      final defaultName = 'Dr. Sarah Mitchell';
+      final defaultEmail = 'sarah.mitchell@healis.org';
 
       // 1. Try fetching from Firestore
       final firestore = _firestore;
@@ -431,14 +431,14 @@ class AuthService {
     } catch (_) {}
 
     // 3. Fallback to default CoachProfile
-    return CoachProfile.fromMap({'uid': uid}, defaultName: 'Kesar Parab', defaultEmail: 'coach@healis.org');
+    return CoachProfile.fromMap({'uid': uid}, defaultName: 'Dr. Sarah Mitchell', defaultEmail: 'sarah.mitchell@healis.org');
   }
 
   /// Retrieves the first available coach profile, or falls back to last_coach_profile / defaults.
   Future<CoachProfile> getFirstCoachProfile() async {
     try {
-      final defaultName = 'Kesar Parab';
-      final defaultEmail = 'coach@healis.org';
+      final defaultName = 'Dr. Sarah Mitchell';
+      final defaultEmail = 'sarah.mitchell@healis.org';
 
       // 1. Try fetching first from Firestore
       final firestore = _firestore;
@@ -471,7 +471,7 @@ class AuthService {
     } catch (_) {}
 
     // 3. Fallback to default
-    return CoachProfile.fromMap({'uid': 'default_coach'}, defaultName: 'Kesar Parab', defaultEmail: 'coach@healis.org');
+    return CoachProfile.fromMap({'uid': 'default_coach'}, defaultName: 'Dr. Sarah Mitchell', defaultEmail: 'sarah.mitchell@healis.org');
   }
 }
 
