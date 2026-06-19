@@ -23,6 +23,14 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   bool _isTyping = false;
   bool _isListening = false;
 
+  final Map<String, String> _qaMap = {
+    "What is prediabetes?": "Prediabetes means your blood sugar levels are higher than normal, but not yet high enough to be diagnosed as type 2 diabetes. It is a warning sign, but it can be reversed with lifestyle changes.",
+    "How can I lower my blood sugar naturally?": "You can lower your blood sugar naturally by exercising regularly, eating more fiber, staying hydrated, managing stress, and getting enough sleep.",
+    "What are the best foods for a diabetic diet?": "Focus on whole, unprocessed foods. Leafy greens, whole grains, lean proteins, beans, and healthy fats like avocados and nuts are excellent choices.",
+    "How much exercise do I need each week?": "It is recommended to get at least 150 minutes of moderate aerobic activity (like brisk walking) per week, spread across multiple days.",
+    "What are the early symptoms of diabetes?": "Common early symptoms include frequent urination, excessive thirst, feeling very hungry, extreme fatigue, blurry vision, and cuts that are slow to heal.",
+  };
+
   @override
   void initState() {
     super.initState();
@@ -124,16 +132,18 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   }
 
   String _getMockResponse(String query) {
-    query = query.toLowerCase();
-    if (query.contains('diet') || query.contains('food')) {
-      return 'Eating a balanced diet is key. Try incorporating more vegetables, lean proteins, and whole grains into your meals.';
-    } else if (query.contains('exercise') || query.contains('workout')) {
-      return 'Aim for at least 150 minutes of moderate aerobic activity or 75 minutes of vigorous activity a week.';
-    } else if (query.contains('sugar') || query.contains('diabetes')) {
-      return 'To manage blood sugar, focus on complex carbohydrates and avoid sugary drinks. Regular monitoring is also important.';
-    } else {
-      return 'That is a great question. As your AI Chatbot, I recommend discussing specific medical concerns with your healthcare provider, but I can help you find general wellness tips!';
+    if (_qaMap.containsKey(query)) {
+      return _qaMap[query]!;
     }
+    
+    query = query.toLowerCase().trim();
+    for (var key in _qaMap.keys) {
+      if (key.toLowerCase().trim() == query) {
+        return _qaMap[key]!;
+      }
+    }
+    
+    return 'I can only answer specific questions about diabetes prevention. Please choose one of the suggested questions above!';
   }
 
   @override
@@ -228,7 +238,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                   GestureDetector(
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('This is a mock AI interface.')),
+                        const SnackBar(content: Text('This is a rules-based chatbot.')),
                       );
                     },
                     child: Container(
@@ -256,7 +266,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                 stream: _chatRepository.getMessagesStream(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return const Center(child: Text('Error loading messages'));
+                    return Center(child: Text('Error: ${snapshot.error}'));
                   }
                   
                   final messages = snapshot.data ?? [];
@@ -265,7 +275,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                   final displayMessages = messages.isEmpty 
                     ? [
                         ChatMessage(
-                          text: 'Hello! I am your AI Chatbot. How can I assist you with your health and diet today?',
+                          text: 'Hello! I am your AI Chatbot. I can answer specific questions about diabetes prevention.',
                           isUser: false,
                           time: _currentTime(),
                           timestamp: DateTime.now(),
@@ -307,10 +317,43 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
               ),
             ),
 
+            // Suggestion Chips
+            Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              color: Colors.white,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _qaMap.length,
+                itemBuilder: (context, index) {
+                  final question = _qaMap.keys.elementAt(index);
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ActionChip(
+                      label: Text(
+                        question,
+                        style: const TextStyle(fontSize: 12, color: _brandColor, fontWeight: FontWeight.w600),
+                      ),
+                      backgroundColor: const Color(0xFFEBF2FA),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: Color(0xFFDCCCEC)),
+                      ),
+                      onPressed: () {
+                        _messageController.text = question;
+                        _sendMessage();
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+
             // Message input bar
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(
                 children: [
                   // Text input
