@@ -14,10 +14,11 @@ class AuthService {
 
   /// Saves the profile image locally for the current user.
   Future<String?> saveLocalProfileImage(File imageFile) async {
-    final email = currentUser?.email;
-    if (email == null) return null;
-
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = currentUser?.email ?? prefs.getString('last_user_email');
+      if (email == null || email.isEmpty) return null;
+
       final appDir = await getApplicationDocumentsDirectory();
       final String extension = imageFile.path.split('.').last;
       final String newPath = '${appDir.path}/profile_${email.hashCode}.$extension';
@@ -26,7 +27,6 @@ class AuthService {
       final File savedFile = await imageFile.copy(newPath);
 
       // Save the path in SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('local_pfp_$email', savedFile.path);
 
       // Also update the photoURL in Firebase Auth to point to this local path
@@ -43,22 +43,24 @@ class AuthService {
 
   /// Retrieves the local profile image path for the current user.
   Future<String?> getLocalProfileImagePath() async {
-    final email = currentUser?.email;
-    if (email == null) return null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = currentUser?.email ?? prefs.getString('last_user_email');
+      if (email == null || email.isEmpty) return null;
 
-    final prefs = await SharedPreferences.getInstance();
-    final localPath = prefs.getString('local_pfp_$email');
-    if (localPath != null && File(localPath).existsSync()) {
-      return localPath;
-    }
-    
-    // Fallback to photoURL if it points to a local file
-    final photoUrl = currentUser?.photoURL;
-    if (photoUrl != null && (photoUrl.startsWith('/') || photoUrl.contains('profile_'))) {
-      if (File(photoUrl).existsSync()) {
-        return photoUrl;
+      final localPath = prefs.getString('local_pfp_$email');
+      if (localPath != null && File(localPath).existsSync()) {
+        return localPath;
       }
-    }
+      
+      // Fallback to photoURL if it points to a local file
+      final photoUrl = currentUser?.photoURL;
+      if (photoUrl != null && (photoUrl.startsWith('/') || photoUrl.contains('profile_'))) {
+        if (File(photoUrl).existsSync()) {
+          return photoUrl;
+        }
+      }
+    } catch (_) {}
     return null;
   }
 
