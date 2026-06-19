@@ -46,8 +46,16 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       var status = await Permission.microphone.request();
       if (status.isGranted) {
         bool available = await _speechToText.initialize(
-          onError: (val) => debugPrint('onError: $val'),
-          onStatus: (val) => debugPrint('onStatus: $val'),
+          onError: (val) {
+            debugPrint('onError: $val');
+            if (mounted) setState(() => _isListening = false);
+          },
+          onStatus: (val) {
+            debugPrint('onStatus: $val');
+            if (val == 'done' || val == 'notListening') {
+              if (mounted) setState(() => _isListening = false);
+            }
+          },
         );
         if (available) {
           setState(() => _isListening = true);
@@ -56,6 +64,10 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
               setState(() {
                 _messageController.text = result.recognizedWords;
               });
+              if (result.finalResult) {
+                if (mounted) setState(() => _isListening = false);
+                _sendMessage();
+              }
             },
           );
         } else {
@@ -136,17 +148,17 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       return _qaMap[query]!;
     }
     
-    query = query.toLowerCase().trim();
+    String normalized = query.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
     
-    if (query.contains('prediabetes')) {
+    if (normalized.contains('prediabetes')) {
       return _qaMap["What is prediabetes?"]!;
-    } else if (query.contains('lower') && (query.contains('sugar') || query.contains('glucose'))) {
+    } else if (normalized.contains('lower') && (normalized.contains('sugar') || normalized.contains('glucose'))) {
       return _qaMap["How can I lower my blood sugar naturally?"]!;
-    } else if (query.contains('food') || query.contains('diet') || query.contains('eat')) {
+    } else if (normalized.contains('food') || normalized.contains('diet') || normalized.contains('eat')) {
       return _qaMap["What are the best foods for a diabetic diet?"]!;
-    } else if (query.contains('exercise') || query.contains('workout') || query.contains('activity')) {
+    } else if (normalized.contains('exercise') || normalized.contains('workout') || normalized.contains('activity')) {
       return _qaMap["How much exercise do I need each week?"]!;
-    } else if (query.contains('symptom') || query.contains('sign')) {
+    } else if (normalized.contains('symptom') || normalized.contains('sign')) {
       return _qaMap["What are the early symptoms of diabetes?"]!;
     }
     

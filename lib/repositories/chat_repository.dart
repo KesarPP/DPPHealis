@@ -10,7 +10,7 @@ class ChatRepository {
 
   CollectionReference get _chatCollection {
     final userId = currentUserId ?? 'anonymous';
-    return _firestore.collection('users').doc(userId).collection('chats');
+    return _firestore.collection('chats').doc(userId).collection('messages');
   }
 
   Future<void> saveMessage(ChatMessage message) async {
