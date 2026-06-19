@@ -213,7 +213,10 @@ class _ProfileHeader extends StatelessWidget {
     final user = AuthService().currentUser;
     final nameController = TextEditingController(text: profile.displayName);
     final ImagePicker picker = ImagePicker();
-    String? localImagePath = profile.localImagePath;
+    
+    // Dialog session state variables
+    File? newPickedFile;
+    bool isRemoved = false;
 
     String getInitials(String name) {
       if (name.isEmpty) return 'JP';
@@ -229,7 +232,16 @@ class _ProfileHeader extends StatelessWidget {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final hasPhoto = localImagePath != null && File(localImagePath!).existsSync();
+            // Determine if there is currently an active photo in the dialog state
+            final hasPhoto = newPickedFile != null || (profile.localImagePath != null && !isRemoved);
+            
+            // Set up image provider for the preview
+            ImageProvider? previewImageProvider;
+            if (newPickedFile != null) {
+              previewImageProvider = FileImage(newPickedFile!);
+            } else if (profile.localImagePath != null && !isRemoved) {
+              previewImageProvider = FileImage(File(profile.localImagePath!));
+            }
 
             return AlertDialog(
               backgroundColor: GelatoTheme.bg,
@@ -259,9 +271,7 @@ class _ProfileHeader extends StatelessWidget {
                         child: CircleAvatar(
                           radius: 40,
                           backgroundColor: GelatoTheme.pink,
-                          foregroundImage: hasPhoto
-                              ? FileImage(File(localImagePath!))
-                              : null,
+                          foregroundImage: previewImageProvider,
                           child: Text(
                             getInitials(nameController.text),
                             style: const TextStyle(
@@ -307,22 +317,10 @@ class _ProfileHeader extends StatelessWidget {
                         try {
                           final XFile? image = await picker.pickImage(source: ImageSource.gallery);
                           if (image != null) {
-                            final File file = File(image.path);
-                            if (context.mounted) {
-                              final File? croppedFile = await Navigator.push<File>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => CropImageScreen(imageFile: file),
-                                ),
-                              );
-                              if (croppedFile != null) {
-                                final savedPath = await AuthService().saveLocalProfileImage(croppedFile);
-                                setDialogState(() {
-                                  localImagePath = savedPath;
-                                });
-                                onUpdate();
-                              }
-                            }
+                            setDialogState(() {
+                              newPickedFile = File(image.path);
+                              isRemoved = false;
+                            });
                           }
                         } catch (e) {
                           if (context.mounted) {
@@ -341,7 +339,7 @@ class _ProfileHeader extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Crop current photo
+                          // Crop current/picked photo
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.black87,
@@ -352,19 +350,18 @@ class _ProfileHeader extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             ),
                             onPressed: () async {
-                              final File currentFile = File(localImagePath!);
+                              final activeFile = newPickedFile ?? File(profile.localImagePath!);
                               final File? croppedFile = await Navigator.push<File>(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => CropImageScreen(imageFile: currentFile),
+                                  builder: (_) => CropImageScreen(imageFile: activeFile),
                                 ),
                               );
                               if (croppedFile != null) {
-                                final savedPath = await AuthService().saveLocalProfileImage(croppedFile);
                                 setDialogState(() {
-                                  localImagePath = savedPath;
+                                  newPickedFile = croppedFile;
+                                  isRemoved = false;
                                 });
-                                onUpdate();
                               }
                             },
                             icon: const Icon(Icons.crop_rounded, size: 18),
@@ -381,12 +378,11 @@ class _ProfileHeader extends StatelessWidget {
                               ),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             ),
-                            onPressed: () async {
-                              await AuthService().removeLocalProfileImage();
+                            onPressed: () {
                               setDialogState(() {
-                                localImagePath = null;
+                                newPickedFile = null;
+                                isRemoved = true;
                               });
-                              onUpdate();
                             },
                             icon: const Icon(Icons.delete_rounded, size: 18),
                             label: const Text('Remove'),
@@ -415,6 +411,13 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                   ),
                   onPressed: () async {
+                    // Commit/persist changes when user saves
+                    if (isRemoved) {
+                      await AuthService().removeLocalProfileImage();
+                    } else if (newPickedFile != null) {
+                      await AuthService().saveLocalProfileImage(newPickedFile!);
+                    }
+
                     final newName = nameController.text.trim();
                     if (newName.isNotEmpty) {
                       if (user != null) {
@@ -422,8 +425,10 @@ class _ProfileHeader extends StatelessWidget {
                         await user.reload();
                       }
                       await AuthService().persistUserProfile(newName, profile.email);
-                      onUpdate();
                     }
+                    
+                    onUpdate();
+
                     if (context.mounted) {
                       Navigator.pop(dialogContext);
                     }
