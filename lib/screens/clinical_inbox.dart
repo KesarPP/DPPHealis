@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dpp_app/screens/clinician_dashboard_screen.dart';
 import 'package:dpp_app/screens/clinician_profile_screen.dart';
 import 'package:dpp_app/screens/patient_chat_screen.dart';
+import '../services/auth_service.dart';
+import '../models/coach_profile.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -86,6 +89,15 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
     );
   }
 
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'CP';
+    final parts = name.trim().split(' ');
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,24 +116,41 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                         context,
                         MaterialPageRoute(
                             builder: (_) => const ClinicianProfileScreen()),
-                      );
+                      ).then((_) {
+                        setState(() {});
+                      });
                     },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        'assets/images/clinician_avatar.png',
-                        width: 44,
-                        height: 44,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return CircleAvatar(
-                            radius: 22,
-                            backgroundColor: _brandColor.withValues(alpha: 0.1),
-                            child: const Icon(Icons.person_rounded,
-                                color: _brandColor),
+                    child: FutureBuilder<CoachProfile>(
+                      future: AuthService().getCoachProfile(AuthService().currentUser?.uid ?? 'default_coach'),
+                      builder: (context, snapshot) {
+                        final localPath = snapshot.data?.localImagePath;
+                        final fileExists = localPath != null && File(localPath).existsSync();
+                        if (fileExists) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(localPath),
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                            ),
                           );
-                        },
-                      ),
+                        }
+
+                        final initials = snapshot.data != null ? _getInitials(snapshot.data!.name) : 'CP';
+                        return CircleAvatar(
+                          radius: 22,
+                          backgroundColor: _brandColor.withValues(alpha: 0.1),
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: _brandColor,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),

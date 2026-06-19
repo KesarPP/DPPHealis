@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
+import '../models/coach_profile.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -381,6 +382,86 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_logged_in', false);
     await prefs.remove('user_role');
+  }
+
+  // ─── Coach Profile Persistence & Retrieval ─────────────────────────────────
+
+  /// Saves the coach's profile to Firestore (if initialized) and SharedPreferences.
+  Future<void> saveCoachProfile(CoachProfile profile) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Save locally in SharedPreferences
+      final profileMap = profile.toMap();
+      final profileJson = json.encode(profileMap);
+      await prefs.setString('coach_profile_${profile.uid}', profileJson);
+      await prefs.setString('last_coach_profile', profileJson);
+
+      // Save to Firestore if available
+      final firestore = _firestore;
+      if (firestore != null) {
+        await firestore.collection('coaches').doc(profile.uid).set(profileMap, SetOptions(merge: true));
+      }
+    } catch (_) {}
+  }
+
+  /// Retrieves a specific coach's profile by UID, falling back to SharedPreferences and defaults.
+  Future<CoachProfile> getCoachProfile(String uid) async {
+    try {
+      final defaultName = 'Dr. Sarah Mitchell';
+      final defaultEmail = 'sarah.mitchell@healis.org';
+
+      // 1. Try fetching from Firestore
+      final firestore = _firestore;
+      if (firestore != null) {
+        try {
+          final doc = await firestore.collection('coaches').doc(uid).get();
+          if (doc.exists && doc.data() != null) {
+            return CoachProfile.fromMap(doc.data()!, defaultName: defaultName, defaultEmail: defaultEmail);
+          }
+        } catch (_) {}
+      }
+
+      // 2. Fall back to local SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final localJson = prefs.getString('coach_profile_$uid');
+      if (localJson != null) {
+        return CoachProfile.fromJson(localJson, defaultName: defaultName, defaultEmail: defaultEmail);
+      }
+    } catch (_) {}
+
+    // 3. Fallback to default CoachProfile
+    return CoachProfile.fromMap({'uid': uid}, defaultName: 'Dr. Sarah Mitchell', defaultEmail: 'sarah.mitchell@healis.org');
+  }
+
+  /// Retrieves the first available coach profile, or falls back to last_coach_profile / defaults.
+  Future<CoachProfile> getFirstCoachProfile() async {
+    try {
+      final defaultName = 'Dr. Sarah Mitchell';
+      final defaultEmail = 'sarah.mitchell@healis.org';
+
+      // 1. Try fetching first from Firestore
+      final firestore = _firestore;
+      if (firestore != null) {
+        try {
+          final querySnapshot = await firestore.collection('coaches').limit(1).get();
+          if (querySnapshot.docs.isNotEmpty) {
+            final doc = querySnapshot.docs.first;
+            return CoachProfile.fromMap(doc.data(), defaultName: defaultName, defaultEmail: defaultEmail);
+          }
+        } catch (_) {}
+      }
+
+      // 2. Fall back to local SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final localJson = prefs.getString('last_coach_profile');
+      if (localJson != null) {
+        return CoachProfile.fromJson(localJson, defaultName: defaultName, defaultEmail: defaultEmail);
+      }
+    } catch (_) {}
+
+    // 3. Fallback to default
+    return CoachProfile.fromMap({'uid': 'default_coach'}, defaultName: 'Dr. Sarah Mitchell', defaultEmail: 'sarah.mitchell@healis.org');
   }
 }
 
