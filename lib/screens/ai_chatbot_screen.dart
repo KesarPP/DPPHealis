@@ -137,13 +137,20 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     }
     
     query = query.toLowerCase().trim();
-    for (var key in _qaMap.keys) {
-      if (key.toLowerCase().trim() == query) {
-        return _qaMap[key]!;
-      }
+    
+    if (query.contains('prediabetes')) {
+      return _qaMap["What is prediabetes?"]!;
+    } else if (query.contains('lower') && (query.contains('sugar') || query.contains('glucose'))) {
+      return _qaMap["How can I lower my blood sugar naturally?"]!;
+    } else if (query.contains('food') || query.contains('diet') || query.contains('eat')) {
+      return _qaMap["What are the best foods for a diabetic diet?"]!;
+    } else if (query.contains('exercise') || query.contains('workout') || query.contains('activity')) {
+      return _qaMap["How much exercise do I need each week?"]!;
+    } else if (query.contains('symptom') || query.contains('sign')) {
+      return _qaMap["What are the early symptoms of diabetes?"]!;
     }
     
-    return 'I can only answer specific questions about diabetes prevention. Please choose one of the suggested questions above!';
+    return 'I can only answer specific questions about diabetes prevention. Please choose one of the suggested questions above, or ask me about diet, exercise, or symptoms!';
   }
 
   @override
