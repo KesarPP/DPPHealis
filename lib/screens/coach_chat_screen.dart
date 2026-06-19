@@ -46,7 +46,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
   final List<Map<String, dynamic>> _messages = [
     {
       'isUser': false,
-      'text': 'Hi Jannice! I am Dr. Sarah Mitchell, your dedicated health coach. How are you feeling today?',
+      'text': 'Hi Jannice! I am Kesar Parab, your dedicated health coach. How are you feeling today?',
       'time': '09:00 AM',
     },
     {
@@ -242,7 +242,7 @@ Widget build(BuildContext context) {
         IconButton(
           icon: const Icon(Icons.phone_outlined, color: GelatoTheme.textDark, size: 22),
           onPressed: () {
-            final name = _coachProfile?.name ?? 'Dr. Sarah Mitchell';
+            final name = _coachProfile?.name ?? 'Kesar Parab';
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Starting voice call with $name...'),
@@ -254,7 +254,7 @@ Widget build(BuildContext context) {
         IconButton(
           icon: const Icon(Icons.videocam_outlined, color: GelatoTheme.textDark, size: 22),
           onPressed: () {
-            final name = _coachProfile?.name ?? 'Dr. Sarah Mitchell';
+            final name = _coachProfile?.name ?? 'Kesar Parab';
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Starting video call with $name...'),
@@ -279,7 +279,7 @@ Widget build(BuildContext context) {
             itemCount: _messages.length + 1, // +1 for the welcome header card
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _buildWelcomeCard(_coachProfile?.name ?? 'Dr. Sarah Mitchell');
+                return _buildWelcomeCard(_coachProfile?.name ?? 'Kesar Parab');
               }
               final message = _messages[index - 1];
               final isUser = message['isUser'] as bool;
@@ -351,7 +351,7 @@ Widget _buildWelcomeCard(String coachName) {
         ),
         const SizedBox(height: 12),
         Text(
-          '${coachName == 'Dr. Sarah Mitchell' ? 'Dr. Mitchell' : coachName} is here to guide you through your Diabetes Prevention Program. Ask about meal planning, increasing fitness, or review metabolic health insights together.',
+          '${coachName == 'Kesar Parab' ? 'Kesar' : coachName} is here to guide you through your Diabetes Prevention Program. Ask about meal planning, increasing fitness, or review metabolic health insights together.',
           style: const TextStyle(
             fontSize: 13,
             color: GelatoTheme.textDark,

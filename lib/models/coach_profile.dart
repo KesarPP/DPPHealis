@@ -38,7 +38,8 @@ class CoachProfile {
     final email = map['email'] as String? ?? defaultEmail;
     final isDefaultCoach = email.toLowerCase() == 'coach@healis.org' || 
                            email.toLowerCase() == 'sarah.mitchell@healis.org' ||
-                           email.toLowerCase() == 'default_coach';
+                           email.toLowerCase() == 'default_coach' ||
+                           email.toLowerCase() == 'kesar.parab@healis.org';
 
     final rawCredentials = map['credentials'] as List<dynamic>?;
     final List<Map<String, String>> parsedCredentials = [];
@@ -66,7 +67,7 @@ class CoachProfile {
       title: map['title'] as String? ?? (isDefaultCoach ? 'Senior Health Coach & Nutritionist' : ''),
       about: map['about'] as String? ??
           (isDefaultCoach
-              ? 'Dr. Mitchell specializes in preventative health with a focus on chronic disease management. With over 15 years of clinical experience, she empowers her patients to master their metabolic health through evidence-based nutritional strategies and behavioral therapy.'
+              ? 'Kesar specializes in preventative health with a focus on chronic disease management. With over 15 years of clinical experience, she empowers her patients to master their metabolic health through evidence-based nutritional strategies and behavioral therapy.'
               : ''),
       specializations: parsedSpecs,
       credentials: parsedCredentials.isNotEmpty

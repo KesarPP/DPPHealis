@@ -179,7 +179,7 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                _profile?.name ?? 'Dr. Sarah Mitchell',
+                                _profile?.name ?? 'Kesar Parab',
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
@@ -543,7 +543,7 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Select a session time to speak with ${_profile?.name ?? 'Dr. Sarah Mitchell'} directly via video call.',
+                'Select a session time to speak with ${_profile?.name ?? 'Kesar Parab'} directly via video call.',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -607,7 +607,7 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
           ],
         ),
         content: Text(
-          'Your session with ${_profile?.name ?? 'Dr. Sarah Mitchell'} has been scheduled for $slot.\n\nA link to the video room will be sent in your chat before the meeting starts.',
+          'Your session with ${_profile?.name ?? 'Kesar Parab'} has been scheduled for $slot.\n\nA link to the video room will be sent in your chat before the meeting starts.',
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
