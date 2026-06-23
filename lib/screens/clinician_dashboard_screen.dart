@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'clinician_profile_screen.dart';
 import 'clinical_inbox.dart';
 import 'patient_chat_screen.dart';
@@ -35,80 +36,6 @@ class Patient {
   });
 }
 
-const _mockPatients = <Patient>[
-  Patient(
-    name: 'Alice Smith',
-    initials: 'AS',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 4,
-    sessionTitle: '',
-    riskLevel: 'HIGH RISK',
-  ),
-  Patient(
-    name: 'James Brown',
-    initials: 'JB',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 8,
-    sessionTitle: '',
-    riskLevel: 'LOW RISK',
-  ),
-  Patient(
-    name: 'Emma Miller',
-    initials: 'EM',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 2,
-    sessionTitle: '',
-    riskLevel: 'MODERATE',
-  ),
-  Patient(
-    name: 'David Thompson',
-    initials: 'DT',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 12,
-    sessionTitle: '',
-    riskLevel: 'HIGH RISK',
-  ),
-  Patient(
-    name: 'Linda Wilson',
-    initials: 'LW',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 5,
-    sessionTitle: '',
-    riskLevel: 'MODERATE',
-  ),
-  Patient(
-    name: 'Marcus Reed',
-    initials: 'MR',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 10,
-    sessionTitle: '',
-    riskLevel: 'LOW RISK',
-  ),
-  Patient(
-    name: 'Sarah Hedges',
-    initials: 'SH',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 1,
-    sessionTitle: '',
-    riskLevel: 'HIGH RISK',
-  ),
-  Patient(
-    name: 'Kevin Knight',
-    initials: 'KK',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 15,
-    sessionTitle: '',
-    riskLevel: 'LOW RISK',
-  ),
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Screen
@@ -727,11 +654,45 @@ class PatientsListScreen extends StatelessWidget {
         ),
         const Divider(height: 1, color: Colors.black12),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: _mockPatients.length,
-            itemBuilder: (context, index) {
-              final p = _mockPatients[index];
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return const Center(child: Text('Error loading patients'));
+              }
+              final docs = snapshot.data?.docs ?? [];
+              if (docs.isEmpty) {
+                return const Center(child: Text('No patients found'));
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final data = docs[index].data() as Map<String, dynamic>;
+                  final name = data['name'] as String? ?? 'Unknown Patient';
+                  
+                  String getInitials(String n) {
+                    if (n.isEmpty) return '??';
+                    final parts = n.trim().split(' ');
+                    if (parts.length > 1) {
+                      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+                    }
+                    return parts[0][0].toUpperCase();
+                  }
+
+                  final p = Patient(
+                    name: name,
+                    initials: getInitials(name),
+                    avatarBg: _navy,
+                    avatarFg: Colors.white,
+                    sessionNumber: 1,
+                    sessionTitle: '',
+                    riskLevel: 'MODERATE',
+                  );
               Color riskColor;
               Color riskBg;
               if (p.riskLevel == 'HIGH RISK') {
@@ -812,6 +773,8 @@ class PatientsListScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              );
+                },
               );
             },
           ),
