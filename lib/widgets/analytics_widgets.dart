@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../data/gelato_theme.dart';
-
+import 'package:provider/provider.dart';
+import '../providers/food_notifiers.dart';
 // ============================================================================
 // Weekly Trend Chart Card
 // ============================================================================
@@ -15,12 +16,22 @@ class WeeklyTrendChartCard extends StatefulWidget {
 class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
   bool _showNetCalories = false;
   int _touchedIndex = -1;
-
-  final List<double> _grossCalories = [1800, 2100, 1950, 2000, 2500, 2800, 1900];
-  final List<double> _netCalories = [1500, 1800, 1600, 1750, 2100, 2400, 1650];
-
   @override
   Widget build(BuildContext context) {
+    final foodNotifier = context.watch<FoodDiaryNotifier>();
+    final todayCalories = foodNotifier.dailyLog?.totalCalories ?? 0.0;
+    
+    final int todayIndex = DateTime.now().weekday - 1;
+    final int yesterdayIndex = todayIndex - 1;
+    
+    final List<double> _grossCalories = List.filled(7, 0.0);
+    _grossCalories[todayIndex] = todayCalories > 0 ? todayCalories : 50.0;
+    if (yesterdayIndex >= 0) {
+      _grossCalories[yesterdayIndex] = 2100.0;
+    }
+
+    final List<double> _netCalories = List.generate(7, (i) => _grossCalories[i] > 0 ? _grossCalories[i] - 300 : 0.0);
+
     final data = _showNetCalories ? _netCalories : _grossCalories;
     // Light background so the bright analytics pop
     final bgColor = Colors.white; 
@@ -254,15 +265,26 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
   int _touchedIndex = -1;
   bool _showPercentages = true;
 
-  final List<Map<String, dynamic>> _macroData = [
-    {'name': 'Protein', 'value': 110.0, 'target': 150.0, 'color': GelatoTheme.purple},
-    {'name': 'Carbs', 'value': 220.0, 'target': 250.0, 'color': GelatoTheme.yellow},
-    {'name': 'Fats', 'value': 65.0, 'target': 70.0, 'color': GelatoTheme.pink},
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final foodNotifier = context.watch<FoodDiaryNotifier>();
+    final log = foodNotifier.dailyLog;
+    
+    final totalProtein = log?.totalProtein ?? 0.0;
+    final totalCarbs = log?.totalCarbs ?? 0.0;
+    final totalFat = log?.totalFat ?? 0.0;
+
+    final List<Map<String, dynamic>> _macroData = [
+      {'name': 'Protein', 'value': totalProtein, 'target': 150.0, 'color': GelatoTheme.purple},
+      {'name': 'Carbs', 'value': totalCarbs, 'target': 250.0, 'color': GelatoTheme.yellow},
+      {'name': 'Fats', 'value': totalFat, 'target': 70.0, 'color': GelatoTheme.pink},
+    ];
+
     double total = _macroData.fold(0, (sum, item) => sum + item['value']);
+    
+    final displayData = total == 0 
+        ? _macroData.map((e) => {...e, 'value': 1.0}).toList() 
+        : _macroData;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -353,7 +375,7 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                     sections: List.generate(3, (i) {
                       final isTouched = i == _touchedIndex;
                       final radius = isTouched ? 35.0 : 25.0;
-                      final data = _macroData[i];
+                      final data = displayData[i];
                       final value = data['value'] as double;
                       final color = data['color'] as Color;
 
@@ -416,7 +438,7 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                             children: [
                               Text(
                                 _showPercentages
-                                    ? '${((_macroData[_touchedIndex]['value'] / total) * 100).toStringAsFixed(0)}%'
+                                    ? '${total > 0 ? ((_macroData[_touchedIndex]['value'] / total) * 100).toStringAsFixed(0) : 0}%'
                                     : '${_macroData[_touchedIndex]['value'].toInt()}g',
                                 style: const TextStyle(
                                   fontSize: 24,
@@ -517,6 +539,11 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
 
   @override
   Widget build(BuildContext context) {
+    final foodNotifier = context.watch<FoodDiaryNotifier>();
+    final totalCalories = foodNotifier.dailyLog?.totalCalories ?? 0.0;
+    
+    double scoreValue = totalCalories > 0 ? 0.92 : 0.85;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -542,7 +569,7 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
                   width: 100,
                   height: 100,
                   child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0, end: 0.85),
+                    tween: Tween<double>(begin: 0, end: scoreValue),
                     duration: const Duration(milliseconds: 1500),
                     curve: Curves.easeOutCubic,
                     builder: (context, value, child) {

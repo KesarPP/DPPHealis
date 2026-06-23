@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
@@ -175,65 +174,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _authenticateWithBiometrics() async {
-    final LocalAuthentication auth = LocalAuthentication();
-    try {
-      final bool canCheck = await auth.canCheckBiometrics;
-      final bool isSupported = await auth.isDeviceSupported();
-
-      if (!canCheck || !isSupported) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Biometric authentication is not supported or set up on this device.'),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
-        }
-        return;
-      }
-
-      final List<BiometricType> availableBiometrics = await auth.getAvailableBiometrics();
-      if (availableBiometrics.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No biometrics are enrolled. Please register a fingerprint or face in settings.'),
-              backgroundColor: Colors.orangeAccent,
-            ),
-          );
-        }
-        return;
-      }
-
-      final bool didAuthenticate = await auth.authenticate(
-        localizedReason: 'Please authenticate to log in to DiaPrevent',
-      );
-
-      if (didAuthenticate && mounted) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('is_logged_in', true);
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => _isPatientSelected
-                ? const MainShell()
-                : const ClinicianDashboardScreen(),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Biometric authentication failed: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -662,57 +602,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Biometric Login Button
-                          _isPatientSelected
-                              ? Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: GelatoTheme.cardShadow,
-                                  ),
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: GelatoTheme.textDark,
-                                      side: const BorderSide(color: Colors.black, width: 2.0),
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    onPressed: _authenticateWithBiometrics,
-                                    icon: const Icon(Icons.fingerprint_rounded, color: GelatoTheme.purpleDark, size: 26),
-                                    label: const Text(
-                                      'Biometric Login',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: _brandColor,
-                                    side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
-                                    backgroundColor: Colors.white,
-                                    elevation: 0,
-                                  ),
-                                  onPressed: _authenticateWithBiometrics,
-                                  icon: const Icon(Icons.fingerprint_rounded, color: _borderBlue, size: 26),
-                                  label: const Text(
-                                    'Biometric Login',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                          const SizedBox(height: 16),
 
                           // Sign Up Button
                           _isPatientSelected

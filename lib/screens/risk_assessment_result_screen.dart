@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
-import 'food_analysis_screen.dart';
-
+import '../main.dart';
 class RiskAssessmentResultScreen extends StatelessWidget {
   final int age;
   final bool isMan;
@@ -290,7 +289,7 @@ class RiskAssessmentResultScreen extends StatelessWidget {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const FoodAnalysisScreen(),
+                            builder: (_) => const MainShell(),
                           ),
                           (route) => false,
                         );

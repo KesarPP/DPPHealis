@@ -6,7 +6,7 @@ import '../widgets/dashboard_timeline.dart';
 import '../widgets/dashboard_risk_card.dart';
 import '../widgets/dashboard_momentum.dart';
 import '../widgets/dashboard_achievements.dart';
-
+import '../widgets/user_side_drawer.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -27,6 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5), // Soft lavender from Gelato theme to highlight white cards
+      endDrawer: const UserSideDrawer(),
       body: SafeArea(
         child: Stack(
           children: [

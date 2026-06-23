@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import 'coach_profile_screen.dart';
+import '../services/auth_service.dart';
+import '../models/coach_profile.dart';
 
 class CoachChatScreen extends StatefulWidget {
   const CoachChatScreen({super.key});
@@ -13,6 +16,32 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isTyping = false;
+  CoachProfile? _coachProfile;
+  bool _isLoadingCoach = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCoachProfile();
+  }
+
+  Future<void> _loadCoachProfile() async {
+    try {
+      final profile = await AuthService().getFirstCoachProfile();
+      if (mounted) {
+        setState(() {
+          _coachProfile = profile;
+          _isLoadingCoach = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingCoach = false;
+        });
+      }
+    }
+  }
 
   final List<Map<String, dynamic>> _messages = [
     {
@@ -124,7 +153,9 @@ Widget build(BuildContext context) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CoachProfileScreen()),
-          );
+          ).then((_) {
+            _loadCoachProfile();
+          });
         },
         child: Row(
           children: [
@@ -137,17 +168,24 @@ Widget build(BuildContext context) {
                     border: Border.all(color: Colors.black87, width: 1.5),
                   ),
                   child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/clinician_avatar.png',
-                      width: 38,
-                      height: 38,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const CircleAvatar(
-                        radius: 19,
-                        backgroundColor: GelatoTheme.purple,
-                        child: Icon(Icons.person_rounded, color: GelatoTheme.textDark, size: 22),
-                      ),
-                    ),
+                    child: (_coachProfile?.localImagePath != null && File(_coachProfile!.localImagePath!).existsSync())
+                        ? Image.file(
+                            File(_coachProfile!.localImagePath!),
+                            width: 38,
+                            height: 38,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.asset(
+                            'assets/images/clinician_avatar.png',
+                            width: 38,
+                            height: 38,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const CircleAvatar(
+                              radius: 19,
+                              backgroundColor: GelatoTheme.purple,
+                              child: Icon(Icons.person_rounded, color: GelatoTheme.textDark, size: 22),
+                            ),
+                          ),
                   ),
                 ),
                 Positioned(
@@ -170,12 +208,12 @@ Widget build(BuildContext context) {
               ],
             ),
             const SizedBox(width: 12),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(
+                    const Text(
                       'Coach',
                       style: TextStyle(
                         color: GelatoTheme.textDark,
@@ -183,11 +221,11 @@ Widget build(BuildContext context) {
                         fontSize: 16,
                       ),
                     ),
-                    SizedBox(width: 4),
-                    Icon(Icons.verified_rounded, color: GelatoTheme.purpleDark, size: 14),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.verified_rounded, color: GelatoTheme.purpleDark, size: 14),
                   ],
                 ),
-                Text(
+                const Text(
                   'Online',
                   style: TextStyle(
                     color: GelatoTheme.greenDark,
@@ -204,9 +242,10 @@ Widget build(BuildContext context) {
         IconButton(
           icon: const Icon(Icons.phone_outlined, color: GelatoTheme.textDark, size: 22),
           onPressed: () {
+            final name = _coachProfile?.name ?? 'Dr. Sarah Mitchell';
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Starting voice call with Dr. Sarah Mitchell...'),
+              SnackBar(
+                content: Text('Starting voice call with $name...'),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -215,9 +254,10 @@ Widget build(BuildContext context) {
         IconButton(
           icon: const Icon(Icons.videocam_outlined, color: GelatoTheme.textDark, size: 22),
           onPressed: () {
+            final name = _coachProfile?.name ?? 'Dr. Sarah Mitchell';
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Starting video call with Dr. Sarah Mitchell...'),
+              SnackBar(
+                content: Text('Starting video call with $name...'),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -239,7 +279,7 @@ Widget build(BuildContext context) {
             itemCount: _messages.length + 1, // +1 for the welcome header card
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _buildWelcomeCard();
+                return _buildWelcomeCard(_coachProfile?.name ?? 'Dr. Sarah Mitchell');
               }
               final message = _messages[index - 1];
               final isUser = message['isUser'] as bool;
@@ -259,7 +299,7 @@ Widget build(BuildContext context) {
   );
 }
 
-Widget _buildWelcomeCard() {
+Widget _buildWelcomeCard(String coachName) {
   return Container(
     margin: const EdgeInsets.only(bottom: 24, top: 4),
     padding: const EdgeInsets.all(16),
@@ -310,9 +350,9 @@ Widget _buildWelcomeCard() {
           ],
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Dr. Mitchell is here to guide you through your Diabetes Prevention Program. Ask about meal planning, increasing fitness, or review metabolic health insights together.',
-          style: TextStyle(
+        Text(
+          '${coachName == 'Dr. Sarah Mitchell' ? 'Dr. Mitchell' : coachName} is here to guide you through your Diabetes Prevention Program. Ask about meal planning, increasing fitness, or review metabolic health insights together.',
+          style: const TextStyle(
             fontSize: 13,
             color: GelatoTheme.textDark,
             fontWeight: FontWeight.w600,
@@ -411,19 +451,19 @@ Widget _buildTypingIndicator() {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Dr. Sarah is typing',
-            style: TextStyle(
+            'typing...',
+            style: const TextStyle(
               color: GelatoTheme.textLight,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(width: 8),
-          SizedBox(
+          const SizedBox(width: 8),
+          const SizedBox(
             width: 10,
             height: 10,
             child: CircularProgressIndicator(

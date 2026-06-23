@@ -15,33 +15,12 @@ class DashboardHeader extends StatefulWidget {
 
 class _DashboardHeaderState extends State<DashboardHeader>
     with TickerProviderStateMixin {
-  late AnimationController _bellController;
-  late Animation<double> _bellAngle;
   late AnimationController _pulseController;
   late Animation<double> _pulseScale;
-  bool _hasNotification = true;
-
   @override
   void initState() {
     super.initState();
     
-    // Bell ring animation
-    _bellController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2500),
-    )..repeat();
-
-    _bellAngle = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 60),
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.15).chain(CurveTween(curve: Curves.easeIn)), weight: 5),
-      TweenSequenceItem(tween: Tween(begin: 0.15, end: -0.13).chain(CurveTween(curve: Curves.easeInOut)), weight: 5),
-      TweenSequenceItem(tween: Tween(begin: -0.13, end: 0.09).chain(CurveTween(curve: Curves.easeInOut)), weight: 5),
-      TweenSequenceItem(tween: Tween(begin: 0.09, end: -0.06).chain(CurveTween(curve: Curves.easeInOut)), weight: 5),
-      TweenSequenceItem(tween: Tween(begin: -0.06, end: 0.02).chain(CurveTween(curve: Curves.easeInOut)), weight: 5),
-      TweenSequenceItem(tween: Tween(begin: 0.02, end: 0.0).chain(CurveTween(curve: Curves.easeOut)), weight: 5),
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 10),
-    ]).animate(_bellController);
-
     // ECG pulse dot animation
     _pulseController = AnimationController(
       vsync: this,
@@ -55,7 +34,6 @@ class _DashboardHeaderState extends State<DashboardHeader>
 
   @override
   void dispose() {
-    _bellController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -252,69 +230,12 @@ class _DashboardHeaderState extends State<DashboardHeader>
               ),
               const SizedBox(width: 8),
 
-              // Bell button
-              GestureDetector(
-                onTap: () {
-                  if (mounted) {
-                    setState(() {
-                      _hasNotification = false;
-                    });
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const FoodAnalysisScreen()),
-                    );
-                  }
+              // Menu button
+              IconButton(
+                icon: const Icon(Icons.menu, color: GelatoTheme.textDark, size: 28),
+                onPressed: () {
+                  Scaffold.of(context).openEndDrawer();
                 },
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Bell Icon with animated tilt
-                      AnimatedBuilder(
-                        animation: _bellAngle,
-                        builder: (context, child) {
-                          return Transform.rotate(
-                            angle: _bellAngle.value,
-                            origin: const Offset(0, -8),
-                            child: const Icon(
-                              Icons.notifications_rounded,
-                              size: 25,
-                              color: GelatoTheme.textDark,
-                            ),
-                          );
-                        },
-                      ),
-                      // Notification red dot badge
-                      if (_hasNotification)
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(3.5),
-                            decoration: BoxDecoration(
-                              color: GelatoTheme.pink,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 1.5),
-                            ),
-                            child: const Text(
-                              '1',
-                              style: TextStyle(
-                                color: GelatoTheme.pinkDark,
-                                fontSize: 7,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
