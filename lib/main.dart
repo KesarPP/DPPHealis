@@ -12,11 +12,16 @@ import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'providers/food_notifiers.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  await NotificationService().init();
+  await NotificationService().requestPermissions();
+  
   runApp(const DPPApp());
 }
 
