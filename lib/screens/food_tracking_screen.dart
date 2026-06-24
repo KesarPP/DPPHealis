@@ -606,6 +606,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
               children: [
                 Stack(
                   alignment: Alignment.center,
+                  clipBehavior: Clip.none,
                   children: [
                     Container(
                       width: 28,
@@ -613,7 +614,6 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                       decoration: BoxDecoration(
                         color: isSelected ? GelatoTheme.green : Colors.transparent,
                         shape: BoxShape.circle,
-                        border: isComplete ? Border.all(color: GelatoTheme.greenDark, width: 1.2) : null,
                       ),
                       child: Center(
                         child: Text(
@@ -626,9 +626,9 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                         ),
                       ),
                     ),
-                  if (isIncomplete)
+                  if (isIncomplete && !isToday)
                     Positioned(
-                      bottom: 0,
+                      bottom: -2,
                       child: Container(
                         width: 4,
                         height: 4,
@@ -638,12 +638,24 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
+                  if (isComplete && !isToday)
+                    Positioned(
+                      bottom: -2,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: GelatoTheme.greenDark,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
-        ),
         );
       }),
     );
@@ -1085,6 +1097,7 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
             alignment: Alignment.center,
             child: Stack(
               alignment: Alignment.center,
+              clipBehavior: Clip.none,
               children: [
                 Container(
                   width: 28,
@@ -1092,7 +1105,6 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
                   decoration: BoxDecoration(
                     color: isSelected ? GelatoTheme.green : Colors.transparent,
                     shape: BoxShape.circle,
-                    border: isComplete ? Border.all(color: GelatoTheme.greenDark, width: 1.2) : null,
                   ),
                   child: Center(
                     child: Text(
@@ -1105,14 +1117,26 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
                     ),
                   ),
                 ),
-              if (isIncomplete)
+              if (isIncomplete && !isToday)
                 Positioned(
-                  bottom: 0,
+                  bottom: -2,
                   child: Container(
                     width: 4,
                     height: 4,
                     decoration: const BoxDecoration(
                       color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              if (isComplete && !isToday)
+                Positioned(
+                  bottom: -2,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: GelatoTheme.greenDark,
                       shape: BoxShape.circle,
                     ),
                   ),
