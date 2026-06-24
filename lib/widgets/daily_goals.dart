@@ -165,7 +165,10 @@ class _DailyGoalsState extends State<DailyGoals>
       ),
     ];
 
-    final isAllCompleted = stepsProgress >= 1.0 && caloriesProgress >= 1.0 && activeProgress >= 1.0;
+    final int completedCount = (stepsProgress >= 1.0 ? 1 : 0) +
+        (caloriesProgress >= 1.0 ? 1 : 0) +
+        (activeProgress >= 1.0 ? 1 : 0);
+    final isAllCompleted = completedCount == 3;
 
     return Stack(
       children: [
@@ -191,21 +194,36 @@ class _DailyGoalsState extends State<DailyGoals>
               // Header Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.gps_fixed_rounded,
-                        color: GelatoTheme.pinkDark,
-                        size: 20,
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.assignment_turned_in_rounded,
+                            color: GelatoTheme.pinkDark,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Goal Summary',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: GelatoTheme.textDark,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(height: 4),
                       Text(
-                        'Daily Goals',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: GelatoTheme.textDark,
+                        '$completedCount/3 Goals Completed',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: GelatoTheme.textLight,
                         ),
                       ),
                     ],
@@ -384,37 +402,14 @@ class _GoalRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Circular Icon Container
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isDone ? Colors.white : goal.bgColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDone ? Colors.black : goal.color.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
-              boxShadow: isDone ? [
-                BoxShadow(
-                  color: goal.color.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  spreadRadius: 0.5,
-                )
-              ] : null,
-            ),
-            child: Center(
-              child: Icon(
-                isDone ? Icons.check_circle_rounded : goal.icon,
-                color: isDone ? const Color(0xFF22C55E) : goal.color,
-                size: 16,
-              ),
-            ),
+          Icon(
+            isDone ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            color: isDone ? const Color(0xFF22C55E) : GelatoTheme.textMuted,
+            size: 24,
           ),
           const SizedBox(width: 10),
-          // Progress Bars and details
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -425,11 +420,11 @@ class _GoalRow extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${goal.label} (${goal.current} / ${goal.target})',
+                        '${goal.label} Goal',
                         style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: isDone ? FontWeight.w900 : FontWeight.w800,
-                          color: GelatoTheme.textDark,
+                          fontSize: 12,
+                          fontWeight: isDone ? FontWeight.w900 : FontWeight.w700,
+                          color: isDone ? GelatoTheme.textDark : GelatoTheme.textLight,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -446,7 +441,7 @@ class _GoalRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(3),
                   child: LinearProgressIndicator(

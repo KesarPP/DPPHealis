@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../models/activity_stats.dart';
 
 class OverviewCards extends StatefulWidget {
-  const OverviewCards({super.key});
+  final ActivityStats stats;
+
+  const OverviewCards({
+    super.key,
+    required this.stats,
+  });
 
   @override
   State<OverviewCards> createState() => _OverviewCardsState();
@@ -20,7 +26,9 @@ class _OverviewCardsState extends State<OverviewCards>
       duration: const Duration(milliseconds: 1000),
     );
     Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) _controller.forward();
+      if (mounted) {
+        _controller.forward();
+      }
     });
   }
 
@@ -32,9 +40,7 @@ class _OverviewCardsState extends State<OverviewCards>
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+    return Column(
         children: [
           Row(
             children: [
@@ -44,7 +50,7 @@ class _OverviewCardsState extends State<OverviewCards>
                   index: 0,
                   icon: Icons.directions_walk_rounded,
                   label: 'Steps',
-                  value: '102,450',
+                  value: widget.stats.steps.toString(),
                   unit: '',
                   subtext: '68% of Goal',
                   progress: 0.68,
@@ -60,9 +66,9 @@ class _OverviewCardsState extends State<OverviewCards>
                   index: 1,
                   icon: Icons.location_on_rounded,
                   label: 'Distance',
-                  value: '72.3',
+                  value: widget.stats.distance.toStringAsFixed(1),
                   unit: 'km',
-                  subtext: '12% vs yesterday',
+                  subtext: '↑ Better than yesterday',
                   progress: 0.72,
                   color: GelatoTheme.blue,
                   bgColor: const Color(0xFFF2F6FA),
@@ -80,9 +86,9 @@ class _OverviewCardsState extends State<OverviewCards>
                   index: 2,
                   icon: Icons.local_fire_department_rounded,
                   label: 'Calories',
-                  value: '2,450',
+                  value: widget.stats.calories.toStringAsFixed(0),
                   unit: 'kcal',
-                  subtext: '15% vs yesterday',
+                  subtext: '↑ Better than yesterday',
                   progress: 0.82,
                   color: GelatoTheme.orange,
                   bgColor: const Color(0xFFFFF6ED),
@@ -96,9 +102,9 @@ class _OverviewCardsState extends State<OverviewCards>
                   index: 3,
                   icon: Icons.access_time_filled_rounded,
                   label: 'Active Minutes',
-                  value: '640',
+                  value: widget.stats.activeMinutes.toString(),
                   unit: 'mins',
-                  subtext: '20% vs yesterday',
+                  subtext: '↑ Better than yesterday',
                   progress: 0.80,
                   color: GelatoTheme.purple,
                   bgColor: const Color(0xFFF6F2FA),
@@ -108,7 +114,6 @@ class _OverviewCardsState extends State<OverviewCards>
             ],
           ),
         ],
-      ),
     );
   }
 
