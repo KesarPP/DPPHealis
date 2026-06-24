@@ -15,6 +15,10 @@ class LoggedFood {
     'protein': food.protein,
     'fat': food.fat,
     'fiber': food.fiber,
+    if (food.brand != null) 'brand': food.brand,
+    if (food.sugar != null) 'sugar': food.sugar,
+    if (food.sodium != null) 'sodium': food.sodium,
+    if (food.servingSize != null) 'servingSize': food.servingSize,
     'quantity': quantity,
     'mealType': mealType,
   };
@@ -31,6 +35,10 @@ class LoggedFood {
         protein: (map['protein'] ?? 0).toDouble(),
         fat: (map['fat'] ?? 0).toDouble(),
         fiber: (map['fiber'] ?? 0).toDouble(),
+        brand: map['brand'] as String?,
+        sugar: map['sugar'] != null ? (map['sugar'] as num).toDouble() : null,
+        sodium: map['sodium'] != null ? (map['sodium'] as num).toDouble() : null,
+        servingSize: map['servingSize'] as String?,
       ),
     );
   }
