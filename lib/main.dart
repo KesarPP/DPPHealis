@@ -12,11 +12,24 @@ import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'providers/food_notifiers.dart';
 import 'services/auth_service.dart';
+import 'services/health_connect_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  try {
+    final healthService = HealthConnectService();
+    await healthService.requestPermissions();
+    await healthService.getTodayDistance();
+    await healthService.getTodayCalories();
+    await healthService.getTodayActiveMinutes();
+  } catch (e) {
+    print('Health Error: $e');
+  }
+
   runApp(const DPPApp());
 }
 

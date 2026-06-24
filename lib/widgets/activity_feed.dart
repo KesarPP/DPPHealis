@@ -8,37 +8,68 @@ class ActivityFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     const activities = [
       _ActivityData(
-        title: 'Morning Walk',
-        type: 'Outdoor',
-        time: '7:30 AM',
-        duration: '35m',
-        calories: 180,
-        icon: Icons.wb_sunny_rounded,
-        color: GelatoTheme.yellow,
-        borderColor: GelatoTheme.yellowDark,
-        iconColor: GelatoTheme.yellowDark,
+        title: 'Walking',
+        type: 'Walk',
+        icon: Icons.directions_walk_rounded,
+        color: GelatoTheme.green,
+        borderColor: GelatoTheme.greenDark,
+        iconColor: GelatoTheme.greenDark,
       ),
       _ActivityData(
-        title: 'Strength Training',
-        type: 'Gym',
-        time: '12:00 PM',
-        duration: '55m',
-        calories: 340,
-        icon: Icons.fitness_center_rounded,
+        title: 'Swimming',
+        type: 'Swim',
+        icon: Icons.pool_rounded,
+        color: GelatoTheme.blue,
+        borderColor: GelatoTheme.blueDark,
+        iconColor: GelatoTheme.blueDark,
+      ),
+      _ActivityData(
+        title: 'Dancing',
+        type: 'Dance',
+        icon: Icons.music_note_rounded,
+        color: GelatoTheme.pink,
+        borderColor: GelatoTheme.pinkDark,
+        iconColor: GelatoTheme.pinkDark,
+      ),
+      _ActivityData(
+        title: 'Stretching',
+        type: 'Stretch',
+        icon: Icons.self_improvement_rounded,
         color: GelatoTheme.purple,
         borderColor: GelatoTheme.purpleDark,
         iconColor: GelatoTheme.purpleDark,
       ),
       _ActivityData(
-        title: 'Evening Cycling',
-        type: 'Outdoor',
-        time: '6:15 PM',
-        duration: '45m',
-        calories: 290,
-        icon: Icons.directions_bike_rounded,
+        title: 'Gardening',
+        type: 'Garden',
+        icon: Icons.yard_rounded,
+        color: GelatoTheme.yellow,
+        borderColor: GelatoTheme.yellowDark,
+        iconColor: GelatoTheme.yellowDark,
+      ),
+      _ActivityData(
+        title: 'Stairs',
+        type: 'Stair Climb',
+        icon: Icons.stairs_rounded,
+        color: GelatoTheme.orange,
+        borderColor: GelatoTheme.orangeDark,
+        iconColor: GelatoTheme.orangeDark,
+      ),
+      _ActivityData(
+        title: 'Household',
+        type: 'Household',
+        icon: Icons.home_rounded,
         color: GelatoTheme.green,
         borderColor: GelatoTheme.greenDark,
         iconColor: GelatoTheme.greenDark,
+      ),
+      _ActivityData(
+        title: 'Other Activity',
+        type: 'Other',
+        icon: Icons.add_circle_outline_rounded,
+        color: GelatoTheme.blue,
+        borderColor: GelatoTheme.blueDark,
+        iconColor: GelatoTheme.blueDark,
       ),
     ];
 
@@ -75,25 +106,24 @@ class ActivityFeed extends StatelessWidget {
                   ),
                 ],
               ),
-              TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(50, 24),
-                ),
-                child: const Text(
-                  'View All',
-                  style: TextStyle(
-                    color: GelatoTheme.pinkDark,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 12),
-          ...activities.map((a) => _ActivityCard(activity: a)),
+          const SizedBox(height: 16),
+          GridView.builder(
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 1.8,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: activities.length,
+            itemBuilder: (context, index) {
+              return _ActivityCard(activity: activities[index]);
+            },
+          ),
         ],
       ),
     );
@@ -112,127 +142,262 @@ class _ActivityCard extends StatefulWidget {
 class _ActivityCardState extends State<_ActivityCard> {
   bool _pressed = false;
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: widget.activity.color,
-            borderRadius: BorderRadius.circular(16),
-            border: GelatoTheme.cardBorder,
-            boxShadow: GelatoTheme.cardShadow,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 1.5,
-                  ),
-                ),
-                child: Center(
-                  child: Icon(
-                    widget.activity.icon,
-                    color: widget.activity.iconColor,
-                    size: 24,
-                  ),
+  void _showLogActivityModal(BuildContext context) {
+    double duration = 30;
+    String frequency = 'Once';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.activity.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                        color: Colors.black, // crisp black text for maximum readability on pastel bg
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 11,
-                          color: GelatoTheme.textLight,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          widget.activity.type,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: GelatoTheme.textLight,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.timer_outlined,
-                        size: 12,
-                        color: GelatoTheme.textLight,
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: widget.activity.color,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          widget.activity.icon,
+                          color: widget.activity.iconColor,
+                        ),
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Log ${widget.activity.title}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: GelatoTheme.textDark,
+                              ),
+                            ),
+                            Text(
+                              widget.activity.type,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: GelatoTheme.textLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Duration (minutes)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: widget.activity.iconColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
                       Text(
-                        widget.activity.duration,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: GelatoTheme.textLight,
-                          fontWeight: FontWeight.w700,
+                        '${duration.toInt()} min',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: widget.activity.iconColor,
+                        ),
+                      ),
+                      Expanded(
+                        child: Slider(
+                          value: duration,
+                          min: 5,
+                          max: 120,
+                          divisions: 23,
+                          activeColor: widget.activity.iconColor,
+                          inactiveColor: widget.activity.color,
+                          onChanged: (val) {
+                            setModalState(() => duration = val);
+                          },
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 16),
                   Text(
-                    '${widget.activity.calories} kcal',
+                    'Frequency',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: widget.activity.borderColor,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: widget.activity.iconColor,
                     ),
                   ),
-                  Text(
-                    widget.activity.time,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: GelatoTheme.textLight,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: frequency,
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down_rounded, color: widget.activity.iconColor),
+                        items: ['Once', 'Daily', 'Weekly']
+                            .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(
+                                    e,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: GelatoTheme.textDark,
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => frequency = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: widget.activity.iconColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${widget.activity.title} logged for ${duration.toInt()} mins!'),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Save Activity',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        _showLogActivityModal(context);
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: widget.activity.color,
+            borderRadius: BorderRadius.circular(16),
+            border: GelatoTheme.cardBorder,
+            boxShadow: _pressed ? [] : GelatoTheme.cardShadow,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        widget.activity.icon,
+                        color: widget.activity.iconColor,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.activity.type,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: GelatoTheme.textDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: widget.activity.borderColor,
+              const SizedBox(height: 8),
+              Text(
+                widget.activity.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  color: Colors.black,
+                  height: 1.1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -245,9 +410,6 @@ class _ActivityCardState extends State<_ActivityCard> {
 class _ActivityData {
   final String title;
   final String type;
-  final String time;
-  final String duration;
-  final int calories;
   final IconData icon;
   final Color color;
   final Color borderColor;
@@ -256,9 +418,6 @@ class _ActivityData {
   const _ActivityData({
     required this.title,
     required this.type,
-    required this.time,
-    required this.duration,
-    required this.calories,
     required this.icon,
     required this.color,
     required this.borderColor,
