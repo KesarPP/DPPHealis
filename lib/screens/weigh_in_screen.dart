@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/gelato_theme.dart';
+import '../services/notification_service.dart';
 
 class _WeighInEntry {
   final double weight;
@@ -141,10 +142,18 @@ class _WeighInScreenState extends State<WeighInScreen> {
     }
   }
 
-  double get _currentWeight => _history.last.weight;
-  double get _startingWeight => _history.first.weight;
+  double get _currentWeight => _history.isNotEmpty ? _history.last.weight : 70.0;
+  double get _startingWeight => _history.isNotEmpty ? _history.first.weight : 70.0;
   double get _totalLost => _startingWeight - _currentWeight;
   double get _bmi => _currentWeight / (_height * _height);
+
+  bool get _canLogWeight {
+    if (_history.isEmpty) return true;
+    final lastDate = _history.last.date;
+    final now = DateTime.now();
+    
+    return now.difference(lastDate).inMinutes >= 30;
+  }
 
   String _getBMICategory(double bmi) {
     if (bmi < 18.5) return 'Underweight';
@@ -199,6 +208,9 @@ class _WeighInScreenState extends State<WeighInScreen> {
     } catch (e) {
       debugPrint('Error saving weight: $e');
     }
+
+    // Schedule notification for next week
+    NotificationService().scheduleWeeklyWeighInReminder(now);
 
     // Show celebration dialog
     showGeneralDialog(
@@ -284,8 +296,11 @@ class _WeighInScreenState extends State<WeighInScreen> {
                   _buildChartCard(),
                   const SizedBox(height: 16),
 
-                  // Logger Card
-                  _buildLoggerCard(),
+                  // Logger Card or Wait Message
+                  if (_canLogWeight)
+                    _buildLoggerCard()
+                  else
+                    _buildWaitMessageCard(),
                   const SizedBox(height: 16),
 
                   // History Section Title
@@ -522,6 +537,49 @@ class _WeighInScreenState extends State<WeighInScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaitMessageCard() {
+    if (_history.isEmpty) return const SizedBox.shrink();
+    
+    final lastDate = _history.last.date;
+    final now = DateTime.now();
+    final minutesPassed = now.difference(lastDate).inMinutes;
+    final minutesLeft = 30 - minutesPassed;
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: GelatoTheme.green,
+        borderRadius: GelatoTheme.cardRadius,
+        border: Border.all(color: GelatoTheme.greenDark, width: 1.5),
+        boxShadow: GelatoTheme.cardShadow,
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.check_circle_outline, color: GelatoTheme.greenDark, size: 48),
+          const SizedBox(height: 12),
+          const Text(
+            'All set for this week!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: GelatoTheme.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your next weigh-in will unlock in $minutesLeft minute${minutesLeft == 1 ? '' : 's'}. Focus on your daily goals until then!',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: GelatoTheme.textLight,
+            ),
           ),
         ],
       ),

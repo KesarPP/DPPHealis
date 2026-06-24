@@ -146,4 +146,37 @@ class NotificationService {
       ),
     );
   }
+
+  Future<void> scheduleWeeklyWeighInReminder(DateTime lastWeighIn) async {
+    if (!_initialized) await init();
+
+    DateTime scheduleTime = lastWeighIn.add(const Duration(minutes: 30));
+    
+    if (scheduleTime.isBefore(DateTime.now())) {
+      return;
+    }
+
+    await _plugin.zonedSchedule(
+      id: 888, // Unique ID for weigh-in
+      title: 'Weekly Weigh-In Time!',
+      body: 'It has been a week since your last weigh-in. Tap to log your progress!',
+      scheduledDate: tz.TZDateTime.from(scheduleTime, tz.local),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'weigh_in_channel',
+          'Weigh-In Reminders',
+          channelDescription: 'Reminders to log your weekly weight',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
 }

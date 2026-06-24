@@ -12,6 +12,7 @@ import '../providers/food_notifiers.dart';
 import '../models/food_log.dart';
 import '../models/food_item.dart';
 import '../services/ai_food_service.dart';
+import 'nutritional_scanner_screen.dart';
 
 class FoodTrackingScreen extends StatefulWidget {
   const FoodTrackingScreen({super.key});
@@ -97,7 +98,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
         children: [
           _buildQuickActionCard(context, 'Insight', Icons.show_chart_rounded, GelatoTheme.purple),
           const SizedBox(width: 8),
-          _buildQuickActionCard(context, 'Barcode Scanner', Icons.qr_code_scanner_rounded, GelatoTheme.yellow),
+          _buildQuickActionCard(context, 'Label Scanner', Icons.document_scanner, GelatoTheme.yellow),
           const SizedBox(width: 8),
           _buildQuickActionCard(context, 'Resources', Icons.menu_book_rounded, GelatoTheme.blue),
         ],
@@ -111,6 +112,8 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
         onTap: () {
           if (title == 'Insight') {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const InsightsScreen()));
+          } else if (title == 'Label Scanner') {
+            _openLabelScanner(context);
           } else if (title == 'Resources') {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const HandoutsScreen(title: 'Food Resources', handouts: foodHandouts)));
           }
@@ -140,6 +143,19 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openLabelScanner(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NutritionalScannerScreen(imageFile: File(pickedFile.path)),
+        ),
+      );
+    }
   }
 
   Widget _buildCalorieGoalCard(BuildContext context) {
