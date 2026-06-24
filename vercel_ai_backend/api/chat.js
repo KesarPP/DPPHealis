@@ -22,13 +22,18 @@ export default async function handler(req, res) {
     'Provide friendly, empathetic, accurate, and encouraging advice regarding prediabetes, ' +
     'blood sugar management, healthy nutrition, and physical activity. Keep answers helpful, professional, and concise.';
 
-  const groqApiKey = process.env.GROQ_API_KEY;
-  const geminiApiKey = process.env.GEMINI_API_KEY;
+  // ─── API KEY CONFIGURATION ────────────────────────────────────────────────
+  // You can either set these in Vercel Environment Variables OR paste them directly below:
+  const groqApiKey = process.env.GROQ_API_KEY || "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";
+  const geminiApiKey = process.env.GEMINI_API_KEY || "AQ.Ab8RN6K8cFWM0RWkAuQU0Rd6oKskt15cCKNEW4seYdE8HTeKow";
 
   // ─── 1. PRIMARY AI: GROQ API ───────────────────────────────────────────────
-  if (groqApiKey) {
+  let groqErrorMsg = "";
+  let geminiErrorMsg = "";
+
+  if (groqApiKey && !groqApiKey.includes('PASTE_YOUR')) {
     try {
-      console.log('Attempting Primary Model: Groq (llama3-8b-8192)...');
+      console.log('Attempting Primary Model: Groq (llama-3.1-8b-instant)...');
       const groqReq = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -36,7 +41,7 @@ export default async function handler(req, res) {
           'Authorization': `Bearer ${groqApiKey}`
         },
         body: JSON.stringify({
-          model: 'llama3-8b-8192',
+          model: 'llama-3.1-8b-instant',
           messages: [
             { role: 'system', content: systemInstruction },
             { role: 'user', content: message }
@@ -51,23 +56,27 @@ export default async function handler(req, res) {
         const reply = groqData.choices?.[0]?.message?.content;
         if (reply) {
           console.log('Successfully generated response via Groq.');
-          return res.status(200).json({ response: reply, model: 'groq-llama3' });
+          return res.status(200).json({ response: reply, model: 'groq-llama-3.1-8b-instant' });
         }
       } else {
-        console.warn(`Groq API returned status ${groqReq.status}. Triggering Gemini fallback...`);
+        const errText = await groqReq.text();
+        groqErrorMsg = `Groq API Error (${groqReq.status}): ${errText}`;
+        console.warn(groqErrorMsg);
       }
     } catch (groqError) {
-      console.warn('Groq API exception encountered. Triggering Gemini fallback...', groqError);
+      groqErrorMsg = `Groq Fetch Exception: ${groqError.message}`;
+      console.warn(groqErrorMsg, groqError);
     }
   } else {
-    console.warn('GROQ_API_KEY not found in environment. Skipping to Gemini fallback...');
+    groqErrorMsg = "GROQ_API_KEY is missing or contains placeholder.";
+    console.warn(groqErrorMsg);
   }
 
   // ─── 2. FALLBACK AI: GOOGLE GEMINI API ─────────────────────────────────────
-  if (geminiApiKey) {
+  if (geminiApiKey && !geminiApiKey.includes('PASTE_YOUR')) {
     try {
-      console.log('Attempting Fallback Model: Google Gemini (gemini-1.5-flash)...');
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+      console.log('Attempting Fallback Model: Google Gemini (gemini-1.5-flash-latest)...');
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
       const geminiReq = await fetch(geminiUrl, {
         method: 'POST',
         headers: {
@@ -95,20 +104,23 @@ export default async function handler(req, res) {
           return res.status(200).json({ response: reply, model: 'gemini-1.5-flash' });
         }
       } else {
-        console.error(`Gemini API fallback also failed with status ${geminiReq.status}.`);
         const errText = await geminiReq.text();
-        console.error('Gemini Error details:', errText);
+        geminiErrorMsg = `Gemini API Error (${geminiReq.status}): ${errText}`;
+        console.error(geminiErrorMsg);
       }
     } catch (geminiError) {
-      console.error('Gemini API fallback exception encountered:', geminiError);
+      geminiErrorMsg = `Gemini Fetch Exception: ${geminiError.message}`;
+      console.error(geminiErrorMsg, geminiError);
     }
   } else {
-    console.error('GEMINI_API_KEY not found in environment.');
+    geminiErrorMsg = "GEMINI_API_KEY is missing or contains placeholder.";
+    console.error(geminiErrorMsg);
   }
 
   // ─── 3. FINAL FALLBACK: ERROR / MOCK MESSAGE ───────────────────────────────
-  return res.status(500).json({
-    response: 'I am experiencing high server demand right now. Please verify your GROQ_API_KEY and GEMINI_API_KEY in Vercel Environment Variables, and try again in a moment!',
-    error: 'Both Primary (Groq) and Fallback (Gemini) models failed or are missing API keys.'
+  // Return status 200 so the Flutter app displays the exact API error details in the chat bubble!
+  return res.status(200).json({
+    response: `⚠️ AI API Request Rejected by Groq & Gemini.\n\n1. ${groqErrorMsg}\n\n2. ${geminiErrorMsg}\n\nPlease check that your API keys are active and valid!`,
+    error: 'API keys rejected.'
   });
 }
