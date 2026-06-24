@@ -80,7 +80,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const RiskAssessmentStep1Screen(),
+            builder: (_) => const RiskAssessmentStep1Screen(isFromSignup: true),
           ),
         );
       }

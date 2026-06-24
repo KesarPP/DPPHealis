@@ -151,7 +151,7 @@ class FfqCalculatorService {
     'Bhakri (jowar, bajra, nachni)': 'Chapati/Roti',
     'Rice bhakri': 'Chapati/Roti',
     'Idli': 'Idli',
-    'Dosa': 'Masala dosa',
+    'Dosa': 'Plain dosa',
     'Papad': 'Chapati/Roti',
     'Rice (plain)': 'Boiled rice (Uble chawal)',
     'Rice preparations': 'Plain pulao',

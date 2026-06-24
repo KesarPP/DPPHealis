@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
-import 'food_analysis_screen.dart';
-
+import '../main.dart';
 class RiskAssessmentResultScreen extends StatelessWidget {
   final int age;
   final bool isMan;
@@ -290,7 +289,7 @@ class RiskAssessmentResultScreen extends StatelessWidget {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const FoodAnalysisScreen(),
+                            builder: (_) => const MainShell(),
                           ),
                           (route) => false,
                         );
@@ -316,26 +315,12 @@ class RiskAssessmentResultScreen extends StatelessWidget {
                             ),
                           ),
                           SizedBox(width: 8),
-                          Icon(Icons.check_circle_outline, size: 20),
+                          Icon(Icons.arrow_forward, size: 20),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      'Edit Questionnaire Answers',
-                      style: TextStyle(
-                        color: GelatoTheme.textLight,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
             ),

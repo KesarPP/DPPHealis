@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/gelato_theme.dart';
 
 class _WeighInEntry {
@@ -23,18 +25,36 @@ class WeighInScreen extends StatefulWidget {
 }
 
 class _WeighInScreenState extends State<WeighInScreen> {
-  final List<_WeighInEntry> _history = [
-    _WeighInEntry(weight: 82.5, date: DateTime(2026, 5, 4), moods: ['Tired']),
-    _WeighInEntry(weight: 81.8, date: DateTime(2026, 5, 11), moods: ['Focused']),
-    _WeighInEntry(weight: 81.2, date: DateTime(2026, 5, 18), moods: ['Bloated']),
-    _WeighInEntry(weight: 80.5, date: DateTime(2026, 5, 25), moods: ['Great', 'Energetic']),
-    _WeighInEntry(weight: 79.8, date: DateTime(2026, 6, 1), moods: ['Focused']),
-    _WeighInEntry(weight: 79.0, date: DateTime(2026, 6, 8), moods: ['Energetic']),
-    _WeighInEntry(weight: 78.4, date: DateTime(2026, 6, 15), moods: ['Great']),
-  ];
+  List<_WeighInEntry> _history = [];
+  bool _isLoadingHistory = true;
 
-  final double _goalWeight = 72.0;
-  final double _height = 1.77; // in meters, for BMI computation
+  double get _goalWeight {
+    if (_history.isEmpty) return 70.0;
+    
+    final double baselineWeight = _history.first.weight;
+    final double baselineBMI = baselineWeight / (_height * _height);
+    
+    if (baselineBMI < 18.5) {
+      // Underweight. Goal is to reach a healthy BMI of 18.5
+      return 18.5 * (_height * _height);
+    } else if (baselineBMI >= 18.5 && baselineBMI < 25.0) {
+      // Normal weight. Goal is to maintain weight
+      return baselineWeight;
+    } else {
+      // Overweight/Obese. NDPP CDC guidelines recommend 5% weight loss of starting weight
+      return baselineWeight * 0.95;
+    }
+  }
+  
+  String get _goalDescription {
+    if (_history.isEmpty) return 'Goal';
+    final double baselineBMI = _history.first.weight / (_height * _height);
+    if (baselineBMI < 18.5) return 'Reach Healthy BMI';
+    if (baselineBMI >= 18.5 && baselineBMI < 25.0) return 'Maintain Weight';
+    return '5% Weight Loss Goal';
+  }
+  
+  double _height = 1.77; // in meters, for BMI computation
 
   // Controller state for logging new weight
   double _loggedWeight = 78.4;
@@ -54,8 +74,71 @@ class _WeighInScreenState extends State<WeighInScreen> {
   @override
   void initState() {
     super.initState();
-    // Default selected point in chart is the latest weigh-in
-    _selectedPointIndex = _history.length - 1;
+    _fetchHistory();
+  }
+
+  Future<void> _fetchHistory() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        double fetchedHeight = 1.77;
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          if (data != null && data.containsKey('height')) {
+            fetchedHeight = (data['height'] as num).toDouble() / 100.0; // cm to m
+          }
+        }
+
+        final qs = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('weight_history')
+            .orderBy('date', descending: false)
+            .get();
+
+        if (qs.docs.isNotEmpty) {
+          final fetchedHistory = qs.docs.map((doc) {
+            final data = doc.data();
+            final timestamp = data['date'] as Timestamp?;
+            final date = timestamp?.toDate() ?? DateTime.now();
+            final weight = (data['weight'] ?? 0.0).toDouble();
+            final moodsList = data['moods'] as List<dynamic>? ?? [];
+            final moods = moodsList.map((e) => e.toString()).toList();
+            return _WeighInEntry(weight: weight, date: date, moods: moods);
+          }).toList();
+          
+          setState(() {
+            _history = fetchedHistory;
+            _height = fetchedHeight;
+            _isLoadingHistory = false;
+            _loggedWeight = _history.last.weight;
+            _selectedPointIndex = _history.length - 1;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching history: $e');
+    }
+
+    // Fallback to dummy data if error or empty
+    if (mounted) {
+      setState(() {
+        _history = [
+          _WeighInEntry(weight: 82.5, date: DateTime.now().subtract(const Duration(days: 42)), moods: ['Tired']),
+          _WeighInEntry(weight: 81.8, date: DateTime.now().subtract(const Duration(days: 35)), moods: ['Focused']),
+          _WeighInEntry(weight: 81.2, date: DateTime.now().subtract(const Duration(days: 28)), moods: ['Bloated']),
+          _WeighInEntry(weight: 80.5, date: DateTime.now().subtract(const Duration(days: 21)), moods: ['Great', 'Energetic']),
+          _WeighInEntry(weight: 79.8, date: DateTime.now().subtract(const Duration(days: 14)), moods: ['Focused']),
+          _WeighInEntry(weight: 79.0, date: DateTime.now().subtract(const Duration(days: 7)), moods: ['Energetic']),
+          _WeighInEntry(weight: 78.4, date: DateTime.now(), moods: ['Great']),
+        ];
+        _isLoadingHistory = false;
+        _loggedWeight = _history.last.weight;
+        _selectedPointIndex = _history.length - 1;
+      });
+    }
   }
 
   double get _currentWeight => _history.last.weight;
@@ -91,6 +174,32 @@ class _WeighInScreenState extends State<WeighInScreen> {
       _selectedPointIndex = _history.length - 1;
     });
 
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final weightToSave = double.parse(_loggedWeight.toStringAsFixed(1));
+        
+        // Update current weight in user document
+        FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'currentWeight': weightToSave,
+          'lastWeighInDate': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        
+        // Add to history subcollection
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('weight_history')
+            .add({
+          'weight': weightToSave,
+          'date': FieldValue.serverTimestamp(),
+          'moods': List.from(_history.last.moods),
+        });
+      }
+    } catch (e) {
+      debugPrint('Error saving weight: $e');
+    }
+
     // Show celebration dialog
     showGeneralDialog(
       context: context,
@@ -124,6 +233,15 @@ class _WeighInScreenState extends State<WeighInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingHistory) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFFAF7F8),
+        body: Center(
+          child: CircularProgressIndicator(color: GelatoTheme.purpleDark),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAF7F8),
       appBar: AppBar(
@@ -321,13 +439,26 @@ class _WeighInScreenState extends State<WeighInScreen> {
                   ),
                 ],
               ),
-              Text(
-                'Goal: ${_goalWeight.toStringAsFixed(1)} kg',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: GelatoTheme.textLight,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${_goalWeight.toStringAsFixed(1)} kg',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: GelatoTheme.purpleDark,
+                    ),
+                  ),
+                  Text(
+                    _goalDescription,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: GelatoTheme.textLight,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -339,8 +470,11 @@ class _WeighInScreenState extends State<WeighInScreen> {
               return GestureDetector(
                 onTapDown: (details) {
                   final chartWidth = constraints.maxWidth;
-                  final stepX = chartWidth / (_history.length - 1);
-                  final int index = (details.localPosition.dx / stepX).round().clamp(0, _history.length - 1);
+                  final stepX = _history.length > 1 ? chartWidth / (_history.length - 1) : chartWidth;
+                  int index = 0;
+                  if (_history.length > 1) {
+                    index = (details.localPosition.dx / stepX).round().clamp(0, _history.length - 1);
+                  }
                   setState(() {
                     _selectedPointIndex = index;
                   });
@@ -475,7 +609,7 @@ class _WeighInScreenState extends State<WeighInScreen> {
                 color: GelatoTheme.orangeDark,
                 onPressed: () {
                   setState(() {
-                    _loggedWeight = (_loggedWeight - 0.1).clamp(65.0, 95.0);
+                    _loggedWeight = (_loggedWeight - 0.1).clamp(25.0, 150.0);
                   });
                 },
               ),
@@ -492,8 +626,8 @@ class _WeighInScreenState extends State<WeighInScreen> {
                   ),
                   child: Slider(
                     value: _loggedWeight,
-                    min: 65.0,
-                    max: 95.0,
+                    min: 25.0,
+                    max: 150.0,
                     onChanged: (val) {
                       setState(() {
                         _loggedWeight = val;
@@ -507,7 +641,7 @@ class _WeighInScreenState extends State<WeighInScreen> {
                 color: GelatoTheme.orangeDark,
                 onPressed: () {
                   setState(() {
-                    _loggedWeight = (_loggedWeight + 0.1).clamp(65.0, 95.0);
+                    _loggedWeight = (_loggedWeight + 0.1).clamp(25.0, 150.0);
                   });
                 },
               ),
@@ -520,9 +654,9 @@ class _WeighInScreenState extends State<WeighInScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('65 kg', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: GelatoTheme.textMuted)),
-                Text('80 kg', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: GelatoTheme.textMuted)),
-                Text('95 kg', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: GelatoTheme.textMuted)),
+                Text('25 kg', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: GelatoTheme.textMuted)),
+                Text('85 kg', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: GelatoTheme.textMuted)),
+                Text('150 kg', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: GelatoTheme.textMuted)),
               ],
             ),
           ),
@@ -769,11 +903,13 @@ class _WeightChartPainter extends CustomPainter {
 
     // Weights info
     final weights = entries.map((e) => e.weight).toList();
-    final double maxW = math.max(weights.reduce(math.max), goalWeight) + 1.5;
-    final double minW = math.min(weights.reduce(math.min), goalWeight) - 1.5;
-    final double range = maxW - minW;
-
-    final double stepX = width / (entries.length - 1);
+    final maxWeightOrig = entries.map((e) => e.weight).reduce(math.max);
+    final minWeightOrig = entries.map((e) => e.weight).reduce(math.min);
+    
+    // Ensure we don't divide by zero if max and min are equal
+    final maxWeight = math.max(maxWeightOrig, goalWeight + 5.0);
+    final minWeight = math.min(minWeightOrig, goalWeight - 5.0);
+    final double range = maxWeight - minWeight;
 
     // Gridlines (draw 4 horizontal gridlines)
     final gridPaint = Paint()
@@ -785,7 +921,7 @@ class _WeightChartPainter extends CustomPainter {
     }
 
     // Goal Weight Line
-    final goalY = 20.0 + (height - 40.0) * (1.0 - (goalWeight - minW) / range);
+    final goalY = 20.0 + (height - 40.0) * (1.0 - (goalWeight - minWeight) / range);
     final goalLinePaint = Paint()
       ..color = GelatoTheme.purpleDark.withValues(alpha: 0.6)
       ..strokeWidth = 1.5
@@ -795,60 +931,70 @@ class _WeightChartPainter extends CustomPainter {
     canvas.drawLine(Offset(0, goalY), Offset(width, goalY), goalLinePaint);
 
     // Compute coordinate points
-    final List<Offset> points = [];
-    for (int i = 0; i < entries.length; i++) {
-      final x = i * stepX;
-      final y = 20.0 + (height - 40.0) * (1.0 - (entries[i].weight - minW) / range);
+    final points = <Offset>[];
+    
+    if (entries.length == 1) {
+      // If only one entry, draw it in the center
+      final x = width / 2;
+      final y = 20.0 + (height - 40.0) * (1.0 - (entries[0].weight - minWeight) / range);
       points.add(Offset(x, y));
+    } else {
+      final stepX = width / (entries.length - 1);
+      for (int i = 0; i < entries.length; i++) {
+        final x = i * stepX;
+        final y = 20.0 + (height - 40.0) * (1.0 - (entries[i].weight - minWeight) / range);
+        points.add(Offset(x, y));
+      }
     }
 
     // Draw area under curve with a beautiful soft pink gradient
-    final fillPath = Path();
-    fillPath.moveTo(0, height);
-    fillPath.lineTo(points.first.dx, points.first.dy);
+    if (points.length > 1) {
+      final fillPath = Path();
+      fillPath.moveTo(points.first.dx, height);
+      fillPath.lineTo(points.first.dx, points.first.dy);
+      for (int i = 1; i < points.length; i++) {
+        final p = points[i];
+        final prev = points[i - 1];
+        final cx = (prev.dx + p.dx) / 2;
+        final cy = (prev.dy + p.dy) / 2;
+        fillPath.quadraticBezierTo(prev.dx, prev.dy, cx, cy);
+      }
+      fillPath.lineTo(points.last.dx, points.last.dy);
+      fillPath.lineTo(points.last.dx, height);
+      fillPath.close();
 
-    for (int i = 1; i < points.length; i++) {
-      final p = points[i];
-      final prev = points[i - 1];
-      final cx = (prev.dx + p.dx) / 2;
-      final cy = (prev.dy + p.dy) / 2;
-      fillPath.quadraticBezierTo(prev.dx, prev.dy, cx, cy);
+      final fillPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            GelatoTheme.pink.withValues(alpha: 0.35),
+            GelatoTheme.pink.withValues(alpha: 0.0),
+          ],
+        ).createShader(Rect.fromLTRB(0, 0, width, height))
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(fillPath, fillPaint);
+
+      // Draw the main curve line (thick purple)
+      final linePath = Path();
+      linePath.moveTo(points.first.dx, points.first.dy);
+      for (int i = 1; i < points.length; i++) {
+        final p = points[i];
+        final prev = points[i - 1];
+        final cx = (prev.dx + p.dx) / 2;
+        final cy = (prev.dy + p.dy) / 2;
+        linePath.quadraticBezierTo(prev.dx, prev.dy, cx, cy);
+      }
+      linePath.lineTo(points.last.dx, points.last.dy);
+
+      final curvePaint = Paint()
+        ..color = GelatoTheme.pinkBright
+        ..strokeWidth = 3.0
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(linePath, curvePaint);
     }
-    fillPath.lineTo(points.last.dx, points.last.dy);
-    fillPath.lineTo(width, height);
-    fillPath.close();
-
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          GelatoTheme.pink.withValues(alpha: 0.35),
-          GelatoTheme.pink.withValues(alpha: 0.0),
-        ],
-      ).createShader(Rect.fromLTRB(0, 0, width, height))
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(fillPath, fillPaint);
-
-    // Draw the main curve line (thick purple)
-    final linePath = Path();
-    linePath.moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      final p = points[i];
-      final prev = points[i - 1];
-      final cx = (prev.dx + p.dx) / 2;
-      final cy = (prev.dy + p.dy) / 2;
-      linePath.quadraticBezierTo(prev.dx, prev.dy, cx, cy);
-    }
-    linePath.lineTo(points.last.dx, points.last.dy);
-
-    final curvePaint = Paint()
-      ..color = GelatoTheme.pinkBright
-      ..strokeWidth = 3.0
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(linePath, curvePaint);
 
     // Draw dots at each point
     for (int i = 0; i < points.length; i++) {

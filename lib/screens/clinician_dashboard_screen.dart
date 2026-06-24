@@ -1,11 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'clinician_profile_screen.dart';
 import 'clinical_inbox.dart';
 import 'patient_chat_screen.dart';
 import 'patient_profile_screen.dart';
-import '../services/auth_service.dart';
-import '../models/coach_profile.dart';
 
 // Brand colors
 const _navy     = Color(0xFF1B3D6D);
@@ -166,17 +163,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
   }
 
   // ── Header bar ────────────────────────────────────────────────────────────────
-  String _getInitials(String name) {
-    if (name.isEmpty) return 'CP';
-    final parts = name.trim().split(' ');
-    if (parts.length > 1) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
-
   Widget _buildHeader() {
-    final uid = AuthService().currentUser?.uid ?? 'default_coach';
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -184,36 +171,20 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const ClinicianProfileScreen())).then((_) {
-                  setState(() {});
-                }),
-            child: FutureBuilder<CoachProfile>(
-              future: AuthService().getCoachProfile(uid),
-              builder: (context, snapshot) {
-                final localPath = snapshot.data?.localImagePath;
-                final fileExists = localPath != null && File(localPath).existsSync();
-                if (fileExists) {
-                  return CircleAvatar(
-                    radius: 21,
-                    backgroundColor: Colors.transparent,
-                    backgroundImage: FileImage(File(localPath)),
-                  );
-                }
-                
-                final initials = snapshot.data != null ? _getInitials(snapshot.data!.name) : 'CP';
-                return CircleAvatar(
+                context, MaterialPageRoute(builder: (_) => const ClinicianProfileScreen())),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                'assets/images/clinician_avatar.png',
+                width: 42,
+                height: 42,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => CircleAvatar(
                   radius: 21,
                   backgroundColor: _navy.withValues(alpha: 0.1),
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: _navy,
-                    ),
-                  ),
-                );
-              },
+                  child: const Icon(Icons.person_rounded, color: _navy, size: 20),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),

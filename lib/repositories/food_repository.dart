@@ -31,16 +31,24 @@ class FoodRepository {
   Stream<DailyFoodLog?> getDailyLog(String userId, String date) {
     final db = _db;
     if (db == null) return Stream.value(null);
-    return db.collection('logs').doc(userId).collection('entries').doc(date).snapshots().map((doc) {
+    return db.collection('logs').doc(userId).collection('food_entries').doc(date).snapshots().map((doc) {
       if (!doc.exists) return null;
       return DailyFoodLog.fromFirestore(doc.data()!, doc.id);
+    });
+  }
+
+  Stream<List<DailyFoodLog>> getAllLogs(String userId) {
+    final db = _db;
+    if (db == null) return Stream.value([]);
+    return db.collection('logs').doc(userId).collection('food_entries').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => DailyFoodLog.fromFirestore(doc.data(), doc.id)).toList();
     });
   }
 
   Future<void> addFoodToLog(String userId, String date, LoggedFood newEntry) async {
     final db = _db;
     if (db == null) return;
-    final docRef = db.collection('logs').doc(userId).collection('entries').doc(date);
+    final docRef = db.collection('logs').doc(userId).collection('food_entries').doc(date);
     
     return db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
@@ -93,7 +101,7 @@ class FoodRepository {
   Future<void> removeFoodFromLog(String userId, String date, LoggedFood itemToRemove) async {
     final db = _db;
     if (db == null) return;
-    final docRef = db.collection('logs').doc(userId).collection('entries').doc(date);
+    final docRef = db.collection('logs').doc(userId).collection('food_entries').doc(date);
     
     return db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
