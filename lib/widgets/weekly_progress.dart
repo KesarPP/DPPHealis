@@ -601,17 +601,25 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          _days[i],
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: isToday
-                                                ? GelatoTheme.purpleDark
-                                                : GelatoTheme.textLight,
-                                            fontWeight: isToday
-                                                ? FontWeight.w900
-                                                : FontWeight.w600,
+                                        SizedBox(
+                                          height: 40,
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                _days[i],
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: isToday
+                                                      ? GelatoTheme.purpleDark
+                                                      : GelatoTheme.textLight,
+                                                  fontWeight: isToday
+                                                      ? FontWeight.w900
+                                                      : FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],

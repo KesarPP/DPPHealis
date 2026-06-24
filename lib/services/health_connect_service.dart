@@ -15,9 +15,7 @@ class HealthConnectService implements HealthService {
   @override
   Future<int> getTodaySteps() async {
     final now = DateTime.now();
-    final startDate = now.subtract(
-      const Duration(days: 7),
-    );
+    final startDate = DateTime(now.year, now.month, now.day);
 
     debugPrint(
       'getTodaySteps() CALLED',

@@ -10,7 +10,6 @@ import '../widgets/goal_journey.dart';
 import '../widgets/today_activity_score.dart';
 import '../widgets/overview_cards.dart';
 import '../widgets/weekly_progress.dart';
-import '../widgets/daily_goals.dart';
 import '../widgets/activity_feed.dart';
 import '../widgets/motivation_section.dart';
 import '../data/gelato_theme.dart';
@@ -26,6 +25,8 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
   final ScrollController _scrollController = ScrollController();
   late final ActivityRepository _repository;
   ActivityStats? _stats;
+  bool _isConnected = false;
+  DateTime? _lastSyncTime;
   bool _isLoading = true;
   ActivityStats get _activityStats {
     return _stats ?? ActivityStats.empty();
@@ -35,14 +36,17 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
     _scrollController.dispose();
     super.dispose();
   }
-  Future<void> _loadActivityData() async {
-    final stats = await _repository.getActivityStats();
+  Future<void> _loadActivityData({bool forceRefresh = false}) async {
+    final connected = await _repository.isConnected();
+    final stats = await _repository.getActivityStats(forceRefresh: forceRefresh);
     debugPrint('HEALTH_STATS');
     debugPrint('Steps: ${stats.steps}');
     debugPrint('Distance: ${stats.distance}');
     debugPrint('Calories: ${stats.calories}');
     debugPrint('Active Minutes: ${stats.activeMinutes}');
     setState(() {
+      _isConnected = connected;
+      _lastSyncTime = _repository.lastSyncTime;
       _stats = stats;
       _isLoading = false;
     });
@@ -72,12 +76,16 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 // Fixed header
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      SizedBox(height: 12),
-                      ActivityHeader(),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
+                      ActivityHeader(
+                        isConnected: _isConnected,
+                        lastSyncTime: _lastSyncTime,
+                        onSyncTap: () => _loadActivityData(forceRefresh: true),
+                      ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -157,16 +165,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                   child: Column(
                     children: [
                       ActivityFeed(),
-                      SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-
-                // Daily Goals (Goal Summary)
-                const SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      DailyGoals(),
                       SizedBox(height: 16),
                     ],
                   ),

@@ -12,6 +12,9 @@ class ActivityRepositoryImpl implements ActivityRepository {
   Duration(minutes: 15);
 
   ActivityRepositoryImpl(this.healthService);
+  @override
+  DateTime? get lastSyncTime => _lastSyncTime;
+
   bool get _hasFreshCache {
     if (_cachedStats == null || _lastSyncTime == null) {
       return false;
@@ -21,12 +24,18 @@ class ActivityRepositoryImpl implements ActivityRepository {
         .difference(_lastSyncTime!) <
         _staleDuration;
   }
+
   @override
-  Future<ActivityStats> getActivityStats() async {
+  Future<bool> isConnected() async {
+    return await healthService.hasPermissions();
+  }
+
+  @override
+  Future<ActivityStats> getActivityStats({bool forceRefresh = false}) async {
     debugPrint(
       'SERVICE TYPE: ${healthService.runtimeType}',
     );
-    if (_hasFreshCache) {
+    if (!forceRefresh && _hasFreshCache) {
       return _cachedStats!;
     }
 

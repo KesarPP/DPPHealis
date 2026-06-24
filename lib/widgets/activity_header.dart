@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 
 class ActivityHeader extends StatefulWidget {
-  const ActivityHeader({super.key});
+  final bool isConnected;
+  final DateTime? lastSyncTime;
+  final VoidCallback onSyncTap;
+
+  const ActivityHeader({
+    super.key,
+    required this.isConnected,
+    this.lastSyncTime,
+    required this.onSyncTap,
+  });
 
   @override
   State<ActivityHeader> createState() => _ActivityHeaderState();
@@ -29,6 +38,7 @@ class _ActivityHeaderState extends State<ActivityHeader>
 
   void _onSyncTap() {
     _syncController.repeat();
+    widget.onSyncTap();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) _syncController.stop();
     });
@@ -68,6 +78,8 @@ class _ActivityHeaderState extends State<ActivityHeader>
           ),
           const SizedBox(width: 8),
           _HealthConnectBadge(
+            isConnected: widget.isConnected,
+            lastSyncTime: widget.lastSyncTime,
             syncController: _syncController,
             onSyncTap: _onSyncTap,
           ),
@@ -78,13 +90,26 @@ class _ActivityHeaderState extends State<ActivityHeader>
 }
 
 class _HealthConnectBadge extends StatelessWidget {
+  final bool isConnected;
+  final DateTime? lastSyncTime;
   final AnimationController syncController;
   final VoidCallback onSyncTap;
 
   const _HealthConnectBadge({
+    required this.isConnected,
+    this.lastSyncTime,
     required this.syncController,
     required this.onSyncTap,
   });
+
+  String _getSyncText() {
+    if (lastSyncTime == null) return 'Not synced';
+    final diff = DateTime.now().difference(lastSyncTime!);
+    if (diff.inMinutes == 0) return 'synced: just now';
+    if (diff.inMinutes < 60) return 'synced: ${diff.inMinutes} mins ago';
+    if (diff.inHours < 24) return 'synced: ${diff.inHours} hours ago';
+    return 'synced: ${diff.inDays} days ago';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,18 +130,18 @@ class _HealthConnectBadge extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: GelatoTheme.green,
+                decoration: BoxDecoration(
+                  color: isConnected ? GelatoTheme.green : GelatoTheme.orange,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 4),
-              const Text(
-                'Connected',
+              Text(
+                isConnected ? 'Connected' : 'Disconnected',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: GelatoTheme.greenDark,
+                  color: isConnected ? GelatoTheme.greenDark : GelatoTheme.orangeDark,
                 ),
               ),
               const SizedBox(width: 4),
@@ -142,9 +167,9 @@ class _HealthConnectBadge extends StatelessWidget {
               color: GelatoTheme.textMuted,
             ),
           ),
-          const Text(
-            'synced: 2 mins ago',
-            style: TextStyle(
+          Text(
+            _getSyncText(),
+            style: const TextStyle(
               fontSize: 9,
               color: GelatoTheme.textMuted,
             ),
