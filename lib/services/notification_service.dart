@@ -121,4 +121,29 @@ class NotificationService {
       }
     }
   }
+
+  Future<void> scheduleAssessmentReminder() async {
+    if (!_initialized) await init();
+
+    await _plugin.show(
+      id: 999, // Unique ID for this reminder
+      title: 'Health Assessments Missing',
+      body: 'Please complete your IDRS and GPAQ assessments to unlock personalized insights.',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'assessment_channel',
+          'Assessment Reminders',
+          channelDescription: 'Reminders to complete health assessments',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
 }

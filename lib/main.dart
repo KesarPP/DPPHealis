@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'data/app_state.dart';
 import 'screens/splash_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/food_tracking_screen.dart';
@@ -74,6 +77,48 @@ class MainShellState extends State<MainShell> {
           setState(() {});
         }
       }).catchError((_) {});
+
+      _checkMissingAssessments(user.uid);
+    }
+  }
+
+  Future<void> _checkMissingAssessments(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        final hasIdrs = data['hasIdrsResult'] == true;
+        final hasGpaq = data['hasGpaqResult'] == true;
+        
+        AppState.hasIdrsResult = hasIdrs;
+        if (hasIdrs) AppState.idrsScore = data['idrsScore'] ?? 0;
+        
+        AppState.hasGpaqResult = hasGpaq;
+        if (hasGpaq) {
+          AppState.gpaqMetMinutes = data['gpaqMetMinutes'] ?? 0;
+          AppState.gpaqLevel = data['gpaqLevel'] ?? 'Low Activity';
+        }
+
+        // Check if past user
+        final createdAt = data['createdAt'] as Timestamp?;
+        if (createdAt != null) {
+          final age = DateTime.now().difference(createdAt.toDate());
+          if (age.inHours > 24) { // past user (older than 24 hours)
+            if (!hasIdrs || !hasGpaq) {
+              final prefs = await SharedPreferences.getInstance();
+              final lastNotificationStr = prefs.getString('last_assessment_notification_date');
+              final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+              
+              if (lastNotificationStr != todayStr) {
+                await NotificationService().scheduleAssessmentReminder();
+                await prefs.setString('last_assessment_notification_date', todayStr);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to check assessments: $e');
     }
   }
 

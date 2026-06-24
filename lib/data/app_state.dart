@@ -1,7 +1,7 @@
 class AppState {
-  static int idrsScore = 42; // default/mock value
-  static int gpaqMetMinutes = 1500; // default/mock value
-  static String gpaqLevel = 'Moderate Activity'; // default/mock value
+  static int idrsScore = 0;
+  static int gpaqMetMinutes = 0;
+  static String gpaqLevel = 'Low Activity';
 
   static bool hasIdrsResult = false;
   static bool hasGpaqResult = false;
