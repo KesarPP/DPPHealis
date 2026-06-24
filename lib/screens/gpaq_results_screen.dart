@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/app_state.dart';
 import '../main.dart'; // MainShell
 import '../data/gelato_theme.dart';
 
-class GPAQResultsScreen extends StatelessWidget {
+class GPAQResultsScreen extends StatefulWidget {
   final bool workVigorous;
   final int workVigorousDays;
   final int workVigorousMinutes;
@@ -42,27 +44,42 @@ class GPAQResultsScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // 1. Calculate MET minutes per week
-    // Vigorous work/rec = 8 METs, Moderate work/rec/travel = 4 METs
-    final int workVigorousMet = workVigorousDays * workVigorousMinutes * 8;
-    final int workModerateMet = workModerateDays * workModerateMinutes * 4;
-    final int travelMet = travelDays * travelMinutes * 4;
-    final int recVigorousMet = recVigorousDays * recVigorousMinutes * 8;
-    final int recModerateMet = recModerateDays * recModerateMinutes * 4;
+  State<GPAQResultsScreen> createState() => _GPAQResultsScreenState();
+}
 
-    final int totalMetMinutes = workVigorousMet + workModerateMet + travelMet + recVigorousMet + recModerateMet;
+class _GPAQResultsScreenState extends State<GPAQResultsScreen> {
+  late int totalMetMinutes;
+  late String activityLevel;
+  late Color levelBg;
+  late Color levelDark;
+  late String levelDescription;
+  late IconData levelIcon;
+  late double sedentaryHours;
 
-    // 2. Classify activity level
-    final int vigDays = (workVigorous ? workVigorousDays : 0) + (recVigorous ? recVigorousDays : 0);
-    final int modDays = (workModerate ? workModerateDays : 0) + (travel ? travelDays : 0) + (recModerate ? recModerateDays : 0);
+  late int workVigorousMet;
+  late int workModerateMet;
+  late int travelMet;
+  late int recVigorousMet;
+  late int recModerateMet;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateAndSave();
+  }
+
+  void _calculateAndSave() {
+    workVigorousMet = widget.workVigorousDays * widget.workVigorousMinutes * 8;
+    workModerateMet = widget.workModerateDays * widget.workModerateMinutes * 4;
+    travelMet = widget.travelDays * widget.travelMinutes * 4;
+    recVigorousMet = widget.recVigorousDays * widget.recVigorousMinutes * 8;
+    recModerateMet = widget.recModerateDays * widget.recModerateMinutes * 4;
+
+    totalMetMinutes = workVigorousMet + workModerateMet + travelMet + recVigorousMet + recModerateMet;
+
+    final int vigDays = (widget.workVigorous ? widget.workVigorousDays : 0) + (widget.recVigorous ? widget.recVigorousDays : 0);
+    final int modDays = (widget.workModerate ? widget.workModerateDays : 0) + (widget.travel ? widget.travelDays : 0) + (widget.recModerate ? widget.recModerateDays : 0);
     final int totalDays = vigDays + modDays;
-
-    String activityLevel;
-    Color levelBg;
-    Color levelDark;
-    String levelDescription;
-    IconData levelIcon;
 
     if ((vigDays >= 3 && totalMetMinutes >= 1500) || (totalDays >= 7 && totalMetMinutes >= 3000)) {
       activityLevel = 'High Activity';
@@ -70,8 +87,8 @@ class GPAQResultsScreen extends StatelessWidget {
       levelDark = GelatoTheme.greenDark;
       levelIcon = Icons.bolt;
       levelDescription = 'Outstanding physical activity level! Your high MET-minutes significantly lower your insulin resistance and diabetes risk.';
-    } else if ((vigDays >= 3 && (workVigorousMinutes >= 20 || recVigorousMinutes >= 20)) ||
-        (modDays >= 5 && (workModerateMinutes >= 30 || travelMinutes >= 30 || recModerateMinutes >= 30)) ||
+    } else if ((vigDays >= 3 && (widget.workVigorousMinutes >= 20 || widget.recVigorousMinutes >= 20)) ||
+        (modDays >= 5 && (widget.workModerateMinutes >= 30 || widget.travelMinutes >= 30 || widget.recModerateMinutes >= 30)) ||
         (totalMetMinutes >= 600)) {
       activityLevel = 'Moderate Activity';
       levelBg = GelatoTheme.yellow;
@@ -86,12 +103,28 @@ class GPAQResultsScreen extends StatelessWidget {
       levelDescription = 'Sedentary or low activity. Increasing daily physical activity will help you manage and lower your prediabetes risk.';
     }
 
-    // Save to AppState
+    sedentaryHours = widget.sedentaryMinutes / 60.0;
+
     AppState.gpaqMetMinutes = totalMetMinutes;
     AppState.gpaqLevel = activityLevel;
     AppState.hasGpaqResult = true;
 
-    final double sedentaryHours = sedentaryMinutes / 60.0;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'gpaqMetMinutes': totalMetMinutes,
+          'gpaqLevel': activityLevel,
+          'hasGpaqResult': true,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('Error saving GPAQ score: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
 
     return Scaffold(
       backgroundColor: GelatoTheme.bg,

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/app_state.dart';
 // MainShell
 import '../data/gelato_theme.dart';
 import 'gpaq_step1_screen.dart';
 
 class RiskAssessmentStep2Screen extends StatefulWidget {
+  final bool isFromSignup;
   final int age;
   final bool isMan;
   final double waist;
@@ -13,6 +16,7 @@ class RiskAssessmentStep2Screen extends StatefulWidget {
 
   const RiskAssessmentStep2Screen({
     super.key,
+    this.isFromSignup = false,
     required this.age,
     required this.isMan,
     required this.waist,
@@ -26,15 +30,15 @@ class RiskAssessmentStep2Screen extends StatefulWidget {
 
 class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
   // 1 = Yes, 2 = No, 3 = Don't Know
-  int _parentDiabetic = 2; // Default to 'No'
-  int _siblingDiabetic = 2; // Default to 'No'
+  int _parentDiabetic = 0;
+  int _siblingDiabetic = 0;
   
   // 1 = Yes, 2 = No
-  int _hasHighBP = 1; // Default to 'Yes' to show follow-up as in image
-  int _prescribedBPMedication = 2; // Default to 'No' in follow-up
+  int _hasHighBP = 0;
+  int _prescribedBPMedication = 0;
 
   // 1 = Regular, 2 = Mild/occasional, 3 = No exercise
-  int _exerciseLevel = 2; // Default to 'Mild/occasional' as in image
+  int _exerciseLevel = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -311,10 +315,58 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          if (_parentDiabetic == 0 ||
+                              _siblingDiabetic == 0 ||
+                              _hasHighBP == 0 ||
+                              _exerciseLevel == 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please answer all questions.')),
+                            );
+                            return;
+                          }
+
+                          if (_hasHighBP == 1 && _prescribedBPMedication == 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please answer the follow-up question for High BP.')),
+                            );
+                            return;
+                          }
+
                           final score = _calculateIdrsScore();
                           AppState.idrsScore = score;
                           AppState.hasIdrsResult = true;
+
+                          try {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+                                'idrsScore': score,
+                                'hasIdrsResult': true,
+                                'currentWeight': widget.weight,
+                                'height': widget.height,
+                                'lastWeighInDate': FieldValue.serverTimestamp(),
+                              }, SetOptions(merge: true));
+
+                              // Also add it to weight_history so it shows up in Weekly Weigh-In
+                              // Use a date-based ID so multiple taps/retakes on the same day don't duplicate
+                              final now = DateTime.now();
+                              final todayStr = "${now.year}-${now.month}-${now.day}";
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(user.uid)
+                                  .collection('weight_history')
+                                  .doc('idrs_$todayStr')
+                                  .set({
+                                'weight': widget.weight,
+                                'date': FieldValue.serverTimestamp(),
+                                'moods': ['Started IDRS Assessment'],
+                              }, SetOptions(merge: true));
+                            }
+                          } catch (e) {
+                            debugPrint('Failed to save IDRS score: $e');
+                          }
+
                           _showRiskResultBottomSheet(score);
                         },
                         style: ElevatedButton.styleFrom(
@@ -671,89 +723,48 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
   }
 
   int _calculateIdrsScore() {
-    // 1. Calculate BMI (widget.height in cm, widget.weight in kg)
-    double heightInM = widget.height / 100.0;
-    double bmi = 0.0;
-    if (heightInM > 0) {
-      bmi = widget.weight / (heightInM * heightInM);
+    int finalScore = 0;
+
+    // 1. Age (years)
+    if (widget.age >= 35 && widget.age <= 49) {
+      finalScore += 20;
+    } else if (widget.age >= 50) {
+      finalScore += 30;
     }
 
-    int rawScore = 0;
-
-    // --- Rules from Image 1 (FINDRISC) ---
-    // Age (years)
-    if (widget.age >= 45 && widget.age <= 54) {
-      rawScore += 2;
-    } else if (widget.age >= 55) {
-      rawScore += 3;
-    }
-
-    // BMI (Kg/m2)
-    if (bmi > 25 && bmi <= 30) {
-      rawScore += 1;
-    } else if (bmi > 30) {
-      rawScore += 3;
-    }
-
-    // Waist circumference (cm)
+    // 2. Waist circumference (cm)
     if (widget.isMan) {
-      if (widget.waist >= 94 && widget.waist < 102) {
-        rawScore += 3;
-      } else if (widget.waist >= 102) {
-        rawScore += 4;
+      if (widget.waist >= 90 && widget.waist < 100) {
+        finalScore += 10;
+      } else if (widget.waist >= 100) {
+        finalScore += 20;
       }
     } else {
-      if (widget.waist >= 80 && widget.waist < 88) {
-        rawScore += 3;
-      } else if (widget.waist >= 88) {
-        rawScore += 4;
+      if (widget.waist >= 80 && widget.waist < 90) {
+        finalScore += 10;
+      } else if (widget.waist >= 90) {
+        finalScore += 20;
       }
     }
 
-    // Have you ever used drugs for high blood pressure? (High BP follow-up medication)
-    if (_hasHighBP == 1 && _prescribedBPMedication == 1) {
-      rawScore += 2;
-    }
-
-    // Exercise (Do you exercise at least 30 minutes on most days?)
+    // 3. Physical Activity (Exercise/Work)
     // 1 = Regular, 2 = Mild/occasional, 3 = No exercise
-    if (_exerciseLevel == 1 || _exerciseLevel == 2) {
-      rawScore += 2;
+    if (_exerciseLevel == 1) {
+      finalScore += 0;
+    } else if (_exerciseLevel == 2) {
+      finalScore += 20;
+    } else if (_exerciseLevel == 3) {
+      finalScore += 30;
     }
 
-    // --- Rules from Image 2 (ADA) ---
-    // Weight is equal to or above that listed in the BMI chart
-    if (bmi >= 25) {
-      rawScore += 5;
+    // 4. Family History
+    // _parentDiabetic: 1=Yes, _siblingDiabetic: 1=Yes
+    if (_parentDiabetic == 1 && _siblingDiabetic == 1) {
+      finalScore += 20;
+    } else if (_parentDiabetic == 1 || _siblingDiabetic == 1) {
+      finalScore += 10;
     }
 
-    // Under 65 years of age and get little or no exercise during a usual day
-    if (widget.age < 65 && _exerciseLevel == 3) {
-      rawScore += 5;
-    }
-
-    // Age 45-64
-    if (widget.age >= 45 && widget.age <= 64) {
-      rawScore += 5;
-    }
-
-    // Age >= 65
-    if (widget.age >= 65) {
-      rawScore += 9;
-    }
-
-    // Sibling with diabetes
-    if (_siblingDiabetic == 1) {
-      rawScore += 1;
-    }
-
-    // Parent with diabetes
-    if (_parentDiabetic == 1) {
-      rawScore += 1;
-    }
-
-    // Scale rawScore (max 35) to be out of 90
-    int finalScore = ((rawScore / 35.0) * 90).round();
     return finalScore;
   }
 
@@ -768,7 +779,7 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
       levelBg = GelatoTheme.green;
       levelDark = GelatoTheme.greenDark;
       description = 'Great news! Your Indian Diabetes Risk Score is low. Keep maintaining a healthy lifestyle to prevent any future risk.';
-    } else if (score >= 30 && score <= 50) {
+    } else if (score >= 30 && score < 60) {
       riskLevel = 'Moderate Risk';
       levelBg = GelatoTheme.yellow;
       levelDark = GelatoTheme.yellowDark;
@@ -829,7 +840,7 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                     ),
                   ),
                   const Text(
-                    ' /90',
+                    ' /100',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -886,7 +897,7 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const GPAQStep1Screen(),
+                        builder: (_) => GPAQStep1Screen(isFromSignup: widget.isFromSignup),
                       ),
                     );
                   },

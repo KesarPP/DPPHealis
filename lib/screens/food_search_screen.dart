@@ -7,8 +7,9 @@ import 'food_detail_screen.dart';
 
 class FoodSearchScreen extends StatefulWidget {
   final String mealType;
+  final String? initialSearchQuery;
 
-  const FoodSearchScreen({super.key, required this.mealType});
+  const FoodSearchScreen({super.key, required this.mealType, this.initialSearchQuery});
 
   @override
   State<FoodSearchScreen> createState() => _FoodSearchScreenState();
@@ -16,6 +17,21 @@ class FoodSearchScreen extends StatefulWidget {
 
 class _FoodSearchScreenState extends State<FoodSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialSearchQuery != null && widget.initialSearchQuery!.isNotEmpty) {
+      _searchController.text = widget.initialSearchQuery!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<FoodSearchNotifier>().search(widget.initialSearchQuery!);
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<FoodSearchNotifier>().search('');
+      });
+    }
+  }
 
   @override
   void dispose() {

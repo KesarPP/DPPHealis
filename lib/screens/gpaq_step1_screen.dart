@@ -4,7 +4,8 @@ import '../data/gelato_theme.dart';
 import 'gpaq_step2_screen.dart';
 
 class GPAQStep1Screen extends StatefulWidget {
-  const GPAQStep1Screen({super.key});
+  final bool isFromSignup;
+  const GPAQStep1Screen({super.key, this.isFromSignup = false});
 
   @override
   State<GPAQStep1Screen> createState() => _GPAQStep1ScreenState();
@@ -25,10 +26,13 @@ class _GPAQStep1ScreenState extends State<GPAQStep1Screen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: GelatoTheme.bg,
-      appBar: AppBar(
+    return PopScope(
+      canPop: !widget.isFromSignup,
+      child: Scaffold(
         backgroundColor: GelatoTheme.bg,
+        appBar: AppBar(
+          automaticallyImplyLeading: !widget.isFromSignup,
+          backgroundColor: GelatoTheme.bg,
         elevation: 0,
         title: const Row(
           children: [
@@ -280,18 +284,18 @@ class _GPAQStep1ScreenState extends State<GPAQStep1Screen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        final vigorousMins = _workVigorous ? (_workVigorousHours * 60 + _workVigorousMins) : 0;
-                        final moderateMins = _workModerate ? (_workModerateHours * 60 + _workModerateMins) : 0;
+                        final vMins = _workVigorous ? (_workVigorousHours * 60 + _workVigorousMins) : 0;
+                        final mMins = _workModerate ? (_workModerateHours * 60 + _workModerateMins) : 0;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => GPAQStep2Screen(
                               workVigorous: _workVigorous,
                               workVigorousDays: _workVigorous ? _workVigorousDays : 0,
-                              workVigorousMinutes: vigorousMins,
+                              workVigorousMinutes: vMins,
                               workModerate: _workModerate,
                               workModerateDays: _workModerate ? _workModerateDays : 0,
-                              workModerateMinutes: moderateMins,
+                              workModerateMinutes: mMins,
                             ),
                           ),
                         );
@@ -328,7 +332,7 @@ class _GPAQStep1ScreenState extends State<GPAQStep1Screen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildCard({required Widget child}) {

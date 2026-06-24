@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/food_item.dart';
 import '../models/food_log.dart';
 import '../repositories/food_repository.dart';
+import '../services/notification_service.dart';
 
 class FoodSearchNotifier extends ChangeNotifier {
   final FoodRepository _repository = FoodRepository();
@@ -44,8 +45,19 @@ class FoodDiaryNotifier extends ChangeNotifier {
   final FoodRepository _repository = FoodRepository();
   DailyFoodLog? _dailyLog;
   StreamSubscription? _subscription;
-  
+  StreamSubscription? _allLogsSubscription;
+  Map<String, bool> _completedDays = {};
+  String _selectedDate = DateTime.now().toIso8601String().split('T')[0];
+
   DailyFoodLog? get dailyLog => _dailyLog;
+  Map<String, bool> get completedDays => _completedDays;
+  String get selectedDate => _selectedDate;
+
+  void setSelectedDate(String date) {
+    _selectedDate = date;
+    loadLogForDate(date);
+    notifyListeners();
+  }
 
   void loadLogForDate(String date) {
     _subscription?.cancel();
@@ -55,6 +67,32 @@ class FoodDiaryNotifier extends ChangeNotifier {
 
     _subscription = _repository.getDailyLog(user.uid, date).listen((log) {
       _dailyLog = log;
+      
+      if (date == DateTime.now().toIso8601String().split('T')[0]) {
+        NotificationService().scheduleMealReminders(log);
+      }
+      
+      notifyListeners();
+    });
+  }
+
+  void loadAllLogs() {
+    _allLogsSubscription?.cancel();
+    if (Firebase.apps.isEmpty) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _allLogsSubscription = _repository.getAllLogs(user.uid).listen((logs) {
+      final newCompletedDays = <String, bool>{};
+      for (final log in logs) {
+        final types = log.entries.map((e) => e.mealType).toSet();
+        if (types.length >= 5) {
+          newCompletedDays[log.date] = true;
+        } else if (types.isNotEmpty) {
+          newCompletedDays[log.date] = false;
+        }
+      }
+      _completedDays = newCompletedDays;
       notifyListeners();
     });
   }
@@ -79,6 +117,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
   @override
   void dispose() {
     _subscription?.cancel();
+    _allLogsSubscription?.cancel();
     super.dispose();
   }
 }

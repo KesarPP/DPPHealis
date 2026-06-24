@@ -1,10 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../models/activity_stats.dart';
+import '../repositories/activity_repository.dart';
+import '../repositories/activity_repository_impl.dart';
+import '../services/health_connect_service.dart';
 import '../widgets/activity_header.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/goal_journey.dart';
+import '../widgets/today_activity_score.dart';
 import '../widgets/overview_cards.dart';
 import '../widgets/weekly_progress.dart';
-import '../widgets/daily_goals.dart';
 import '../widgets/activity_feed.dart';
 import '../widgets/motivation_section.dart';
 import '../data/gelato_theme.dart';
@@ -18,13 +23,42 @@ class ActivityFitnessScreen extends StatefulWidget {
 
 class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
   final ScrollController _scrollController = ScrollController();
-
+  late final ActivityRepository _repository;
+  ActivityStats? _stats;
+  bool _isConnected = false;
+  DateTime? _lastSyncTime;
+  bool _isLoading = true;
+  ActivityStats get _activityStats {
+    return _stats ?? ActivityStats.empty();
+  }
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
-
+  Future<void> _loadActivityData({bool forceRefresh = false}) async {
+    final connected = await _repository.isConnected();
+    final stats = await _repository.getActivityStats(forceRefresh: forceRefresh);
+    debugPrint('HEALTH_STATS');
+    debugPrint('Steps: ${stats.steps}');
+    debugPrint('Distance: ${stats.distance}');
+    debugPrint('Calories: ${stats.calories}');
+    debugPrint('Active Minutes: ${stats.activeMinutes}');
+    setState(() {
+      _isConnected = connected;
+      _lastSyncTime = _repository.lastSyncTime;
+      _stats = stats;
+      _isLoading = false;
+    });
+  }
+  @override
+  void initState() {
+    super.initState();
+    _repository = ActivityRepositoryImpl(
+      HealthConnectService(),
+    );
+    _loadActivityData();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,12 +76,16 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 // Fixed header
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      SizedBox(height: 12),
-                      ActivityHeader(),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
+                      ActivityHeader(
+                        isConnected: _isConnected,
+                        lastSyncTime: _lastSyncTime,
+                        onSyncTap: () => _loadActivityData(forceRefresh: true),
+                      ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -75,12 +113,28 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                   ),
                 ),
 
-                // Today's Overview section header
+                // Today's Activity Score
+                const SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      TodayActivityScore(),
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+
+                // Today's Overview section (Header + Cards in a BG Card)
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: GelatoTheme.cardRadius,
+                      border: GelatoTheme.cardBorder,
+                      boxShadow: GelatoTheme.cardShadow,
+                    ),
+                    child: Column(
                       children: [
                         const Row(
                           children: [
@@ -89,46 +143,28 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                             Text(
                               "Today's Overview",
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 color: GelatoTheme.textDark,
                               ),
                             ),
                           ],
                         ),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(80, 24),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'View Insights',
-                                style: TextStyle(
-                                  color: GelatoTheme.purpleDark,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Icon(Icons.chevron_right_rounded,
-                                  size: 16, color: GelatoTheme.purpleDark),
-                            ],
-                          ),
+                        const SizedBox(height: 16),
+                        OverviewCards(
+                          stats: _activityStats,
                         ),
                       ],
                     ),
                   ),
                 ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                // Overview Cards
+                // Activity Feed (Today's activities)
                 const SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      OverviewCards(),
+                      ActivityFeed(),
                       SizedBox(height: 16),
                     ],
                   ),
@@ -139,26 +175,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
                   child: Column(
                     children: [
                       WeeklyProgress(),
-                      SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-
-                // Daily Goals
-                const SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      DailyGoals(),
-                      SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-
-                // Activity Feed
-                const SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      ActivityFeed(),
                       SizedBox(height: 16),
                     ],
                   ),

@@ -199,6 +199,70 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               );
             }).toList(),
           ),
+          const SizedBox(height: 16),
+          // Context Section matching the attached image
+          Container(
+            height: 70,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.8), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  offset: const Offset(2, 3),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6.5),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      color: const Color(0xFFFDE4A1), // Yellowish
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Average', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                          Text('7,800', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2C5282))),
+                          Text('steps/day', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
+                  Expanded(
+                    child: Container(
+                      color: const Color(0xFFCDE3BB), // Greenish
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Best Day', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                          Text('Thursday', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF388E3C))),
+                          Text('102K steps', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
+                  Expanded(
+                    child: Container(
+                      color: const Color(0xFFFFD4AA), // Orangish
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Goal achieved', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                          Text('5', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF8B4513))),
+                          Text('of 7 days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Chart Area with Tooltips and Gridlines
@@ -208,13 +272,19 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final double chartWidth = constraints.maxWidth;
-                  final double leftOffset = (chartWidth - 210) / 2;
+                  final double availableWidth = chartWidth - 28; // Space after Y-axis
+                  final double spacing = (availableWidth - 210) / 8; // 7 bars = 210px, 8 spaces
+                  final double startX = 28 + spacing;
+
+                  int _getIndexFromX(double dx) {
+                    final double adjustedX = dx - startX + (spacing / 2);
+                    return (adjustedX / (30 + spacing)).floor().clamp(0, 6);
+                  }
 
                   return MouseRegion(
                     onHover: (details) {
                       final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
-                      final double adjustedX = relativeX - leftOffset;
-                      final int index = (adjustedX / 30).floor().clamp(0, 6);
+                      final int index = _getIndexFromX(relativeX);
                       if (index != _selectedBarIndex) {
                         HapticFeedback.selectionClick();
                         setState(() {
@@ -232,8 +302,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                       behavior: HitTestBehavior.opaque,
                       onHorizontalDragUpdate: (details) {
                         final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
-                        final double adjustedX = relativeX - leftOffset;
-                        final int index = (adjustedX / 30).floor().clamp(0, 6);
+                        final int index = _getIndexFromX(relativeX);
                         if (index != _selectedBarIndex) {
                           HapticFeedback.selectionClick();
                           setState(() {
@@ -244,8 +313,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                       },
                       onTapDown: (details) {
                         final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
-                        final double adjustedX = relativeX - leftOffset;
-                        final int index = (adjustedX / 30).floor().clamp(0, 6);
+                        final int index = _getIndexFromX(relativeX);
                         setState(() {
                           _selectedBarIndex = _selectedBarIndex == index ? null : index;
                           if (_selectedBarIndex != null) {
@@ -258,20 +326,73 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            // Gridlines
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: List.generate(4, (index) => Container(
-                                height: 1,
-                                color: const Color(0xFFF1F5F9),
-                              )),
+                            // Y-axis labels dynamically based on tab
+                            Builder(
+                              builder: (context) {
+                                List<String> yLabels;
+                                if (_selectedTab == 0) yLabels = ['15k', '10k', '5k', '0'];
+                                else if (_selectedTab == 1) yLabels = ['3k', '2k', '1k', '0'];
+                                else yLabels = ['15km', '10km', '5km', '0'];
+
+                                return Positioned(
+                                  left: 0,
+                                  top: -4,
+                                  bottom: 36,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: yLabels.map((lbl) => Text(
+                                      lbl,
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        color: GelatoTheme.textLight,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    )).toList(),
+                                  ),
+                                );
+                              }
                             ),
 
-                            // Goal Line (drawn at 75% height)
+                            // Gridlines and Axes
                             Positioned(
-                              left: 0,
+                              left: 28,
                               right: 0,
-                              bottom: 40 + (100 * 0.75),
+                              top: 0,
+                              bottom: 40,
+                              child: Stack(
+                                children: [
+                                  // Gridlines
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: List.generate(4, (index) => Container(
+                                      height: 1,
+                                      color: const Color(0xFFF1F5F9),
+                                    )),
+                                  ),
+                                  // Y-axis Line
+                                  Positioned(
+                                    left: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: Container(width: 1.5, color: Colors.black.withValues(alpha: 0.1)),
+                                  ),
+                                  // X-axis Line
+                                  Positioned(
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(height: 1.5, color: Colors.black.withValues(alpha: 0.1)),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Goal Line (drawn at 75% height of the 120px chart area)
+                            Positioned(
+                              left: 28,
+                              right: 0,
+                              bottom: 40 + (120 * 0.75),
                               child: Container(
                                 height: 1.8,
                                 decoration: const BoxDecoration(
@@ -285,15 +406,28 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                 ),
                               ),
                             ),
+                            // Daily Goal Line Text
+                            Positioned(
+                              left: 34,
+                              bottom: 40 + (120 * 0.75) + 4,
+                              child: const Text(
+                                'Daily goal line',
+                                style: TextStyle(
+                                  color: GelatoTheme.purpleDark,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
 
                             // Smooth Sliding Tooltip
                             AnimatedPositioned(
                               duration: const Duration(milliseconds: 250),
                               curve: Curves.easeOutCubic,
-                              left: leftOffset + _lastActiveIndex * 30 + (30 - 56) / 2,
+                              left: startX + _lastActiveIndex * (30 + spacing) + (30 - 56) / 2,
                               bottom: _selectedBarIndex != null
-                                  ? 40 + (100 * currentData[_lastActiveIndex] * _barAnim.value) + 8
-                                  : 40 + (100 * currentData[_lastActiveIndex] * _barAnim.value) + 2,
+                                  ? 40 + (120 * currentData[_lastActiveIndex] * _barAnim.value) + 8
+                                  : 40 + (120 * currentData[_lastActiveIndex] * _barAnim.value) + 2,
                               child: AnimatedOpacity(
                                 duration: const Duration(milliseconds: 150),
                                 opacity: _selectedBarIndex != null ? 1.0 : 0.0,
@@ -326,9 +460,13 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                             ),
 
                             // Bars
-                            Positioned.fill(
+                            Positioned(
+                              left: 28,
+                              right: 0,
+                              top: 0,
+                              bottom: 0,
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: currentData.asMap().entries.map((entry) {
                                   final i = entry.key;
@@ -337,9 +475,9 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                   final bool isSelected = _selectedBarIndex == i;
                                   final barColor = _getBarColor(i);
                                   final barColorDark = _getBarDarkColor(i);
-                                  final double baseBarHeight = 100.0 * val;
+                                  final double baseBarHeight = 120.0 * val;
                                   final double barHeight = isSelected
-                                      ? (baseBarHeight * 1.08).clamp(10.0, 110.0)
+                                      ? (baseBarHeight * 1.08).clamp(10.0, 120.0)
                                       : baseBarHeight;
 
                                   return SizedBox(
@@ -463,17 +601,25 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          _days[i],
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: isToday
-                                                ? GelatoTheme.purpleDark
-                                                : GelatoTheme.textLight,
-                                            fontWeight: isToday
-                                                ? FontWeight.w900
-                                                : FontWeight.w600,
+                                        SizedBox(
+                                          height: 40,
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                _days[i],
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: isToday
+                                                      ? GelatoTheme.purpleDark
+                                                      : GelatoTheme.textLight,
+                                                  fontWeight: isToday
+                                                      ? FontWeight.w900
+                                                      : FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
@@ -492,44 +638,6 @@ class _WeeklyProgressState extends State<WeeklyProgress>
             },
           ),
           const SizedBox(height: 12),
-          // Legend
-          Row(
-            children: [
-              Container(
-                width: 14,
-                height: 2,
-                color: GelatoTheme.purpleDark,
-              ),
-              const SizedBox(width: 4),
-              const Text(
-                'Daily goal line',
-                style: TextStyle(fontSize: 10, color: GelatoTheme.textLight, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: GelatoTheme.orangeBright,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 4),
-              const Text(
-                'Today',
-                style: TextStyle(fontSize: 10, color: GelatoTheme.textLight, fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              const Text(
-                'Best day',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: GelatoTheme.purpleDark,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
