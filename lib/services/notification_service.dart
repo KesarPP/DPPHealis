@@ -150,7 +150,7 @@ class NotificationService {
   Future<void> scheduleWeeklyWeighInReminder(DateTime lastWeighIn) async {
     if (!_initialized) await init();
 
-    DateTime scheduleTime = lastWeighIn.add(const Duration(days: 7));
+    DateTime scheduleTime = lastWeighIn.add(const Duration(minutes: 30));
     
     if (scheduleTime.isBefore(DateTime.now())) {
       return;
