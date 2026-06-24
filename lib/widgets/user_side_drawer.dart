@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import '../data/app_state.dart';
 import '../data/gelato_theme.dart';
-import '../screens/risk_assessment_result_screen.dart';
-import '../screens/gpaq_results_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/idrs_score_card_screen.dart';
+import '../screens/gpaq_score_card_screen.dart';
+import '../screens/weigh_in_screen.dart';
+import '../services/auth_service.dart';
+import '../screens/login_screen.dart';
 import '../screens/food_analysis_screen.dart';
 import '../screens/handouts_screen.dart';
 import '../data/handouts_data.dart';
@@ -53,18 +58,7 @@ class UserSideDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => RiskAssessmentResultScreen(
-                            age: 45,
-                            isMan: false,
-                            waist: 85.0,
-                            height: 65.0,
-                            weight: 70.0,
-                            parentDiabetic: 0,
-                            siblingDiabetic: 0,
-                            hasHighBP: 0,
-                            prescribedBPMedication: 0,
-                            exerciseLevel: 2,
-                          ),
+                          builder: (_) => const IdrsScoreCardScreen(),
                         ),
                       );
                     },
@@ -78,24 +72,21 @@ class UserSideDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => GPAQResultsScreen(
-                            workVigorous: false,
-                            workVigorousDays: 0,
-                            workVigorousMinutes: 0,
-                            workModerate: false,
-                            workModerateDays: 0,
-                            workModerateMinutes: 0,
-                            travel: false,
-                            travelDays: 0,
-                            travelMinutes: 0,
-                            recVigorous: false,
-                            recVigorousDays: 0,
-                            recVigorousMinutes: 0,
-                            recModerate: false,
-                            recModerateDays: 0,
-                            recModerateMinutes: 0,
-                            sedentaryMinutes: 0,
-                          ),
+                          builder: (_) => const GpaqScoreCardScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.monitor_weight_outlined,
+                    title: 'Weekly Weigh-In',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const WeighInScreen(),
                         ),
                       );
                     },

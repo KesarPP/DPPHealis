@@ -5,22 +5,23 @@ import 'risk_assessment_step2_screen.dart';
 import '../data/gelato_theme.dart';
 
 class RiskAssessmentStep1Screen extends StatefulWidget {
-  const RiskAssessmentStep1Screen({super.key});
+  final bool isFromSignup;
+  const RiskAssessmentStep1Screen({super.key, this.isFromSignup = false});
 
   @override
   State<RiskAssessmentStep1Screen> createState() => _RiskAssessmentStep1ScreenState();
 }
 
 class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
-  final _ageController = TextEditingController(text: '30');
+  final _ageController = TextEditingController();
   bool _isMan = true; // true = Man, false = Woman
   String _heightUnit = 'inches'; // 'cm', 'inches', 'ft_in'
-  final _heightCmController = TextEditingController(text: '170');
-  final _heightInchesController = TextEditingController(text: '67');
-  final _heightFtController = TextEditingController(text: '5');
-  final _heightInController = TextEditingController(text: '7');
-  final _weightController = TextEditingController(text: '0');
-  final _waistController = TextEditingController(text: '0');
+  final _heightCmController = TextEditingController();
+  final _heightInchesController = TextEditingController();
+  final _heightFtController = TextEditingController();
+  final _heightInController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _waistController = TextEditingController();
 
   @override
   void dispose() {
@@ -36,11 +37,14 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: GelatoTheme.bg,
-      appBar: AppBar(
+    return PopScope(
+      canPop: !widget.isFromSignup,
+      child: Scaffold(
         backgroundColor: GelatoTheme.bg,
-        elevation: 0,
+        appBar: AppBar(
+          automaticallyImplyLeading: !widget.isFromSignup,
+          backgroundColor: GelatoTheme.bg,
+          elevation: 0,
         title: const Row(
           children: [
             Icon(
@@ -607,7 +611,33 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        final ageVal = int.tryParse(_ageController.text) ?? 30;
+                        if (_ageController.text.trim().isEmpty ||
+                            _waistController.text.trim().isEmpty ||
+                            _weightController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please fill out all required fields.')),
+                          );
+                          return;
+                        }
+
+                        if (_heightUnit == 'cm' && _heightCmController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your height.')),
+                          );
+                          return;
+                        } else if (_heightUnit == 'inches' && _heightInchesController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your height.')),
+                          );
+                          return;
+                        } else if (_heightUnit == 'ft_in' && (_heightFtController.text.trim().isEmpty || _heightInController.text.trim().isEmpty)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your height.')),
+                          );
+                          return;
+                        }
+
+                        final ageVal = int.tryParse(_ageController.text) ?? 0;
                         final waistVal = double.tryParse(_waistController.text) ?? 0.0;
                         
                         double heightInCm = 170.0;
@@ -628,6 +658,7 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => RiskAssessmentStep2Screen(
+                              isFromSignup: widget.isFromSignup,
                               age: ageVal,
                               isMan: _isMan,
                               waist: waistVal,
@@ -669,7 +700,7 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   void _onHeightUnitChanged(String newUnit) {

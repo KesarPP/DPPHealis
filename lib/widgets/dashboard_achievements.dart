@@ -76,7 +76,6 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
             child: ListView.builder(
               physics: const BouncingScrollPhysics(),
               scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
               itemCount: earnedItems.length,
               itemBuilder: (context, index) {
                 return _buildBadge(earnedItems[index], index, false);
@@ -89,7 +88,6 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
           // "Next Up" container
           Container(
             padding: const EdgeInsets.all(16),
-            clipBehavior: Clip.antiAlias, // ADDED THIS TO PREVENT SCROLL BLEED
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),

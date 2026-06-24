@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../data/gelato_theme.dart';
 import '../data/handouts_data.dart';
 import 'insights_screen.dart';
 import 'handouts_screen.dart';
 import 'food_search_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/food_notifiers.dart';
 import '../models/food_log.dart';
+import '../models/food_item.dart';
+import '../services/ai_food_service.dart';
+import 'nutritional_scanner_screen.dart';
 
 class FoodTrackingScreen extends StatefulWidget {
   const FoodTrackingScreen({super.key});
@@ -20,8 +26,9 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final today = DateTime.now().toIso8601String().split('T')[0];
-      context.read<FoodDiaryNotifier>().loadLogForDate(today);
+      final notifier = context.read<FoodDiaryNotifier>();
+      notifier.loadLogForDate(notifier.selectedDate);
+      notifier.loadAllLogs();
     });
   }
 
@@ -91,7 +98,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
         children: [
           _buildQuickActionCard(context, 'Insight', Icons.show_chart_rounded, GelatoTheme.purple),
           const SizedBox(width: 8),
-          _buildQuickActionCard(context, 'Barcode Scanner', Icons.qr_code_scanner_rounded, GelatoTheme.yellow),
+          _buildQuickActionCard(context, 'Label Scanner', Icons.document_scanner, GelatoTheme.yellow),
           const SizedBox(width: 8),
           _buildQuickActionCard(context, 'Resources', Icons.menu_book_rounded, GelatoTheme.blue),
         ],
@@ -105,6 +112,8 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
         onTap: () {
           if (title == 'Insight') {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const InsightsScreen()));
+          } else if (title == 'Label Scanner') {
+            _openLabelScanner(context);
           } else if (title == 'Resources') {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const HandoutsScreen(title: 'Food Resources', handouts: foodHandouts)));
           }
@@ -134,6 +143,19 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openLabelScanner(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NutritionalScannerScreen(imageFile: File(pickedFile.path)),
+        ),
+      );
+    }
   }
 
   Widget _buildCalorieGoalCard(BuildContext context) {
@@ -208,6 +230,8 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
       child: Consumer<FoodDiaryNotifier>(
         builder: (context, notifier, child) {
           final log = notifier.dailyLog;
+          final String todayStr = DateTime.now().toIso8601String().split('T')[0];
+          final bool isEditable = notifier.selectedDate == todayStr;
           
           List<LoggedFood> getItems(String mealType) {
             return log?.entries.where((e) => e.mealType == mealType).toList() ?? [];
@@ -219,30 +243,35 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 title: 'Breakfast',
                 color: GelatoTheme.yellow,
                 items: getItems('Breakfast'),
+                isEditable: isEditable,
               ),
               const SizedBox(height: 16),
               _ExpandableMealCard(
                 title: 'Snack 1',
                 color: GelatoTheme.orange,
                 items: getItems('Snack 1')..addAll(getItems('Snack')),
+                isEditable: isEditable,
               ),
               const SizedBox(height: 16),
               _ExpandableMealCard(
                 title: 'Lunch',
                 color: GelatoTheme.green,
                 items: getItems('Lunch'),
+                isEditable: isEditable,
               ),
               const SizedBox(height: 16),
               _ExpandableMealCard(
                 title: 'Snack 2',
                 color: GelatoTheme.pink,
                 items: getItems('Snack 2'),
+                isEditable: isEditable,
               ),
               const SizedBox(height: 16),
               _ExpandableMealCard(
                 title: 'Dinner',
                 color: GelatoTheme.blue,
                 items: getItems('Dinner'),
+                isEditable: isEditable,
               ),
             ],
           );
@@ -450,12 +479,11 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
   @override
   Widget build(BuildContext context) {
     final foodNotifier = context.watch<FoodDiaryNotifier>();
-    final log = foodNotifier.dailyLog;
-    bool todayHasAllMeals = false;
-    if (log != null) {
-      final types = log.entries.map((e) => e.mealType).toSet();
-      if (types.length >= 5) todayHasAllMeals = true;
-    }
+    final completedDays = foodNotifier.completedDays;
+    final selectedDate = foodNotifier.selectedDate;
+    
+    // Check if the selected date specifically is completed
+    bool todayHasAllMeals = completedDays[selectedDate] == true;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -464,7 +492,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
           showDialog(
             context: context,
             barrierColor: Colors.black.withValues(alpha: 0.5),
-            builder: (context) => _MonthlyCalendarOverlay(todayHasAllMeals: todayHasAllMeals),
+            builder: (context) => const _MonthlyCalendarOverlay(),
           );
         },
         child: Container(
@@ -544,7 +572,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                 controller: _pageController,
                 itemBuilder: (context, index) {
                   DateTime weekStart = _getWeekStart(index);
-                  return _buildWeekRow(weekStart, todayHasAllMeals);
+                  return _buildWeekRow(weekStart, completedDays);
                 },
               ),
             ),
@@ -556,52 +584,93 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
     );
   }
 
-  Widget _buildWeekRow(DateTime weekStart, bool todayHasAllMeals) {
+  Widget _buildWeekRow(DateTime weekStart, Map<String, bool> completedDays) {
+    DateTime? signUpTime = FirebaseAuth.instance.currentUser?.metadata.creationTime;
+    DateTime? signUpDate;
+    if (signUpTime != null) {
+      signUpDate = DateTime(signUpTime.year, signUpTime.month, signUpTime.day);
+    }
+    DateTime todayDate = DateTime(_today.year, _today.month, _today.day);
+    final selectedDate = context.read<FoodDiaryNotifier>().selectedDate;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(7, (i) {
         DateTime date = weekStart.add(Duration(days: i));
+        String dateString = date.toIso8601String().split('T')[0];
+        DateTime currentDay = DateTime(date.year, date.month, date.day);
         
-        bool isToday = date.year == _today.year && date.month == _today.month && date.day == _today.day;
-        final yesterday = _today.subtract(const Duration(days: 1));
-        bool isYesterday = date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day;
-        bool isBeforeYesterday = date.isBefore(yesterday);
+        bool isToday = currentDay.isAtSameMomentAs(todayDate);
+        bool isSelected = dateString == selectedDate;
+        bool isFuture = currentDay.isAfter(todayDate);
+        bool isBeforeSignUp = signUpDate != null && currentDay.isBefore(signUpDate);
         
-        // Mark yesterday as complete automatically, and today if 5 meals are tracked
-        bool isComplete = isYesterday || (isToday && todayHasAllMeals);
+        bool isComplete = completedDays[dateString] == true;
+        // Incomplete is any day after (or on) sign up that is not future and not complete
+        bool isIncomplete = !isFuture && !isBeforeSignUp && !isComplete; 
 
-        return Container(
-          width: 44,
-          alignment: Alignment.center,
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: isToday ? GelatoTheme.green : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
-                          color: isToday ? Colors.black87 : (isBeforeYesterday ? GelatoTheme.textDark.withValues(alpha: 0.3) : GelatoTheme.textDark),
+        return GestureDetector(
+          onTap: () {
+            if (!isFuture) {
+              context.read<FoodDiaryNotifier>().setSelectedDate(dateString);
+            }
+          },
+          child: Container(
+            width: 44,
+            alignment: Alignment.center,
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: isSelected ? GelatoTheme.green : Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                            color: isSelected ? Colors.black87 : (isBeforeSignUp ? GelatoTheme.textDark.withValues(alpha: 0.3) : GelatoTheme.textDark),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  if (isIncomplete && !isToday)
+                    Positioned(
+                      bottom: -2,
+                      child: Container(
+                        width: 4,
+                        height: 4,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
                   if (isComplete && !isToday)
-                    const Icon(Icons.check, size: 24, color: GelatoTheme.greenDark),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
+                    Positioned(
+                      bottom: -2,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: GelatoTheme.greenDark,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       }),
@@ -613,11 +682,13 @@ class _ExpandableMealCard extends StatefulWidget {
   final String title;
   final Color color;
   final List<LoggedFood> items;
+  final bool isEditable;
 
   const _ExpandableMealCard({
     required this.title,
     required this.color,
     required this.items,
+    this.isEditable = true,
   });
 
   @override
@@ -626,6 +697,45 @@ class _ExpandableMealCard extends StatefulWidget {
 
 class _ExpandableMealCardState extends State<_ExpandableMealCard> {
   bool _isExpanded = false;
+  bool _isScanning = false;
+
+  Future<void> _scanFood() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      setState(() => _isScanning = true);
+      
+      try {
+        final result = await AiFoodService().identifyFood(File(pickedFile.path));
+        
+        if (!mounted) return;
+        setState(() => _isScanning = false);
+
+        if (result != null && result.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FoodSearchScreen(
+                mealType: widget.title,
+                initialSearchQuery: result,
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not identify food. Please try again or search manually.')),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isScanning = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error analyzing image: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -671,36 +781,47 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
                     duration: const Duration(milliseconds: 300),
                     child: const Icon(Icons.keyboard_arrow_down_rounded, color: GelatoTheme.textDark),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black87, width: 1.2),
-                    ),
-                    child: const Icon(Icons.camera_alt_outlined, size: 20, color: GelatoTheme.textDark),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => FoodSearchScreen(mealType: widget.title),
+                  if (widget.isEditable) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _isScanning ? null : _scanFood,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black87, width: 1.2),
                         ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: widget.color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black87, width: 1.2),
+                        child: _isScanning 
+                            ? const SizedBox(
+                                width: 20, 
+                                height: 20, 
+                                child: CircularProgressIndicator(strokeWidth: 2, color: GelatoTheme.textDark)
+                              )
+                            : const Icon(Icons.camera_alt_outlined, size: 20, color: GelatoTheme.textDark),
                       ),
-                      child: const Icon(Icons.add, size: 20, color: GelatoTheme.textDark),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FoodSearchScreen(mealType: widget.title),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: widget.color,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black87, width: 1.2),
+                        ),
+                        child: const Icon(Icons.add, size: 20, color: GelatoTheme.textDark),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -765,8 +886,8 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
               const SizedBox(height: 4),
               GestureDetector(
                 onTap: () {
-                  final today = DateTime.now().toIso8601String().split('T')[0];
-                  context.read<FoodDiaryNotifier>().removeFood(item, today);
+                  final date = context.read<FoodDiaryNotifier>().selectedDate;
+                  context.read<FoodDiaryNotifier>().removeFood(item, date);
                 },
                 child: const Icon(Icons.remove_circle_outline, color: GelatoTheme.pinkDark, size: 20),
               ),
@@ -843,9 +964,7 @@ class _DotsPainter extends CustomPainter {
 }
 
 class _MonthlyCalendarOverlay extends StatefulWidget {
-  final bool todayHasAllMeals;
-
-  const _MonthlyCalendarOverlay({required this.todayHasAllMeals});
+  const _MonthlyCalendarOverlay();
 
   @override
   State<_MonthlyCalendarOverlay> createState() => _MonthlyCalendarOverlayState();
@@ -949,6 +1068,9 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
   }
 
   Widget _buildMonthGrid() {
+    final foodNotifier = context.watch<FoodDiaryNotifier>();
+    final completedDays = foodNotifier.completedDays;
+
     int daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
     int firstWeekday = DateTime(_currentMonth.year, _currentMonth.month, 1).weekday;
     // Dart DateTime.weekday: 1=Mon, 7=Sun. We want Sun=0, Mon=1.
@@ -959,45 +1081,85 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
       dayWidgets.add(const SizedBox(width: 40, height: 40));
     }
 
-    final yesterday = _today.subtract(const Duration(days: 1));
+    DateTime? signUpTime = FirebaseAuth.instance.currentUser?.metadata.creationTime;
+    DateTime? signUpDate;
+    if (signUpTime != null) {
+      signUpDate = DateTime(signUpTime.year, signUpTime.month, signUpTime.day);
+    }
+    DateTime todayDate = DateTime(_today.year, _today.month, _today.day);
+    final selectedDate = foodNotifier.selectedDate;
 
     for (int i = 1; i <= daysInMonth; i++) {
       DateTime date = DateTime(_currentMonth.year, _currentMonth.month, i);
+      String dateString = date.toIso8601String().split('T')[0];
       
-      bool isToday = date.year == _today.year && date.month == _today.month && date.day == _today.day;
-      bool isYesterday = date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day;
-      bool isBeforeYesterday = date.isBefore(yesterday);
+      bool isToday = date.isAtSameMomentAs(todayDate);
+      bool isSelected = dateString == selectedDate;
+      bool isFuture = date.isAfter(todayDate);
+      bool isBeforeSignUp = signUpDate != null && date.isBefore(signUpDate);
       
-      bool isComplete = isYesterday || (isToday && widget.todayHasAllMeals);
+      bool isComplete = completedDays[dateString] == true;
+      bool isIncomplete = !isFuture && !isBeforeSignUp && !isComplete;
 
       dayWidgets.add(
-        Container(
-          alignment: Alignment.center,
-          child: Stack(
+        GestureDetector(
+          onTap: () {
+            if (!isFuture) {
+              context.read<FoodDiaryNotifier>().setSelectedDate(dateString);
+              Navigator.pop(context);
+            }
+          },
+          child: Container(
             alignment: Alignment.center,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: isToday ? GelatoTheme.green : Colors.transparent,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '$i',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
-                      color: isToday ? Colors.black87 : (isBeforeYesterday ? GelatoTheme.textDark.withValues(alpha: 0.3) : GelatoTheme.textDark),
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: isSelected ? GelatoTheme.green : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$i',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                        color: isSelected ? Colors.black87 : (isBeforeSignUp ? GelatoTheme.textDark.withValues(alpha: 0.3) : GelatoTheme.textDark),
+                      ),
                     ),
                   ),
                 ),
-              ),
+              if (isIncomplete && !isToday)
+                Positioned(
+                  bottom: -2,
+                  child: Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
               if (isComplete && !isToday)
-                const Icon(Icons.check, size: 24, color: GelatoTheme.greenDark),
+                Positioned(
+                  bottom: -2,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: GelatoTheme.greenDark,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
             ],
           ),
+        ),
         ),
       );
     }

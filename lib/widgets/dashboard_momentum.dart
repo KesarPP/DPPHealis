@@ -118,7 +118,6 @@ class _DashboardMomentumState extends State<DashboardMomentum> with SingleTicker
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 20),
               ],
             ),
           ),

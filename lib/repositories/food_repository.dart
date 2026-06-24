@@ -31,16 +31,24 @@ class FoodRepository {
   Stream<DailyFoodLog?> getDailyLog(String userId, String date) {
     final db = _db;
     if (db == null) return Stream.value(null);
-    return db.collection('logs').doc(userId).collection('entries').doc(date).snapshots().map((doc) {
+    return db.collection('logs').doc(userId).collection('food_entries').doc(date).snapshots().map((doc) {
       if (!doc.exists) return null;
       return DailyFoodLog.fromFirestore(doc.data()!, doc.id);
+    });
+  }
+
+  Stream<List<DailyFoodLog>> getAllLogs(String userId) {
+    final db = _db;
+    if (db == null) return Stream.value([]);
+    return db.collection('logs').doc(userId).collection('food_entries').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => DailyFoodLog.fromFirestore(doc.data(), doc.id)).toList();
     });
   }
 
   Future<void> addFoodToLog(String userId, String date, LoggedFood newEntry) async {
     final db = _db;
     if (db == null) return;
-    final docRef = db.collection('logs').doc(userId).collection('entries').doc(date);
+    final docRef = db.collection('logs').doc(userId).collection('food_entries').doc(date);
     
     return db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
@@ -93,7 +101,7 @@ class FoodRepository {
   Future<void> removeFoodFromLog(String userId, String date, LoggedFood itemToRemove) async {
     final db = _db;
     if (db == null) return;
-    final docRef = db.collection('logs').doc(userId).collection('entries').doc(date);
+    final docRef = db.collection('logs').doc(userId).collection('food_entries').doc(date);
     
     return db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
@@ -128,6 +136,57 @@ class FoodRepository {
           'totalFat': (log.totalFat - itemToRemove.food.fat).clamp(0.0, double.infinity),
           'totalFiber': (log.totalFiber - itemToRemove.food.fiber).clamp(0.0, double.infinity),
         });
+      }
+    });
+  }
+
+  Future<FoodItem> saveScannedProduct(FoodItem item) async {
+    final db = _db;
+    if (db == null) return item;
+
+    final brandStr = item.brand?.toLowerCase().replaceAll(' ', '_') ?? 'unknown';
+    final nameStr = item.name.toLowerCase().replaceAll(' ', '_');
+    final docId = '${brandStr}_$nameStr';
+
+    final docRef = db.collection('foods').doc(docId);
+    
+    return db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (snapshot.exists) {
+        final currentCount = snapshot.data()?['scanCount'] as int? ?? 0;
+        transaction.update(docRef, {'scanCount': currentCount + 1});
+        return FoodItem(
+          id: docId,
+          name: item.name,
+          calories: item.calories,
+          carbs: item.carbs,
+          protein: item.protein,
+          fat: item.fat,
+          fiber: item.fiber,
+          brand: item.brand,
+          sugar: item.sugar,
+          sodium: item.sodium,
+          servingSize: item.servingSize,
+          scanCount: currentCount + 1,
+        );
+      } else {
+        final mapData = item.toMap();
+        mapData['scanCount'] = 1;
+        transaction.set(docRef, mapData);
+        return FoodItem(
+          id: docId,
+          name: item.name,
+          calories: item.calories,
+          carbs: item.carbs,
+          protein: item.protein,
+          fat: item.fat,
+          fiber: item.fiber,
+          brand: item.brand,
+          sugar: item.sugar,
+          sodium: item.sodium,
+          servingSize: item.servingSize,
+          scanCount: 1,
+        );
       }
     });
   }

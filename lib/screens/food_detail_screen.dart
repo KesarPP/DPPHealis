@@ -35,30 +35,35 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     }
   }
 
-  String _getTodayDate() {
-    return DateTime.now().toIso8601String().split('T')[0];
+  String _getSelectedDate() {
+    return context.read<FoodDiaryNotifier>().selectedDate;
   }
 
-  void _addToDiary() {
-    context.read<FoodDiaryNotifier>().logFood(
-      widget.food, 
-      widget.mealType, 
-      _getTodayDate(),
-      quantity: _quantity,
-    );
+  Future<void> _addToDiary() async {
+    try {
+      await context.read<FoodDiaryNotifier>().logFood(
+        widget.food, 
+        widget.mealType, 
+        _getSelectedDate(),
+        quantity: _quantity,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added $_quantity x ${widget.food.name} to ${widget.mealType}!', style: const TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: GelatoTheme.greenDark,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-    
-    // Pop back twice to get to the dashboard (pop the detail screen, pop the search screen)
-    Navigator.pop(context);
-    Navigator.pop(context);
+      if (!mounted) return;
+      
+      // Pop back twice to get to the dashboard (pop the detail screen, pop the search screen)
+      Navigator.pop(context);
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving to database: $e', style: const TextStyle(fontWeight: FontWeight.w800)),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    }
   }
 
   @override

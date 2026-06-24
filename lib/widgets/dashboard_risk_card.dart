@@ -255,12 +255,6 @@ class _DashboardRiskCardState extends State<DashboardRiskCard> with TickerProvid
               ],
             ),
           ),
-          
-          // 4. Chevron
-          const Padding(
-            padding: EdgeInsets.only(left: 4),
-            child: Icon(Icons.chevron_right_rounded, color: Color(0xFFE11D48), size: 24),
-          ),
         ],
       ),
     );
