@@ -152,10 +152,7 @@ class _WeighInScreenState extends State<WeighInScreen> {
     final lastDate = _history.last.date;
     final now = DateTime.now();
     
-    final lastMidnight = DateTime(lastDate.year, lastDate.month, lastDate.day);
-    final nowMidnight = DateTime(now.year, now.month, now.day);
-    
-    return nowMidnight.difference(lastMidnight).inDays >= 7;
+    return now.difference(lastDate).inMinutes >= 30;
   }
 
   String _getBMICategory(double bmi) {
@@ -551,10 +548,8 @@ class _WeighInScreenState extends State<WeighInScreen> {
     
     final lastDate = _history.last.date;
     final now = DateTime.now();
-    final lastMidnight = DateTime(lastDate.year, lastDate.month, lastDate.day);
-    final nowMidnight = DateTime(now.year, now.month, now.day);
-    final daysPassed = nowMidnight.difference(lastMidnight).inDays;
-    final daysLeft = 7 - daysPassed;
+    final minutesPassed = now.difference(lastDate).inMinutes;
+    final minutesLeft = 30 - minutesPassed;
     
     return Container(
       padding: const EdgeInsets.all(24),
@@ -578,7 +573,7 @@ class _WeighInScreenState extends State<WeighInScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Your next weigh-in will unlock in $daysLeft day${daysLeft == 1 ? '' : 's'}. Focus on your daily goals until then!',
+            'Your next weigh-in will unlock in $minutesLeft minute${minutesLeft == 1 ? '' : 's'}. Focus on your daily goals until then!',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 13,
