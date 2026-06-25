@@ -204,7 +204,6 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
       return _buildCard(
         currentWeight: 78.4,
         goalWeight: 72.0,
-        totalLost: 2.3,
         toGo: 6.4,
       );
     }
@@ -219,7 +218,6 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
       builder: (context, snapshot) {
         double currentWeight = 78.4;
         double startingWeight = 82.5;
-        double totalLost = 2.3;
         double goalWeight = 72.0;
         double toGo = 6.4;
 
@@ -228,7 +226,6 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
           
           startingWeight = (docs.first.data() as Map<String, dynamic>)['weight']?.toDouble() ?? 82.5;
           currentWeight = (docs.last.data() as Map<String, dynamic>)['weight']?.toDouble() ?? 78.4;
-          totalLost = startingWeight - currentWeight;
 
           // Calculate goal weight using same formula as WeighInScreen
           final baselineWeight = startingWeight;
@@ -248,7 +245,6 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
         return _buildCard(
           currentWeight: currentWeight,
           goalWeight: goalWeight,
-          totalLost: totalLost,
           toGo: toGo,
         );
       },
@@ -258,7 +254,6 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
   Widget _buildCard({
     required double currentWeight,
     required double goalWeight,
-    required double totalLost,
     required double toGo,
   }) {
     return GestureDetector(
@@ -405,17 +400,6 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                                 GelatoTheme.green
                                     .withValues(alpha: 0.3), // Pastel green
                                 const Color(0xFFDC2626), // Red highlight text
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildStatCard(
-                                'Total Lost',
-                                totalLost,
-                                'kg',
-                                GelatoTheme.yellow
-                                    .withValues(alpha: 0.3), // Pastel yellow
-                                Colors.black,
                               ),
                             ),
                           ],
