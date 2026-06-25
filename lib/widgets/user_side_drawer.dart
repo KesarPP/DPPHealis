@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import '../data/app_state.dart';
 import '../data/gelato_theme.dart';
-import '../screens/profile_screen.dart';
 import '../screens/idrs_score_card_screen.dart';
 import '../screens/gpaq_score_card_screen.dart';
 import '../screens/weigh_in_screen.dart';
-import '../services/auth_service.dart';
-import '../screens/login_screen.dart';
 import '../screens/food_analysis_screen.dart';
 import '../screens/handouts_screen.dart';
 import '../data/handouts_data.dart';
@@ -17,7 +13,7 @@ class UserSideDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: GelatoTheme.bg,
       child: SafeArea(
         child: Column(
           children: [
@@ -53,6 +49,7 @@ class UserSideDrawer extends StatelessWidget {
                     context,
                     icon: Icons.assignment,
                     title: 'IDRS Score Card',
+                    bgColor: GelatoTheme.pink,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -67,6 +64,7 @@ class UserSideDrawer extends StatelessWidget {
                     context,
                     icon: Icons.directions_run,
                     title: 'GPAQ Score Card',
+                    bgColor: GelatoTheme.green,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -81,6 +79,7 @@ class UserSideDrawer extends StatelessWidget {
                     context,
                     icon: Icons.monitor_weight_outlined,
                     title: 'Weekly Weigh-In',
+                    bgColor: GelatoTheme.yellow,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -94,7 +93,8 @@ class UserSideDrawer extends StatelessWidget {
                   _buildDrawerItem(
                     context,
                     icon: Icons.restaurant_menu,
-                    title: 'Food Frequency Questionnaire (FFQ)',
+                    title: 'Food Frequency (FFQ)',
+                    bgColor: GelatoTheme.blue,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -107,6 +107,7 @@ class UserSideDrawer extends StatelessWidget {
                     context,
                     icon: Icons.library_books,
                     title: 'Handouts Library',
+                    bgColor: GelatoTheme.purple,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -129,18 +130,41 @@ class UserSideDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
-    return ListTile(
-      leading: Icon(icon, color: GelatoTheme.purpleDark),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: GelatoTheme.textDark,
+  Widget _buildDrawerItem(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap, Color bgColor = Colors.white}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0, left: 16.0, right: 16.0),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: GelatoTheme.cardRadius,
+        child: Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: GelatoTheme.cardRadius,
+            border: GelatoTheme.cardBorder,
+            boxShadow: GelatoTheme.cardShadow,
+          ),
+          child: ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              child: Icon(icon, color: Colors.black, size: 20),
+            ),
+            title: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: GelatoTheme.textDark,
+              ),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black),
+          ),
         ),
       ),
-      onTap: onTap,
     );
   }
 }
