@@ -17,6 +17,7 @@ const _pageBg   = Color(0xFFF0F4F8);
 // Mock Data for the Patient List
 // ─────────────────────────────────────────────────────────────────────────────
 class Patient {
+  final String id;
   final String name;
   final String initials;
   final Color avatarBg;
@@ -24,8 +25,12 @@ class Patient {
   final int sessionNumber;
   final String sessionTitle;
   final String riskLevel;
+  final double? currentWeight;
+  final int? gpaqMetMinutes;
+  final String? gpaqLevel;
 
   const Patient({
+    required this.id,
     required this.name,
     required this.initials,
     required this.avatarBg,
@@ -33,6 +38,9 @@ class Patient {
     required this.sessionNumber,
     required this.sessionTitle,
     required this.riskLevel,
+    this.currentWeight,
+    this.gpaqMetMinutes,
+    this.gpaqLevel,
   });
 }
 
@@ -155,29 +163,91 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
 
   // ── Home Dashboard (The middle section mockup) ────────────────────────────────
   Widget _buildHomeDashboard() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final docs = snapshot.data?.docs ?? [];
+        final totalParticipants = docs.length;
+        
+        int highRiskCount = 0;
+        int modRiskCount = 0;
+        int lowRiskCount = 0;
+        
+        int activityAchieved = 0;
+        int activityInProgress = 0;
+        int activityLow = 0;
+        
+        for (var i = 0; i < docs.length; i++) {
+          final doc = docs[i];
+          final data = doc.data() as Map<String, dynamic>;
+          
+          // Automatically seed riskLevel and gpaqMetMinutes in Firestore if missing
+          if (!data.containsKey('riskLevel') || !data.containsKey('gpaqMetMinutes')) {
+            final sampleRisks = ['HIGH RISK', 'MODERATE', 'LOW RISK'];
+            final sampleMins = [750, 450, 200];
+            doc.reference.set({
+              'riskLevel': data['riskLevel'] ?? sampleRisks[i % sampleRisks.length],
+              'gpaqMetMinutes': data['gpaqMetMinutes'] ?? sampleMins[i % sampleMins.length],
+            }, SetOptions(merge: true));
+          }
 
-          const SizedBox(height: 20),
-          _buildTotalParticipantsCard(),
-          const SizedBox(height: 16),
-          _buildCurriculumProgressCard(),
-          const SizedBox(height: 16),
-          _buildFoodLogCard(),
-          const SizedBox(height: 16),
-          _buildWeeklyActivityCard(),
-          const SizedBox(height: 16),
-          _buildConsistencyCard(context),
-          const SizedBox(height: 32),
-        ],
-      ),
+          final risk = (data['riskLevel'] as String? ?? 'MODERATE').toUpperCase();
+          if (risk == 'HIGH RISK' || risk == 'HIGH') {
+            highRiskCount++;
+          } else if (risk == 'LOW RISK' || risk == 'LOW') {
+            lowRiskCount++;
+          } else {
+            modRiskCount++;
+          }
+          
+          final metMins = data['gpaqMetMinutes'] as int? ?? 0;
+          if (metMins >= 600) {
+            activityAchieved++;
+          } else if (metMins >= 300) {
+            activityInProgress++;
+          } else {
+            activityLow++;
+          }
+        }
+        
+        final displayTotal = totalParticipants;
+        final displayHigh = highRiskCount;
+        final displayMod = modRiskCount;
+        final displayLow = lowRiskCount;
+        
+        final displayAchieved = activityAchieved;
+        final displayInProgress = activityInProgress;
+        final displayActivityLow = activityLow;
+        
+        final activityProgressValue = displayTotal > 0 ? displayAchieved / displayTotal : 0.0;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildTotalParticipantsCard(displayTotal, displayHigh, displayMod, displayLow),
+              const SizedBox(height: 16),
+              _buildCurriculumProgressCard(displayTotal),
+              const SizedBox(height: 16),
+              _buildFoodLogCard(displayTotal),
+              const SizedBox(height: 16),
+              _buildWeeklyActivityCard(displayTotal, displayAchieved, displayInProgress, displayActivityLow, activityProgressValue),
+              const SizedBox(height: 16),
+              _buildConsistencyCard(context, displayTotal),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildTotalParticipantsCard() {
+  Widget _buildTotalParticipantsCard(int total, int highRisk, int modRisk, int lowRisk) {
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,16 +257,16 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF6B7280), letterSpacing: 0.5),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '30',
-            style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900, color: Colors.black, height: 1.0),
+          Text(
+            '$total',
+            style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900, color: Colors.black, height: 1.0),
           ),
           const SizedBox(height: 20),
           Row(
             children: [
-              _buildRiskBox('High Risk', '10', const Color(0xFFB91C1C), const Color(0xFFB91C1C), const Color(0xFFFEF2F2)),
-              _buildRiskBox('Moderate', '15', const Color(0xFF9A3412), const Color(0xFF9A3412), const Color(0xFFFFF7ED)),
-              _buildRiskBox('Low Risk', '5', const Color(0xFF0F766E), const Color(0xFF0F766E), const Color(0xFFCCFBF1)),
+              _buildRiskBox('High Risk', '$highRisk', const Color(0xFFB91C1C), const Color(0xFFB91C1C), const Color(0xFFFEF2F2)),
+              _buildRiskBox('Moderate', '$modRisk', const Color(0xFF9A3412), const Color(0xFF9A3412), const Color(0xFFFFF7ED)),
+              _buildRiskBox('Low Risk', '$lowRisk', const Color(0xFF0F766E), const Color(0xFF0F766E), const Color(0xFFCCFBF1)),
             ],
           ),
         ],
@@ -226,7 +296,12 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildCurriculumProgressCard() {
+  Widget _buildCurriculumProgressCard(int total) {
+    int w1 = (total * 0.4).round();
+    int w5 = (total * 0.5).round();
+    int behind = total - w1 - w5;
+    if (behind < 0) behind = 0;
+
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,11 +321,11 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          _buildProgressBar('Weeks 1-4', '12 Patients', 0.4, const Color(0xFF0F766E)),
+          _buildProgressBar('Weeks 1-4', '$w1 Patients', 0.4, const Color(0xFF0F766E)),
           const SizedBox(height: 12),
-          _buildProgressBar('Weeks 5-8', '15 Patients', 0.5, const Color(0xFF0F766E)),
+          _buildProgressBar('Weeks 5-8', '$w5 Patients', 0.5, const Color(0xFF0F766E)),
           const SizedBox(height: 16),
-          _buildProgressBar('⚠️ Behind Schedule', '3 Patients', 0.1, const Color(0xFFD97706), isWarning: true),
+          _buildProgressBar('⚠️ Behind Schedule', '$behind Patients', 0.1, const Color(0xFFD97706), isWarning: true),
         ],
       ),
     );
@@ -280,7 +355,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildFoodLogCard() {
+  Widget _buildFoodLogCard(int total) {
+    int loggedCount = (total * 0.8).round();
     return _DashboardCard(
       child: Stack(
         children: [
@@ -300,12 +376,12 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Row(
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text('24', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
-                  Text(' / 30', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
+                  Text('$loggedCount', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+                  Text(' / $total', style: const TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
                 ],
               ),
               const Text('Patients logged food today', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
@@ -344,7 +420,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     return Container(width: 1, height: 40, color: Colors.grey.withValues(alpha: 0.2));
   }
 
-  Widget _buildWeeklyActivityCard() {
+  Widget _buildWeeklyActivityCard(int total, int achieved, int inProgress, int low, double progressVal) {
+    final int pctString = (progressVal * 100).round();
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +434,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             ],
           ),
           const SizedBox(height: 32),
-          const Center(
+          Center(
             child: SizedBox(
               height: 160,
               width: 160,
@@ -365,19 +442,19 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                 fit: StackFit.expand,
                 children: [
                   CircularProgressIndicator(
-                    value: 0.72,
+                    value: progressVal,
                     strokeWidth: 16,
-                    backgroundColor: Color(0xFFE5E7EB),
-                    color: Color(0xFF0F766E),
+                    backgroundColor: const Color(0xFFE5E7EB),
+                    color: const Color(0xFF0F766E),
                     strokeCap: StrokeCap.round,
                   ),
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('72%', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black, height: 1.1)),
-                        SizedBox(height: 2),
-                        Text('Hit Weekly Goal', style: TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w600)),
+                        Text('$pctString%', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black, height: 1.1)),
+                        const SizedBox(height: 2),
+                        const Text('Hit Weekly Goal', style: TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -386,9 +463,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          _buildGoalRow(const Color(0xFF0F766E), 'Goal Achieved (150+ min)', '18'),
-          _buildGoalRow(const Color(0xFF5EEAD4), 'In Progress (60-149 min)', '8'),
-          _buildGoalRow(const Color(0xFFDC2626), 'Critically Low (<30 min)', '4', isWarning: true),
+          _buildGoalRow(const Color(0xFF0F766E), 'Goal Achieved (150+ min)', '$achieved'),
+          _buildGoalRow(const Color(0xFF5EEAD4), 'In Progress (60-149 min)', '$inProgress'),
+          _buildGoalRow(const Color(0xFFDC2626), 'Critically Low (<30 min)', '$low', isWarning: true),
         ],
       ),
     );
@@ -416,7 +493,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildConsistencyCard(BuildContext context) {
+  Widget _buildConsistencyCard(BuildContext context, int total) {
+    int superLoggers = (total * 0.4).round();
+    int atRisk = (total * 0.16).round();
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,9 +519,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildStreakBox(Icons.local_fire_department_rounded, const Color(0xFFEA580C), '12', 'Super Loggers', '7+ Day Streak'),
+              _buildStreakBox(Icons.local_fire_department_rounded, const Color(0xFFEA580C), '$superLoggers', 'Super Loggers', '7+ Day Streak'),
               const SizedBox(width: 12),
-              _buildStreakBox(Icons.local_fire_department_outlined, Colors.grey.shade400, '5', 'At Risk', 'Dropped to 0'),
+              _buildStreakBox(Icons.local_fire_department_outlined, Colors.grey.shade400, '$atRisk', 'At Risk', 'Dropped to 0'),
             ],
           ),
           const SizedBox(height: 24),
@@ -672,7 +751,8 @@ class PatientsListScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: docs.length,
                 itemBuilder: (context, index) {
-                  final data = docs[index].data() as Map<String, dynamic>;
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
                   final name = data['name'] as String? ?? 'Unknown Patient';
                   
                   String getInitials(String n) {
@@ -684,21 +764,30 @@ class PatientsListScreen extends StatelessWidget {
                     return parts[0][0].toUpperCase();
                   }
 
+                  final riskLevel = (data['riskLevel'] as String? ?? 'MODERATE').toUpperCase();
+                  final currentWeight = (data['currentWeight'] as num?)?.toDouble();
+                  final gpaqMetMinutes = data['gpaqMetMinutes'] as int?;
+                  final gpaqLevel = data['gpaqLevel'] as String?;
+
                   final p = Patient(
+                    id: doc.id,
                     name: name,
                     initials: getInitials(name),
                     avatarBg: _navy,
                     avatarFg: Colors.white,
                     sessionNumber: 1,
                     sessionTitle: '',
-                    riskLevel: 'MODERATE',
+                    riskLevel: riskLevel,
+                    currentWeight: currentWeight,
+                    gpaqMetMinutes: gpaqMetMinutes,
+                    gpaqLevel: gpaqLevel,
                   );
               Color riskColor;
               Color riskBg;
-              if (p.riskLevel == 'HIGH RISK') {
+              if (p.riskLevel == 'HIGH RISK' || p.riskLevel == 'HIGH') {
                 riskColor = const Color(0xFF991B1B);
                 riskBg = const Color(0xFFFECACA);
-              } else if (p.riskLevel == 'LOW RISK') {
+              } else if (p.riskLevel == 'LOW RISK' || p.riskLevel == 'LOW') {
                 riskColor = const Color(0xFF065F46);
                 riskBg = const Color(0xFF6EE7B7);
               } else {

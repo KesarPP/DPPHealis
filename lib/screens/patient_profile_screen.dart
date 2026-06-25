@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'clinician_dashboard_screen.dart'; // To import the Patient model
 import 'patient_chat_screen.dart';
 
@@ -96,6 +97,19 @@ class PatientProfileScreen extends StatelessWidget {
   }
 
   Widget _buildProfileSummaryCard() {
+    Color riskColor;
+    Color riskBg;
+    if (patient.riskLevel == 'HIGH RISK' || patient.riskLevel == 'HIGH') {
+      riskColor = const Color(0xFF991B1B);
+      riskBg = const Color(0xFFFECACA);
+    } else if (patient.riskLevel == 'LOW RISK' || patient.riskLevel == 'LOW') {
+      riskColor = const Color(0xFF065F46);
+      riskBg = const Color(0xFF6EE7B7);
+    } else {
+      riskColor = const Color(0xFF9A3412);
+      riskBg = const Color(0xFFFFEDD5);
+    }
+
     return _ProfileCard(
       child: Column(
         children: [
@@ -144,15 +158,15 @@ class PatientProfileScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFEDD5),
+                  color: riskBg,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text('MODERATE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFC2410C))),
+                child: Text(patient.riskLevel, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: riskColor)),
               )
             ],
           ),
           const SizedBox(height: 4),
-          const Text('ID #DPP-9210', style: TextStyle(fontSize: 12, color: Colors.black54)),
+          Text('ID #${patient.id.length > 6 ? patient.id.substring(0, 6).toUpperCase() : patient.id}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
           const SizedBox(height: 20),
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -177,6 +191,116 @@ class PatientProfileScreen extends StatelessWidget {
   }
 
   Widget _buildWeightLossCard() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(patient.id).collection('weight_history').orderBy('date', descending: false).snapshots(),
+      builder: (context, snapshot) {
+        final docs = snapshot.data?.docs ?? [];
+        double startWeight = patient.currentWeight ?? 88.5;
+        double currWeight = patient.currentWeight ?? 84.3;
+        if (docs.isNotEmpty) {
+          startWeight = (docs.first.data() as Map<String, dynamic>)['weight'] as double? ?? startWeight;
+          currWeight = (docs.last.data() as Map<String, dynamic>)['weight'] as double? ?? currWeight;
+        }
+
+        final double totalLost = startWeight - currWeight;
+        final double targetLost = startWeight * 0.07;
+        final double pctGoal = targetLost > 0 ? (totalLost / targetLost).clamp(0.0, 1.0) : 0.68;
+        final int pctGoalInt = (pctGoal * 100).round();
+
+        return _ProfileCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Weight Loss', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Icon(Icons.hourglass_bottom_rounded, color: _navy, size: 20),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Starting', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(text: startWeight.toStringAsFixed(1), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                              const TextSpan(text: ' kg', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  Container(width: 1, height: 30, color: Colors.black12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Current', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(text: currWeight.toStringAsFixed(1), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                              const TextSpan(text: ' kg', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1FAE5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.5)),
+                ),
+                child: Center(
+                  child: Text('${totalLost >= 0 ? '-' : '+'}${totalLost.abs().toStringAsFixed(1)} kg lost', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('TARGET: 7% (${targetLost.toStringAsFixed(1)} KG)', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Text('$pctGoalInt% OF GOAL', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: pctGoal,
+                  backgroundColor: const Color(0xFFE5E7EB),
+                  color: const Color(0xFF059669),
+                  minHeight: 6,
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActivityTrackerCard() {
+    final metMins = patient.gpaqMetMinutes ?? 440;
+    final level = patient.gpaqLevel ?? 'Moderate Activity';
+    final progress = (metMins / 600).clamp(0.0, 1.0);
+
     return _ProfileCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,99 +308,11 @@ class PatientProfileScreen extends StatelessWidget {
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Weight Loss', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-              Icon(Icons.hourglass_bottom_rounded, color: _navy, size: 20),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Starting', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                    const SizedBox(height: 4),
-                    RichText(
-                      text: const TextSpan(
-                        children: [
-                          TextSpan(text: '88.5', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                          TextSpan(text: ' kg', style: TextStyle(fontSize: 12, color: Colors.black54)),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              Container(width: 1, height: 30, color: Colors.black12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text('Current', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                    const SizedBox(height: 4),
-                    RichText(
-                      text: const TextSpan(
-                        children: [
-                          TextSpan(text: '84.3', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                          TextSpan(text: ' kg', style: TextStyle(fontSize: 12, color: Colors.black54)),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD1FAE5),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.5)),
-            ),
-            child: const Center(
-              child: Text('-4.2 kg lost', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('TARGET: 7% (6.2 KG)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
-              Text('68% OF GOAL', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: const LinearProgressIndicator(
-              value: 0.68,
-              backgroundColor: Color(0xFFE5E7EB),
-              color: Color(0xFF059669),
-              minHeight: 6,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityTrackerCard() {
-    return const _ProfileCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
               Text('Activity Tracker', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
               Icon(Icons.directions_run_rounded, color: _navy, size: 20),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Row(
             children: [
               SizedBox(
@@ -286,9 +322,9 @@ class PatientProfileScreen extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     CircularProgressIndicator(
-                      value: 110 / 150,
+                      value: progress,
                       strokeWidth: 6,
-                      backgroundColor: Color(0xFFE5E7EB),
+                      backgroundColor: const Color(0xFFE5E7EB),
                       color: _navy,
                       strokeCap: StrokeCap.round,
                     ),
@@ -296,28 +332,28 @@ class PatientProfileScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('110', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _navy, height: 1.1)),
-                          Text('/ 150 MIN', style: TextStyle(fontSize: 7, color: Colors.black87, fontWeight: FontWeight.w600)),
+                          Text('$metMins', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _navy, height: 1.1)),
+                          const Text('/ 600 MET', style: TextStyle(fontSize: 7, color: Colors.black87, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Last Activity:', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                    SizedBox(height: 4),
-                    Text('Brisk Walking', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    SizedBox(height: 6),
+                    const Text('Activity Level:', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                    const SizedBox(height: 4),
+                    Text(level, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.timer_outlined, size: 12, color: Colors.black54),
-                        SizedBox(width: 4),
-                        Text('40 mins  •  Yesterday', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                        const Icon(Icons.timer_outlined, size: 12, color: Colors.black54),
+                        const SizedBox(width: 4),
+                        Text('$metMins MET-mins / week', style: const TextStyle(fontSize: 11, color: Colors.black54)),
                       ],
                     ),
                   ],
@@ -421,40 +457,60 @@ class PatientProfileScreen extends StatelessWidget {
   }
 
   Widget _buildFoodLogCard() {
-    return _ProfileCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('logs').doc(patient.id).collection('food_entries').snapshots(),
+      builder: (context, snapshot) {
+        final docs = snapshot.data?.docs ?? [];
+        double totalCalories = 1450;
+        bool hasBreakfast = true;
+        bool hasLunch = true;
+        bool hasDinner = false;
+
+        if (docs.isNotEmpty) {
+          final latestDoc = docs.last.data() as Map<String, dynamic>;
+          totalCalories = (latestDoc['totalCalories'] as num? ?? 1450).toDouble();
+          final entries = latestDoc['entries'] as List<dynamic>? ?? [];
+          hasBreakfast = entries.any((e) => e['mealType'] == 'Breakfast');
+          hasLunch = entries.any((e) => e['mealType'] == 'Lunch');
+          hasDinner = entries.any((e) => e['mealType'] == 'Dinner');
+        }
+
+        return _ProfileCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Food Log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  RichText(
-                    text: const TextSpan(
-                      children: [
-                        TextSpan(text: '1,450', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy)),
-                        TextSpan(text: ' kcal', style: TextStyle(fontSize: 11, color: _navy)),
-                      ],
-                    ),
-                  ),
-                  const Text('Weekly Avg | 42g Fat', style: TextStyle(fontSize: 9, color: Colors.black54)),
+                  const Text('Food Log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(text: totalCalories.round().toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy)),
+                            const TextSpan(text: ' kcal', style: TextStyle(fontSize: 11, color: _navy)),
+                          ],
+                        ),
+                      ),
+                      const Text('Weekly Avg | 42g Fat', style: TextStyle(fontSize: 9, color: Colors.black54)),
+                    ],
+                  )
                 ],
-              )
+              ),
+              const SizedBox(height: 16),
+              const Text('TODAY\'S LOG', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 0.5)),
+              const SizedBox(height: 12),
+              _buildMealRow('Breakfast', hasBreakfast ? '08:15 AM' : '', hasBreakfast),
+              const SizedBox(height: 8),
+              _buildMealRow('Lunch', hasLunch ? '12:40 PM' : '', hasLunch),
+              const SizedBox(height: 8),
+              _buildMealRow('Dinner', hasDinner ? '07:30 PM' : '', hasDinner),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text('TODAY\'S LOG', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 0.5)),
-          const SizedBox(height: 12),
-          _buildMealRow('Breakfast', '08:15 AM', true),
-          const SizedBox(height: 8),
-          _buildMealRow('Lunch', '12:40 PM', true),
-          const SizedBox(height: 8),
-          _buildMealRow('Dinner', '', false),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -486,78 +542,87 @@ class PatientProfileScreen extends StatelessWidget {
   }
 
   Widget _buildConsistencyCard() {
-    return _ProfileCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('logs').doc(patient.id).collection('food_entries').snapshots(),
+      builder: (context, snapshot) {
+        final docs = snapshot.data?.docs ?? [];
+        final int streak = docs.isNotEmpty ? docs.length : 12;
+        final double loggingRate = docs.isNotEmpty ? (docs.length / 14.0 * 100).clamp(0, 100) : 86;
+
+        return _ProfileCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Consistency', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5E6CC),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.local_fire_department_rounded, color: Color(0xFFC2410C), size: 14),
-                    SizedBox(width: 4),
-                    Text('12 Days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF78350F))),
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Consistency', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5E6CC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.local_fire_department_rounded, color: Color(0xFFC2410C), size: 14),
+                        const SizedBox(width: 4),
+                        Text('$streak Days', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF78350F))),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text('Last 14 Days Activity', style: TextStyle(fontSize: 10, color: Colors.black54)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(14, (index) {
+                  bool isLogged = index < streak;
+                  return Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: isLogged ? _navy : const Color(0xFFE5E7EB),
+                      shape: BoxShape.circle,
+                      border: isLogged ? null : Border.all(color: Colors.black12),
+                    ),
+                    child: isLogged
+                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                        : null,
+                  );
+                }),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text('${loggingRate.round()}%', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        const SizedBox(height: 2),
+                        const Text('Logging Rate', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                      ],
+                    ),
+                  ),
+                  Container(width: 1, height: 30, color: Colors.black12),
+                  const Expanded(
+                    child: Column(
+                      children: [
+                        Text('14/14', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        const SizedBox(height: 2),
+                        const Text('Med Compliance', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                      ],
+                    ),
+                  ),
+                ],
               )
             ],
           ),
-          const SizedBox(height: 16),
-          const Text('Last 14 Days Activity', style: TextStyle(fontSize: 10, color: Colors.black54)),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(14, (index) {
-              bool isLogged = index < 12; // 12 days streak
-              return Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: isLogged ? _navy : const Color(0xFFE5E7EB),
-                  shape: BoxShape.circle,
-                  border: isLogged ? null : Border.all(color: Colors.black12),
-                ),
-                child: isLogged
-                    ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
-                    : null,
-              );
-            }),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              const Expanded(
-                child: Column(
-                  children: [
-                    Text('86%', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    SizedBox(height: 2),
-                    Text('Logging Rate', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                  ],
-                ),
-              ),
-              Container(width: 1, height: 30, color: Colors.black12),
-              const Expanded(
-                child: Column(
-                  children: [
-                    Text('14/14', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    SizedBox(height: 2),
-                    Text('Med Compliance', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                  ],
-                ),
-              ),
-            ],
-          )
-        ],
-      ),
+        );
+      },
     );
   }
 }

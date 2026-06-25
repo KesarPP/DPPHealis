@@ -336,12 +336,22 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                           final score = _calculateIdrsScore();
                           AppState.idrsScore = score;
                           AppState.hasIdrsResult = true;
+                          
+                          String calculatedRiskLevel = 'Moderate Risk';
+                          if (score < 30) {
+                            calculatedRiskLevel = 'Low Risk';
+                          } else if (score >= 30 && score < 60) {
+                            calculatedRiskLevel = 'Moderate Risk';
+                          } else {
+                            calculatedRiskLevel = 'High Risk';
+                          }
 
                           try {
                             final user = FirebaseAuth.instance.currentUser;
                             if (user != null) {
                               await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
                                 'idrsScore': score,
+                                'riskLevel': calculatedRiskLevel,
                                 'hasIdrsResult': true,
                                 'currentWeight': widget.weight,
                                 'height': widget.height,
