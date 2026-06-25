@@ -38,6 +38,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
 
   webview_flutter_platform_interface: any
 flutter:
@@ -53,3 +54,8 @@ flutter:
     - assets/images/ffq/pulses_legumes/
     - assets/images/ffq/snacks_sweets/
     - assets/images/ffq/vegetables/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/diaprevent_logo.png"

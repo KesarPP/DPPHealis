@@ -233,10 +233,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               alignment: Alignment.center,
                               child: Text(
                                 _isPatientSelected
-                                    ? 'Welcome to DiaPrevent'
-                                    : 'Welcome to DiaPrevent - Clinician Portal',
+                                    ? 'Welcome to Diabetes Prevention Program'
+                                    : 'Welcome to Diabetes Prevention Program - Clinician Portal',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: _isPatientSelected
                                       ? const Color(0xFF1E1E50)

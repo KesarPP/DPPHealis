@@ -258,7 +258,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Join DiaPrevent and start your healthy life today.',
+                  'Join Diabetes Prevention Program and start your healthy life today.',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: _isPatientSelected ? FontWeight.w600 : FontWeight.w500,

@@ -163,53 +163,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Custom Droplet & Leaf Vector Logo
-                        const SizedBox(
-                          width: 120,
-                          height: 120,
-                          child: CustomPaint(
-                            painter: _LogoDropletPainter(),
-                          ),
+                        // App Logo Image
+                        Image.asset(
+                          'assets/images/Splashscreenlogo.png',
+                          width: 280,
+                          height: 180,
+                          fit: BoxFit.contain,
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
 
-                        // Title Text: Diabetes
+                        // Title Text: Diabetes Prevention Program
                         const Text(
-                          'Diabetes',
+                          'Diabetes Prevention',
                           style: TextStyle(
-                            fontSize: 38,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
                             color: Color(0xFF074840), // Dark elegant teal
-                            fontFamily: 'Georgia',
                             letterSpacing: -0.5,
                           ),
                         ),
-
-                        // Title Text: Prevention
                         const Text(
-                          'Prevention',
+                          'Program',
                           style: TextStyle(
-                            fontSize: 38,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
                             color: Color(0xFF074840),
-                            fontFamily: 'Georgia',
                             letterSpacing: -0.5,
                             height: 0.95,
                           ),
                         ),
-                        const SizedBox(height: 8),
-
-                        // Subtitle Text: — Program —
-                        const Text(
-                          '— Program —',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF32B396), // Medium mint-green
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 56),
+                        const SizedBox(height: 48),
 
                         // Subtle matching progress indicator
                         SizedBox(
@@ -334,97 +317,4 @@ class _BottomWavePainter extends CustomPainter {
   bool shouldRepaint(covariant _BottomWavePainter oldDelegate) => false;
 }
 
-// ─── CUSTOM VECTOR LOGO PAINTER (DROPLET & LEAF) ─────────────────────────────
 
-class _LogoDropletPainter extends CustomPainter {
-  const _LogoDropletPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final double w = size.width;
-    final double h = size.height;
-
-    // Gradient shading for the droplet (cyan-teal gradient matching reference)
-    const dropletGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        Color(0xFF26A69A), // Teal/cyan
-        Color(0xFF00796B), // Dark green-teal
-      ],
-    );
-
-    // 1. Draw outer droplet shape (outlined)
-    final dropletPaint = Paint()
-      ..shader = dropletGradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final dropletPath = Path();
-    
-    // droplet path points: starts at top center, sweeps down and out, circles back
-    dropletPath.moveTo(w * 0.5, h * 0.12);
-    dropletPath.cubicTo(
-      w * 0.86, h * 0.46,
-      w * 0.85, h * 0.88,
-      w * 0.5, h * 0.88,
-    );
-    dropletPath.cubicTo(
-      w * 0.15, h * 0.88,
-      w * 0.14, h * 0.46,
-      w * 0.5, h * 0.12,
-    );
-    dropletPath.close();
-    canvas.drawPath(dropletPath, dropletPaint);
-
-    // 2. Draw inner leaf shape (fill)
-    final leafPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.bottomLeft,
-        end: Alignment.topRight,
-        colors: [
-          Color(0xFF00897B), // Rich dark green-teal
-          Color(0xFF26A69A), // Bright minty teal
-          Color(0xFF4DB6AC), // Soft light teal
-        ],
-      ).createShader(rect)
-      ..style = PaintingStyle.fill;
-
-    final leafPath = Path();
-    // Leaf starts at bottom center and curves upwards to the right side
-    leafPath.moveTo(w * 0.47, h * 0.83);
-    // Draw top/left edge of the leaf
-    leafPath.quadraticBezierTo(
-      w * 0.45, h * 0.60,
-      w * 0.70, h * 0.49,
-    );
-    // Draw bottom/right edge of the leaf
-    leafPath.quadraticBezierTo(
-      w * 0.73, h * 0.74,
-      w * 0.47, h * 0.83,
-    );
-    leafPath.close();
-    canvas.drawPath(leafPath, leafPaint);
-
-    // 3. Draw a subtle white-ish leaf vein line
-    final veinPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-
-    final veinPath = Path();
-    veinPath.moveTo(w * 0.47, h * 0.83);
-    veinPath.quadraticBezierTo(
-      w * 0.57, h * 0.71,
-      w * 0.70, h * 0.49,
-    );
-    canvas.drawPath(veinPath, veinPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _LogoDropletPainter oldDelegate) => false;
-}
