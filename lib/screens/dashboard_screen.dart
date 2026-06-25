@@ -30,37 +30,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadData() async {
-    final healthSync = HealthSyncService();
-    await healthSync.requestPermissions();
-    final now = DateTime.now();
-    final thirtyDaysAgo = now.subtract(const Duration(days: 29));
-    final past30Days = await healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now);
-    
-    final pastDays = past30Days.length >= 7 
-        ? past30Days.sublist(past30Days.length - 7)
-        : past30Days;
+    try {
+      final healthSync = HealthSyncService();
+      try {
+        await healthSync.requestPermissions().timeout(const Duration(seconds: 4));
+      } catch (e) {
+        debugPrint('Dashboard requestPermissions error: $e');
+      }
+      final now = DateTime.now();
+      final thirtyDaysAgo = now.subtract(const Duration(days: 29));
+      List<DailyAggregate> past30Days = [];
+      try {
+        past30Days = await healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 5));
+      } catch (e) {
+        debugPrint('Dashboard getStatsForInterval error: $e');
+      }
+      
+      if (past30Days.isEmpty) {
+        for (int i = 29; i >= 0; i--) {
+          past30Days.add(DailyAggregate.empty(now.subtract(Duration(days: i))));
+        }
+      }
+      
+      final pastDays = past30Days.length >= 7 
+          ? past30Days.sublist(past30Days.length - 7)
+          : past30Days;
 
-    const int mealLogCount = 52;
-    const double baselineWeight = 90.0;
-    const double currentWeight = 84.0;
-    const double riskScore = 28.0;
-    const int programWeek = 6;
+      const int mealLogCount = 52;
+      const double baselineWeight = 90.0;
+      const double currentWeight = 84.0;
+      const double riskScore = 28.0;
+      const int programWeek = 6;
 
-    final achievements = ActivityMetricsEngine.evaluateAchievements(
-      pastDays: pastDays,
-      mealLogCount: mealLogCount,
-      baselineWeight: baselineWeight,
-      currentWeight: currentWeight,
-      riskScore: riskScore,
-      programWeek: programWeek,
-    );
+      final achievements = ActivityMetricsEngine.evaluateAchievements(
+        pastDays: pastDays,
+        mealLogCount: mealLogCount,
+        baselineWeight: baselineWeight,
+        currentWeight: currentWeight,
+        riskScore: riskScore,
+        programWeek: programWeek,
+      );
 
-    if (mounted) {
-      setState(() {
-        _achievements = achievements;
-        _past30Days = past30Days;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _achievements = achievements;
+          _past30Days = past30Days;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Dashboard loadData overall error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

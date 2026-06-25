@@ -330,7 +330,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
 
           // Context Section matching the attached image
           Container(
-            height: 70,
+            constraints: const BoxConstraints(minHeight: 75),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.black.withValues(alpha: 0.8), width: 1.5),
@@ -344,48 +344,56 @@ class _WeeklyProgressState extends State<WeeklyProgress>
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6.5),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      color: const Color(0xFFFDE4A1),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Average', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
-                          Text(_avgPerDay[_selectedTab], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF2C5282)), textAlign: TextAlign.center),
-                        ],
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        color: const Color(0xFFFDE4A1),
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Average', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                            const SizedBox(height: 2),
+                            Text(_avgPerDay[_selectedTab], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF2C5282)), textAlign: TextAlign.center),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
-                  Expanded(
-                    child: Container(
-                      color: const Color(0xFFCDE3BB),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Best Day', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
-                          Text(_bestDay[_selectedTab], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF388E3C)), textAlign: TextAlign.center),
-                        ],
+                    Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
+                    Expanded(
+                      child: Container(
+                        color: const Color(0xFFCDE3BB),
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Best Day', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                            const SizedBox(height: 2),
+                            Text(_bestDay[_selectedTab], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF388E3C)), textAlign: TextAlign.center),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
-                  Expanded(
-                    child: Container(
-                      color: const Color(0xFFFFD4AA),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Goal achieved', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
-                          Text(_goalAchieved[_selectedTab], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF8B4513))),
-                          const Text('of 7 days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
-                        ],
+                    Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
+                    Expanded(
+                      child: Container(
+                        color: const Color(0xFFFFD4AA),
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Goal achieved', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF8B4513)), textAlign: TextAlign.center),
+                            Text(_goalAchieved[_selectedTab], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF8B4513))),
+                            const Text('of 7 days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

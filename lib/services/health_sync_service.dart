@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:health/health.dart';
 import '../models/ndpp_constants.dart';
 
@@ -13,11 +14,19 @@ class HealthSyncService {
   ];
 
   Future<bool> requestPermissions() async {
-    return await _health.requestAuthorization(_syncTypes);
+    try {
+      return await _health.requestAuthorization(_syncTypes).timeout(const Duration(seconds: 5));
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> hasPermissions() async {
-    return await _health.hasPermissions(_syncTypes) ?? false;
+    try {
+      return await _health.hasPermissions(_syncTypes).timeout(const Duration(seconds: 3)) ?? false;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<List<DailyAggregate>> getLast7DaysStats({DateTime? endDate}) async {
@@ -46,7 +55,7 @@ class HealthSyncService {
         startTime: startDate,
         endTime: startOfDayEnd,
         types: _syncTypes,
-      );
+      ).timeout(const Duration(seconds: 4));
       final data = _health.removeDuplicates(rawData);
 
       Map<String, int> dailySteps = {};

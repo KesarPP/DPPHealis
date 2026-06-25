@@ -74,79 +74,108 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
       });
     }
 
-    final available = await HealthConnectService().isHealthConnectAvailable();
+    bool available = false;
+    try {
+      available = await HealthConnectService().isHealthConnectAvailable().timeout(const Duration(seconds: 3));
+    } catch (e) {
+      debugPrint('isHealthConnectAvailable error: $e');
+    }
+
+    bool hasPerms = false;
+    if (available) {
+      try {
+        hasPerms = await _healthSync.hasPermissions().timeout(const Duration(seconds: 3));
+      } catch (e) {
+        debugPrint('hasPermissions error: $e');
+      }
+    }
+
+    HealthConnectOnboardingState targetState = HealthConnectOnboardingState.connected;
     if (!available) {
-      if (mounted) {
-        setState(() {
-          _onboardingState = HealthConnectOnboardingState.notInstalled;
-          _isLoading = false;
-        });
-      }
-      return;
+      targetState = HealthConnectOnboardingState.notInstalled;
+    } else if (!hasPerms) {
+      targetState = HealthConnectOnboardingState.permissionsMissing;
     }
 
-    final hasPerms = await _healthSync.hasPermissions();
-    if (!hasPerms) {
-      if (mounted) {
-        setState(() {
-          _onboardingState = HealthConnectOnboardingState.permissionsMissing;
-          _isLoading = false;
-        });
-      }
-      return;
-    }
-
-    await _loadActivityData();
+    await _loadActivityData(targetOnboardingState: targetState);
   }
 
-  Future<void> _loadActivityData({bool forceRefresh = false}) async {
-    if (mounted && _onboardingState != HealthConnectOnboardingState.connected) {
-      setState(() {
-        _onboardingState = HealthConnectOnboardingState.syncing;
-        _isLoading = true;
-      });
-    }
+  Future<void> _loadActivityData({bool forceRefresh = false, HealthConnectOnboardingState? targetOnboardingState}) async {
+    try {
+      if (mounted && _onboardingState != HealthConnectOnboardingState.connected && targetOnboardingState == null) {
+        setState(() {
+          _onboardingState = HealthConnectOnboardingState.syncing;
+          _isLoading = true;
+        });
+      }
 
-    final connected = await HealthConnectService().isHealthConnectAvailable();
-    final pastDays = await _healthSync.getLast7DaysStats();
+      bool connected = false;
+      try {
+        connected = await HealthConnectService().isHealthConnectAvailable().timeout(const Duration(seconds: 3));
+      } catch (e) {
+        debugPrint('HealthConnect availability check failed: $e');
+      }
 
-    int currentMins = 0;
-    int weeklySteps = 0;
-    for (var day in pastDays) {
-      currentMins += day.qualifyingActiveMinutes;
-      weeklySteps += day.totalSteps;
-    }
+      List<DailyAggregate> pastDays = [];
+      try {
+        pastDays = await _healthSync.getLast7DaysStats().timeout(const Duration(seconds: 5));
+      } catch (e) {
+        debugPrint('HealthSync getLast7DaysStats failed or timed out: $e');
+      }
 
-    final today = pastDays.isNotEmpty ? pastDays.last : DailyAggregate.empty(DateTime.now());
+      if (pastDays.isEmpty) {
+        final now = DateTime.now();
+        for (int i = 6; i >= 0; i--) {
+          pastDays.add(DailyAggregate.empty(now.subtract(Duration(days: i))));
+        }
+      }
 
-    final stats = ActivityStats(
-      steps: today.totalSteps,
-      distance: today.totalDistance,
-      calories: today.totalCalories,
-      activeMinutes: today.totalActiveMinutes,
-      weeklySteps: weeklySteps,
-    );
+      int currentMins = 0;
+      int weeklySteps = 0;
+      for (var day in pastDays) {
+        currentMins += day.qualifyingActiveMinutes;
+        weeklySteps += day.totalSteps;
+      }
 
-    int score = ActivityMetricsEngine.calculateActivityScore(today, _programWeek);
-    String feedback = ActivityMetricsEngine.getDailyScoreFeedback(
-      score,
-      currentMins,
-      NdppConstants.getWeeklyTargetForWeek(_programWeek),
-    );
+      final today = pastDays.isNotEmpty ? pastDays.last : DailyAggregate.empty(DateTime.now());
 
-    if (mounted) {
-      setState(() {
-        _isConnected = connected;
-        _lastSyncTime = DateTime.now();
-        _stats = stats;
-        _pastDays = pastDays;
-        _currentWeeklyMinutes = currentMins;
-        _weeklyTargetMinutes = NdppConstants.getWeeklyTargetForWeek(_programWeek);
-        _dailyScore = score;
-        _dailyScoreFeedback = feedback;
-        _onboardingState = HealthConnectOnboardingState.connected;
-        _isLoading = false;
-      });
+      final stats = ActivityStats(
+        steps: today.totalSteps,
+        distance: today.totalDistance,
+        calories: today.totalCalories,
+        activeMinutes: today.totalActiveMinutes,
+        weeklySteps: weeklySteps,
+      );
+
+      int score = ActivityMetricsEngine.calculateActivityScore(today, _programWeek);
+      String feedback = ActivityMetricsEngine.getDailyScoreFeedback(
+        score,
+        currentMins,
+        NdppConstants.getWeeklyTargetForWeek(_programWeek),
+      );
+
+      if (mounted) {
+        setState(() {
+          _isConnected = connected;
+          _lastSyncTime = DateTime.now();
+          _stats = stats;
+          _pastDays = pastDays;
+          _currentWeeklyMinutes = currentMins;
+          _weeklyTargetMinutes = NdppConstants.getWeeklyTargetForWeek(_programWeek);
+          _dailyScore = score;
+          _dailyScoreFeedback = feedback;
+          _onboardingState = targetOnboardingState ?? (connected ? HealthConnectOnboardingState.connected : HealthConnectOnboardingState.notInstalled);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('_loadActivityData overall error: $e');
+      if (mounted) {
+        setState(() {
+          _onboardingState = targetOnboardingState ?? HealthConnectOnboardingState.connected;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -582,87 +611,77 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen> {
   }
 
   Widget _buildMainContent() {
-    switch (_onboardingState) {
-      case HealthConnectOnboardingState.notInstalled:
-        return Column(
-          key: const ValueKey('notInstalled'),
-          children: [
-            _buildState1Card(),
-            _buildDashboardPreview(),
-          ],
-        );
-      case HealthConnectOnboardingState.permissionsMissing:
-        return Column(
-          key: const ValueKey('permissionsMissing'),
-          children: [
-            _buildState2Card(),
-            _buildDashboardPreview(),
-          ],
-        );
-      case HealthConnectOnboardingState.syncing:
-        return Column(
-          key: const ValueKey('syncing'),
-          children: [
-            _buildState3Card(),
-            _buildDashboardPreview(isShimmer: true),
-          ],
-        );
-      case HealthConnectOnboardingState.connected:
-        return Column(
-          key: const ValueKey('connected'),
-          children: [
-            const HeroBanner(),
-            const SizedBox(height: 16),
-            GoalJourney(
-              currentMinutes: _currentWeeklyMinutes,
-              goalMinutes: _weeklyTargetMinutes,
-            ),
-            const SizedBox(height: 16),
-            TodayActivityScore(
-              score: _dailyScore,
-              feedbackText: _dailyScoreFeedback,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: GelatoTheme.cardRadius,
-                border: GelatoTheme.cardBorder,
-                boxShadow: GelatoTheme.cardShadow,
-              ),
-              child: Column(
+    if (_onboardingState == HealthConnectOnboardingState.syncing) {
+      return Column(
+        key: const ValueKey('syncing'),
+        children: [
+          _buildState3Card(),
+          _buildDashboardPreview(isShimmer: true),
+        ],
+      );
+    }
+
+    return Column(
+      key: ValueKey(_onboardingState.name),
+      children: [
+        if (_onboardingState == HealthConnectOnboardingState.notInstalled) ...[
+          _buildState1Card(),
+          const SizedBox(height: 16),
+        ] else if (_onboardingState == HealthConnectOnboardingState.permissionsMissing) ...[
+          _buildState2Card(),
+          const SizedBox(height: 16),
+        ],
+        const HeroBanner(),
+        const SizedBox(height: 16),
+        GoalJourney(
+          currentMinutes: _currentWeeklyMinutes,
+          goalMinutes: _weeklyTargetMinutes,
+        ),
+        const SizedBox(height: 16),
+        TodayActivityScore(
+          score: _dailyScore,
+          feedbackText: _dailyScoreFeedback,
+        ),
+        const SizedBox(height: 16),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: GelatoTheme.cardRadius,
+            border: GelatoTheme.cardBorder,
+            boxShadow: GelatoTheme.cardShadow,
+          ),
+          child: Column(
+            children: [
+              const Row(
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.bar_chart_rounded, color: GelatoTheme.purpleDark, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Today's Overview",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: GelatoTheme.textDark,
-                        ),
-                      ),
-                    ],
+                  Icon(Icons.bar_chart_rounded, color: GelatoTheme.purpleDark, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    "Today's Overview",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: GelatoTheme.textDark,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  OverviewCards(stats: _activityStats),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-            const ActivityFeed(),
-            const SizedBox(height: 16),
-            WeeklyProgress(pastDays: _pastDays, programWeek: _programWeek),
-            const SizedBox(height: 16),
-            MotivationSection(pastDays: _pastDays),
-            const SizedBox(height: 16),
-          ],
-        );
-    }
+              const SizedBox(height: 16),
+              OverviewCards(stats: _activityStats),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        const ActivityFeed(),
+        const SizedBox(height: 16),
+        WeeklyProgress(pastDays: _pastDays, programWeek: _programWeek),
+        const SizedBox(height: 16),
+        MotivationSection(pastDays: _pastDays),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 
   @override

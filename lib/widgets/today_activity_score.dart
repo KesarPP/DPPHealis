@@ -10,11 +10,13 @@ class TodayActivityScore extends StatelessWidget {
     required this.score,
     required this.feedbackText,
   });
+  @override
   Widget build(BuildContext context) {
     return Container(
-      height: 150,
+      constraints: const BoxConstraints(minHeight: 150),
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: GelatoTheme.cardRadius,
@@ -31,6 +33,7 @@ class TodayActivityScore extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Row(
@@ -51,7 +54,7 @@ class TodayActivityScore extends StatelessWidget {
               ),
             ],
           ),
-          const Spacer(),
+          const SizedBox(height: 14),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -75,7 +78,7 @@ class TodayActivityScore extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
@@ -85,7 +88,7 @@ class TodayActivityScore extends StatelessWidget {
               valueColor: const AlwaysStoppedAnimation(GelatoTheme.purpleDark),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             feedbackText,
             style: const TextStyle(
@@ -94,7 +97,6 @@ class TodayActivityScore extends StatelessWidget {
               color: GelatoTheme.textDark,
             ),
           ),
-          const Spacer(),
         ],
       ),
     );

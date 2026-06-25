@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
 import 'health_service.dart';
+
 class HealthConnectService implements HealthService {
   final Health _health = Health();
   static const List<HealthDataType> _types = [
@@ -8,89 +10,98 @@ class HealthConnectService implements HealthService {
     HealthDataType.DISTANCE_DELTA,
     HealthDataType.TOTAL_CALORIES_BURNED,
   ];
+
   @override
   Future<bool> isHealthConnectAvailable() async {
-    return await _health.isHealthConnectAvailable();
+    try {
+      return await _health.isHealthConnectAvailable().timeout(const Duration(seconds: 3));
+    } catch (e) {
+      debugPrint('isHealthConnectAvailable error: $e');
+      return false;
+    }
   }
+
   @override
   Future<int> getTodaySteps() async {
     final now = DateTime.now();
     final startDate = DateTime(now.year, now.month, now.day);
-
-    debugPrint(
-      'getTodaySteps() CALLED',
-    );
-    final steps = await _health.getTotalStepsInInterval(
-      startDate,
-      now,
-
-    );
-    debugPrint(
-      'RAW STEPS: $steps',
-    );
-    return steps ?? 0;
+    debugPrint('getTodaySteps() CALLED');
+    try {
+      final steps = await _health.getTotalStepsInInterval(startDate, now).timeout(const Duration(seconds: 3));
+      debugPrint('RAW STEPS: $steps');
+      return steps ?? 0;
+    } catch (e) {
+      debugPrint('getTodaySteps error: $e');
+      return 0;
+    }
   }
 
   @override
   Future<int> getWeeklySteps() async {
     final now = DateTime.now();
-    // Assuming the week starts on Monday (weekday 1)
     final daysToSubtract = now.weekday - 1;
     final startOfWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: daysToSubtract));
-
     debugPrint('getWeeklySteps() CALLED (from $startOfWeek)');
-    final steps = await _health.getTotalStepsInInterval(
-      startOfWeek,
-      now,
-    );
-    debugPrint('RAW WEEKLY STEPS: $steps');
-    return steps ?? 0;
-  }
-  @override
-  Future<bool> hasPermissions()async {
-    return await _health.hasPermissions(_types) ?? false;
+    try {
+      final steps = await _health.getTotalStepsInInterval(startOfWeek, now).timeout(const Duration(seconds: 3));
+      debugPrint('RAW WEEKLY STEPS: $steps');
+      return steps ?? 0;
+    } catch (e) {
+      debugPrint('getWeeklySteps error: $e');
+      return 0;
+    }
   }
 
+  @override
+  Future<bool> hasPermissions() async {
+    try {
+      return await _health.hasPermissions(_types).timeout(const Duration(seconds: 3)) ?? false;
+    } catch (e) {
+      debugPrint('hasPermissions error: $e');
+      return false;
+    }
+  }
 
   @override
   Future<bool> requestPermissions() async {
-    return await _health.requestAuthorization(_types);
+    try {
+      return await _health.requestAuthorization(_types).timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('requestPermissions error: $e');
+      return false;
+    }
   }
-
 
   @override
   Future<double> getTodayDistance() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
-
     try {
       final data = await _health.getHealthDataFromTypes(
         startTime: startOfDay,
         endTime: now,
         types: [HealthDataType.DISTANCE_DELTA],
-      );
+      ).timeout(const Duration(seconds: 3));
 
       if (data.isNotEmpty) {
         double totalDistance = 0;
         for (var point in data) {
           totalDistance += double.tryParse(point.value.toString()) ?? 0.0;
         }
-        if (totalDistance > 0) return totalDistance / 1000.0; // Convert meters to km
+        if (totalDistance > 0) return totalDistance / 1000.0;
       }
     } catch (e) {
-      print('Native distance fetch error: $e');
+      debugPrint('Native distance fetch error: $e');
     }
 
-    // Fallback: estimate from steps (assuming 0.762 meters per step)
     final steps = await getTodaySteps();
-    return (steps * 0.762) / 1000.0; // Return km
+    return (steps * 0.762) / 1000.0;
   }
 
   @override
   Future<double> getTodayCalories() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
-
     try {
       final rawData = await _health.getHealthDataFromTypes(
         startTime: startOfDay,
@@ -99,7 +110,7 @@ class HealthConnectService implements HealthService {
           HealthDataType.ACTIVE_ENERGY_BURNED,
           HealthDataType.TOTAL_CALORIES_BURNED,
         ],
-      );
+      ).timeout(const Duration(seconds: 3));
       final data = _health.removeDuplicates(rawData);
 
       if (data.isNotEmpty) {
@@ -120,18 +131,15 @@ class HealthConnectService implements HealthService {
         if (totalCals > 0) return totalCals;
       }
     } catch (e) {
-      print('Native calories fetch error: $e');
+      debugPrint('Native calories fetch error: $e');
     }
 
-    // Fallback: estimate from steps (~0.04 calories per step)
     final steps = await getTodaySteps();
     return steps * 0.04;
   }
 
   @override
   Future<int> getTodayActiveMinutes() async {
-    // Health Connect throws unsupported error for EXERCISE_TIME / Active Minutes directly
-    // Fallback: estimate 100 steps = 1 active minute (standard pedometer conversion)
     final steps = await getTodaySteps();
     return (steps / 100).floor();
   }
