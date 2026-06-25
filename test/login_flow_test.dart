@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dpp_app/main.dart';
@@ -72,6 +71,13 @@ void main() {
     // Verify we are on RiskAssessmentStep1Screen
     expect(find.byType(RiskAssessmentStep1Screen), findsOneWidget);
     expect(find.text('Risk Assessment (Step 2/7)'), findsOneWidget);
+
+    // Enter required personal data on Step 1 Screen
+    await tester.enterText(find.byType(TextField).at(0), '35');
+    await tester.enterText(find.byType(TextField).at(1), '68');
+    await tester.enterText(find.byType(TextField).at(2), '75');
+    await tester.enterText(find.byType(TextField).at(3), '34');
+    await tester.pumpAndSettle();
 
     // Tap Continue on Step 1 Screen
     final continueButton1 = find.widgetWithText(ElevatedButton, 'Continue');
