@@ -29,6 +29,8 @@ class PatientProfileScreen extends StatelessWidget {
                   children: [
                     _buildProfileSummaryCard(),
                     const SizedBox(height: 12),
+                    _buildIdrsCard(),
+                    const SizedBox(height: 12),
                     _buildWeightLossCard(),
                     const SizedBox(height: 12),
                     _buildActivityTrackerCard(),
@@ -185,6 +187,57 @@ class PatientProfileScreen extends StatelessWidget {
               minHeight: 6,
             ),
           )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIdrsCard() {
+    final int score = patient.idrsScore ?? 45;
+    final String riskText = score >= 60 ? 'HIGH RISK' : score >= 30 ? 'MODERATE RISK' : 'LOW RISK';
+    final Color riskColor = score >= 60 ? const Color(0xFFB91C1C) : score >= 30 ? const Color(0xFF9A3412) : const Color(0xFF0F766E);
+    final Color riskBg = score >= 60 ? const Color(0xFFFEF2F2) : score >= 30 ? const Color(0xFFFFF7ED) : const Color(0xFFCCFBF1);
+
+    return _ProfileCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('IDRS Assessment Score', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: riskBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: riskColor.withValues(alpha: 0.2)),
+                ),
+                child: Text(riskText, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: riskColor)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('$score', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.black)),
+              const Text(' / 100', style: TextStyle(fontSize: 16, color: Colors.black54)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text('Based on age, family history, waist circumference, and physical activity.', style: TextStyle(fontSize: 11, color: Colors.black54)),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 100.0,
+              backgroundColor: const Color(0xFFE5E7EB),
+              color: riskColor,
+              minHeight: 6,
+            ),
+          ),
         ],
       ),
     );

@@ -28,6 +28,7 @@ class Patient {
   final double? currentWeight;
   final int? gpaqMetMinutes;
   final String? gpaqLevel;
+  final int? idrsScore;
 
   const Patient({
     required this.id,
@@ -41,6 +42,7 @@ class Patient {
     this.currentWeight,
     this.gpaqMetMinutes,
     this.gpaqLevel,
+    this.idrsScore,
   });
 }
 
@@ -232,6 +234,10 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
               const SizedBox(height: 20),
               _buildTotalParticipantsCard(displayTotal, displayHigh, displayMod, displayLow),
               const SizedBox(height: 16),
+              _buildIdrsScorecard(docs),
+              const SizedBox(height: 16),
+              _buildGpaqScorecard(docs),
+              const SizedBox(height: 16),
               _buildCurriculumProgressCard(displayTotal),
               const SizedBox(height: 16),
               _buildFoodLogCard(displayTotal),
@@ -244,6 +250,166 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildIdrsScorecard(List<DocumentSnapshot> docs) {
+    int totalScore = 0;
+    int validCount = 0;
+    int highCount = 0;
+    int modCount = 0;
+    int lowCount = 0;
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>? ?? {};
+      final score = (data['idrsScore'] as num? ?? 45).toInt();
+      totalScore += score;
+      validCount++;
+
+      if (score >= 60) {
+        highCount++;
+      } else if (score >= 30) {
+        modCount++;
+      } else {
+        lowCount++;
+      }
+    }
+
+    final avgScore = validCount > 0 ? (totalScore / validCount).round() : 0;
+
+    return _DashboardCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.analytics_rounded, color: Color(0xFFB91C1C), size: 20),
+              const SizedBox(width: 8),
+              const Text('IDRS Risk Scorecard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFB91C1C).withValues(alpha: 0.2)),
+                ),
+                child: const Text('Live Feed', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFB91C1C))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('$avgScore', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+              const Text(' / 100', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
+              const Spacer(),
+              Text(avgScore >= 60 ? 'HIGH RISK AVG' : avgScore >= 30 ? 'MODERATE AVG' : 'LOW RISK AVG',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: avgScore >= 60 ? const Color(0xFFB91C1C) : const Color(0xFF9A3412)),
+              ),
+            ],
+          ),
+          const Text('Cohort Average IDRS Score', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildMetricStat('High (≥60)', '$highCount', const Color(0xFFB91C1C)),
+              _buildVDivider(),
+              _buildMetricStat('Mod (30-50)', '$modCount', const Color(0xFF9A3412)),
+              _buildVDivider(),
+              _buildMetricStat('Low (<30)', '$lowCount', const Color(0xFF0F766E)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGpaqScorecard(List<DocumentSnapshot> docs) {
+    int totalMins = 0;
+    int validCount = 0;
+    int highActive = 0;
+    int modActive = 0;
+    int lowActive = 0;
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>? ?? {};
+      final metMins = (data['gpaqMetMinutes'] as num? ?? 450).toInt();
+      totalMins += metMins;
+      validCount++;
+
+      if (metMins >= 600) {
+        highActive++;
+      } else if (metMins >= 300) {
+        modActive++;
+      } else {
+        lowActive++;
+      }
+    }
+
+    final avgMetMins = validCount > 0 ? (totalMins / validCount).round() : 0;
+
+    return _DashboardCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.directions_run_rounded, color: Color(0xFF0F766E), size: 20),
+              const SizedBox(width: 8),
+              const Text('GPAQ Activity Scorecard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCCFBF1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF0F766E).withValues(alpha: 0.2)),
+                ),
+                child: const Text('Live Feed', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('$avgMetMins', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+              const Text(' MET-min', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
+              const Spacer(),
+              Text(avgMetMins >= 600 ? 'ACTIVE AVG' : 'MODERATE AVG',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
+              ),
+            ],
+          ),
+          const Text('Cohort Average Weekly MET Minutes', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildMetricStat('High (≥600)', '$highActive', const Color(0xFF0F766E)),
+              _buildVDivider(),
+              _buildMetricStat('Mod (300-599)', '$modActive', const Color(0xFF5EEAD4)),
+              _buildVDivider(),
+              _buildMetricStat('Low (<300)', '$lowActive', const Color(0xFFDC2626)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricStat(String label, String value, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87)),
+        ],
+      ),
     );
   }
 
@@ -768,6 +934,7 @@ class PatientsListScreen extends StatelessWidget {
                   final currentWeight = (data['currentWeight'] as num?)?.toDouble();
                   final gpaqMetMinutes = data['gpaqMetMinutes'] as int?;
                   final gpaqLevel = data['gpaqLevel'] as String?;
+                  final idrsScore = (data['idrsScore'] as num?)?.toInt();
 
                   final p = Patient(
                     id: doc.id,
@@ -781,6 +948,7 @@ class PatientsListScreen extends StatelessWidget {
                     currentWeight: currentWeight,
                     gpaqMetMinutes: gpaqMetMinutes,
                     gpaqLevel: gpaqLevel,
+                    idrsScore: idrsScore,
                   );
               Color riskColor;
               Color riskBg;
