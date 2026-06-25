@@ -6,7 +6,7 @@ class HealthConnectService implements HealthService {
   static const List<HealthDataType> _types = [
     HealthDataType.STEPS,
     HealthDataType.DISTANCE_DELTA,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
+    HealthDataType.TOTAL_CALORIES_BURNED,
   ];
   @override
   Future<bool> isHealthConnectAvailable() async {
@@ -29,7 +29,22 @@ class HealthConnectService implements HealthService {
       'RAW STEPS: $steps',
     );
     return steps ?? 0;
+  }
 
+  @override
+  Future<int> getWeeklySteps() async {
+    final now = DateTime.now();
+    // Assuming the week starts on Monday (weekday 1)
+    final daysToSubtract = now.weekday - 1;
+    final startOfWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: daysToSubtract));
+
+    debugPrint('getWeeklySteps() CALLED (from $startOfWeek)');
+    final steps = await _health.getTotalStepsInInterval(
+      startOfWeek,
+      now,
+    );
+    debugPrint('RAW WEEKLY STEPS: $steps');
+    return steps ?? 0;
   }
   @override
   Future<bool> hasPermissions()async {
@@ -49,11 +64,10 @@ class HealthConnectService implements HealthService {
     final startOfDay = DateTime(now.year, now.month, now.day);
 
     try {
-      final data = await _health.getHealthIntervalDataFromTypes(
-        startDate: startOfDay,
-        endDate: now,
+      final data = await _health.getHealthDataFromTypes(
+        startTime: startOfDay,
+        endTime: now,
         types: [HealthDataType.DISTANCE_DELTA],
-        interval: 1440,
       );
 
       if (data.isNotEmpty) {
@@ -61,7 +75,7 @@ class HealthConnectService implements HealthService {
         for (var point in data) {
           totalDistance += double.tryParse(point.value.toString()) ?? 0.0;
         }
-        if (totalDistance > 0) return totalDistance;
+        if (totalDistance > 0) return totalDistance / 1000.0; // Convert meters to km
       }
     } catch (e) {
       print('Native distance fetch error: $e');
@@ -69,7 +83,7 @@ class HealthConnectService implements HealthService {
 
     // Fallback: estimate from steps (assuming 0.762 meters per step)
     final steps = await getTodaySteps();
-    return steps * 0.762;
+    return (steps * 0.762) / 1000.0; // Return km
   }
 
   @override
@@ -78,19 +92,32 @@ class HealthConnectService implements HealthService {
     final startOfDay = DateTime(now.year, now.month, now.day);
 
     try {
-      final data = await _health.getHealthIntervalDataFromTypes(
-        startDate: startOfDay,
-        endDate: now,
-        types: [HealthDataType.ACTIVE_ENERGY_BURNED],
-        interval: 1440,
+      final rawData = await _health.getHealthDataFromTypes(
+        startTime: startOfDay,
+        endTime: now,
+        types: [
+          HealthDataType.ACTIVE_ENERGY_BURNED,
+          HealthDataType.TOTAL_CALORIES_BURNED,
+        ],
       );
+      final data = _health.removeDuplicates(rawData);
 
       if (data.isNotEmpty) {
-        double totalCalories = 0;
+        double activeCals = 0;
+        double totalCals = 0;
         for (var point in data) {
-          totalCalories += double.tryParse(point.value.toString()) ?? 0.0;
+          final val = double.tryParse(point.value.toString()) ?? 0.0;
+          if (point.type == HealthDataType.ACTIVE_ENERGY_BURNED) {
+            activeCals += val;
+          } else if (point.type == HealthDataType.TOTAL_CALORIES_BURNED) {
+            totalCals += val;
+          }
         }
-        if (totalCalories > 0) return totalCalories;
+        final steps = await getTodaySteps();
+        final estCals = steps * 0.04;
+        if (activeCals > 0) return max(activeCals, estCals);
+        if (estCals > 0) return estCals;
+        if (totalCals > 0) return totalCals;
       }
     } catch (e) {
       print('Native calories fetch error: $e');

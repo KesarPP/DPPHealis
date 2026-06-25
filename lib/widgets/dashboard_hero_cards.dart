@@ -1,9 +1,17 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../models/ndpp_constants.dart';
+import '../services/activity_metrics_engine.dart';
 
 class DashboardHeroCards extends StatefulWidget {
-  const DashboardHeroCards({super.key});
+  final List<DailyAggregate> trailing30Days;
+  final int programWeek;
+  const DashboardHeroCards({
+    super.key,
+    required this.trailing30Days,
+    required this.programWeek,
+  });
 
   @override
   State<DashboardHeroCards> createState() => _DashboardHeroCardsState();
@@ -35,6 +43,8 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
                 padding: const EdgeInsets.only(right: 12),
                 child: _ActivityJourneyCard(
                   isWeekly: _selectedSegment == 0,
+                  trailing30Days: widget.trailing30Days,
+                  programWeek: widget.programWeek,
                   toggleWidget: _buildSegmentedToggle(const Color(0xFF064E3B),
                       const Color(0xFFA7F3D0), const Color(0xFF64748B)),
                 ),
@@ -597,8 +607,14 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
 class _ActivityJourneyCard extends StatefulWidget {
   final bool isWeekly;
   final Widget toggleWidget;
-  const _ActivityJourneyCard(
-      {required this.isWeekly, required this.toggleWidget});
+  final List<DailyAggregate> trailing30Days;
+  final int programWeek;
+  const _ActivityJourneyCard({
+    required this.isWeekly,
+    required this.toggleWidget,
+    required this.trailing30Days,
+    required this.programWeek,
+  });
 
   @override
   State<_ActivityJourneyCard> createState() => _ActivityJourneyCardState();
@@ -634,6 +650,25 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
 
   @override
   Widget build(BuildContext context) {
+    final kcalRate = ActivityMissionEngine.getPersonalizedKcalRate(widget.trailing30Days);
+    final summary = widget.isWeekly
+        ? ActivityMissionEngine.getWeeklySummary(
+            trailing30Days: widget.trailing30Days,
+            programWeek: widget.programWeek,
+            kcalRate: kcalRate,
+          )
+        : ActivityMissionEngine.getMonthlySummary(
+            trailing30Days: widget.trailing30Days,
+            programWeek: widget.programWeek,
+            kcalRate: kcalRate,
+          );
+
+    final todayAgg = widget.trailing30Days.isNotEmpty
+        ? widget.trailing30Days.last
+        : DailyAggregate.empty(DateTime.now());
+    final int todayScore = ActivityMetricsEngine.calculateActivityScore(todayAgg, widget.programWeek);
+    final double todayRingValue = todayScore / 100.0;
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -650,8 +685,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: Colors.black, width: 2), // Added black border
+                border: Border.all(color: Colors.black, width: 2),
                 boxShadow: _isPressed
                     ? [
                         BoxShadow(
@@ -664,7 +698,6 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
               clipBehavior: Clip.antiAlias,
               child: Stack(
                 children: [
-                  // 1. Background Image
                   Positioned.fill(
                     child: Image.asset(
                       'assets/images/activity_park.png',
@@ -672,7 +705,6 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                       alignment: Alignment.topCenter,
                     ),
                   ),
-                  // 2. Warm Fade Overlay
                   Positioned(
                     top: 0,
                     left: 0,
@@ -692,13 +724,11 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                       ),
                     ),
                   ),
-                  // 3. Content
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Header
                         Row(
                           children: [
                             Container(
@@ -706,18 +736,14 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                               height: 44,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFB923C),
-                                    Color(0xFFEA580C)
-                                  ],
+                                  colors: [Color(0xFFFB923C), Color(0xFFEA580C)],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFEA580C)
-                                        .withValues(alpha: 0.4),
+                                    color: const Color(0xFFEA580C).withValues(alpha: 0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -756,21 +782,18 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                           ],
                         ),
                         const SizedBox(height: 24),
-                        // Large Circular Progress with orange highlight
                         SizedBox(
                           width: 160,
                           height: 160,
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              // Orange highlight glow behind the ring
                               Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFF59E0B)
-                                          .withValues(alpha: 0.4),
+                                      color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
                                       blurRadius: 24,
                                       spreadRadius: 8,
                                     ),
@@ -778,9 +801,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                 ),
                               ),
                               TweenAnimationBuilder<double>(
-                                tween: Tween<double>(
-                                    begin: 0.0,
-                                    end: widget.isWeekly ? 0.93 : 0.90),
+                                tween: Tween<double>(begin: 0.0, end: todayRingValue),
                                 duration: const Duration(milliseconds: 1500),
                                 curve: Curves.easeOutCubic,
                                 builder: (context, value, child) {
@@ -791,14 +812,12 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                       CircularProgressIndicator(
                                         value: value,
                                         strokeWidth: 14,
-                                        backgroundColor:
-                                            Colors.white.withValues(alpha: 0.8),
+                                        backgroundColor: Colors.white.withValues(alpha: 0.8),
                                         color: const Color(0xFFF59E0B),
                                         strokeCap: StrokeCap.round,
                                       ),
                                       Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Stack(
                                             alignment: Alignment.center,
@@ -806,20 +825,16 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                               Text('$percentage%',
                                                   style: TextStyle(
                                                       fontSize: 42,
-                                                      fontWeight:
-                                                          FontWeight.w900,
+                                                      fontWeight: FontWeight.w900,
                                                       height: 1.0,
                                                       foreground: Paint()
-                                                        ..style =
-                                                            PaintingStyle.stroke
+                                                        ..style = PaintingStyle.stroke
                                                         ..strokeWidth = 4
-                                                        ..color =
-                                                            Colors.white)),
+                                                        ..color = Colors.white)),
                                               Text('$percentage%',
                                                   style: const TextStyle(
                                                       fontSize: 42,
-                                                      fontWeight:
-                                                          FontWeight.w900,
+                                                      fontWeight: FontWeight.w900,
                                                       color: Color(0xFF1E293B),
                                                       height: 1.0)),
                                             ],
@@ -844,8 +859,6 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                       ],
                     ),
                   ),
-
-                  // 4. Bottom Solid White Panel (Data Table)
                   Positioned(
                     left: 0,
                     right: 0,
@@ -853,8 +866,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7).withValues(
-                            alpha: 0.95), // Pastel green for summary tab
+                        color: const Color(0xFFDCFCE7).withValues(alpha: 0.95),
                         borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(24),
                           bottomRight: Radius.circular(24),
@@ -872,30 +884,18 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                       child: Column(
                         children: [
                           Text(
-                            widget.isWeekly
-                                ? 'Weekly Summary'
-                                : 'Monthly Summary',
+                            widget.isWeekly ? 'Weekly Summary' : 'Monthly Summary',
                             style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.black87),
                           ),
                           const SizedBox(height: 12),
-                          _buildDataRow(
-                              'Mission Goal',
-                              widget.isWeekly
-                                  ? '500 Active Mins / 1,500 kcal'
-                                  : '2,000 Active Mins / 6,000 kcal'),
+                          _buildDataRow('Mission Goal', summary.goalText),
                           _buildDivider(),
-                          _buildDataRow(
-                              'Completed',
-                              widget.isWeekly
-                                  ? '465 Active Mins / 1,395 kcal'
-                                  : '1,800 Active Mins / 5,200 kcal'),
+                          _buildDataRow('Completed', summary.completedText),
                           _buildDivider(),
-                          _buildDataRow(
-                              'Progress', widget.isWeekly ? '93%' : '90%',
-                              isLast: true),
+                          _buildDataRow('Progress', '${summary.progressPercentage}%', isLast: true),
                         ],
                       ),
                     ),

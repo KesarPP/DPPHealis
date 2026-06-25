@@ -7,6 +7,8 @@ abstract class HealthService {
 
   Future<int> getTodaySteps();
 
+  Future<int> getWeeklySteps();
+
   Future<double> getTodayDistance();
 
   Future<double> getTodayCalories();

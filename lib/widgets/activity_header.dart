@@ -113,15 +113,21 @@ class _HealthConnectBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      elevation: 2, // Slight shadow
+      shadowColor: GelatoTheme.cardShadow.first.color,
+      child: InkWell(
+        onTap: onSyncTap,
         borderRadius: BorderRadius.circular(12),
-        border: GelatoTheme.cardBorder,
-        boxShadow: GelatoTheme.cardShadow,
-      ),
-      child: Column(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: GelatoTheme.cardBorder,
+          ),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -145,15 +151,12 @@ class _HealthConnectBadge extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              GestureDetector(
-                onTap: onSyncTap,
-                child: RotationTransition(
-                  turns: syncController,
-                  child: const Icon(
-                    Icons.sync,
-                    size: 14,
-                    color: GelatoTheme.textLight,
-                  ),
+              RotationTransition(
+                turns: syncController,
+                child: const Icon(
+                  Icons.sync,
+                  size: 14,
+                  color: GelatoTheme.textLight,
                 ),
               ),
               const SizedBox(width: 2),
@@ -176,6 +179,6 @@ class _HealthConnectBadge extends StatelessWidget {
           ),
         ],
       ),
-    );
+    )));
   }
 }

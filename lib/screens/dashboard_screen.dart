@@ -7,6 +7,9 @@ import '../widgets/dashboard_risk_card.dart';
 import '../widgets/dashboard_momentum.dart';
 import '../widgets/dashboard_achievements.dart';
 import '../widgets/user_side_drawer.dart';
+import '../services/health_sync_service.dart';
+import '../services/activity_metrics_engine.dart';
+import '../models/ndpp_constants.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -16,6 +19,50 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final ScrollController _scrollController = ScrollController();
+  List<Achievement> _achievements = [];
+  List<DailyAggregate> _past30Days = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final healthSync = HealthSyncService();
+    await healthSync.requestPermissions();
+    final now = DateTime.now();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 29));
+    final past30Days = await healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now);
+    
+    final pastDays = past30Days.length >= 7 
+        ? past30Days.sublist(past30Days.length - 7)
+        : past30Days;
+
+    const int mealLogCount = 52;
+    const double baselineWeight = 90.0;
+    const double currentWeight = 84.0;
+    const double riskScore = 28.0;
+    const int programWeek = 6;
+
+    final achievements = ActivityMetricsEngine.evaluateAchievements(
+      pastDays: pastDays,
+      mealLogCount: mealLogCount,
+      baselineWeight: baselineWeight,
+      currentWeight: currentWeight,
+      riskScore: riskScore,
+      programWeek: programWeek,
+    );
+
+    if (mounted) {
+      setState(() {
+        _achievements = achievements;
+        _past30Days = past30Days;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -26,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5), // Soft lavender from Gelato theme to highlight white cards
+      backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5),
       endDrawer: const UserSideDrawer(),
       body: SafeArea(
         child: Stack(
@@ -39,44 +86,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
             CustomScrollView(
               controller: _scrollController,
               physics: const BouncingScrollPhysics(),
-              slivers: const [
+              slivers: [
                 // 1. Dashboard Header
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: DashboardHeader(),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 12)),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                 // 2. Hero Progress Area (Weight & Activity)
                 SliverToBoxAdapter(
-                  child: DashboardHeroCards(),
+                  child: _isLoading
+                      ? const SizedBox(height: 480, child: Center(child: CircularProgressIndicator()))
+                      : DashboardHeroCards(trailing30Days: _past30Days, programWeek: 6),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 16)),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
                 // 3. Today's Mission (Timeline)
                 SliverToBoxAdapter(
-                  child: DashboardTimeline(),
+                  child: _isLoading
+                      ? const SizedBox(height: 180, child: Center(child: CircularProgressIndicator()))
+                      : DashboardTimeline(
+                          todayAgg: _past30Days.isNotEmpty ? _past30Days.last : null,
+                          mealLogCount: 2,
+                          waterLogged: true,
+                          weightLogged: true,
+                          lessonCompleted: true,
+                          journalLogged: false,
+                        ),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 16)),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
                 // 4. Prediabetes Risk Card (Compact)
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: DashboardRiskCard(),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 16)),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
                 // 5. Your Momentum
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: DashboardMomentum(),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 16)),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
                 // 6. Achievement Showcase
                 SliverToBoxAdapter(
-                  child: DashboardAchievements(),
+                  child: _isLoading 
+                    ? const Center(child: CircularProgressIndicator()) 
+                    : DashboardAchievements(achievements: _achievements),
                 ),
                 
                 // Bottom Padding for BottomNavigationBar
-                SliverPadding(padding: EdgeInsets.only(bottom: 120)),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
               ],
             ),
           ],

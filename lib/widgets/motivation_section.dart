@@ -1,9 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../models/ndpp_constants.dart';
+import '../services/activity_metrics_engine.dart';
 
 class MotivationSection extends StatefulWidget {
-  const MotivationSection({super.key});
+  final List<DailyAggregate> pastDays;
+
+  const MotivationSection({super.key, required this.pastDays});
 
   @override
   State<MotivationSection> createState() => _MotivationSectionState();
@@ -15,8 +19,12 @@ class _MotivationSectionState extends State<MotivationSection>
   late Animation<double> _flameAnim;
   late AnimationController _particleController;
 
-  final List<String> _days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  final List<bool> _activeDays = [true, true, true, true, true, false, false];
+  late List<String> _days;
+  late List<bool> _activeDays;
+  late int _streak;
+  late int _level;
+  late int _daysToNext;
+
   final List<_Particle> _particles = [];
   final math.Random _random = math.Random();
 
@@ -41,6 +49,38 @@ class _MotivationSectionState extends State<MotivationSection>
       duration: const Duration(seconds: 2),
     );
     _particleController.addListener(_updateParticles);
+
+    _computeData();
+  }
+
+  @override
+  void didUpdateWidget(MotivationSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pastDays != widget.pastDays) {
+      _computeData();
+    }
+  }
+
+  void _computeData() {
+    _days = [];
+    _activeDays = [];
+    final daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    
+    // Assuming pastDays is chronologically ordered, ending with today.
+    for (var day in widget.pastDays) {
+      _days.add(daysOfWeek[day.date.weekday - 1]);
+      _activeDays.add(day.isActiveDay);
+    }
+    
+    // Pad to 7 if pastDays is less than 7 for some reason
+    while (_days.length < 7) {
+      _days.insert(0, '-');
+      _activeDays.insert(0, false);
+    }
+
+    _streak = ActivityMetricsEngine.getCurrentStreak(widget.pastDays);
+    _level = ActivityMetricsEngine.getStreakLevel(_streak);
+    _daysToNext = ActivityMetricsEngine.getDaysToNextMilestone(_streak);
   }
 
   @override
@@ -147,11 +187,11 @@ class _MotivationSectionState extends State<MotivationSection>
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.black87, width: 1.5),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Text(
-                              'Level 3',
-                              style: TextStyle(
+                              'Level $_level',
+                              style: const TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                                 color: GelatoTheme.textDark,
@@ -168,7 +208,7 @@ class _MotivationSectionState extends State<MotivationSection>
                       Stack(
                         children: [
                           Text(
-                            '12',
+                            '$_streak',
                             style: TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.w900,
@@ -185,9 +225,9 @@ class _MotivationSectionState extends State<MotivationSection>
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ).createShader(bounds),
-                            child: const Text(
-                              '12',
-                              style: TextStyle(
+                            child: Text(
+                              '$_streak',
+                              style: const TextStyle(
                                 fontSize: 40,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
@@ -284,23 +324,23 @@ class _MotivationSectionState extends State<MotivationSection>
                   ),
                   const SizedBox(height: 14),
                   // Bottom Reward Info
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 2),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(
-                            '2 days remaining to hit milestone',
-                            style: TextStyle(
+                            _daysToNext > 0 ? '$_daysToNext days remaining to hit milestone' : 'Max milestone reached!',
+                            style: const TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.bold,
                               color: GelatoTheme.textLight,
                             ),
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Text(
+                        const SizedBox(width: 4),
+                        const Text(
                           '+150 XP PENDING',
                           style: TextStyle(
                             fontSize: 10.5,

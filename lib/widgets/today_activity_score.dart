@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 
 class TodayActivityScore extends StatelessWidget {
-  const TodayActivityScore({super.key});
+  final int score;
+  final String feedbackText;
 
-  @override
+  const TodayActivityScore({
+    super.key,
+    required this.score,
+    required this.feedbackText,
+  });
   Widget build(BuildContext context) {
     return Container(
       height: 150,
@@ -47,20 +52,20 @@ class TodayActivityScore extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          const Row(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                '78',
-                style: TextStyle(
+                '$score',
+                style: const TextStyle(
                   fontSize: 42,
                   fontWeight: FontWeight.w900,
                   color: GelatoTheme.purpleDark,
                   height: 1.0,
                 ),
               ),
-              Text(
+              const Text(
                 '/100',
                 style: TextStyle(
                   fontSize: 16,
@@ -73,17 +78,17 @@ class TodayActivityScore extends StatelessWidget {
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: const LinearProgressIndicator(
-              value: 0.78,
+            child: LinearProgressIndicator(
+              value: score / 100.0,
               minHeight: 10,
-              backgroundColor: Color(0xFFEFEAEA),
-              valueColor: AlwaysStoppedAnimation(GelatoTheme.purpleDark),
+              backgroundColor: const Color(0xFFEFEAEA),
+              valueColor: const AlwaysStoppedAnimation(GelatoTheme.purpleDark),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            "You're ahead of 68% of your weekly average.",
-            style: TextStyle(
+          Text(
+            feedbackText,
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: GelatoTheme.textDark,

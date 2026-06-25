@@ -2,8 +2,25 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 
+import '../models/ndpp_constants.dart';
+
 class DashboardTimeline extends StatefulWidget {
-  const DashboardTimeline({super.key});
+  final DailyAggregate? todayAgg;
+  final int mealLogCount;
+  final bool waterLogged;
+  final bool weightLogged;
+  final bool lessonCompleted;
+  final bool journalLogged;
+
+  const DashboardTimeline({
+    super.key,
+    this.todayAgg,
+    this.mealLogCount = 2,
+    this.waterLogged = true,
+    this.weightLogged = true,
+    this.lessonCompleted = true,
+    this.journalLogged = false,
+  });
 
   @override
   State<DashboardTimeline> createState() => _DashboardTimelineState();
@@ -14,57 +31,65 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
   late AnimationController _pulseController;
   late Animation<double> _progressAnim;
 
-  final List<_TimelineItem> items = [
-    _TimelineItem(
-      text: "Breakfast\nlogged",
-      done: true,
-      mainIcon: Icons.breakfast_dining_rounded,
-      timeText: "8:12 AM",
-      statusText: "Done",
-    ),
-    _TimelineItem(
-      text: "Morning\nwalk",
-      done: true,
-      mainIcon: Icons.directions_run_rounded,
-      timeText: "8:45 AM",
-      statusText: "Done",
-    ),
-    _TimelineItem(
-      text: "Water goal\n75%",
-      done: true,
-      mainIcon: Icons.water_drop_rounded,
-      timeText: "Ongoing",
-      statusText: "Great!",
-    ),
-    _TimelineItem(
-      text: "Log\nlunch",
-      done: false,
-      mainIcon: Icons.assignment_rounded,
-      timeText: "Pending",
-      statusText: "12-2 PM",
-    ),
-    _TimelineItem(
-      text: "Evening\nactivity",
-      done: false,
-      mainIcon: Icons.fitness_center_rounded,
-      timeText: "Pending",
-      statusText: "6:00 PM",
-    ),
-    _TimelineItem(
-      text: "Weekly\nweigh-in",
-      done: false,
-      mainIcon: Icons.monitor_weight_rounded,
-      timeText: "Pending",
-      statusText: "Tomorrow",
-    ),
-  ];
-
+  late List<_TimelineItem> items;
   late int doneCount;
+
+  void _buildItems() {
+    final int qualifyingMins = widget.todayAgg?.qualifyingActiveMinutes ?? 0;
+    final bool activityDone = qualifyingMins >= 10;
+
+    items = [
+      _TimelineItem(
+        text: "Log a\nmeal",
+        done: widget.mealLogCount >= 1,
+        mainIcon: Icons.restaurant_rounded,
+        timeText: widget.mealLogCount >= 1 ? "Logged" : "Pending",
+        statusText: widget.mealLogCount >= 1 ? "${widget.mealLogCount} logged" : "Log breakfast",
+      ),
+      _TimelineItem(
+        text: "Qualifying\nactivity",
+        done: activityDone,
+        mainIcon: Icons.directions_run_rounded,
+        timeText: activityDone ? "Done" : "Pending",
+        statusText: activityDone ? "$qualifyingMins mins logged" : "≥10m session",
+      ),
+      _TimelineItem(
+        text: "Hydration\ncheck-in",
+        done: widget.waterLogged,
+        mainIcon: Icons.water_drop_rounded,
+        timeText: widget.waterLogged ? "Done" : "Pending",
+        statusText: widget.waterLogged ? "Great!" : "Log water",
+      ),
+      _TimelineItem(
+        text: "Weight\ncheck-in",
+        done: widget.weightLogged,
+        mainIcon: Icons.monitor_weight_rounded,
+        timeText: widget.weightLogged ? "Done" : "Pending",
+        statusText: widget.weightLogged ? "Logged" : "Check-in",
+      ),
+      _TimelineItem(
+        text: "Today's\nlesson",
+        done: widget.lessonCompleted,
+        mainIcon: Icons.menu_book_rounded,
+        timeText: widget.lessonCompleted ? "Done" : "Pending",
+        statusText: widget.lessonCompleted ? "Completed" : "Read lesson",
+      ),
+      _TimelineItem(
+        text: "Reflection\nnote",
+        done: widget.journalLogged,
+        mainIcon: Icons.edit_note_rounded,
+        timeText: widget.journalLogged ? "Done" : "Pending",
+        statusText: widget.journalLogged ? "Saved" : "Add note",
+      ),
+    ];
+
+    doneCount = items.where((element) => element.done).length;
+  }
 
   @override
   void initState() {
     super.initState();
-    doneCount = items.where((element) => element.done).length;
+    _buildItems();
     
     // Intro animation (line filling, checks popping)
     _introController = AnimationController(
@@ -98,6 +123,12 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
         _introController.forward();
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(DashboardTimeline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _buildItems();
   }
 
   @override

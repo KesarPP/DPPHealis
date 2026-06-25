@@ -39,11 +39,16 @@ class ActivityRepositoryImpl implements ActivityRepository {
       return _cachedStats!;
     }
 
+    if (!await healthService.hasPermissions()) {
+      await healthService.requestPermissions();
+    }
+
     final results = await Future.wait([
       healthService.getTodaySteps(),
       healthService.getTodayDistance(),
       healthService.getTodayCalories(),
       healthService.getTodayActiveMinutes(),
+      healthService.getWeeklySteps(),
     ]);
 
     final stats = ActivityStats(
@@ -51,6 +56,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
       distance: results[1] as double,
       calories: results[2] as double,
       activeMinutes: results[3] as int,
+      weeklySteps: results[4] as int,
     );
   _cachedStats = stats;
   _lastSyncTime = DateTime.now();

@@ -1,9 +1,15 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../services/activity_metrics_engine.dart';
 
 class DashboardAchievements extends StatefulWidget {
-  const DashboardAchievements({super.key});
+  final List<Achievement> achievements;
+
+  const DashboardAchievements({
+    super.key,
+    required this.achievements,
+  });
 
   @override
   State<DashboardAchievements> createState() => _DashboardAchievementsState();
@@ -27,33 +33,67 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
     super.dispose();
   }
 
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'calendar_month_rounded': return Icons.calendar_month_rounded;
+      case 'emoji_events_rounded': return Icons.emoji_events_rounded;
+      case 'timer_rounded': return Icons.timer_rounded;
+      case 'directions_walk_rounded': return Icons.directions_walk_rounded;
+      case 'restaurant_rounded': return Icons.restaurant_rounded;
+      case 'explore_rounded': return Icons.explore_rounded;
+      case 'accessibility_new_rounded': return Icons.accessibility_new_rounded;
+      case 'cleaning_services_rounded': return Icons.cleaning_services_rounded;
+      case 'monitor_weight_rounded': return Icons.monitor_weight_rounded;
+      case 'health_and_safety_rounded': return Icons.health_and_safety_rounded;
+      default: return Icons.star_rounded;
+    }
+  }
+
+  Color _getColor(String id) {
+    switch (id) {
+      case 'streak_7': return GelatoTheme.orangeDark;
+      case 'logged_50_meals': return GelatoTheme.greenDark;
+      case 'first_10k': return GelatoTheme.blueDark;
+      case 'lose_5kg': return GelatoTheme.pinkDark;
+      case 'low_risk_zone': return GelatoTheme.pinkDark;
+      case 'week_150': return GelatoTheme.purpleDark;
+      case 'streak_30': return GelatoTheme.purpleDark;
+      default: return GelatoTheme.blueDark;
+    }
+  }
+
+  Color _getBgColor(String id) {
+    switch (id) {
+      case 'streak_7': return GelatoTheme.orange;
+      case 'logged_50_meals': return GelatoTheme.green;
+      case 'first_10k': return GelatoTheme.blue;
+      case 'lose_5kg': return GelatoTheme.pink;
+      case 'low_risk_zone': return GelatoTheme.pink;
+      case 'week_150': return GelatoTheme.purple;
+      case 'streak_30': return GelatoTheme.purple;
+      default: return GelatoTheme.blue;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Data matching the image exactly
-    final earnedItems = [
-      _AchievementData(title: "7 Day Streak", sub: "Kept the streak alive!", icon: Icons.local_fire_department_rounded, color: GelatoTheme.orangeDark, bgColor: GelatoTheme.orange, progress: ""),
-      _AchievementData(title: "Logged 50 Meals", sub: "Fueling your body right!", icon: Icons.restaurant_menu_rounded, color: GelatoTheme.greenDark, bgColor: GelatoTheme.green, progress: ""),
-      _AchievementData(title: "First 10K Step Day", sub: "Big steps, big progress!", icon: Icons.directions_run_rounded, color: GelatoTheme.blueDark, bgColor: GelatoTheme.blue, progress: ""),
-      _AchievementData(title: "Lost First 2 kg", sub: "You're getting lighter!", icon: Icons.monitor_weight_rounded, color: GelatoTheme.pinkDark, bgColor: GelatoTheme.pink, progress: ""),
-      _AchievementData(title: "Risk Score Reduced", sub: "Healthier every day!", icon: Icons.favorite_rounded, color: GelatoTheme.pinkDark, bgColor: GelatoTheme.pink, progress: ""),
-      _AchievementData(title: "Session Milestone", sub: "Learning. Growing. Winning!", icon: Icons.school_rounded, color: GelatoTheme.purpleDark, bgColor: GelatoTheme.purple, progress: ""),
-    ];
-
-    final lockedItems = [
-      _AchievementData(title: "Lose 5 kg", sub: "You're on your way!", icon: Icons.monitor_weight_rounded, color: GelatoTheme.pinkDark, bgColor: GelatoTheme.pink, progress: "2.6 / 5 kg", progressRatio: 2.6/5, locked: true),
-      _AchievementData(title: "Reach Low Risk Zone", sub: "Unlock a healthier you!", icon: Icons.health_and_safety_rounded, color: GelatoTheme.greenDark, bgColor: GelatoTheme.green, progress: "42 / 100", progressRatio: 42/100, locked: true),
-      _AchievementData(title: "30 Day Streak", sub: "Consistency is power!", icon: Icons.calendar_month_rounded, color: GelatoTheme.purpleDark, bgColor: GelatoTheme.purple, progress: "14 / 30 days", progressRatio: 14/30, locked: true),
-      _AchievementData(title: "Complete Program", sub: "Finish strong!", icon: Icons.emoji_events_rounded, color: GelatoTheme.yellowDark, bgColor: GelatoTheme.yellow, progress: "5 / 16 sessions", progressRatio: 5/16, locked: true),
-      _AchievementData(title: "Wellness Champion", sub: "The ultimate achievement!", icon: Icons.workspace_premium_rounded, color: GelatoTheme.blueDark, bgColor: GelatoTheme.blue, progress: "0 / 1", progressRatio: 0.0, locked: true),
-    ];
+    final earnedItems = widget.achievements.where((a) => a.unlocked).toList();
+    
+    // Sort locked items by progress ratio descending
+    final lockedItems = widget.achievements.where((a) => !a.unlocked).toList();
+    lockedItems.sort((a, b) {
+      final ratioA = a.progressTarget > 0 ? a.progressCurrent / a.progressTarget : 0;
+      final ratioB = b.progressTarget > 0 ? b.progressCurrent / b.progressTarget : 0;
+      return ratioB.compareTo(ratioA);
+    });
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFDBEAFE), // Stronger pastel blue (blue-100) to highlight the golden stars
+        color: const Color(0xFFDBEAFE),
         borderRadius: GelatoTheme.cardRadius,
-        border: GelatoTheme.cardBorder, // Add black border
+        border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
       ),
       child: Column(
@@ -70,18 +110,26 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
           ),
           const SizedBox(height: 16),
           
-          // Horizontal list of earned items
-          SizedBox(
-            height: 160,
-            child: ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              scrollDirection: Axis.horizontal,
-              itemCount: earnedItems.length,
-              itemBuilder: (context, index) {
-                return _buildBadge(earnedItems[index], index, false);
-              },
+          if (earnedItems.isNotEmpty)
+            SizedBox(
+              height: 160,
+              child: ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                scrollDirection: Axis.horizontal,
+                itemCount: earnedItems.length,
+                itemBuilder: (context, index) {
+                  return _buildBadge(earnedItems[index], index, false);
+                },
+              ),
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Text(
+                "Complete tasks to earn achievements!",
+                style: TextStyle(color: GelatoTheme.textLight, fontWeight: FontWeight.w600),
+              ),
             ),
-          ),
           
           const SizedBox(height: 16),
           
@@ -136,7 +184,19 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
     );
   }
 
-  Widget _buildBadge(_AchievementData item, int index, bool locked) {
+  Widget _buildBadge(Achievement item, int index, bool locked) {
+    final double progressRatio = item.progressTarget > 0 ? item.progressCurrent / item.progressTarget : 0.0;
+    
+    // Format progress string
+    String progressStr = "";
+    if (item.id.contains("kg") || item.id == "low_risk_zone") {
+      progressStr = "${item.progressCurrent.toStringAsFixed(1)} / ${item.progressTarget.toStringAsFixed(1)}";
+    } else {
+      progressStr = "${item.progressCurrent.round()} / ${item.progressTarget.round()}";
+    }
+
+    final Color color = _getColor(item.id);
+
     return AnimatedBuilder(
       animation: _animController,
       builder: (context, child) {
@@ -151,22 +211,19 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
         margin: const EdgeInsets.only(right: 16),
         child: Column(
           children: [
-            // Pop-out Badge shape as a Star inside Star
             SizedBox(
               width: 80,
               height: 80,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Outer golden star
                   CustomPaint(
                     size: const Size(80, 80),
                     painter: _DoubleStarPainter(
                       outerColor: locked ? const Color(0xFFFEF3C7) : const Color(0xFFFDE047),
-                      innerColor: locked ? const Color(0xFFFFFBEB) : Colors.white, // Inner color white
+                      innerColor: locked ? const Color(0xFFFFFBEB) : Colors.white, 
                     ),
                   ),
-                  // Lock icon or Main Icon
                   if (locked)
                     Align(
                       alignment: const Alignment(0, 0.7),
@@ -179,10 +236,9 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
                         child: const Icon(Icons.lock_rounded, size: 12, color: GelatoTheme.purpleBright),
                       ),
                     ),
-                  if (!locked || item.icon != null)
-                    Center(
-                      child: Icon(item.icon, size: 36, color: locked ? item.color.withValues(alpha: 0.5) : item.color),
-                    ),
+                  Center(
+                    child: Icon(_getIconData(item.icon), size: 36, color: locked ? color.withValues(alpha: 0.5) : color),
+                  ),
                 ],
               ),
             ),
@@ -200,7 +256,7 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
             ),
             const SizedBox(height: 2),
             Text(
-              item.sub,
+              item.subtitle,
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -226,10 +282,10 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
                   ],
                 ),
               ),
-            if (locked && item.progress.isNotEmpty) ...[
+            if (locked) ...[
               Text(
-                item.progress,
-                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: item.color),
+                progressStr,
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: color),
               ),
               const SizedBox(height: 4),
               Container(
@@ -241,10 +297,10 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
                 ),
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
-                  widthFactor: item.progressRatio,
+                  widthFactor: progressRatio,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: item.color,
+                      color: color,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -270,7 +326,6 @@ class _DoubleStarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     _drawStar(canvas, size.width / 2, size.width / 2, size.width / 2, size.width / 4, outerColor);
-    // Draw inner star slightly smaller
     _drawStar(canvas, size.width / 2, size.width / 2, size.width / 2.8, size.width / 5, innerColor);
   }
 
@@ -307,26 +362,4 @@ class _DoubleStarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DoubleStarPainter oldDelegate) => false;
-}
-
-class _AchievementData {
-  final String title;
-  final String sub;
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-  final String progress;
-  final double progressRatio;
-  final bool locked;
-
-  _AchievementData({
-    required this.title,
-    required this.sub,
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-    required this.progress,
-    this.progressRatio = 0.0,
-    this.locked = false,
-  });
 }

@@ -1,9 +1,19 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/gelato_theme.dart';
+import '../models/ndpp_constants.dart';
+import '../services/activity_metrics_engine.dart';
 
 class WeeklyProgress extends StatefulWidget {
-  const WeeklyProgress({super.key});
+  final List<DailyAggregate> pastDays;
+  final int programWeek;
+
+  const WeeklyProgress({
+    super.key,
+    required this.pastDays,
+    required this.programWeek,
+  });
 
   @override
   State<WeeklyProgress> createState() => _WeeklyProgressState();
@@ -14,52 +24,25 @@ class _WeeklyProgressState extends State<WeeklyProgress>
   late AnimationController _barController;
   late Animation<double> _barAnim;
   int _selectedTab = 0;
-  int? _selectedBarIndex = 3; // Thursday (Today) highlighted by default
-  int _lastActiveIndex = 3; // For tracking smooth tooltip transitions
+  int? _selectedBarIndex = 6; // Default to last day (today)
+  int _lastActiveIndex = 6;
 
-  final List<String> _tabs = ['Steps', 'Calories', 'Distance'];
+  final List<String> _tabs = ['Steps', 'Calories', 'Distance', 'Active Min'];
 
-  // Exact values to display in the tooltips
-  final List<List<String>> _tooltipValues = [
-    ['62K', '78K', '89K', '102K', '91K', '67K', '75K'], // Steps
-    ['1.8K', '2.2K', '2.5K', '2.4K', '2.8K', '2.0K', '2.3K'], // Calories
-    ['5.2 km', '6.8 km', '7.2 km', '8.5 km', '7.9 km', '4.8 km', '6.1 km'], // Distance
-  ];
+  late List<List<String>> _tooltipValues;
+  late List<List<double>> _data;
+  late List<String> _days;
 
-  // Normalized data [0..1] per tab for bar heights
-  final List<List<double>> _data = [
-    [0.55, 0.70, 0.80, 0.95, 0.85, 0.60, 0.68], // Steps
-    [0.60, 0.73, 0.83, 0.80, 0.93, 0.66, 0.76], // Calories
-    [0.58, 0.75, 0.80, 0.95, 0.88, 0.53, 0.68], // Distance
-  ];
+  // Context line values for each tab
+  late List<String> _avgPerDay;
+  late List<String> _bestDay;
+  late List<String> _goalAchieved;
 
-  final List<String> _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  Color _getBarColor(int i) {
-    final colors = [
-      const Color(0xFFFFE082), // Mon: Bright Yellow/Amber
-      const Color(0xFFE1BEE7), // Tue: Bright Lavender
-      const Color(0xFF80DEEA), // Wed: Bright Cyan
-      const Color(0xFF90CAF9), // Thu: Bright Sky Blue
-      const Color(0xFFF48FB1), // Fri: Bright Soft Pink
-      const Color(0xFFFFCC80), // Sat: Bright Peach/Orange
-      const Color(0xFFC5E1A5), // Sun: Bright Lime/Green
-    ];
-    return colors[i % colors.length];
-  }
-
-  Color _getBarDarkColor(int i) {
-    final darkColors = [
-      const Color(0xFFFF8F00), // Amber Dark
-      const Color(0xFF8E24AA), // Purple Dark
-      const Color(0xFF00ACC1), // Cyan Dark
-      const Color(0xFF1565C0), // Blue Dark
-      const Color(0xFFD81B60), // Pink Dark
-      const Color(0xFFEF6C00), // Orange Dark
-      const Color(0xFF558B2F), // Green Dark
-    ];
-    return darkColors[i % darkColors.length];
-  }
+  // NDPP Goal block
+  late int _weeklyTarget;
+  late int _weeklyQualifyingMinutes;
+  late int _activeDaysThisWeek;
+  late int _remainingMinutes;
 
   @override
   void initState() {
@@ -68,27 +51,149 @@ class _WeeklyProgressState extends State<WeeklyProgress>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
-    _barAnim =
-        CurvedAnimation(parent: _barController, curve: Curves.easeOutQuart);
+    _barAnim = CurvedAnimation(parent: _barController, curve: Curves.easeOutQuart);
+    
+    _computeData();
+
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _barController.forward();
     });
   }
 
   @override
-  void dispose() {
-    _barController.dispose();
-    super.dispose();
+  void didUpdateWidget(WeeklyProgress oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pastDays != widget.pastDays || oldWidget.programWeek != widget.programWeek) {
+      _computeData();
+    }
+  }
+
+  void _computeData() {
+    _days = [];
+    final daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // Ensure we have exactly 7 days, padded if necessary
+    List<DailyAggregate> processingDays = List.from(widget.pastDays);
+    while (processingDays.length < 7) {
+      processingDays.insert(0, DailyAggregate.empty(DateTime.now().subtract(Duration(days: 7 - processingDays.length))));
+    }
+
+    // Prepare arrays
+    List<double> rawSteps = [];
+    List<double> rawCals = [];
+    List<double> rawDist = [];
+    List<double> rawMins = [];
+    
+    _tooltipValues = [[], [], [], []];
+    
+    _weeklyQualifyingMinutes = 0;
+    _activeDaysThisWeek = 0;
+
+    for (var day in processingDays) {
+      _days.add(daysOfWeek[day.date.weekday - 1]);
+      
+      rawSteps.add(day.totalSteps.toDouble());
+      rawCals.add(day.totalCalories);
+      rawDist.add(day.totalDistance);
+      rawMins.add(day.qualifyingActiveMinutes.toDouble());
+
+      _tooltipValues[0].add('${(day.totalSteps / 1000).toStringAsFixed(1)}K');
+      _tooltipValues[1].add('${day.totalCalories.round()}');
+      _tooltipValues[2].add('${day.totalDistance.toStringAsFixed(1)} km');
+      _tooltipValues[3].add('${day.qualifyingActiveMinutes} min');
+
+      _weeklyQualifyingMinutes += day.qualifyingActiveMinutes;
+      if (day.isActiveDay) _activeDaysThisWeek++;
+    }
+
+    _weeklyTarget = NdppConstants.getWeeklyTargetForWeek(widget.programWeek);
+    _remainingMinutes = math.max(0, _weeklyTarget - _weeklyQualifyingMinutes);
+
+    // Normalize
+    _data = [
+      _normalize(rawSteps),
+      _normalize(rawCals),
+      _normalize(rawDist),
+      _normalize(rawMins),
+    ];
+
+    // Compute Context Box Stats
+    _avgPerDay = [];
+    _bestDay = [];
+    _goalAchieved = [];
+
+    for (int t = 0; t < 4; t++) {
+      double avg = ActivityMetricsEngine.getAverage(processingDays, t);
+      DailyAggregate? best = ActivityMetricsEngine.getBestDay(processingDays, t);
+      int achieved = ActivityMetricsEngine.getGoalAchievedCount(processingDays, t);
+
+      _avgPerDay.add(_formatStat(avg, t));
+      
+      if (best != null && _getRaw(best, t) > 0) {
+        _bestDay.add('${daysOfWeek[best.date.weekday - 1]}\n${_formatStat(_getRaw(best, t), t)}');
+      } else {
+        _bestDay.add('--\n0');
+      }
+
+      _goalAchieved.add(achieved.toString());
+    }
+  }
+
+  double _getRaw(DailyAggregate day, int tabIndex) {
+    if (tabIndex == 0) return day.totalSteps.toDouble();
+    if (tabIndex == 1) return day.totalCalories;
+    if (tabIndex == 2) return day.totalDistance;
+    return day.qualifyingActiveMinutes.toDouble();
+  }
+
+  String _formatStat(double val, int tabIndex) {
+    if (tabIndex == 0) return '${val.round()} steps';
+    if (tabIndex == 1) return '${val.round()} cals';
+    if (tabIndex == 2) return '${val.toStringAsFixed(1)} km';
+    return '${val.round()} min';
+  }
+
+  List<double> _normalize(List<double> values) {
+    if (values.isEmpty) return [];
+    double maxVal = values.reduce(math.max);
+    if (maxVal == 0) return List.filled(values.length, 0.0);
+    // Add 10% headroom
+    maxVal = maxVal * 1.1;
+    return values.map((v) => (v / maxVal).clamp(0.0, 1.0)).toList();
+  }
+
+  Color _getBarColor(int i) {
+    final colors = [
+      const Color(0xFFFFE082), const Color(0xFFE1BEE7), const Color(0xFF80DEEA),
+      const Color(0xFF90CAF9), const Color(0xFFF48FB1), const Color(0xFFFFCC80),
+      const Color(0xFFC5E1A5),
+    ];
+    return colors[i % colors.length];
+  }
+
+  Color _getBarDarkColor(int i) {
+    final darkColors = [
+      const Color(0xFFFF8F00), const Color(0xFF8E24AA), const Color(0xFF00ACC1),
+      const Color(0xFF1565C0), const Color(0xFFD81B60), const Color(0xFFEF6C00),
+      const Color(0xFF558B2F),
+    ];
+    return darkColors[i % darkColors.length];
   }
 
   void _switchTab(int index) {
     if (index == _selectedTab) return;
     setState(() {
       _selectedTab = index;
-      _selectedBarIndex = null; // reset selected bar
+      _selectedBarIndex = null;
     });
     _barController.reset();
     _barController.forward();
+  }
+
+  @override
+  void dispose() {
+    _barController.dispose();
+    super.dispose();
   }
 
   @override
@@ -107,10 +212,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            Color(0xFFF2F7EC), // Light green tint
-          ],
+          colors: [Colors.white, Color(0xFFF2F7EC)],
         ),
       ),
       child: Column(
@@ -118,11 +220,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.bar_chart_rounded,
-                color: GelatoTheme.purpleDark,
-                size: 20,
-              ),
+              Icon(Icons.bar_chart_rounded, color: GelatoTheme.purpleDark, size: 20),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -136,70 +234,100 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-
             ],
           ),
           const SizedBox(height: 12),
+          
           // Tab bar
-          Row(
-            children: _tabs.asMap().entries.map((e) {
-              final selected = e.key == _selectedTab;
-              Color activeBg;
-              Color activeText;
-              
-              switch (e.key) {
-                case 0: // Steps
-                  activeBg = GelatoTheme.green;
-                  activeText = GelatoTheme.greenDark;
-                  break;
-                case 1: // Calories
-                  activeBg = GelatoTheme.orange;
-                  activeText = GelatoTheme.orangeDark;
-                  break;
-                case 2: // Distance
-                  activeBg = GelatoTheme.blue;
-                  activeText = GelatoTheme.blueDark;
-                  break;
-                default:
-                  activeBg = GelatoTheme.purple;
-                  activeText = GelatoTheme.purpleDark;
-              }
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _tabs.asMap().entries.map((e) {
+                final selected = e.key == _selectedTab;
+                Color activeBg = GelatoTheme.purple;
+                Color activeText = GelatoTheme.purpleDark;
+                
+                switch (e.key) {
+                  case 0: activeBg = GelatoTheme.green; activeText = GelatoTheme.greenDark; break;
+                  case 1: activeBg = GelatoTheme.orange; activeText = GelatoTheme.orangeDark; break;
+                  case 2: activeBg = GelatoTheme.blue; activeText = GelatoTheme.blueDark; break;
+                  case 3: activeBg = const Color(0xFFEF9A9A); activeText = const Color(0xFFB71C1C); break;
+                }
 
-              return GestureDetector(
-                onTap: () => _switchTab(e.key),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.only(right: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: selected ? activeBg : const Color(0xFFFAF8FA),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: selected ? Colors.black : const Color(0xFFEFEAEA),
-                      width: selected ? 2.0 : 1.2,
+                return GestureDetector(
+                  onTap: () => _switchTab(e.key),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: selected ? activeBg : const Color(0xFFFAF8FA),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected ? Colors.black : const Color(0xFFEFEAEA),
+                        width: selected ? 2.0 : 1.2,
+                      ),
+                      boxShadow: selected ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          offset: const Offset(2.0, 2.0),
+                          blurRadius: 0,
+                        )
+                      ] : null,
                     ),
-                    boxShadow: selected ? [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        offset: const Offset(2.0, 2.0),
-                        blurRadius: 0,
-                      )
-                    ] : null,
-                  ),
-                  child: Text(
-                    e.value,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: selected ? activeText : GelatoTheme.textLight,
+                    child: Text(
+                      e.value,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: selected ? activeText : GelatoTheme.textLight,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
           const SizedBox(height: 16),
+
+          // NDPP Weekly Goal Block
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: GelatoTheme.purple.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: GelatoTheme.purpleDark, width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Week ${widget.programWeek} Goal: $_weeklyTarget min',
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: GelatoTheme.purpleDark),
+                      ),
+                      Text(
+                        '$_weeklyQualifyingMinutes min logged • $_activeDaysThisWeek active days',
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: GelatoTheme.textDark),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_remainingMinutes > 0)
+                  Text(
+                    '$_remainingMinutes min left',
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.deepOrange),
+                  )
+                else
+                  const Icon(Icons.check_circle_rounded, color: Colors.green),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
           // Context Section matching the attached image
           Container(
             height: 70,
@@ -220,13 +348,12 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                 children: [
                   Expanded(
                     child: Container(
-                      color: const Color(0xFFFDE4A1), // Yellowish
-                      child: const Column(
+                      color: const Color(0xFFFDE4A1),
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Average', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
-                          Text('7,800', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2C5282))),
-                          Text('steps/day', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
+                          const Text('Average', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                          Text(_avgPerDay[_selectedTab], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF2C5282)), textAlign: TextAlign.center),
                         ],
                       ),
                     ),
@@ -234,13 +361,12 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                   Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
                   Expanded(
                     child: Container(
-                      color: const Color(0xFFCDE3BB), // Greenish
-                      child: const Column(
+                      color: const Color(0xFFCDE3BB),
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Best Day', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
-                          Text('Thursday', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF388E3C))),
-                          Text('102K steps', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
+                          const Text('Best Day', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                          Text(_bestDay[_selectedTab], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF388E3C)), textAlign: TextAlign.center),
                         ],
                       ),
                     ),
@@ -248,13 +374,13 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                   Container(width: 1.5, color: Colors.black.withValues(alpha: 0.8)),
                   Expanded(
                     child: Container(
-                      color: const Color(0xFFFFD4AA), // Orangish
-                      child: const Column(
+                      color: const Color(0xFFFFD4AA),
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Goal achieved', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
-                          Text('5', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF8B4513))),
-                          Text('of 7 days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
+                          const Text('Goal achieved', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF8B4513))),
+                          Text(_goalAchieved[_selectedTab], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF8B4513))),
+                          const Text('of 7 days', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF8B4513))),
                         ],
                       ),
                     ),
@@ -272,8 +398,8 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final double chartWidth = constraints.maxWidth;
-                  final double availableWidth = chartWidth - 28; // Space after Y-axis
-                  final double spacing = (availableWidth - 210) / 8; // 7 bars = 210px, 8 spaces
+                  final double availableWidth = chartWidth - 28; 
+                  final double spacing = (availableWidth - 210) / 8;
                   final double startX = 28 + spacing;
 
                   int _getIndexFromX(double dx) {
@@ -326,13 +452,14 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            // Y-axis labels dynamically based on tab
+                            // Y-axis labels dynamically based on max value
                             Builder(
                               builder: (context) {
                                 List<String> yLabels;
-                                if (_selectedTab == 0) yLabels = ['15k', '10k', '5k', '0'];
-                                else if (_selectedTab == 1) yLabels = ['3k', '2k', '1k', '0'];
-                                else yLabels = ['15km', '10km', '5km', '0'];
+                                if (_selectedTab == 0) yLabels = ['Max', 'Med', 'Low', '0'];
+                                else if (_selectedTab == 1) yLabels = ['Max', 'Med', 'Low', '0'];
+                                else if (_selectedTab == 2) yLabels = ['Max', 'Med', 'Low', '0'];
+                                else yLabels = ['Max', 'Med', 'Low', '0'];
 
                                 return Positioned(
                                   left: 0,
@@ -362,7 +489,6 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                               bottom: 40,
                               child: Stack(
                                 children: [
-                                  // Gridlines
                                   Column(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: List.generate(4, (index) => Container(
@@ -370,53 +496,15 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                       color: const Color(0xFFF1F5F9),
                                     )),
                                   ),
-                                  // Y-axis Line
                                   Positioned(
-                                    left: 0,
-                                    top: 0,
-                                    bottom: 0,
+                                    left: 0, top: 0, bottom: 0,
                                     child: Container(width: 1.5, color: Colors.black.withValues(alpha: 0.1)),
                                   ),
-                                  // X-axis Line
                                   Positioned(
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
+                                    left: 0, right: 0, bottom: 0,
                                     child: Container(height: 1.5, color: Colors.black.withValues(alpha: 0.1)),
                                   ),
                                 ],
-                              ),
-                            ),
-
-                            // Goal Line (drawn at 75% height of the 120px chart area)
-                            Positioned(
-                              left: 28,
-                              right: 0,
-                              bottom: 40 + (120 * 0.75),
-                              child: Container(
-                                height: 1.8,
-                                decoration: const BoxDecoration(
-                                  color: GelatoTheme.purpleDark,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: GelatoTheme.purple,
-                                      blurRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // Daily Goal Line Text
-                            Positioned(
-                              left: 34,
-                              bottom: 40 + (120 * 0.75) + 4,
-                              child: const Text(
-                                'Daily goal line',
-                                style: TextStyle(
-                                  color: GelatoTheme.purpleDark,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                ),
                               ),
                             ),
 
@@ -465,19 +553,29 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                               right: 0,
                               top: 0,
                               bottom: 0,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: currentData.asMap().entries.map((entry) {
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: _ChartLinePainter(
+                                        data: currentData,
+                                        animation: _barAnim,
+                                      ),
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: currentData.asMap().entries.map((entry) {
                                   final i = entry.key;
                                   final val = entry.value;
-                                  final isToday = i == 3;
+                                  final isToday = i == 6; // Last element is today
                                   final bool isSelected = _selectedBarIndex == i;
                                   final barColor = _getBarColor(i);
                                   final barColorDark = _getBarDarkColor(i);
                                   final double baseBarHeight = 120.0 * val;
                                   final double barHeight = isSelected
-                                      ? (baseBarHeight * 1.08).clamp(10.0, 120.0)
+                                      ? (baseBarHeight * 1.08).clamp(0.0, 120.0)
                                       : baseBarHeight;
 
                                   return SizedBox(
@@ -514,7 +612,6 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                             borderRadius: BorderRadius.circular(6),
                                             child: Stack(
                                               children: [
-                                                // 1. Base Gradient (Bright & Popping)
                                                 Positioned.fill(
                                                   child: Opacity(
                                                     opacity: (isSelected || _selectedBarIndex == null) ? 1.0 : 0.6,
@@ -523,21 +620,14 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                                         gradient: LinearGradient(
                                                           begin: Alignment.bottomCenter,
                                                           end: Alignment.topCenter,
-                                                          colors: [
-                                                            barColorDark,
-                                                            barColor,
-                                                          ],
+                                                          colors: [barColorDark, barColor],
                                                         ),
                                                       ),
                                                     ),
                                                   ),
                                                 ),
-                                                // 2. Glossy Highlight - Left Sheen (vertical white highlight)
                                                 Positioned(
-                                                  left: 0,
-                                                  top: 0,
-                                                  bottom: 0,
-                                                  width: 6,
+                                                  left: 0, top: 0, bottom: 0, width: 6,
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                       gradient: LinearGradient(
@@ -548,52 +638,6 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                                           Colors.white.withValues(alpha: 0.0),
                                                         ],
                                                       ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                // 3. Glossy Highlight - Right edge reflection (subtle dark border inside)
-                                                Positioned(
-                                                  right: 0,
-                                                  top: 0,
-                                                  bottom: 0,
-                                                  width: 3,
-                                                  child: Container(
-                                                    color: Colors.black.withValues(alpha: 0.05),
-                                                  ),
-                                                ),
-                                                // 4. Glossy Highlight - Top Cap Reflection (3D rounded cylinder shine)
-                                                Positioned(
-                                                  left: 1,
-                                                  top: 1,
-                                                  right: 1,
-                                                  height: 10,
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      borderRadius: const BorderRadius.only(
-                                                        topLeft: Radius.circular(5),
-                                                        topRight: Radius.circular(5),
-                                                      ),
-                                                      gradient: LinearGradient(
-                                                        begin: Alignment.topCenter,
-                                                        end: Alignment.bottomCenter,
-                                                        colors: [
-                                                          Colors.white.withValues(alpha: isSelected ? 0.8 : 0.5),
-                                                          Colors.white.withValues(alpha: 0.0),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                // 5. Glossy Highlight - Center-left soft glare
-                                                Positioned(
-                                                  left: 4,
-                                                  top: 4,
-                                                  bottom: 4,
-                                                  width: 3,
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white.withValues(alpha: isSelected ? 0.25 : 0.15),
-                                                      borderRadius: BorderRadius.circular(1),
                                                     ),
                                                   ),
                                                 ),
@@ -626,6 +670,8 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                     ),
                                   );
                                 }).toList(),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -642,4 +688,47 @@ class _WeeklyProgressState extends State<WeeklyProgress>
       ),
     );
   }
+}
+
+class _ChartLinePainter extends CustomPainter {
+  final List<double> data;
+  final Animation<double> animation;
+
+  _ChartLinePainter({required this.data, required this.animation}) : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    final paint = Paint()
+      ..color = GelatoTheme.purpleDark.withValues(alpha: 0.3)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+    final int n = data.length;
+    final double itemWidth = 30.0;
+    final double space = (size.width - (n * itemWidth)) / (n + 1);
+
+    for (int i = 0; i < n; i++) {
+      final double x = (i + 1) * space + (i * itemWidth) + (itemWidth / 2);
+      final double val = data[i] * animation.value;
+      final double baseBarHeight = 120.0 * val;
+      // top of bar: total height - 40 (text at bottom) - barHeight
+      final double y = size.height - 40 - baseBarHeight;
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ChartLinePainter oldDelegate) => true;
 }
