@@ -90,21 +90,48 @@ class AuthService {
   }
 
 
-  /// Persists the user's profile details locally.
+  /// Persists the user's profile details locally AND to Firestore.
   Future<void> persistUserProfile(String name, String email) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('last_user_name', name);
     await prefs.setString('last_user_email', email);
+    // Also write to Firestore so the name reflects everywhere (admin panel, etc.)
+    try {
+      final uid = currentUser?.uid;
+      if (uid != null && isFirebaseInitialized) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .set({'name': name}, SetOptions(merge: true));
+      }
+    } catch (_) {}
   }
 
-  /// Retrieves the user profile details (falling back to SharedPreferences if Firebase user is null).
+  /// Retrieves the user profile details.
+  /// Priority: Firestore > Firebase Auth displayName > SharedPreferences.
   Future<UserProfileData> getUserProfileData() async {
     final user = currentUser;
     final prefs = await SharedPreferences.getInstance();
-    
-    final String name = user?.displayName ?? prefs.getString('last_user_name') ?? 'Janice Pattice';
+
+    String name = user?.displayName ?? prefs.getString('last_user_name') ?? 'Janice Pattice';
     final String email = user?.email ?? prefs.getString('last_user_email') ?? '';
-    
+
+    // Read latest name from Firestore (most authoritative source)
+    try {
+      if (user != null && isFirebaseInitialized) {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        final firestoreName = doc.data()?['name'] as String?;
+        if (firestoreName != null && firestoreName.isNotEmpty) {
+          name = firestoreName;
+          // Keep local cache in sync
+          await prefs.setString('last_user_name', name);
+        }
+      }
+    } catch (_) {}
+
     String? localPath = prefs.getString('local_pfp_$email');
     if (localPath == null || !File(localPath).existsSync()) {
       final photoUrl = user?.photoURL;
