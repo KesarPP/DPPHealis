@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
+import 'forgot_password_screen.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -490,7 +491,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ForgotPasswordScreen(isPatient: _isPatientSelected),
+                                  ),
+                                );
+                              },
                               style: TextButton.styleFrom(
                                 foregroundColor: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
                                 padding: EdgeInsets.zero,

@@ -465,6 +465,56 @@ class AuthService {
     await prefs.remove('user_role');
   }
 
+  /// Sends a password reset email. If a phone number is provided, looks up the associated email.
+  Future<String> sendPasswordReset(String emailOrPhone, bool isCoach) async {
+    final auth = _auth;
+    final prefs = await SharedPreferences.getInstance();
+    String resolvedEmail = emailOrPhone.trim();
+    bool wasPhone = false;
+
+    // Check if input is a phone number (digits only)
+    final isPhone = RegExp(r'^\d+$').hasMatch(resolvedEmail);
+    if (isPhone) {
+      wasPhone = true;
+      if (_firestore != null) {
+        final collectionName = isCoach ? 'coaches' : 'users';
+        final docQuery = await _firestore!
+            .collection(collectionName)
+            .where('phoneNumber', isEqualTo: resolvedEmail)
+            .limit(1)
+            .get();
+        if (docQuery.docs.isNotEmpty) {
+          resolvedEmail = docQuery.docs.first.data()['email'] as String;
+        } else {
+          throw Exception('No ${isCoach ? 'coach' : 'patient'} account found with this phone number.');
+        }
+      } else {
+        resolvedEmail = prefs.getString('phone_email_map_$resolvedEmail') ?? '$resolvedEmail@${isCoach ? 'healis.org' : 'mock.com'}';
+      }
+    }
+
+    if (isCoach && !wasPhone) {
+      _assertCoachEmail(resolvedEmail);
+    }
+
+    if (auth != null) {
+      await auth.sendPasswordResetEmail(email: resolvedEmail);
+    } else {
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    if (wasPhone) {
+      // Mask email for privacy
+      final parts = resolvedEmail.split('@');
+      if (parts.length == 2 && parts[0].isNotEmpty) {
+        final masked = '${parts[0][0]}***@${parts[1]}';
+        return 'A password reset link has been sent to the email ($masked) associated with your phone number.';
+      }
+    }
+
+    return 'A password reset link has been sent to $resolvedEmail.';
+  }
+
   // ─── Coach Profile Persistence & Retrieval ─────────────────────────────────
 
   /// Saves the coach's profile to Firestore (if initialized) and SharedPreferences.
