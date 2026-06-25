@@ -120,13 +120,22 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
 
   // ─── VERCEL AI BACKEND CONFIGURATION ───────────────────────────────────────
   // Paste your deployed Vercel URL here (e.g., https://my-dpp-backend.vercel.app/api/chat)
-  final String _vercelEndpoint = "https://dpp-ai-backend.vercel.app/api/chat";
+  final String _vercelEndpoint = "https://vercel-ai-backend-xi.vercel.app/api/chat";
 
   Future<String> _getVercelResponse(String query) async {
     // If the Vercel endpoint hasn't been configured yet, fallback to mock response
     if (_vercelEndpoint.contains('your-vercel-app')) {
       return _getMockResponse(query);
     }
+
+    // Prepare conversation history (exclude the latest user message which is sent as 'message')
+    final history = _currentSessionMessages
+        .sublist(0, _currentSessionMessages.length > 1 ? _currentSessionMessages.length - 1 : 0)
+        .map((msg) => {
+              'role': msg.isUser ? 'user' : 'assistant',
+              'content': msg.text,
+            })
+        .toList();
 
     try {
       final response = await http.post(
@@ -136,6 +145,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
         },
         body: jsonEncode({
           'message': query,
+          'history': history,
           'user_id': 'dpp_user', // Optional user identifier for context
         }),
       ).timeout(const Duration(seconds: 20));

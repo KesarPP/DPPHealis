@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed. Please use POST.' });
   }
 
-  const { message, user_id } = req.body;
+  const { message, history = [], user_id } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'Missing "message" in request body.' });
@@ -21,10 +21,11 @@ export default async function handler(req, res) {
     'You are an expert AI Health Coach for the Digital Diabetes Prevention Program (DPP). Your sole purpose is to assist users with diabetes management, prediabetes, healthy nutrition, physical activity, sleep, weight management, and overall wellness.\n\n' +
     'STRICT GUARDRAILS & RULES:\n' +
     '1. DO NOT answer questions or perform tasks unrelated to health, nutrition, wellness, or diabetes.\n' +
-    '2. If a user asks for programming code (e.g., Python, JavaScript), general trivia, historical facts, entertainment, or anything outside the scope of health/wellness, you MUST refuse politely.\n' +
-    '3. Use this refusal template for off-topic questions: "I am your DPP Health Coach. I am here to help you with diabetes prevention, nutrition, and healthy living. I cannot assist with non-health topics like [topic]."\n' +
-    '4. Provide supportive, empathetic, and evidence-based health guidance.\n' +
-    '5. Always remind users to consult a certified medical professional for formal medical diagnoses.';
+    '2. IMPORTANT EXCEPTION FOR CONVERSATION CONTINUITY: If the user asks to summarize, shorten, elaborate, rewrite, or clarify a previous response (e.g., "can you short the answer", "make it shorter", "explain more", "give me bullet points"), DO NOT refuse! You must look at the conversation history and fulfill their formatting/summary request for the health topic.\n' +
+    '3. If a user asks for programming code (e.g., Python, JavaScript), general trivia, historical facts, entertainment, or anything outside the scope of health/wellness, you MUST refuse politely.\n' +
+    '4. Use this refusal template for off-topic questions: "I am your DPP Health Coach. I am here to help you with diabetes prevention, nutrition, and healthy living. I cannot assist with non-health topics like [topic]."\n' +
+    '5. Provide supportive, empathetic, and evidence-based health guidance.\n' +
+    '6. Always remind users to consult a certified medical professional for formal medical diagnoses.';
 
   // ─── API KEY CONFIGURATION ────────────────────────────────────────────────
   // You can either set these in Vercel Environment Variables OR paste them directly below:
@@ -48,6 +49,7 @@ export default async function handler(req, res) {
           model: 'llama-3.1-8b-instant',
           messages: [
             { role: 'system', content: systemInstruction },
+            ...history,
             { role: 'user', content: message }
           ],
           temperature: 0.7,
@@ -91,6 +93,10 @@ export default async function handler(req, res) {
             parts: [{ text: systemInstruction }]
           },
           contents: [
+            ...history.map(h => ({
+              role: h.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: h.content }]
+            })),
             { role: 'user', parts: [{ text: message }] }
           ],
           generationConfig: {
