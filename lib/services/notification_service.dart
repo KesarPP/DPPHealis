@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import '../models/food_log.dart';
 import 'dart:io' show Platform;
 
@@ -25,6 +26,12 @@ class NotificationService {
     if (_initialized) return;
 
     tz.initializeTimeZones();
+    try {
+      final String timeZoneName = (await FlutterTimezone.getLocalTimezone()).identifier;
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+    } catch (e) {
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
 
     const androidInitialize = AndroidInitializationSettings('@mipmap/ic_launcher');
     const darwinInitialize = DarwinInitializationSettings(

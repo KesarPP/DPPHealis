@@ -238,6 +238,7 @@ class AuthService {
     required String email,
     required String password,
     required String name,
+    required String phoneNumber,
   }) async {
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
@@ -259,6 +260,7 @@ class AuthService {
           'uid': user.uid,
           'name': name,
           'email': email,
+          'phoneNumber': phoneNumber,
           'role': 'user',
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -333,6 +335,7 @@ class AuthService {
     required String email,
     required String password,
     required String name,
+    required String phoneNumber,
   }) async {
     _assertCoachEmail(email);
     final auth = _auth;
@@ -355,6 +358,7 @@ class AuthService {
           'uid': user.uid,
           'name': name,
           'email': email,
+          'phoneNumber': phoneNumber,
           'role': 'coach',
           'createdAt': FieldValue.serverTimestamp(),
         });
