@@ -12,6 +12,7 @@ import '../providers/food_notifiers.dart';
 import '../models/food_log.dart';
 import '../models/food_item.dart';
 import '../services/ai_food_service.dart';
+import '../services/auth_service.dart';
 import 'nutritional_scanner_screen.dart';
 
 class FoodTrackingScreen extends StatefulWidget {
@@ -585,7 +586,11 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
   }
 
   Widget _buildWeekRow(DateTime weekStart, Map<String, bool> completedDays) {
-    DateTime? signUpTime = FirebaseAuth.instance.currentUser?.metadata.creationTime;
+    DateTime? signUpTime;
+    final authService = AuthService();
+    if (authService.isFirebaseInitialized) {
+      signUpTime = authService.currentUser?.metadata.creationTime;
+    }
     DateTime? signUpDate;
     if (signUpTime != null) {
       signUpDate = DateTime(signUpTime.year, signUpTime.month, signUpTime.day);
@@ -1081,7 +1086,11 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
       dayWidgets.add(const SizedBox(width: 40, height: 40));
     }
 
-    DateTime? signUpTime = FirebaseAuth.instance.currentUser?.metadata.creationTime;
+    DateTime? signUpTime;
+    final authService = AuthService();
+    if (authService.isFirebaseInitialized) {
+      signUpTime = authService.currentUser?.metadata.creationTime;
+    }
     DateTime? signUpDate;
     if (signUpTime != null) {
       signUpDate = DateTime(signUpTime.year, signUpTime.month, signUpTime.day);

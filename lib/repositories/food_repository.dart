@@ -13,19 +13,32 @@ class FoodRepository {
     return null;
   }
 
-  Future<List<FoodItem>> searchFoods(String query) async {
+  List<FoodItem>? _cachedFoods;
+
+  Future<List<FoodItem>> _getAllFoods() async {
     final db = _db;
-    if (db == null || query.isEmpty) return [];
-    final lowercaseQuery = query.toLowerCase();
+    if (db == null) return [];
+    if (_cachedFoods != null) return _cachedFoods!;
+
+    final snapshot = await db.collection('foods').get();
+    _cachedFoods = snapshot.docs.map((doc) => FoodItem.fromFirestore(doc.data(), doc.id)).toList();
+    return _cachedFoods!;
+  }
+
+  Future<List<FoodItem>> searchFoods(String query) async {
+    if (query.isEmpty) return [];
+    final lowercaseQuery = query.toLowerCase().trim();
+    final searchWords = lowercaseQuery.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     
-    // Prefix query: >= lowercaseQuery and < lowercaseQuery + 'z'
-    final snapshot = await db.collection('foods')
-      .where('nameSearch', isGreaterThanOrEqualTo: lowercaseQuery)
-      .where('nameSearch', isLessThan: lowercaseQuery + 'z')
-      .limit(20)
-      .get();
+    final allFoods = await _getAllFoods();
       
-    return snapshot.docs.map((doc) => FoodItem.fromFirestore(doc.data(), doc.id)).toList();
+    final results = allFoods.where((food) {
+      final name = food.name.toLowerCase();
+      // Check if EVERY search word is found ANYWHERE in the food name
+      return searchWords.every((word) => name.contains(word));
+    }).take(20).toList();
+
+    return results;
   }
 
   Stream<DailyFoodLog?> getDailyLog(String userId, String date) {

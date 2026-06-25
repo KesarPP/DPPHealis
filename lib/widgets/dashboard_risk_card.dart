@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
 import '../data/gelato_theme.dart';
 import '../data/app_state.dart';
 
@@ -39,8 +41,29 @@ class _DashboardRiskCardState extends State<DashboardRiskCard> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    int score = AppState.idrsScore; // e.g. 42
-    
+    final authService = AuthService();
+    if (!authService.isFirebaseInitialized || authService.currentUser == null) {
+      return _buildCard(AppState.idrsScore);
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(authService.currentUser!.uid).snapshots(),
+      builder: (context, snapshot) {
+        int score = AppState.idrsScore;
+        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          if (data != null && data.containsKey('idrsScore')) {
+            score = data['idrsScore'] ?? 0;
+            AppState.idrsScore = score;
+            AppState.hasIdrsResult = data['hasIdrsResult'] == true;
+          }
+        }
+        return _buildCard(score);
+      },
+    );
+  }
+
+  Widget _buildCard(int score) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),

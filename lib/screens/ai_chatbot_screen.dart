@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../models/chat_message.dart';
@@ -116,6 +118,44 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     return '$hour:$minute $period';
   }
 
+  // ─── VERCEL AI BACKEND CONFIGURATION ───────────────────────────────────────
+  // Paste your deployed Vercel URL here (e.g., https://my-dpp-backend.vercel.app/api/chat)
+  final String _vercelEndpoint = "https://vercel-ai-backend-xi.vercel.app/api/chat";
+
+  Future<String> _getVercelResponse(String query) async {
+    // If the Vercel endpoint hasn't been configured yet, fallback to mock response
+    if (_vercelEndpoint.contains('your-vercel-app')) {
+      return _getMockResponse(query);
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(_vercelEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'message': query,
+          'user_id': 'dpp_user', // Optional user identifier for context
+        }),
+      ).timeout(const Duration(seconds: 20));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          return data['response'] ?? data['reply'] ?? data['answer'] ?? data['message'] ?? response.body;
+        }
+        return response.body;
+      } else {
+        debugPrint('Vercel Error: ${response.statusCode} - ${response.body}');
+        return 'I am having trouble connecting to my Vercel backend server (Error ${response.statusCode}). Please check your Vercel deployment logs and API keys.';
+      }
+    } catch (e) {
+      debugPrint('Vercel Exception: $e');
+      return 'Could not connect to the Vercel AI server. Please verify your Vercel deployment URL and network connection.';
+    }
+  }
+
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
@@ -138,26 +178,26 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
 
     await _chatRepository.saveMessage(userMessage);
 
-    // Mock AI response
-    Future.delayed(const Duration(seconds: 1), () async {
-      if (mounted) {
-        final aiMessage = ChatMessage(
-          text: _getMockResponse(text),
-          isUser: false,
-          time: _currentTime(),
-          timestamp: DateTime.now(),
-        );
-        
-        setState(() {
-          _currentSessionMessages.add(aiMessage);
-          _isTyping = false;
-        });
-        
-        _scrollToBottom();
-        
-        await _chatRepository.saveMessage(aiMessage);
-      }
-    });
+    // Fetch dynamic response from Vercel backend (Groq Primary -> Gemini Fallback)
+    final aiResponseText = await _getVercelResponse(text);
+
+    if (mounted) {
+      final aiMessage = ChatMessage(
+        text: aiResponseText,
+        isUser: false,
+        time: _currentTime(),
+        timestamp: DateTime.now(),
+      );
+      
+      setState(() {
+        _currentSessionMessages.add(aiMessage);
+        _isTyping = false;
+      });
+      
+      _scrollToBottom();
+      
+      await _chatRepository.saveMessage(aiMessage);
+    }
   }
 
   void _scrollToBottom() {

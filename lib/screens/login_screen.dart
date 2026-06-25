@@ -1,9 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
-import 'risk_assessment_step1_screen.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,16 +26,16 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _handlePatientLogin() async {
-    final email = _emailController.text.trim();
+    final emailOrPhone = _emailController.text.trim();
     final password = _passwordController.text;
 
     final authService = AuthService();
     final isTesting = !authService.isFirebaseInitialized;
 
-    if (!isTesting && (email.isEmpty || password.isEmpty)) {
+    if (!isTesting && (emailOrPhone.isEmpty || password.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter your email and password.'),
+          content: Text('Please enter your email or phone number and password.'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -49,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await authService.signInWithEmailAndPassword(email, password);
+      await authService.signInWithEmailAndPassword(emailOrPhone, password);
       
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -61,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       String message = 'Authentication failed. Please try again.';
       if (e.code == 'user-not-found') {
-        message = 'No user found with this email.';
+        message = 'No user found with this email or phone number.';
       } else if (e.code == 'wrong-password') {
         message = 'Incorrect password.';
       } else if (e.code == 'invalid-email') {
@@ -85,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('An unexpected error occurred: $e'),
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -100,13 +98,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleCoachLogin() async {
-    final email = _emailController.text.trim();
+    final emailOrPhone = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
+    if (emailOrPhone.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter your email and password.'),
+          content: Text('Please enter your email or phone number and password.'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -119,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final authService = AuthService();
-      await authService.signInCoachWithEmailAndPassword(email, password);
+      await authService.signInCoachWithEmailAndPassword(emailOrPhone, password);
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -131,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       String message = 'Authentication failed. Please try again.';
       if (e.code == 'user-not-found') {
-        message = 'No coach account found with this email.';
+        message = 'No coach account found with this email or phone number.';
       } else if (e.code == 'wrong-password') {
         message = 'Incorrect password.';
       } else if (e.code == 'invalid-email') {
@@ -235,10 +233,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               alignment: Alignment.center,
                               child: Text(
                                 _isPatientSelected
-                                    ? 'Welcome to DiaPrevent'
-                                    : 'Welcome to DiaPrevent - Clinician Portal',
+                                    ? 'Welcome to Diabetes Prevention Program'
+                                    : 'Welcome to Diabetes Prevention Program - Clinician Portal',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: _isPatientSelected
                                       ? const Color(0xFF1E1E50)
@@ -360,13 +358,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Email or Phone Number Field
                           TextField(
                             controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            onChanged: (value) {
+                              setState(() {});
+                            },
                             style: TextStyle(
                               color: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
                               fontWeight: _isPatientSelected ? FontWeight.w700 : FontWeight.w500,
                             ),
                             decoration: InputDecoration(
-                              labelText: 'Email Address',
-                              hintText: 'Email Address',
+                              labelText: 'Email Address or Phone Number',
+                              hintText: 'Email Address or Phone Number',
                               floatingLabelBehavior: FloatingLabelBehavior.always,
                               labelStyle: TextStyle(
                                 color: _isPatientSelected ? GelatoTheme.textDark : _borderBlue,
@@ -380,7 +382,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               prefixIcon: Padding(
                                 padding: const EdgeInsets.only(left: 16.0, right: 12.0),
                                 child: Icon(
-                                  Icons.mail_outline_rounded,
+                                  RegExp(r'^\d+$').hasMatch(_emailController.text.trim())
+                                      ? Icons.phone_iphone_rounded
+                                      : Icons.mail_outline_rounded,
                                   color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
                                   size: 24,
                                 ),
@@ -394,21 +398,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
-                                borderSide: BorderSide(
-                                  color: _isPatientSelected ? Colors.black : _borderBlue,
-                                  width: _isPatientSelected ? 2.0 : 1.5,
+                                  borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                                  borderSide: BorderSide(
+                                    color: _isPatientSelected ? Colors.black : _borderBlue,
+                                    width: _isPatientSelected ? 2.0 : 1.5,
+                                  ),
                                 ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
-                                borderSide: BorderSide(
-                                  color: _isPatientSelected ? Colors.black : _borderBlue,
-                                  width: 2.0,
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                                  borderSide: BorderSide(
+                                    color: _isPatientSelected ? Colors.black : _borderBlue,
+                                    width: 2.0,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
                           const SizedBox(height: 20),
 
                           // Password Field

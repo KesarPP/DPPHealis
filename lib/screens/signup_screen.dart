@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'clinician_dashboard_screen.dart';
 import 'risk_assessment_step1_screen.dart';
 import '../data/gelato_theme.dart';
@@ -24,6 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
@@ -31,13 +33,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _handlePatientSignUp() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
     final authService = AuthService();
     final isTesting = !authService.isFirebaseInitialized;
 
-    if (!isTesting && (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty)) {
+    if (!isTesting && (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty || confirmPassword.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all fields.'),
@@ -66,6 +69,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: email,
         password: password,
         name: name,
+        phoneNumber: phone,
       );
 
       if (mounted) {
@@ -126,10 +130,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _handleCoachSignUp() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all fields.'),
@@ -159,6 +164,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: email,
         password: password,
         name: name,
+        phoneNumber: phone,
       );
 
       if (mounted) {
@@ -218,6 +224,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -251,7 +258,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Join DiaPrevent and start your healthy life today.',
+                  'Join Diabetes Prevention Program and start your healthy life today.',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: _isPatientSelected ? FontWeight.w600 : FontWeight.w500,
@@ -463,6 +470,71 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   Icons.alternate_email_rounded,
                                   color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
                                   size: 22,
+                                ),
+                              ],
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: _isPatientSelected ? 2.0 : 1.5,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: _isPatientSelected ? 2.0 : 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(_isPatientSelected ? 20 : 24),
+                            borderSide: BorderSide(
+                              color: _isPatientSelected ? Colors.black : _borderBlue,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Phone Number Field
+                      TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        style: TextStyle(
+                          color: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
+                          fontWeight: _isPatientSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          counterText: "",
+                          labelText: 'Phone Number',
+                          hintText: 'Enter your phone number',
+                          floatingLabelBehavior: FloatingLabelBehavior.always,
+                          labelStyle: TextStyle(
+                            color: _isPatientSelected ? GelatoTheme.textDark : _borderBlue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          hintStyle: TextStyle(
+                            color: _isPatientSelected ? GelatoTheme.textMuted : _slateGrey,
+                            fontWeight: _isPatientSelected ? FontWeight.w500 : FontWeight.w400,
+                          ),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.only(left: 16.0, right: 12.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.phone_outlined,
+                                  color: _isPatientSelected ? GelatoTheme.blueDark : _borderBlue,
+                                  size: 24,
                                 ),
                               ],
                             ),

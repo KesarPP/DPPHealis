@@ -197,12 +197,33 @@ class AuthService {
   /// Authenticate a patient with email and password.
   /// Verifies the account belongs to the 'users' collection in Firestore.
   /// Throws a [FirebaseAuthException] or [Exception] on failure.
-  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+  Future<User?> signInWithEmailAndPassword(String emailOrPhone, String password) async {
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
+    String resolvedEmail = emailOrPhone;
+
+    final isPhone = RegExp(r'^\d{10}$').hasMatch(emailOrPhone);
+    if (isPhone) {
+      if (_firestore != null) {
+        final docQuery = await _firestore!
+            .collection('users')
+            .where('phoneNumber', isEqualTo: emailOrPhone)
+            .limit(1)
+            .get();
+        if (docQuery.docs.isNotEmpty) {
+          resolvedEmail = docQuery.docs.first.data()['email'] as String;
+        } else {
+          throw Exception('No patient account found with this phone number.');
+        }
+      } else {
+        // Mock mode lookup
+        resolvedEmail = prefs.getString('phone_email_map_$emailOrPhone') ?? '$emailOrPhone@mock.com';
+      }
+    }
+
     if (auth != null) {
       final credential = await auth.signInWithEmailAndPassword(
-        email: email,
+        email: resolvedEmail,
         password: password,
       );
       final user = credential.user;
@@ -227,6 +248,7 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'user');
+      await prefs.setString('last_user_email', resolvedEmail);
       return null;
     }
   }
@@ -238,9 +260,13 @@ class AuthService {
     required String email,
     required String password,
     required String name,
+    required String phoneNumber,
   }) async {
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
+    if (phoneNumber.isNotEmpty) {
+      await prefs.setString('phone_email_map_$phoneNumber', email);
+    }
     if (auth != null) {
       final credential = await auth.createUserWithEmailAndPassword(
         email: email,
@@ -259,6 +285,7 @@ class AuthService {
           'uid': user.uid,
           'name': name,
           'email': email,
+          'phoneNumber': phoneNumber,
           'role': 'user',
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -271,6 +298,7 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'user');
+      await prefs.setString('last_user_email', email);
       return null;
     }
   }
@@ -289,13 +317,34 @@ class AuthService {
   /// Validates healis.org domain AND verifies the account is in the 'coaches' Firestore collection.
   /// Throws if the email is not a healis.org address, or on Firebase failure.
   Future<User?> signInCoachWithEmailAndPassword(
-      String email, String password) async {
-    _assertCoachEmail(email);
+      String emailOrPhone, String password) async {
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
+    String resolvedEmail = emailOrPhone;
+
+    final isPhone = RegExp(r'^\d{10}$').hasMatch(emailOrPhone);
+    if (isPhone) {
+      if (_firestore != null) {
+        final docQuery = await _firestore!
+            .collection('coaches')
+            .where('phoneNumber', isEqualTo: emailOrPhone)
+            .limit(1)
+            .get();
+        if (docQuery.docs.isNotEmpty) {
+          resolvedEmail = docQuery.docs.first.data()['email'] as String;
+        } else {
+          throw Exception('No coach account found with this phone number.');
+        }
+      } else {
+        // Mock mode lookup
+        resolvedEmail = prefs.getString('phone_email_map_$emailOrPhone') ?? '$emailOrPhone@healis.org';
+      }
+    }
+
+    _assertCoachEmail(resolvedEmail);
     if (auth != null) {
       final credential = await auth.signInWithEmailAndPassword(
-        email: email,
+        email: resolvedEmail,
         password: password,
       );
       final user = credential.user;
@@ -321,7 +370,7 @@ class AuthService {
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
       await prefs.setString('last_user_name', 'Dr. Sarah Mitchell');
-      await prefs.setString('last_user_email', email);
+      await prefs.setString('last_user_email', resolvedEmail);
       return null;
     }
   }
@@ -333,10 +382,14 @@ class AuthService {
     required String email,
     required String password,
     required String name,
+    required String phoneNumber,
   }) async {
     _assertCoachEmail(email);
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
+    if (phoneNumber.isNotEmpty) {
+      await prefs.setString('phone_email_map_$phoneNumber', email);
+    }
     if (auth != null) {
       final credential = await auth.createUserWithEmailAndPassword(
         email: email,
@@ -355,6 +408,7 @@ class AuthService {
           'uid': user.uid,
           'name': name,
           'email': email,
+          'phoneNumber': phoneNumber,
           'role': 'coach',
           'createdAt': FieldValue.serverTimestamp(),
         });

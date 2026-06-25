@@ -1,5 +1,6 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
 import '../data/gelato_theme.dart';
 import '../models/ndpp_constants.dart';
 import '../services/activity_metrics_engine.dart';
@@ -148,6 +149,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
   bool _isPressed = false;
+  double _height = 1.77;
 
   @override
   void initState() {
@@ -162,6 +164,29 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
         .animate(CurvedAnimation(
             parent: _animController, curve: Curves.easeOutCubic));
     _animController.forward();
+    _loadHeight();
+  }
+
+  Future<void> _loadHeight() async {
+    try {
+      final authService = AuthService();
+      if (authService.isFirebaseInitialized && authService.currentUser != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(authService.currentUser!.uid)
+            .get();
+        if (doc.exists) {
+          final data = doc.data();
+          if (data != null && data.containsKey('height')) {
+            if (mounted) {
+              setState(() {
+                _height = (data['height'] as num).toDouble() / 100.0; // cm to m
+              });
+            }
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -172,6 +197,70 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
 
   @override
   Widget build(BuildContext context) {
+    final authService = AuthService();
+    final uid = authService.isFirebaseInitialized ? authService.currentUser?.uid : null;
+
+    if (uid == null) {
+      return _buildCard(
+        currentWeight: 78.4,
+        goalWeight: 72.0,
+        totalLost: 2.3,
+        toGo: 6.4,
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('weight_history')
+          .orderBy('date', descending: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        double currentWeight = 78.4;
+        double startingWeight = 82.5;
+        double totalLost = 2.3;
+        double goalWeight = 72.0;
+        double toGo = 6.4;
+
+        if (snapshot.hasData && snapshot.data != null && snapshot.data!.docs.isNotEmpty) {
+          final docs = snapshot.data!.docs;
+          
+          startingWeight = (docs.first.data() as Map<String, dynamic>)['weight']?.toDouble() ?? 82.5;
+          currentWeight = (docs.last.data() as Map<String, dynamic>)['weight']?.toDouble() ?? 78.4;
+          totalLost = startingWeight - currentWeight;
+
+          // Calculate goal weight using same formula as WeighInScreen
+          final baselineWeight = startingWeight;
+          final baselineBMI = baselineWeight / (_height * _height);
+          
+          if (baselineBMI < 18.5) {
+            goalWeight = 18.5 * (_height * _height);
+          } else if (baselineBMI >= 18.5 && baselineBMI < 25.0) {
+            goalWeight = baselineWeight;
+          } else {
+            goalWeight = baselineWeight * 0.95;
+          }
+
+          toGo = currentWeight > goalWeight ? currentWeight - goalWeight : 0.0;
+        }
+
+        return _buildCard(
+          currentWeight: currentWeight,
+          goalWeight: goalWeight,
+          totalLost: totalLost,
+          toGo: toGo,
+        );
+      },
+    );
+  }
+
+  Widget _buildCard({
+    required double currentWeight,
+    required double goalWeight,
+    required double totalLost,
+    required double toGo,
+  }) {
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -300,7 +389,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                             Expanded(
                               child: _buildStatCard(
                                 'Current',
-                                78.4,
+                                currentWeight,
                                 'kg',
                                 GelatoTheme.pink
                                     .withValues(alpha: 0.3), // Pastel pink
@@ -311,7 +400,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                             Expanded(
                               child: _buildStatCard(
                                 'GOAL',
-                                72.0,
+                                goalWeight,
                                 'kg',
                                 GelatoTheme.green
                                     .withValues(alpha: 0.3), // Pastel green
@@ -322,7 +411,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                             Expanded(
                               child: _buildStatCard(
                                 'Total Lost',
-                                2.3,
+                                totalLost,
                                 'kg',
                                 GelatoTheme.yellow
                                     .withValues(alpha: 0.3), // Pastel yellow
@@ -363,7 +452,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                           Stack(
                             alignment: Alignment.centerLeft,
                             children: [
-                              Text('6.4 kg',
+                              Text('${toGo.toStringAsFixed(1)} kg',
                                   style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
@@ -371,8 +460,8 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                                         ..style = PaintingStyle.stroke
                                         ..strokeWidth = 3
                                         ..color = Colors.white)),
-                              const Text('6.4 kg',
-                                  style: TextStyle(
+                              Text('${toGo.toStringAsFixed(1)} kg',
+                                  style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.black)),

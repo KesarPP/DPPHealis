@@ -327,6 +327,11 @@ class _WeighInScreenState extends State<WeighInScreen> {
   }
 
   Widget _buildStatsGrid() {
+    final double previousWeight = _history.length >= 2
+        ? _history[_history.length - 2].weight
+        : _currentWeight;
+    final bool weightIncreased = _currentWeight > previousWeight;
+
     final lostText = _totalLost >= 0
         ? '-${_totalLost.toStringAsFixed(1)} kg'
         : '+${(-_totalLost).toStringAsFixed(1)} kg';
@@ -350,8 +355,8 @@ class _WeighInScreenState extends State<WeighInScreen> {
           title: 'TOTAL LOST',
           value: lostText,
           subtitle: 'From starting weight',
-          color: GelatoTheme.green,
-          textColor: GelatoTheme.greenDark,
+          color: weightIncreased ? const Color(0xFFFADBD8) : GelatoTheme.green,
+          textColor: weightIncreased ? const Color(0xFF78281F) : GelatoTheme.greenDark,
         ),
         _buildStatTile(
           title: 'WEIGHT GOAL',
@@ -364,8 +369,8 @@ class _WeighInScreenState extends State<WeighInScreen> {
           title: 'BMI STATUS',
           value: _bmi.toStringAsFixed(1),
           subtitle: _getBMICategory(_bmi),
-          color: GelatoTheme.yellow,
-          textColor: _getBMICategoryColor(_bmi),
+          color: weightIncreased ? const Color(0xFFFADBD8) : GelatoTheme.yellow,
+          textColor: weightIncreased ? const Color(0xFF78281F) : _getBMICategoryColor(_bmi),
         ),
       ],
     );
