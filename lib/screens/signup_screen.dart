@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'clinician_dashboard_screen.dart';
 import 'risk_assessment_step1_screen.dart';
 import '../data/gelato_theme.dart';
@@ -503,11 +504,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       TextField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                         style: TextStyle(
                           color: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
                           fontWeight: _isPatientSelected ? FontWeight.w700 : FontWeight.w500,
                         ),
                         decoration: InputDecoration(
+                          counterText: "",
                           labelText: 'Phone Number',
                           hintText: 'Enter your phone number',
                           floatingLabelBehavior: FloatingLabelBehavior.always,
