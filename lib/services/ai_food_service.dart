@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import '../secrets.dart';
+import 'package:firebase_ai/firebase_ai.dart';
 import '../models/food_item.dart';
 
 class AiFoodService {
@@ -9,19 +8,12 @@ class AiFoodService {
   factory AiFoodService() => _instance;
   AiFoodService._internal();
 
-  GenerativeModel? _model;
-
-  void _init() {
-    _model = GenerativeModel(
-      model: 'gemini-1.5-pro',
-      apiKey: geminiApiKey,
-    );
-  }
-
   Future<String?> identifyFood(File imageFile) async {
-    if (_model == null) _init();
-
     try {
+      final model = FirebaseAI.googleAI().generativeModel(
+        model: 'gemini-2.5-flash',
+      );
+
       final imageBytes = await imageFile.readAsBytes();
       final prompt = TextPart(
           'Analyze this image and identify the main food item present. '
@@ -29,9 +21,9 @@ class AiFoodService {
               'Do not use any punctuation, descriptive sentences, or markdown. '
               'Example responses: "Apple", "Pizza", "Grilled Chicken", "Salad".'
       );
-      final imagePart = DataPart('image/jpeg', imageBytes);
+      final imagePart = InlineDataPart('image/jpeg', imageBytes);
 
-      final response = await _model!.generateContent([
+      final response = await model.generateContent([
         Content.multi([prompt, imagePart])
       ]);
 
@@ -42,45 +34,54 @@ class AiFoodService {
   }
 
   Future<FoodItem?> analyzeNutritionalLabel(File imageFile) async {
-    if (_model == null) _init();
-
     try {
+      final model = FirebaseAI.googleAI().generativeModel(
+        model: 'gemini-2.5-flash',
+      );
+
       final imageBytes = await imageFile.readAsBytes();
       final prompt = TextPart(
-          'Analyze this nutritional label image. '
-          'Extract the following information and return ONLY a valid JSON object without markdown formatting or code blocks: '
-          '{"name": "Product Name", "brand": "Brand Name", "calories": 0.0, "carbs": 0.0, "protein": 0.0, "fat": 0.0, "fiber": 0.0, "sugar": 0.0, "sodium": 0.0, "servingSize": "1 cup (100g)"}. '
-          'If the brand or name is missing, infer it from the packaging if possible, otherwise use "Unknown". '
-          'If nutritional values are missing, set them to 0.0.'
+          '''Analyze this nutritional label image and extract the following information.
+Respond ONLY with a valid JSON object matching this structure. Use null or 0.0 for missing values:
+{
+  "name": "Product Name (if visible, otherwise generic name)",
+  "brand": "Brand Name (if visible)",
+  "calories": 0.0,
+  "carbs": 0.0,
+  "protein": 0.0,
+  "fat": 0.0,
+  "fiber": 0.0,
+  "sugar": 0.0,
+  "sodium": 0.0,
+  "servingSize": "e.g., 1 cup (240ml)"
+}
+Do not use markdown formatting like ```json.
+'''
       );
-      final imagePart = DataPart('image/jpeg', imageBytes);
+      final imagePart = InlineDataPart('image/jpeg', imageBytes);
 
-      final response = await _model!.generateContent([
+      final response = await model.generateContent([
         Content.multi([prompt, imagePart])
       ]);
 
-      var text = response.text?.trim() ?? '';
-      if (text.startsWith('```json')) text = text.substring(7);
-      if (text.startsWith('```')) text = text.substring(3);
-      if (text.endsWith('```')) text = text.substring(0, text.length - 3);
-      
-      final Map<String, dynamic> data = jsonDecode(text.trim());
-      
+      final text = response.text?.trim() ?? '';
+      final jsonStr = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      final data = jsonDecode(jsonStr);
+
       return FoodItem(
-        id: '', 
-        name: data['name'] ?? 'Unknown Product',
-        brand: data['brand'],
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: data['name'] ?? 'Unknown',
         calories: (data['calories'] ?? 0).toDouble(),
         carbs: (data['carbs'] ?? 0).toDouble(),
         protein: (data['protein'] ?? 0).toDouble(),
         fat: (data['fat'] ?? 0).toDouble(),
         fiber: (data['fiber'] ?? 0).toDouble(),
+        brand: data['brand'],
         sugar: data['sugar'] != null ? (data['sugar'] as num).toDouble() : null,
         sodium: data['sodium'] != null ? (data['sodium'] as num).toDouble() : null,
         servingSize: data['servingSize'],
       );
     } catch (e) {
-      print('Error parsing label: $e');
       throw Exception("Failed to analyze nutritional label: $e");
     }
   }
