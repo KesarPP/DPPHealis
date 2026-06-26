@@ -70,6 +70,11 @@
     <queries>
         <!-- Required to check if Health Connect is installed -->
         <package android:name="com.google.android.apps.healthdata" />
+        <package android:name="com.google.android.apps.fitness" />
+        <package android:name="com.sec.android.app.shealth" />
+        <package android:name="com.fitbit.FitbitMobile" />
+        <package android:name="com.garmin.android.apps.connectmobile" />
+        <package android:name="com.xiaomi.wearable" />
         <intent>
             <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
         </intent>

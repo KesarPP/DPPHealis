@@ -78,14 +78,33 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
   @override
   Widget build(BuildContext context) {
     final earnedItems = widget.achievements.where((a) => a.unlocked).toList();
+    earnedItems.sort((a, b) {
+      final dateA = a.earnedDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final dateB = b.earnedDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return dateB.compareTo(dateA);
+    });
     
-    // Sort locked items by progress ratio descending
     final lockedItems = widget.achievements.where((a) => !a.unlocked).toList();
     lockedItems.sort((a, b) {
-      final ratioA = a.progressTarget > 0 ? a.progressCurrent / a.progressTarget : 0;
-      final ratioB = b.progressTarget > 0 ? b.progressCurrent / b.progressTarget : 0;
+      final ratioA = a.progressTarget > 0 ? a.progressCurrent / a.progressTarget : 0.0;
+      final ratioB = b.progressTarget > 0 ? b.progressCurrent / b.progressTarget : 0.0;
       return ratioB.compareTo(ratioA);
     });
+    final nextUpList = lockedItems.take(3).toList();
+
+    // Dynamic Header Text
+    final now = DateTime.now();
+    bool hasRecentEarned = earnedItems.any((a) => a.earnedDate != null && now.difference(a.earnedDate!).inHours < 24);
+    final topLockedRatio = nextUpList.isNotEmpty && nextUpList[0].progressTarget > 0 
+        ? nextUpList[0].progressCurrent / nextUpList[0].progressTarget 
+        : 0.0;
+    
+    String headerMessage = "Keep going!";
+    if (hasRecentEarned) {
+      headerMessage = "Keep it up!";
+    } else if (topLockedRatio >= 0.9) {
+      headerMessage = "Almost there!";
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -100,12 +119,12 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.emoji_events_rounded, color: GelatoTheme.yellowDark, size: 28),
-              SizedBox(width: 12),
-              Text('Achievements', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Keep it up!', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: GelatoTheme.purpleDark))),
+            children: [
+              const Icon(Icons.emoji_events_rounded, color: GelatoTheme.yellowDark, size: 28),
+              const SizedBox(width: 12),
+              const Text('Achievements', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(headerMessage, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: GelatoTheme.purpleDark))),
             ],
           ),
           const SizedBox(height: 16),
@@ -170,9 +189,9 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
                   child: ListView.builder(
                     physics: const BouncingScrollPhysics(),
                     scrollDirection: Axis.horizontal,
-                    itemCount: lockedItems.length,
+                    itemCount: nextUpList.length,
                     itemBuilder: (context, index) {
-                      return _buildBadge(lockedItems[index], index, true);
+                      return _buildBadge(nextUpList[index], index, true);
                     },
                   ),
                 ),
@@ -306,6 +325,14 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
                   ),
                 ),
               ),
+              if (item.id == 'lose_5kg') ...[
+                const SizedBox(height: 4),
+                Text(
+                  "~${math.max(1, ((5.0 - item.progressCurrent) / 0.5).ceil())} wks at 0.5kg/wk",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 7, fontWeight: FontWeight.w700, color: GelatoTheme.textLight),
+                ),
+              ],
             ],
           ],
         ),

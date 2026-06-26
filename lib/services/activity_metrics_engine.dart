@@ -1,21 +1,33 @@
 import 'dart:math';
 import '../models/ndpp_constants.dart';
 
+enum AchievementCategory { streak, food, activity, weight, risk }
+enum AchievementType { oneTime, cumulative, threshold }
+enum AchievementStatus { locked, earned }
+
 class Achievement {
   final String id;
   final String title;
   final String subtitle;
   final String icon;
-  final bool unlocked;
+  final AchievementCategory category;
+  final AchievementType type;
+  final AchievementStatus status;
+  final DateTime? earnedDate;
   final double progressCurrent;
   final double progressTarget;
+
+  bool get unlocked => status == AchievementStatus.earned;
 
   Achievement({
     required this.id,
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.unlocked,
+    this.category = AchievementCategory.activity,
+    this.type = AchievementType.oneTime,
+    required this.status,
+    this.earnedDate,
     required this.progressCurrent,
     required this.progressTarget,
   });
@@ -174,6 +186,7 @@ class ActivityMetricsEngine {
     required double currentWeight,
     required double riskScore,
     required int programWeek,
+    Map<String, DateTime>? earnedMap,
   }) {
     final int currentStreak = getCurrentStreak(pastDays);
     
@@ -183,115 +196,115 @@ class ActivityMetricsEngine {
     int stretchCount = 0;
     int lifestyleCount = 0;
     bool has10kDay = false;
+    bool hasBriskPace = false;
+
+    // Evaluate rolling 7 days vs older days if pastDays has >7 items
+    final List<DailyAggregate> rolling7Days = pastDays.length > 7
+        ? pastDays.sublist(pastDays.length - 7)
+        : pastDays;
+
+    for (var day in rolling7Days) {
+      weeklyQualifyingMinutes += day.qualifyingActiveMinutes;
+      for (var s in day.coreSessions) {
+        if (s.activityType == ActivityType.stretching) stretchCount++;
+      }
+      lifestyleCount += day.lifestyleSessions.length;
+    }
 
     for (var day in pastDays) {
-      weeklyQualifyingMinutes += day.qualifyingActiveMinutes;
       if (day.totalSteps >= 10000) has10kDay = true;
-      
       for (var s in day.coreSessions) {
         distinctTypes.add(s.activityType);
-        if (s.activityType == ActivityType.stretching) stretchCount++;
+        if (s.activityType == ActivityType.walking && s.durationMinutes >= 10 && s.isQualifying) {
+          hasBriskPace = true;
+        }
       }
       for (var s in day.lifestyleSessions) {
         distinctTypes.add(s.activityType);
-        lifestyleCount++;
       }
     }
 
-    final double weightLoss = baselineWeight - currentWeight;
+    final double weightLostKg = max(0.0, baselineWeight - currentWeight);
 
-    List<Achievement> achievements = [
-      Achievement(
-        id: 'streak_7',
-        title: '7 Day Streak',
-        subtitle: 'Consistency is power!',
-        icon: 'calendar_month_rounded',
-        unlocked: currentStreak >= 7,
-        progressCurrent: min(7.0, currentStreak.toDouble()),
-        progressTarget: 7.0,
-      ),
-      Achievement(
-        id: 'streak_30',
-        title: '30 Day Streak',
-        subtitle: 'A month of dedication!',
-        icon: 'emoji_events_rounded',
-        unlocked: currentStreak >= 30,
-        progressCurrent: min(30.0, currentStreak.toDouble()),
-        progressTarget: 30.0,
-      ),
-      Achievement(
-        id: 'week_150',
-        title: '150 Minute Week',
-        subtitle: 'Hit the NDPP goal!',
-        icon: 'timer_rounded',
-        unlocked: programWeek >= 8 && weeklyQualifyingMinutes >= 150,
-        progressCurrent: min(150.0, weeklyQualifyingMinutes.toDouble()),
-        progressTarget: 150.0,
-      ),
-      Achievement(
-        id: 'first_10k',
-        title: 'First 10K Step Day',
-        subtitle: 'Walked the distance!',
-        icon: 'directions_walk_rounded',
-        unlocked: has10kDay,
-        progressCurrent: has10kDay ? 1 : 0,
-        progressTarget: 1,
-      ),
-      Achievement(
-        id: 'logged_50_meals',
-        title: 'Logged 50 Meals',
-        subtitle: 'Tracked your nutrition!',
-        icon: 'restaurant_rounded',
-        unlocked: mealLogCount >= 50,
-        progressCurrent: min(50.0, mealLogCount.toDouble()),
-        progressTarget: 50.0,
-      ),
-      Achievement(
-        id: 'activity_explorer',
-        title: 'Activity Explorer',
-        subtitle: 'Tried 4 different activities!',
-        icon: 'explore_rounded',
-        unlocked: distinctTypes.length >= 4,
-        progressCurrent: min(4.0, distinctTypes.length.toDouble()),
-        progressTarget: 4.0,
-      ),
-      Achievement(
-        id: 'stretch_champion',
-        title: 'Stretch Champion',
-        subtitle: 'Stretched 5 times this week!',
-        icon: 'accessibility_new_rounded',
-        unlocked: stretchCount >= 5,
-        progressCurrent: min(5.0, stretchCount.toDouble()),
-        progressTarget: 5.0,
-      ),
-      Achievement(
-        id: 'lifestyle_mover',
-        title: 'Lifestyle Mover',
-        subtitle: 'Active choices every day!',
-        icon: 'cleaning_services_rounded',
-        unlocked: lifestyleCount >= 3,
-        progressCurrent: min(3.0, lifestyleCount.toDouble()),
-        progressTarget: 3.0,
-      ),
-      Achievement(
-        id: 'lose_5kg',
-        title: 'Lose 5 kg',
-        subtitle: 'Great progress on your weight!',
-        icon: 'monitor_weight_rounded',
-        unlocked: weightLoss >= 5.0,
-        progressCurrent: max(0.0, min(5.0, weightLoss)),
-        progressTarget: 5.0,
-      ),
-      Achievement(
-        id: 'low_risk_zone',
-        title: 'Reach Low Risk Zone',
-        subtitle: 'Reduced your diabetes risk!',
-        icon: 'health_and_safety_rounded',
-        unlocked: riskScore <= 30.0, // Assuming 30 is low risk threshold
-        progressCurrent: min(100.0, max(0.0, 100 - riskScore)), // Inverted
-        progressTarget: 100.0 - 30.0,
-      ),
-    ];
+    // TODO: confirm against dedicated risk module if one exists
+    final double activityComponent = min(1.0, weeklyQualifyingMinutes / 150.0) * 50.0;
+    final double weightComponent = min(1.0, weightLostKg / 5.0) * 50.0;
+    final double riskReductionScore = (activityComponent + weightComponent).roundToDouble();
+
+    // Raw condition evaluation map
+    final rawConditions = {
+      'streak_7': currentStreak >= 7,
+      'logged_50_meals': mealLogCount >= 50,
+      'first_10k': has10kDay,
+      'lose_5kg': weightLostKg >= 5.0,
+      'low_risk_zone': riskReductionScore >= 80.0,
+      'streak_30': currentStreak >= 30,
+      'activity_explorer': distinctTypes.length >= 4,
+      'stretch_champion': stretchCount >= 5,
+      'lifestyle_mover': lifestyleCount >= 3,
+      'week_150': programWeek >= 8 && weeklyQualifyingMinutes >= 150,
+      'brisk_pace': hasBriskPace,
+      'streak_14': currentStreak >= 14,
+    };
+
+    final rawProgress = {
+      'streak_7': {'curr': min(7.0, currentStreak.toDouble()), 'targ': 7.0},
+      'logged_50_meals': {'curr': min(50.0, mealLogCount.toDouble()), 'targ': 50.0},
+      'first_10k': {'curr': has10kDay ? 1.0 : 0.0, 'targ': 1.0},
+      'lose_5kg': {'curr': min(5.0, ((weightLostKg * 10).round() / 10)), 'targ': 5.0},
+      'low_risk_zone': {'curr': min(100.0, riskReductionScore), 'targ': 100.0},
+      'streak_30': {'curr': min(30.0, currentStreak.toDouble()), 'targ': 30.0},
+      'activity_explorer': {'curr': min(4.0, distinctTypes.length.toDouble()), 'targ': 4.0},
+      'stretch_champion': {'curr': min(5.0, stretchCount.toDouble()), 'targ': 5.0},
+      'lifestyle_mover': {'curr': min(3.0, lifestyleCount.toDouble()), 'targ': 3.0},
+      'week_150': {'curr': min(150.0, weeklyQualifyingMinutes.toDouble()), 'targ': 150.0},
+      'brisk_pace': {'curr': hasBriskPace ? 1.0 : 0.0, 'targ': 1.0},
+      'streak_14': {'curr': min(14.0, currentStreak.toDouble()), 'targ': 14.0},
+    };
+
+    final meta = {
+      'streak_7': {'title': '7 Day Streak', 'sub': 'Kept the streak alive!', 'icon': 'calendar_month_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime},
+      'logged_50_meals': {'title': 'Logged 50 Meals', 'sub': 'Fueling your body right!', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.cumulative},
+      'first_10k': {'title': 'First 10K Step Day', 'sub': 'Big steps, big progress', 'icon': 'directions_walk_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime},
+      'lose_5kg': {'title': 'Lose 5 kg', 'sub': "You're on your way!", 'icon': 'monitor_weight_rounded', 'cat': AchievementCategory.weight, 'type': AchievementType.threshold},
+      'low_risk_zone': {'title': 'Reach Low Risk Zone', 'sub': 'Unlock a healthier you!', 'icon': 'health_and_safety_rounded', 'cat': AchievementCategory.risk, 'type': AchievementType.threshold},
+      'streak_30': {'title': '30 Day Streak', 'sub': 'Consistency', 'icon': 'emoji_events_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime},
+      'activity_explorer': {'title': 'Activity Explorer', 'sub': 'Tried 4 different activities!', 'icon': 'explore_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.cumulative},
+      'stretch_champion': {'title': 'Stretch Champion', 'sub': 'Stretched 5 times this week!', 'icon': 'accessibility_new_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold},
+      'lifestyle_mover': {'title': 'Lifestyle Mover', 'sub': 'Active choices every day!', 'icon': 'cleaning_services_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold},
+      'week_150': {'title': '150 Minute Week', 'sub': 'Hit the NDPP goal!', 'icon': 'timer_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold},
+      'brisk_pace': {'title': 'Brisk Pace Logged', 'sub': 'Walked with a brisk pace!', 'icon': 'directions_walk_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime},
+      'streak_14': {'title': '14 Day Streak', 'sub': 'Two weeks consistent!', 'icon': 'calendar_month_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime},
+    };
+
+    List<Achievement> achievements = [];
+    for (final key in meta.keys) {
+      final isPermanentlyEarned = earnedMap?.containsKey(key) ?? false;
+      final isCurrentlyMet = rawConditions[key] ?? false;
+      final status = (isPermanentlyEarned || isCurrentlyMet)
+          ? AchievementStatus.earned
+          : AchievementStatus.locked;
+      final eDate = isPermanentlyEarned
+          ? earnedMap![key]
+          : (isCurrentlyMet ? DateTime.now() : null);
+
+      final p = rawProgress[key]!;
+      final curr = status == AchievementStatus.earned ? p['targ']! : p['curr']!;
+
+      final m = meta[key]!;
+      achievements.add(Achievement(
+        id: key,
+        title: m['title'] as String,
+        subtitle: m['sub'] as String,
+        icon: m['icon'] as String,
+        category: m['cat'] as AchievementCategory,
+        type: m['type'] as AchievementType,
+        status: status,
+        earnedDate: eDate,
+        progressCurrent: curr,
+        progressTarget: p['targ']!,
+      ));
+    }
 
     return achievements;
   }

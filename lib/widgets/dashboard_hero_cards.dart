@@ -736,11 +736,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
             kcalRate: kcalRate,
           );
 
-    final todayAgg = widget.trailing30Days.isNotEmpty
-        ? widget.trailing30Days.last
-        : DailyAggregate.empty(DateTime.now());
-    final int todayScore = ActivityMetricsEngine.calculateActivityScore(todayAgg, widget.programWeek);
-    final double todayRingValue = todayScore / 100.0;
+    final double ringValue = summary.progressPercentage / 100.0;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -874,7 +870,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                 ),
                               ),
                               TweenAnimationBuilder<double>(
-                                tween: Tween<double>(begin: 0.0, end: todayRingValue),
+                                tween: Tween<double>(begin: 0.0, end: ringValue),
                                 duration: const Duration(milliseconds: 1500),
                                 curve: Curves.easeOutCubic,
                                 builder: (context, value, child) {
@@ -912,10 +908,12 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                                       height: 1.0)),
                                             ],
                                           ),
-                                          const Text(
-                                            "of today's\nmission completed",
+                                          Text(
+                                            widget.isWeekly
+                                                ? "of this week's\nmission completed"
+                                                : "of this month's\nmission completed",
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w700,
                                                 color: Color(0xFF475569)),

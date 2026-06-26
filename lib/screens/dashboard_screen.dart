@@ -9,6 +9,7 @@ import '../widgets/dashboard_achievements.dart';
 import '../widgets/user_side_drawer.dart';
 import '../services/health_sync_service.dart';
 import '../services/activity_metrics_engine.dart';
+import '../services/achievements_service.dart';
 import '../models/ndpp_constants.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -52,23 +53,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
       
-      final pastDays = past30Days.length >= 7 
-          ? past30Days.sublist(past30Days.length - 7)
-          : past30Days;
-
-      const int mealLogCount = 52;
-      const double baselineWeight = 90.0;
-      const double currentWeight = 84.0;
-      const double riskScore = 28.0;
       const int programWeek = 6;
 
-      final achievements = ActivityMetricsEngine.evaluateAchievements(
-        pastDays: pastDays,
-        mealLogCount: mealLogCount,
-        baselineWeight: baselineWeight,
-        currentWeight: currentWeight,
-        riskScore: riskScore,
+      final achievements = await AchievementsService.evaluateAndSync(
+        trailing30Days: past30Days,
         programWeek: programWeek,
+        context: mounted ? context : null,
       );
 
       if (mounted) {

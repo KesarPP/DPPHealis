@@ -141,6 +141,6 @@ class HealthConnectService implements HealthService {
   @override
   Future<int> getTodayActiveMinutes() async {
     final steps = await getTodaySteps();
-    return (steps / 100).floor();
+    return steps > 0 ? max(1, (steps / 100).round()) : 0;
   }
 }

@@ -51,12 +51,17 @@ class HealthSyncService {
     }
 
     try {
-      final rawData = await _health.getHealthDataFromTypes(
-        startTime: startDate,
-        endTime: startOfDayEnd,
-        types: _syncTypes,
-      ).timeout(const Duration(seconds: 4));
-      final data = _health.removeDuplicates(rawData);
+      List<HealthDataPoint> data = [];
+      for (var type in _syncTypes) {
+        try {
+          final pts = await _health.getHealthDataFromTypes(
+            startTime: startDate,
+            endTime: startOfDayEnd,
+            types: [type],
+          ).timeout(const Duration(seconds: 3));
+          data.addAll(_health.removeDuplicates(pts));
+        } catch (_) {}
+      }
 
       Map<String, int> dailySteps = {};
       Map<String, double> dailyDistance = {};
@@ -104,15 +109,32 @@ class HealthSyncService {
         }
       }
 
+      for (int i = 0; i < daysCount; i++) {
+        final d = startDate.add(Duration(days: i));
+        final dKey = _dateKey(d);
+        final dayStart = DateTime(d.year, d.month, d.day, 0, 0, 0);
+        final dayEnd = DateTime(d.year, d.month, d.day, 23, 59, 59);
+
+        int? intervalSteps;
+        try {
+          intervalSteps = await _health.getTotalStepsInInterval(dayStart, dayEnd);
+        } catch (_) {}
+        if (intervalSteps != null && intervalSteps > 0) {
+          dailySteps[dKey] = max(dailySteps[dKey] ?? 0, intervalSteps);
+        }
+      }
+
       List<DailyAggregate> results = [];
       for (int i = 0; i < daysCount; i++) {
         final d = startDate.add(Duration(days: i));
         final dKey = _dateKey(d);
 
         final steps = dailySteps[dKey] ?? 0;
-        final distance = (dailyDistance[dKey] ?? 0.0) / 1000.0;
+        double distance = (dailyDistance[dKey] ?? 0.0) / 1000.0;
+        if (distance <= 0.0 && steps > 0) {
+          distance = steps * 0.00076;
+        }
         final activeCals = dailyActiveCalories[dKey] ?? 0.0;
-        final totalCals = dailyTotalCalories[dKey] ?? 0.0;
         final coreSessions = dailyCoreSessions[dKey] ?? [];
         final lifestyleSessions = dailyLifestyleSessions[dKey] ?? [];
 
@@ -120,7 +142,7 @@ class HealthSyncService {
         int qualifyingMins = 0;
 
         if (coreSessions.isEmpty && lifestyleSessions.isEmpty) {
-          totalActiveMins = (steps / 100).floor();
+          totalActiveMins = steps > 0 ? max(1, (steps / 100).round()) : 0;
           if (totalActiveMins >= NdppConstants.minQualifyingSessionMinutes) {
             qualifyingMins = totalActiveMins;
           }
