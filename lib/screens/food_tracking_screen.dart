@@ -298,6 +298,11 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
               const _AchievementCard(
                 bgColor: Color(0xFFFFB6C1),
                 borderColor: Color(0xFFC69C6D),
+                imagePath: 'assets/images/Monthly_Consistency_Champion.png', // The user will drop this PNG into assets
+                title: 'CONSISTENCY\nCHAMPION',
+                description: 'Log 7 days in a row',
+                completedDays: 5,
+                totalDays: 7,
               ),
               const _AchievementCard(
                 bgColor: Color(0xFFA8E4A0),
@@ -330,10 +335,20 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
 class _AchievementCard extends StatelessWidget {
   final Color bgColor;
   final Color borderColor;
+  final String? imagePath;
+  final String? title;
+  final String? description;
+  final int? completedDays;
+  final int? totalDays;
 
   const _AchievementCard({
     required this.bgColor,
     required this.borderColor,
+    this.imagePath,
+    this.title,
+    this.description,
+    this.completedDays,
+    this.totalDays,
   });
 
   List<Widget> _buildCornerDecorations(Color color) {
@@ -372,45 +387,347 @@ class _AchievementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 155,
-      height: 280,
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.8),
-            bgColor,
-          ],
-          center: Alignment.topCenter,
-          radius: 1.5,
-        ),
-        borderRadius: BorderRadius.circular(12), // Slightly rounded outer corner
-        border: Border.all(color: borderColor, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: bgColor.withValues(alpha: 0.8),
-            blurRadius: 15,
-            spreadRadius: 4,
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 32),
       child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
         children: [
-          // Inner Border
-          Positioned.fill(
-            child: Container(
-              margin: const EdgeInsets.all(2), // Edges join/run very close to the outer border
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(45), // Extremely rounded inner corner
-                border: Border.all(color: borderColor.withValues(alpha: 0.8), width: 2.0), // Slightly thicker
+          Container(
+            width: 155,
+            height: 280,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                colors: [
+                  Colors.white.withValues(alpha: 0.8),
+                  bgColor,
+                ],
+                center: Alignment.topCenter,
+                radius: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(12), // Slightly rounded outer corner
+              border: Border.all(color: borderColor, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: bgColor.withValues(alpha: 0.8),
+                  blurRadius: 15,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                // Inner Border
+                Positioned.fill(
+                  child: Container(
+                    margin: const EdgeInsets.all(2), // Edges join/run very close to the outer border
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(45), // Extremely rounded inner corner
+                      border: Border.all(color: borderColor.withValues(alpha: 0.8), width: 2.0), // Slightly thicker
+                    ),
+                  ),
+                ),
+                ..._buildCornerDecorations(borderColor),
+                // Inner Content Layout
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 32.0, left: 4.0, right: 4.0, bottom: 16.0),
+                    child: Column(
+                      children: [
+                        // Icon Area (65%)
+                        Expanded(
+                          flex: 85,
+                          child: Transform.translate(
+                            offset: const Offset(0, -25),
+                            child: Center(
+                              child: imagePath != null
+                                  ? Transform.scale(
+                                      scale: 1.20,
+                                      child: Image.asset(
+                                        imagePath!,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.shield_outlined, size: 130, color: borderColor),
+                                      ),
+                                    )
+                                  : Icon(Icons.shield_outlined, size: 130, color: borderColor),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Text Area (35%)
+                        Expanded(
+                          flex: 35,
+                          child: Transform.translate(
+                            offset: const Offset(0, -50), // Moved up by 15 pixels
+                            child: Center(
+                              child: title != null
+                                ? FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Transform.translate(
+                                          offset: const Offset(0, 0), // Adjust title position
+                                          child: Text(
+                                            title!,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: const Color(0xFF001F54), // Deep Dark Blue
+                                              fontSize: 50,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.2,
+                                              height: 1.1, // Bring the two lines a bit closer
+                                              shadows: [
+                                                Shadow(offset: const Offset(1, 2), color: Colors.black.withValues(alpha: 0.2), blurRadius: 2),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Transform.translate(
+                                          offset: const Offset(0, 20), // Adjust subtitle position
+                                          child: Text(
+                                            'MONTHLY',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: const Color(0xFFC2185B), // Dark Pink
+                                              fontSize: 30,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.2,
+                                              shadows: [
+                                                Shadow(offset: const Offset(1, 1), color: Colors.black.withValues(alpha: 0.2), blurRadius: 2),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        if (completedDays != null && totalDays != null) ...[
+                                          const SizedBox(height: 6),
+                                          Transform.translate(
+                                            offset: const Offset(0, 0), // Adjust slider position
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // Slider bar
+                                                SizedBox(
+                                                  width: 110,
+                                                  height: 24,
+                                                  child: Stack(
+                                                    alignment: Alignment.centerLeft,
+                                                    children: [
+                                                      // Background Track
+                                                      Container(
+                                                        height: 12,
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white.withValues(alpha: 0.6),
+                                                          borderRadius: BorderRadius.circular(6),
+                                                          border: Border.all(color: const Color(0xFFC2185B), width: 1.5), // Pink Outline
+                                                        ),
+                                                      ),
+                                                      // Filled Track (Golden)
+                                                      FractionallySizedBox(
+                                                        widthFactor: completedDays! / totalDays!,
+                                                        child: Container(
+                                                          height: 12,
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(0xFFFFD700), // Gold
+                                                            borderRadius: BorderRadius.circular(6),
+                                                            border: Border.all(color: const Color(0xFFC2185B), width: 1.5), // Pink Outline
+                                                            boxShadow: [
+                                                              BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.4), blurRadius: 4),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // Thumb (Pink with white outline)
+                                                      Positioned(
+                                                        left: (110 - 20) * (completedDays! / totalDays!),
+                                                        child: Container(
+                                                          width: 20,
+                                                          height: 20,
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(0xFFC2185B), // Dark Pink
+                                                            shape: BoxShape.circle,
+                                                            border: Border.all(color: Colors.white, width: 2.5),
+                                                            boxShadow: [
+                                                              BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 2, offset: const Offset(1, 1)),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                // Text X/7
+                                                Text(
+                                                  '$completedDays/$totalDays',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF001F54), // Deep Dark Blue
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                        if (description != null) ...[
+                                          const SizedBox(height: 8),
+                                          Transform.translate(
+                                            offset: const Offset(0, 0), // Adjust description position
+                                            child: Text(
+                                              description!,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: const Color(0xFF001F54).withValues(alpha: 0.8), // Deep Dark Blue faded
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w700,
+                                                height: 1.1,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: -28,
+            child: SizedBox(
+              width: 60,
+              height: 45,
+              child: CustomPaint(
+                painter: _CrownPainter(
+                  crownColor: bgColor,
+                  borderColor: borderColor,
+                ),
               ),
             ),
           ),
-          ..._buildCornerDecorations(borderColor),
         ],
       ),
     );
   }
+}
+
+class _CrownPainter extends CustomPainter {
+  final Color crownColor;
+  final Color borderColor;
+
+  _CrownPainter({required this.crownColor, required this.borderColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 60, size.height / 45);
+
+    Paint strokePaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeJoin = StrokeJoin.round;
+
+    Paint fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.white.withValues(alpha: 0.8), crownColor],
+      ).createShader(const Rect.fromLTWH(0, 0, 60, 45));
+
+    Paint darkFillPaint = Paint()
+      ..color = crownColor.withValues(alpha: 0.6); // Darker for back spikes
+
+    Paint jewelRed = Paint()..color = const Color(0xFFE91E63);
+    Paint jewelBlue = Paint()..color = const Color(0xFF2196F3);
+
+    // 1. Back Spikes
+    Path backSpikes = Path()
+      ..moveTo(10, 25)
+      ..quadraticBezierTo(13, 16, 15, 12)
+      ..quadraticBezierTo(18, 16, 25, 20)
+      ..moveTo(35, 20)
+      ..quadraticBezierTo(42, 16, 45, 12)
+      ..quadraticBezierTo(47, 16, 50, 25);
+    
+    canvas.drawPath(backSpikes, darkFillPaint);
+    canvas.drawPath(backSpikes, strokePaint);
+
+    // 2. Main Crown Body
+    Path body = Path()
+      ..moveTo(10, 35)
+      ..quadraticBezierTo(5, 28, 5, 20)
+      ..quadraticBezierTo(15, 27, 20, 28)
+      ..quadraticBezierTo(25, 15, 30, 5)
+      ..quadraticBezierTo(35, 15, 40, 28)
+      ..quadraticBezierTo(45, 27, 55, 20)
+      ..quadraticBezierTo(55, 28, 50, 35)
+      ..quadraticBezierTo(30, 41, 10, 35)
+      ..close();
+
+    canvas.drawPath(body, fillPaint);
+    canvas.drawPath(body, strokePaint);
+
+    // 3. Base Rim
+    Path rim = Path()
+      ..moveTo(6, 36)
+      ..quadraticBezierTo(30, 43, 54, 36)
+      ..quadraticBezierTo(55, 38, 54, 39)
+      ..quadraticBezierTo(30, 46, 6, 39)
+      ..quadraticBezierTo(5, 38, 6, 36)
+      ..close();
+      
+    canvas.drawPath(rim, fillPaint);
+    canvas.drawPath(rim, strokePaint);
+
+    // 4. Pearls
+    void drawPearl(double x, double y, double r) {
+      canvas.drawCircle(Offset(x, y), r, fillPaint);
+      canvas.drawCircle(Offset(x, y), r, strokePaint);
+      canvas.drawCircle(Offset(x - r*0.3, y - r*0.3), r*0.3, Paint()..color = Colors.white.withValues(alpha: 0.6));
+    }
+
+    drawPearl(15, 12, 2.5);
+    drawPearl(45, 12, 2.5);
+    drawPearl(5, 20, 3.5);
+    drawPearl(55, 20, 3.5);
+    drawPearl(30, 5, 4.5);
+
+    // 5. Jewels
+    Path diamond = Path()
+      ..moveTo(30, 20)
+      ..lineTo(34, 26)
+      ..lineTo(30, 32)
+      ..lineTo(26, 26)
+      ..close();
+    canvas.drawPath(diamond, jewelRed);
+    canvas.drawPath(diamond, strokePaint..strokeWidth = 1.0);
+
+    Path diamondHighlight = Path()
+      ..moveTo(30, 22)
+      ..lineTo(32, 26)
+      ..lineTo(30, 26)
+      ..close();
+    canvas.drawPath(diamondHighlight, Paint()..color = Colors.white.withValues(alpha: 0.5));
+
+    canvas.drawCircle(const Offset(18, 31), 2, jewelBlue);
+    canvas.drawCircle(const Offset(18, 31), 2, strokePaint..strokeWidth = 1.0);
+    
+    canvas.drawCircle(const Offset(42, 31), 2, jewelBlue);
+    canvas.drawCircle(const Offset(42, 31), 2, strokePaint..strokeWidth = 1.0);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _TeardropOrnament extends StatelessWidget {
