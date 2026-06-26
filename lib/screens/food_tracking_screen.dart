@@ -287,40 +287,37 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.0),
-          child: Text('Your Momentum!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
+          child: Text('Your Achievements!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 160,
-          child: PageView(
-            controller: PageController(viewportFraction: 0.95),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
             children: [
-              // Page 1: Weekly
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildMinimalCard(context, 'Weekly\nConsistency', Icons.local_fire_department_rounded, GelatoTheme.green, 'Consistency Champion', 'Log 5 Days (Streak)', 2, 7, 50),
-                  _buildMinimalCard(context, 'Weekly\nCalorie', Icons.track_changes_rounded, GelatoTheme.blue, 'Calorie Crusher', 'Under Daily Goal 7/7 days', 2, 7, 60),
-                  _buildMinimalCard(context, 'Weekly\nNutrition', Icons.verified_rounded, GelatoTheme.purple, 'Nutrition Ninja', 'Balanced Macros 6/7 days', 2, 7, 70),
-                ],
+              const _AchievementCard(
+                bgColor: Color(0xFFFFB6C1),
+                borderColor: Color(0xFFC69C6D),
               ),
-              // Page 2: Monthly
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildMinimalCard(context, 'Monthly\nConsistency', Icons.star_rounded, GelatoTheme.yellow, 'Consistency Champion', 'Log 21 Days (Month)', 2, 30, 200),
-                  _buildMinimalCard(context, 'Monthly\nCalorie', Icons.trending_down_rounded, GelatoTheme.orange, 'Calorie Crusher', 'Under Daily Goal 28/31 days', 2, 30, 250),
-                  _buildMinimalCard(context, 'Monthly\nNutrition', Icons.restaurant_rounded, GelatoTheme.greenDark, 'Nutrition Ninja', 'Balanced Macros 26/31 days', 2, 30, 300),
-                ],
+              const _AchievementCard(
+                bgColor: Color(0xFFA8E4A0),
+                borderColor: Color(0xFFC69C6D),
               ),
-              // Page 3: Yearly
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildMinimalCard(context, 'Yearly\nConsistency', Icons.emoji_events_rounded, GelatoTheme.purple, 'Consistency Champion', 'Log 250 Days (Year)', 2, 365, 1000),
-                  _buildMinimalCard(context, 'Yearly\nCalorie', Icons.fitness_center_rounded, GelatoTheme.pink, 'Calorie Crusher', 'Under Daily Goal 330/365 days', 2, 365, 1500),
-                  _buildMinimalCard(context, 'Yearly\nNutrition', Icons.workspace_premium_rounded, GelatoTheme.blue, 'Nutrition Ninja', 'Balanced Macros 310/365 days', 2, 365, 2000),
-                ],
+              const _AchievementCard(
+                bgColor: Color(0xFFFFD54F),
+                borderColor: Color(0xFFC69C6D),
+              ),
+              const _AchievementCard(
+                bgColor: Color(0xFFD8BFD8),
+                borderColor: Color(0xFFC69C6D),
+              ),
+              const _AchievementCard(
+                bgColor: Color(0xFFA0E8E8),
+                borderColor: Color(0xFFC69C6D),
+              ),
+              const _AchievementCard(
+                bgColor: Color(0xFFFFB347),
+                borderColor: Color(0xFFC69C6D),
               ),
             ],
           ),
@@ -328,116 +325,145 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
       ],
     );
   }
+}
 
-  Widget _buildMinimalCard(BuildContext context, String title, IconData icon, Color color, String fullTitle, String subtitle, int progress, int target, int xp) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          _showAchievementDetails(context, fullTitle, subtitle, icon, color, progress, target, xp);
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 6),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color, // Vibrant full color
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black87, width: 1.5),
-            boxShadow: [
-              BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(3, 3)),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 28, color: Colors.white),
-              ),
-              const SizedBox(height: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8)
-                ),
-                child: const Text('ACHIEVED', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white)),
-              ),
-            ],
-          ),
+class _AchievementCard extends StatelessWidget {
+  final Color bgColor;
+  final Color borderColor;
+
+  const _AchievementCard({
+    required this.bgColor,
+    required this.borderColor,
+  });
+
+  List<Widget> _buildCornerDecorations(Color color) {
+    Widget smallCircle() => Container(
+      width: 6, 
+      height: 6,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+
+    return [
+      // Top Left
+      Positioned(top: 8, left: 8, child: _TeardropOrnament(color: color, corner: Alignment.topLeft, size: 10)),
+      Positioned(top: 5, left: 20, child: smallCircle()),
+      Positioned(top: 20, left: 5, child: smallCircle()),
+
+      // Top Right
+      Positioned(top: 8, right: 8, child: _TeardropOrnament(color: color, corner: Alignment.topRight, size: 10)),
+      Positioned(top: 5, right: 20, child: smallCircle()),
+      Positioned(top: 20, right: 5, child: smallCircle()),
+
+      // Bottom Left
+      Positioned(bottom: 8, left: 8, child: _TeardropOrnament(color: color, corner: Alignment.bottomLeft, size: 10)),
+      Positioned(bottom: 5, left: 20, child: smallCircle()),
+      Positioned(bottom: 20, left: 5, child: smallCircle()),
+
+      // Bottom Right
+      Positioned(bottom: 8, right: 8, child: _TeardropOrnament(color: color, corner: Alignment.bottomRight, size: 10)),
+      Positioned(bottom: 5, right: 20, child: smallCircle()),
+      Positioned(bottom: 20, right: 5, child: smallCircle()),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 155,
+      height: 280,
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.8),
+            bgColor,
+          ],
+          center: Alignment.topCenter,
+          radius: 1.5,
         ),
+        borderRadius: BorderRadius.circular(12), // Slightly rounded outer corner
+        border: Border.all(color: borderColor, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: bgColor.withValues(alpha: 0.8),
+            blurRadius: 15,
+            spreadRadius: 4,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Inner Border
+          Positioned.fill(
+            child: Container(
+              margin: const EdgeInsets.all(2), // Edges join/run very close to the outer border
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(45), // Extremely rounded inner corner
+                border: Border.all(color: borderColor.withValues(alpha: 0.8), width: 2.0), // Slightly thicker
+              ),
+            ),
+          ),
+          ..._buildCornerDecorations(borderColor),
+        ],
       ),
     );
   }
+}
 
-  void _showAchievementDetails(BuildContext context, String title, String subtitle, IconData icon, Color color, int progress, int target, int xp) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(20),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 5),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 64, color: Colors.white),
-                ),
-                const SizedBox(height: 16),
-                Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
-                const SizedBox(height: 8),
-                Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.9))),
-                const SizedBox(height: 32),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: LinearProgressIndicator(
-                    value: progress / target,
-                    backgroundColor: Colors.black.withValues(alpha: 0.3),
-                    color: Colors.white,
-                    minHeight: 12,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('+$xp XP', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.yellowAccent)),
-                    Text('$progress / $target Days', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+class _TeardropOrnament extends StatelessWidget {
+  final Color color;
+  final Alignment corner;
+  final double size;
+
+  const _TeardropOrnament({
+    required this.color,
+    required this.corner,
+    this.size = 12.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    BorderRadius radius;
+    if (corner == Alignment.topLeft) {
+      radius = BorderRadius.only(
+        topLeft: const Radius.circular(0),
+        topRight: Radius.circular(size),
+        bottomLeft: Radius.circular(size),
+        bottomRight: Radius.circular(size),
+      );
+    } else if (corner == Alignment.topRight) {
+      radius = BorderRadius.only(
+        topLeft: Radius.circular(size),
+        topRight: const Radius.circular(0),
+        bottomLeft: Radius.circular(size),
+        bottomRight: Radius.circular(size),
+      );
+    } else if (corner == Alignment.bottomLeft) {
+      radius = BorderRadius.only(
+        topLeft: Radius.circular(size),
+        topRight: Radius.circular(size),
+        bottomLeft: const Radius.circular(0),
+        bottomRight: Radius.circular(size),
+      );
+    } else {
+      radius = BorderRadius.only(
+        topLeft: Radius.circular(size),
+        topRight: Radius.circular(size),
+        bottomLeft: Radius.circular(size),
+        bottomRight: const Radius.circular(0),
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: radius,
+      ),
     );
   }
 }

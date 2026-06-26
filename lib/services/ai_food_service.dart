@@ -42,10 +42,11 @@ class AiFoodService {
       final imageBytes = await imageFile.readAsBytes();
       final prompt = TextPart(
           '''Analyze this nutritional label image and extract the following information.
+Look very closely for any brand names, logos, or product names anywhere in the image (even in small text, margins, or copyright text).
 Respond ONLY with a valid JSON object matching this structure. Use null or 0.0 for missing values:
 {
-  "name": "Product Name (if visible, otherwise generic name)",
-  "brand": "Brand Name (if visible)",
+  "name": "Exact Product Name (e.g. 'Britannia Good Day Butter Biscuit'). Search the entire image for context clues. If absolutely nothing is found, use a descriptive generic name.",
+  "brand": "Exact Brand Name (if visible, e.g. 'Britannia')",
   "calories": 0.0,
   "carbs": 0.0,
   "protein": 0.0,

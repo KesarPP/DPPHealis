@@ -41,6 +41,22 @@ class FoodRepository {
     return results;
   }
 
+  Future<FoodItem?> findFoodByNutrition(FoodItem scannedItem) async {
+    final allFoods = await _getAllFoods();
+    for (final food in allFoods) {
+      final calDiff = (food.calories - scannedItem.calories).abs();
+      final carbDiff = (food.carbs - scannedItem.carbs).abs();
+      final proteinDiff = (food.protein - scannedItem.protein).abs();
+      final fatDiff = (food.fat - scannedItem.fat).abs();
+
+      // If macros are extremely similar, it's likely the same product
+      if (calDiff <= 5.0 && carbDiff <= 1.0 && proteinDiff <= 1.0 && fatDiff <= 1.0) {
+        return food;
+      }
+    }
+    return null;
+  }
+
   Stream<DailyFoodLog?> getDailyLog(String userId, String date) {
     final db = _db;
     if (db == null) return Stream.value(null);

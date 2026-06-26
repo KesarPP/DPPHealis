@@ -34,7 +34,27 @@ class _NutritionalScannerScreenState extends State<NutritionalScannerScreen> {
 
   Future<void> _analyzeImage() async {
     try {
-      final item = await AiFoodService().analyzeNutritionalLabel(widget.imageFile);
+      var item = await AiFoodService().analyzeNutritionalLabel(widget.imageFile);
+      if (item != null) {
+        final match = await FoodRepository().findFoodByNutrition(item);
+        if (match != null) {
+          // Auto-fill from database if nutritional profile matches
+          item = FoodItem(
+            id: item.id,
+            name: match.name,
+            brand: match.brand,
+            calories: item.calories,
+            carbs: item.carbs,
+            protein: item.protein,
+            fat: item.fat,
+            fiber: item.fiber,
+            sugar: item.sugar,
+            sodium: item.sodium,
+            servingSize: item.servingSize,
+          );
+        }
+      }
+
       if (!mounted) return;
       setState(() {
         _scannedItem = item;
