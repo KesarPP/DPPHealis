@@ -5,7 +5,8 @@ import '../models/coach_profile.dart';
 import '../services/auth_service.dart';
 
 class CoachProfileScreen extends StatefulWidget {
-  const CoachProfileScreen({super.key});
+  final String? coachId;
+  const CoachProfileScreen({super.key, this.coachId});
 
   @override
   State<CoachProfileScreen> createState() => _CoachProfileScreenState();
@@ -24,7 +25,13 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final profile = await _authService.getFirstCoachProfile();
+      CoachProfile profile;
+      if (widget.coachId != null) {
+        profile = await _authService.getCoachProfile(widget.coachId!);
+      } else {
+        profile = await _authService.getFirstCoachProfile();
+      }
+      
       if (mounted) {
         setState(() {
           _profile = profile;

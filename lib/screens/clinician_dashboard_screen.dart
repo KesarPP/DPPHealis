@@ -166,7 +166,11 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
   // ── Home Dashboard (The middle section mockup) ────────────────────────────────
   Widget _buildHomeDashboard() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'user')
+          .where('assignedCoachId', isEqualTo: AuthService().currentUser?.uid)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -900,7 +904,11 @@ class PatientsListScreen extends StatelessWidget {
         const Divider(height: 1, color: Colors.black12),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .where('role', isEqualTo: 'user')
+                .where('assignedCoachId', isEqualTo: AuthService().currentUser?.uid)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
