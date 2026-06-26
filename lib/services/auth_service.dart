@@ -465,35 +465,12 @@ class AuthService {
     await prefs.remove('user_role');
   }
 
-  /// Sends a password reset email. If a phone number is provided, looks up the associated email.
-  Future<String> sendPasswordReset(String emailOrPhone, bool isCoach) async {
+  /// Sends a password reset email.
+  Future<String> sendPasswordReset(String email, bool isCoach) async {
     final auth = _auth;
-    final prefs = await SharedPreferences.getInstance();
-    String resolvedEmail = emailOrPhone.trim();
-    bool wasPhone = false;
+    String resolvedEmail = email.trim();
 
-    // Check if input is a phone number (digits only)
-    final isPhone = RegExp(r'^\d+$').hasMatch(resolvedEmail);
-    if (isPhone) {
-      wasPhone = true;
-      if (_firestore != null) {
-        final collectionName = isCoach ? 'coaches' : 'users';
-        final docQuery = await _firestore!
-            .collection(collectionName)
-            .where('phoneNumber', isEqualTo: resolvedEmail)
-            .limit(1)
-            .get();
-        if (docQuery.docs.isNotEmpty) {
-          resolvedEmail = docQuery.docs.first.data()['email'] as String;
-        } else {
-          throw Exception('No ${isCoach ? 'coach' : 'patient'} account found with this phone number.');
-        }
-      } else {
-        resolvedEmail = prefs.getString('phone_email_map_$resolvedEmail') ?? '$resolvedEmail@${isCoach ? 'healis.org' : 'mock.com'}';
-      }
-    }
-
-    if (isCoach && !wasPhone) {
+    if (isCoach) {
       _assertCoachEmail(resolvedEmail);
     }
 
@@ -503,16 +480,106 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 300));
     }
 
-    if (wasPhone) {
-      // Mask email for privacy
-      final parts = resolvedEmail.split('@');
-      if (parts.length == 2 && parts[0].isNotEmpty) {
-        final masked = '${parts[0][0]}***@${parts[1]}';
-        return 'A password reset link has been sent to the email ($masked) associated with your phone number.';
+    return 'A password reset link has been sent to $resolvedEmail.';
+  }
+
+  /// Initiates phone number verification for password reset.
+  Future<void> verifyPhoneNumberForReset(
+    String phoneNumber,
+    bool isCoach, {
+    required Function(String verificationId) onCodeSent,
+    required Function(String error) onError,
+  }) async {
+    final auth = _auth;
+    final prefs = await SharedPreferences.getInstance();
+    final cleanPhone = phoneNumber.trim();
+
+    // Verify phone number exists in Firestore or local mock
+    if (_firestore != null) {
+      final collectionName = isCoach ? 'coaches' : 'users';
+      final docQuery = await _firestore!
+          .collection(collectionName)
+          .where('phoneNumber', isEqualTo: cleanPhone)
+          .limit(1)
+          .get();
+      if (docQuery.docs.isEmpty) {
+        onError('No ${isCoach ? 'coach' : 'patient'} account found with this phone number.');
+        return;
+      }
+    } else {
+      final mappedEmail = prefs.getString('phone_email_map_$cleanPhone');
+      if (mappedEmail == null && cleanPhone != '9876543210' && cleanPhone != '1234567890') {
+        // Allow fallback test numbers or mapped numbers in mock mode
+        await prefs.setString('phone_email_map_$cleanPhone', '$cleanPhone@${isCoach ? 'healis.org' : 'mock.com'}');
       }
     }
 
-    return 'A password reset link has been sent to $resolvedEmail.';
+    if (auth != null) {
+      try {
+        // We ensure phone has country code for Firebase Auth, default to +91 or +1 if not present
+        String formattedPhone = cleanPhone;
+        if (!formattedPhone.startsWith('+')) {
+          formattedPhone = '+91$cleanPhone'; // default India/standard prefix if user enters 10 digits
+        }
+        await auth.verifyPhoneNumber(
+          phoneNumber: formattedPhone,
+          verificationCompleted: (PhoneAuthCredential credential) {},
+          verificationFailed: (FirebaseAuthException e) {
+            onError(e.message ?? 'Phone verification failed.');
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            onCodeSent(verificationId);
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {},
+        );
+      } catch (e) {
+        onError(e.toString());
+      }
+    } else {
+      // Mock mode: simulate code sent
+      await Future.delayed(const Duration(milliseconds: 400));
+      onCodeSent('mock_verification_id');
+    }
+  }
+
+  /// Confirms OTP and resets the password.
+  Future<void> confirmPasswordResetWithOtp({
+    required String verificationId,
+    required String smsCode,
+    required String newPassword,
+    required String phoneNumber,
+    required bool isCoach,
+  }) async {
+    final auth = _auth;
+    final prefs = await SharedPreferences.getInstance();
+
+    if (auth != null && verificationId != 'mock_verification_id') {
+      try {
+        final credential = PhoneAuthProvider.credential(
+          verificationId: verificationId,
+          smsCode: smsCode.trim(),
+        );
+        // Sign in with the credential to authenticate the user
+        final userCredential = await auth.signInWithCredential(credential);
+        if (userCredential.user != null) {
+          await userCredential.user!.updatePassword(newPassword);
+          // Sign out so they can log in with their new password
+          await auth.signOut();
+        } else {
+          throw Exception('Failed to authenticate with OTP.');
+        }
+      } catch (e) {
+        throw Exception('Invalid OTP or failed to reset password: ${e.toString().replaceFirst('Exception: ', '')}');
+      }
+    } else {
+      // Mock mode verification
+      if (smsCode.trim() != '123456') {
+        throw Exception('Invalid OTP. For mock testing, please enter 123456.');
+      }
+      await Future.delayed(const Duration(milliseconds: 400));
+      // Save updated mock state if needed
+      await prefs.setString('mock_password_$phoneNumber', newPassword);
+    }
   }
 
   // ─── Coach Profile Persistence & Retrieval ─────────────────────────────────
