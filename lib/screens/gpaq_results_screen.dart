@@ -4,8 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/app_state.dart';
 import '../main.dart'; // MainShell
 import '../data/gelato_theme.dart';
+import 'coach_selection_screen.dart';
 
 class GPAQResultsScreen extends StatefulWidget {
+  final bool isFromSignup;
+  
   final bool workVigorous;
   final int workVigorousDays;
   final int workVigorousMinutes;
@@ -25,6 +28,7 @@ class GPAQResultsScreen extends StatefulWidget {
 
   const GPAQResultsScreen({
     super.key,
+    this.isFromSignup = false,
     required this.workVigorous,
     required this.workVigorousDays,
     required this.workVigorousMinutes,
@@ -348,12 +352,21 @@ class _GPAQResultsScreenState extends State<GPAQResultsScreen> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MainShell(),
-                      ),
-                    );
+                    if (widget.isFromSignup) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CoachSelectionScreen(),
+                        ),
+                      );
+                    } else {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MainShell(),
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: GelatoTheme.purple,
@@ -365,11 +378,11 @@ class _GPAQResultsScreenState extends State<GPAQResultsScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Go to Dashboard',
+                        widget.isFromSignup ? 'Continue to Coach Selection' : 'Go to Dashboard',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,

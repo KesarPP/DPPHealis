@@ -3,6 +3,7 @@ import '../data/gelato_theme.dart';
 import 'gpaq_step4_screen.dart';
 
 class GPAQStep3Screen extends StatefulWidget {
+  final bool isFromSignup;
   final bool workVigorous;
   final int workVigorousDays;
   final int workVigorousMinutes;
@@ -15,6 +16,7 @@ class GPAQStep3Screen extends StatefulWidget {
 
   const GPAQStep3Screen({
     super.key,
+    this.isFromSignup = false,
     required this.workVigorous,
     required this.workVigorousDays,
     required this.workVigorousMinutes,
@@ -306,6 +308,7 @@ class _GPAQStep3ScreenState extends State<GPAQStep3Screen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => GPAQStep4Screen(
+                              isFromSignup: widget.isFromSignup,
                               workVigorous: widget.workVigorous,
                               workVigorousDays: widget.workVigorousDays,
                               workVigorousMinutes: widget.workVigorousMinutes,

@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
+import 'forgot_password_screen.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -490,7 +491,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ForgotPasswordScreen(isPatient: _isPatientSelected),
+                                  ),
+                                );
+                              },
                               style: TextButton.styleFrom(
                                 foregroundColor: _isPatientSelected ? GelatoTheme.textDark : _brandColor,
                                 padding: EdgeInsets.zero,
@@ -574,103 +582,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                 ),
-                          const SizedBox(height: 20),
-
-                          // OR Divider
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: _isPatientSelected ? Colors.black : const Color(0xFFE2E8F0),
-                                  thickness: 1.5,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Text(
-                                  'OR',
-                                  style: TextStyle(
-                                    color: _isPatientSelected ? GelatoTheme.textDark : _slateGrey,
-                                    fontWeight: _isPatientSelected ? FontWeight.w900 : FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: _isPatientSelected ? Colors.black : const Color(0xFFE2E8F0),
-                                  thickness: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-
-                          // Sign Up Button
-                          _isPatientSelected
-                              ? Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: GelatoTheme.cardShadow,
-                                  ),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: GelatoTheme.green,
-                                      foregroundColor: GelatoTheme.greenDark,
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                        side: const BorderSide(color: Colors.black, width: 2.0),
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                                      );
-                                    },
-                                    child: const Text(
-                                      'Sign Up',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF90D185),
-                                    foregroundColor: _brandColor,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    elevation: 2,
-                                    shadowColor: const Color(0xFF90D185).withValues(alpha: 0.3),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                                    );
-                                  },
-                                  child: const Text(
-                                    'Sign Up',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   // Footer
                   Center(
                     child: RichText(

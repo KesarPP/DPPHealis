@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/gelato_theme.dart';
 import 'coach_profile_screen.dart';
+import 'coach_selection_screen.dart';
 import '../services/auth_service.dart';
 import '../models/coach_profile.dart';
 
@@ -16,28 +19,59 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isTyping = false;
+  String? _assignedCoachId;
+  bool _isLoadingStatus = true;
   CoachProfile? _coachProfile;
-  bool _isLoadingCoach = true;
+
+  StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadCoachProfile();
+    _listenToUserDoc();
   }
 
-  Future<void> _loadCoachProfile() async {
-    try {
-      final profile = await AuthService().getFirstCoachProfile();
+  void _listenToUserDoc() {
+    final user = AuthService().currentUser;
+    if (user != null) {
+      _userSubscription = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((doc) async {
+        if (doc.exists) {
+          final newAssignedCoachId = doc.data()?['assignedCoachId'] as String?;
+          
+          if (newAssignedCoachId != _assignedCoachId) {
+            _assignedCoachId = newAssignedCoachId;
+            
+            if (_assignedCoachId != null && _assignedCoachId != 'ADMIN_PENDING') {
+              final profile = await AuthService().getCoachProfile(_assignedCoachId!);
+              if (mounted) {
+                setState(() {
+                  _coachProfile = profile;
+                  _isLoadingStatus = false;
+                });
+              }
+            } else {
+              if (mounted) {
+                setState(() {
+                  _coachProfile = null;
+                  _isLoadingStatus = false;
+                });
+              }
+            }
+          } else if (mounted && _isLoadingStatus) {
+            setState(() {
+              _isLoadingStatus = false;
+            });
+          }
+        }
+      });
+    } else {
       if (mounted) {
         setState(() {
-          _coachProfile = profile;
-          _isLoadingCoach = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoadingCoach = false;
+          _isLoadingStatus = false;
         });
       }
     }
@@ -135,6 +169,7 @@ void _simulateResponse(String userText) {
 
 @override
 void dispose() {
+  _userSubscription?.cancel();
   _messageController.dispose();
   _scrollController.dispose();
   super.dispose();
@@ -142,6 +177,113 @@ void dispose() {
 
 @override
 Widget build(BuildContext context) {
+  if (_isLoadingStatus) {
+    return Scaffold(
+      backgroundColor: GelatoTheme.bg,
+      body: const Center(child: CircularProgressIndicator(color: GelatoTheme.purpleDark)),
+    );
+  }
+
+  if (_assignedCoachId == null || _assignedCoachId!.isEmpty) {
+    return Scaffold(
+      backgroundColor: GelatoTheme.bg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Your Coach',
+          style: TextStyle(color: GelatoTheme.textDark, fontWeight: FontWeight.w900),
+        ),
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.person_off_rounded, size: 80, color: Colors.black26),
+              const SizedBox(height: 16),
+              const Text(
+                'No coach assigned or selected.',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GelatoTheme.textDark),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CoachSelectionScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: GelatoTheme.purple,
+                  foregroundColor: GelatoTheme.purpleDark,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    side: const BorderSide(color: Colors.black, width: 2.0),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Select a Coach',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  if (_assignedCoachId == 'ADMIN_PENDING') {
+    return Scaffold(
+      backgroundColor: GelatoTheme.bg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Your Coach',
+          style: TextStyle(color: GelatoTheme.textDark, fontWeight: FontWeight.w900),
+        ),
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.hourglass_empty_rounded, size: 80, color: GelatoTheme.orangeDark),
+              const SizedBox(height: 16),
+              const Text(
+                'You will soon be assigned a coach.',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GelatoTheme.textDark),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Our team is matching you with the best professional for your needs.',
+                style: TextStyle(fontSize: 14, color: GelatoTheme.textLight),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   return Scaffold(
     backgroundColor: GelatoTheme.bg,
     appBar: AppBar(
@@ -152,10 +294,8 @@ Widget build(BuildContext context) {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const CoachProfileScreen()),
-          ).then((_) {
-            _loadCoachProfile();
-          });
+            MaterialPageRoute(builder: (_) => CoachProfileScreen(coachId: _assignedCoachId)),
+          );
         },
         child: Row(
           children: [

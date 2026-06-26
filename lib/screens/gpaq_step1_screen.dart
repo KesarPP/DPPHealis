@@ -296,6 +296,7 @@ class _GPAQStep1ScreenState extends State<GPAQStep1Screen> {
                               workModerate: _workModerate,
                               workModerateDays: _workModerate ? _workModerateDays : 0,
                               workModerateMinutes: mMins,
+                              isFromSignup: widget.isFromSignup,
                             ),
                           ),
                         );

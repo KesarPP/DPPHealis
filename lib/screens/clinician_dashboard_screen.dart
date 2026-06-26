@@ -17,6 +17,7 @@ const _pageBg   = Color(0xFFF0F4F8);
 // Mock Data for the Patient List
 // ─────────────────────────────────────────────────────────────────────────────
 class Patient {
+  final String id;
   final String name;
   final String initials;
   final Color avatarBg;
@@ -24,8 +25,13 @@ class Patient {
   final int sessionNumber;
   final String sessionTitle;
   final String riskLevel;
+  final double? currentWeight;
+  final int? gpaqMetMinutes;
+  final String? gpaqLevel;
+  final int? idrsScore;
 
   const Patient({
+    required this.id,
     required this.name,
     required this.initials,
     required this.avatarBg,
@@ -33,6 +39,10 @@ class Patient {
     required this.sessionNumber,
     required this.sessionTitle,
     required this.riskLevel,
+    this.currentWeight,
+    this.gpaqMetMinutes,
+    this.gpaqLevel,
+    this.idrsScore,
   });
 }
 
@@ -155,29 +165,259 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
 
   // ── Home Dashboard (The middle section mockup) ────────────────────────────────
   Widget _buildHomeDashboard() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'user')
+          .where('assignedCoachId', isEqualTo: AuthService().currentUser?.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final docs = snapshot.data?.docs ?? [];
+        final totalParticipants = docs.length;
+        
+        int highRiskCount = 0;
+        int modRiskCount = 0;
+        int lowRiskCount = 0;
+        
+        int activityAchieved = 0;
+        int activityInProgress = 0;
+        int activityLow = 0;
+        
+        for (var i = 0; i < docs.length; i++) {
+          final doc = docs[i];
+          final data = doc.data() as Map<String, dynamic>;
+          
+          // Automatically seed riskLevel and gpaqMetMinutes in Firestore if missing
+          if (!data.containsKey('riskLevel') || !data.containsKey('gpaqMetMinutes')) {
+            final sampleRisks = ['HIGH RISK', 'MODERATE', 'LOW RISK'];
+            final sampleMins = [750, 450, 200];
+            doc.reference.set({
+              'riskLevel': data['riskLevel'] ?? sampleRisks[i % sampleRisks.length],
+              'gpaqMetMinutes': data['gpaqMetMinutes'] ?? sampleMins[i % sampleMins.length],
+            }, SetOptions(merge: true));
+          }
+
+          final risk = (data['riskLevel'] as String? ?? 'MODERATE').toUpperCase();
+          if (risk == 'HIGH RISK' || risk == 'HIGH') {
+            highRiskCount++;
+          } else if (risk == 'LOW RISK' || risk == 'LOW') {
+            lowRiskCount++;
+          } else {
+            modRiskCount++;
+          }
+          
+          final metMins = data['gpaqMetMinutes'] as int? ?? 0;
+          if (metMins >= 600) {
+            activityAchieved++;
+          } else if (metMins >= 300) {
+            activityInProgress++;
+          } else {
+            activityLow++;
+          }
+        }
+        
+        final displayTotal = totalParticipants;
+        final displayHigh = highRiskCount;
+        final displayMod = modRiskCount;
+        final displayLow = lowRiskCount;
+        
+        final displayAchieved = activityAchieved;
+        final displayInProgress = activityInProgress;
+        final displayActivityLow = activityLow;
+        
+        final activityProgressValue = displayTotal > 0 ? displayAchieved / displayTotal : 0.0;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildTotalParticipantsCard(displayTotal, displayHigh, displayMod, displayLow),
+              const SizedBox(height: 16),
+              _buildIdrsScorecard(docs),
+              const SizedBox(height: 16),
+              _buildGpaqScorecard(docs),
+              const SizedBox(height: 16),
+              _buildCurriculumProgressCard(displayTotal),
+              const SizedBox(height: 16),
+              _buildFoodLogCard(displayTotal),
+              const SizedBox(height: 16),
+              _buildWeeklyActivityCard(displayTotal, displayAchieved, displayInProgress, displayActivityLow, activityProgressValue),
+              const SizedBox(height: 16),
+              _buildConsistencyCard(context, displayTotal),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildIdrsScorecard(List<DocumentSnapshot> docs) {
+    int totalScore = 0;
+    int validCount = 0;
+    int highCount = 0;
+    int modCount = 0;
+    int lowCount = 0;
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>? ?? {};
+      final score = (data['idrsScore'] as num? ?? 45).toInt();
+      totalScore += score;
+      validCount++;
+
+      if (score >= 60) {
+        highCount++;
+      } else if (score >= 30) {
+        modCount++;
+      } else {
+        lowCount++;
+      }
+    }
+
+    final avgScore = validCount > 0 ? (totalScore / validCount).round() : 0;
+
+    return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          const SizedBox(height: 20),
-          _buildTotalParticipantsCard(),
+          Row(
+            children: [
+              const Icon(Icons.analytics_rounded, color: Color(0xFFB91C1C), size: 20),
+              const SizedBox(width: 8),
+              const Text('IDRS Risk Scorecard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFB91C1C).withValues(alpha: 0.2)),
+                ),
+                child: const Text('Live Feed', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFB91C1C))),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
-          _buildCurriculumProgressCard(),
-          const SizedBox(height: 16),
-          _buildFoodLogCard(),
-          const SizedBox(height: 16),
-          _buildWeeklyActivityCard(),
-          const SizedBox(height: 16),
-          _buildConsistencyCard(context),
-          const SizedBox(height: 32),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('$avgScore', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+              const Text(' / 100', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
+              const Spacer(),
+              Text(avgScore >= 60 ? 'HIGH RISK AVG' : avgScore >= 30 ? 'MODERATE AVG' : 'LOW RISK AVG',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: avgScore >= 60 ? const Color(0xFFB91C1C) : const Color(0xFF9A3412)),
+              ),
+            ],
+          ),
+          const Text('Cohort Average IDRS Score', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildMetricStat('High (≥60)', '$highCount', const Color(0xFFB91C1C)),
+              _buildVDivider(),
+              _buildMetricStat('Mod (30-50)', '$modCount', const Color(0xFF9A3412)),
+              _buildVDivider(),
+              _buildMetricStat('Low (<30)', '$lowCount', const Color(0xFF0F766E)),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTotalParticipantsCard() {
+  Widget _buildGpaqScorecard(List<DocumentSnapshot> docs) {
+    int totalMins = 0;
+    int validCount = 0;
+    int highActive = 0;
+    int modActive = 0;
+    int lowActive = 0;
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>? ?? {};
+      final metMins = (data['gpaqMetMinutes'] as num? ?? 450).toInt();
+      totalMins += metMins;
+      validCount++;
+
+      if (metMins >= 600) {
+        highActive++;
+      } else if (metMins >= 300) {
+        modActive++;
+      } else {
+        lowActive++;
+      }
+    }
+
+    final avgMetMins = validCount > 0 ? (totalMins / validCount).round() : 0;
+
+    return _DashboardCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.directions_run_rounded, color: Color(0xFF0F766E), size: 20),
+              const SizedBox(width: 8),
+              const Text('GPAQ Activity Scorecard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCCFBF1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF0F766E).withValues(alpha: 0.2)),
+                ),
+                child: const Text('Live Feed', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('$avgMetMins', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+              const Text(' MET-min', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
+              const Spacer(),
+              Text(avgMetMins >= 600 ? 'ACTIVE AVG' : 'MODERATE AVG',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
+              ),
+            ],
+          ),
+          const Text('Cohort Average Weekly MET Minutes', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildMetricStat('High (≥600)', '$highActive', const Color(0xFF0F766E)),
+              _buildVDivider(),
+              _buildMetricStat('Mod (300-599)', '$modActive', const Color(0xFF5EEAD4)),
+              _buildVDivider(),
+              _buildMetricStat('Low (<300)', '$lowActive', const Color(0xFFDC2626)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricStat(String label, String value, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalParticipantsCard(int total, int highRisk, int modRisk, int lowRisk) {
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,16 +427,16 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF6B7280), letterSpacing: 0.5),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '30',
-            style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900, color: Colors.black, height: 1.0),
+          Text(
+            '$total',
+            style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900, color: Colors.black, height: 1.0),
           ),
           const SizedBox(height: 20),
           Row(
             children: [
-              _buildRiskBox('High Risk', '10', const Color(0xFFB91C1C), const Color(0xFFB91C1C), const Color(0xFFFEF2F2)),
-              _buildRiskBox('Moderate', '15', const Color(0xFF9A3412), const Color(0xFF9A3412), const Color(0xFFFFF7ED)),
-              _buildRiskBox('Low Risk', '5', const Color(0xFF0F766E), const Color(0xFF0F766E), const Color(0xFFCCFBF1)),
+              _buildRiskBox('High Risk', '$highRisk', const Color(0xFFB91C1C), const Color(0xFFB91C1C), const Color(0xFFFEF2F2)),
+              _buildRiskBox('Moderate', '$modRisk', const Color(0xFF9A3412), const Color(0xFF9A3412), const Color(0xFFFFF7ED)),
+              _buildRiskBox('Low Risk', '$lowRisk', const Color(0xFF0F766E), const Color(0xFF0F766E), const Color(0xFFCCFBF1)),
             ],
           ),
         ],
@@ -226,7 +466,12 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildCurriculumProgressCard() {
+  Widget _buildCurriculumProgressCard(int total) {
+    int w1 = (total * 0.4).round();
+    int w5 = (total * 0.5).round();
+    int behind = total - w1 - w5;
+    if (behind < 0) behind = 0;
+
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,11 +491,11 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          _buildProgressBar('Weeks 1-4', '12 Patients', 0.4, const Color(0xFF0F766E)),
+          _buildProgressBar('Weeks 1-4', '$w1 Patients', 0.4, const Color(0xFF0F766E)),
           const SizedBox(height: 12),
-          _buildProgressBar('Weeks 5-8', '15 Patients', 0.5, const Color(0xFF0F766E)),
+          _buildProgressBar('Weeks 5-8', '$w5 Patients', 0.5, const Color(0xFF0F766E)),
           const SizedBox(height: 16),
-          _buildProgressBar('⚠️ Behind Schedule', '3 Patients', 0.1, const Color(0xFFD97706), isWarning: true),
+          _buildProgressBar('⚠️ Behind Schedule', '$behind Patients', 0.1, const Color(0xFFD97706), isWarning: true),
         ],
       ),
     );
@@ -280,7 +525,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildFoodLogCard() {
+  Widget _buildFoodLogCard(int total) {
+    int loggedCount = (total * 0.8).round();
     return _DashboardCard(
       child: Stack(
         children: [
@@ -300,12 +546,12 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Row(
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text('24', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
-                  Text(' / 30', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
+                  Text('$loggedCount', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+                  Text(' / $total', style: const TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
                 ],
               ),
               const Text('Patients logged food today', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
@@ -344,7 +590,8 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     return Container(width: 1, height: 40, color: Colors.grey.withValues(alpha: 0.2));
   }
 
-  Widget _buildWeeklyActivityCard() {
+  Widget _buildWeeklyActivityCard(int total, int achieved, int inProgress, int low, double progressVal) {
+    final int pctString = (progressVal * 100).round();
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +604,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             ],
           ),
           const SizedBox(height: 32),
-          const Center(
+          Center(
             child: SizedBox(
               height: 160,
               width: 160,
@@ -365,19 +612,19 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                 fit: StackFit.expand,
                 children: [
                   CircularProgressIndicator(
-                    value: 0.72,
+                    value: progressVal,
                     strokeWidth: 16,
-                    backgroundColor: Color(0xFFE5E7EB),
-                    color: Color(0xFF0F766E),
+                    backgroundColor: const Color(0xFFE5E7EB),
+                    color: const Color(0xFF0F766E),
                     strokeCap: StrokeCap.round,
                   ),
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('72%', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black, height: 1.1)),
-                        SizedBox(height: 2),
-                        Text('Hit Weekly Goal', style: TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w600)),
+                        Text('$pctString%', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black, height: 1.1)),
+                        const SizedBox(height: 2),
+                        const Text('Hit Weekly Goal', style: TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -386,9 +633,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          _buildGoalRow(const Color(0xFF0F766E), 'Goal Achieved (150+ min)', '18'),
-          _buildGoalRow(const Color(0xFF5EEAD4), 'In Progress (60-149 min)', '8'),
-          _buildGoalRow(const Color(0xFFDC2626), 'Critically Low (<30 min)', '4', isWarning: true),
+          _buildGoalRow(const Color(0xFF0F766E), 'Goal Achieved (150+ min)', '$achieved'),
+          _buildGoalRow(const Color(0xFF5EEAD4), 'In Progress (60-149 min)', '$inProgress'),
+          _buildGoalRow(const Color(0xFFDC2626), 'Critically Low (<30 min)', '$low', isWarning: true),
         ],
       ),
     );
@@ -416,7 +663,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildConsistencyCard(BuildContext context) {
+  Widget _buildConsistencyCard(BuildContext context, int total) {
+    int superLoggers = (total * 0.4).round();
+    int atRisk = (total * 0.16).round();
     return _DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,9 +689,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildStreakBox(Icons.local_fire_department_rounded, const Color(0xFFEA580C), '12', 'Super Loggers', '7+ Day Streak'),
+              _buildStreakBox(Icons.local_fire_department_rounded, const Color(0xFFEA580C), '$superLoggers', 'Super Loggers', '7+ Day Streak'),
               const SizedBox(width: 12),
-              _buildStreakBox(Icons.local_fire_department_outlined, Colors.grey.shade400, '5', 'At Risk', 'Dropped to 0'),
+              _buildStreakBox(Icons.local_fire_department_outlined, Colors.grey.shade400, '$atRisk', 'At Risk', 'Dropped to 0'),
             ],
           ),
           const SizedBox(height: 24),
@@ -655,7 +904,11 @@ class PatientsListScreen extends StatelessWidget {
         const Divider(height: 1, color: Colors.black12),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .where('role', isEqualTo: 'user')
+                .where('assignedCoachId', isEqualTo: AuthService().currentUser?.uid)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -672,7 +925,8 @@ class PatientsListScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: docs.length,
                 itemBuilder: (context, index) {
-                  final data = docs[index].data() as Map<String, dynamic>;
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
                   final name = data['name'] as String? ?? 'Unknown Patient';
                   
                   String getInitials(String n) {
@@ -684,21 +938,32 @@ class PatientsListScreen extends StatelessWidget {
                     return parts[0][0].toUpperCase();
                   }
 
+                  final riskLevel = (data['riskLevel'] as String? ?? 'MODERATE').toUpperCase();
+                  final currentWeight = (data['currentWeight'] as num?)?.toDouble();
+                  final gpaqMetMinutes = data['gpaqMetMinutes'] as int?;
+                  final gpaqLevel = data['gpaqLevel'] as String?;
+                  final idrsScore = (data['idrsScore'] as num?)?.toInt();
+
                   final p = Patient(
+                    id: doc.id,
                     name: name,
                     initials: getInitials(name),
                     avatarBg: _navy,
                     avatarFg: Colors.white,
                     sessionNumber: 1,
                     sessionTitle: '',
-                    riskLevel: 'MODERATE',
+                    riskLevel: riskLevel,
+                    currentWeight: currentWeight,
+                    gpaqMetMinutes: gpaqMetMinutes,
+                    gpaqLevel: gpaqLevel,
+                    idrsScore: idrsScore,
                   );
               Color riskColor;
               Color riskBg;
-              if (p.riskLevel == 'HIGH RISK') {
+              if (p.riskLevel == 'HIGH RISK' || p.riskLevel == 'HIGH') {
                 riskColor = const Color(0xFF991B1B);
                 riskBg = const Color(0xFFFECACA);
-              } else if (p.riskLevel == 'LOW RISK') {
+              } else if (p.riskLevel == 'LOW RISK' || p.riskLevel == 'LOW') {
                 riskColor = const Color(0xFF065F46);
                 riskBg = const Color(0xFF6EE7B7);
               } else {

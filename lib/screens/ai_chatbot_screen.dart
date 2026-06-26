@@ -120,13 +120,22 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
 
   // ─── VERCEL AI BACKEND CONFIGURATION ───────────────────────────────────────
   // Paste your deployed Vercel URL here (e.g., https://my-dpp-backend.vercel.app/api/chat)
-  final String _vercelEndpoint = "https://dpp-ai-backend.vercel.app/api/chat";
+  final String _vercelEndpoint = "https://vercel-ai-backend-xi.vercel.app/api/chat";
 
   Future<String> _getVercelResponse(String query) async {
     // If the Vercel endpoint hasn't been configured yet, fallback to mock response
     if (_vercelEndpoint.contains('your-vercel-app')) {
       return _getMockResponse(query);
     }
+
+    // Prepare conversation history (exclude the latest user message which is sent as 'message')
+    final history = _currentSessionMessages
+        .sublist(0, _currentSessionMessages.length > 1 ? _currentSessionMessages.length - 1 : 0)
+        .map((msg) => {
+              'role': msg.isUser ? 'user' : 'assistant',
+              'content': msg.text,
+            })
+        .toList();
 
     try {
       final response = await http.post(
@@ -136,6 +145,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
         },
         body: jsonEncode({
           'message': query,
+          'history': history,
           'user_id': 'dpp_user', // Optional user identifier for context
         }),
       ).timeout(const Duration(seconds: 20));
@@ -537,15 +547,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                 ),
               ],
             ),
-            child: Text(
-              msg.text,
-              style: TextStyle(
-                fontSize: 14,
-                color: isUserMsg ? Colors.white : _brandColor,
-                fontWeight: FontWeight.w400,
-                height: 1.4,
-              ),
-            ),
+            child: _buildFormattedText(msg.text, isUserMsg),
           ),
           const SizedBox(height: 3),
           Text(
@@ -559,4 +561,61 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       ),
     );
   }
+
+  Widget _buildFormattedText(String text, bool isUserMsg) {
+    final baseColor = isUserMsg ? Colors.white : _brandColor;
+    final defaultStyle = TextStyle(
+      fontSize: 14,
+      color: baseColor,
+      fontWeight: FontWeight.w400,
+      height: 1.4,
+    );
+    final boldStyle = TextStyle(
+      fontSize: 14,
+      color: baseColor,
+      fontWeight: FontWeight.w800,
+      height: 1.4,
+    );
+    final italicStyle = TextStyle(
+      fontSize: 14,
+      color: baseColor,
+      fontStyle: FontStyle.italic,
+      fontWeight: FontWeight.w400,
+      height: 1.4,
+    );
+
+    List<TextSpan> spans = [];
+    
+    final lines = text.split('\n');
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      
+      if (line.startsWith('#')) {
+        line = line.replaceFirst(RegExp(r'^#+\s*'), '');
+        spans.add(TextSpan(text: line, style: boldStyle));
+      } else {
+        final matches = RegExp(r'(\*\*([^\*]+)\*\*)|(\*([^\*]+)\*)|([^\*]+)|(\*)').allMatches(line);
+        for (final match in matches) {
+          if (match.group(1) != null) {
+            spans.add(TextSpan(text: match.group(2), style: boldStyle));
+          } else if (match.group(3) != null) {
+            spans.add(TextSpan(text: match.group(4), style: italicStyle));
+          } else if (match.group(5) != null) {
+            spans.add(TextSpan(text: match.group(5), style: defaultStyle));
+          } else if (match.group(6) != null) {
+            spans.add(TextSpan(text: '•', style: boldStyle));
+          }
+        }
+      }
+      
+      if (i < lines.length - 1) {
+        spans.add(TextSpan(text: '\n', style: defaultStyle));
+      }
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+    );
+  }
 }
+

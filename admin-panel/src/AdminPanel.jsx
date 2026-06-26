@@ -6,6 +6,10 @@ import {
   updateDoc,
   deleteDoc,
   onSnapshot,
+  getDocs,
+  writeBatch,
+  query,
+  where
 } from 'firebase/firestore';
 
 // ─── Inline SVG Icons ─────────────────────────────────────────────────────────
@@ -139,13 +143,53 @@ function DeleteModal({ record, type, onConfirm, onClose }) {
 
   const handleDelete = async () => {
     setDeleting(true);
-    const colName = type === 'patient' ? 'users' : 'coaches';
     try {
-      await deleteDoc(doc(db, colName, record.id));
+      if (type === 'patient') {
+        const uid = record.id;
+        const batch = writeBatch(db);
+
+        // 1. Delete weight_history subcollection
+        const weightQuery = await getDocs(collection(db, `users/${uid}/weight_history`));
+        weightQuery.forEach(docSnap => batch.delete(docSnap.ref));
+
+        // 2. Delete chats and messages subcollection
+        const messagesQuery = await getDocs(collection(db, `chats/${uid}/messages`));
+        messagesQuery.forEach(docSnap => batch.delete(docSnap.ref));
+        batch.delete(doc(db, 'chats', uid));
+
+        // 3. Delete logs and food_entries subcollection
+        const foodQuery = await getDocs(collection(db, `logs/${uid}/food_entries`));
+        foodQuery.forEach(docSnap => batch.delete(docSnap.ref));
+        batch.delete(doc(db, 'logs', uid));
+
+        // 4. Finally, delete the user document
+        batch.delete(doc(db, 'users', uid));
+
+        await batch.commit();
+
+        alert("Patient deleted from database.\n\nNote: You still need to manually delete this user from the 'Authentication' tab in the Firebase Console so they can no longer log in.");
+
+      } else if (type === 'coach') {
+        const coachId = record.id;
+        const batch = writeBatch(db);
+
+        // 1. Unassign all patients assigned to this coach
+        const usersQuery = await getDocs(query(collection(db, 'users'), where('assignedCoachId', '==', coachId)));
+        usersQuery.forEach(docSnap => {
+          batch.update(docSnap.ref, { assignedCoachId: 'ADMIN_PENDING' });
+        });
+
+        // 2. Delete the coach document
+        batch.delete(doc(db, 'coaches', coachId));
+
+        await batch.commit();
+        alert("Coach deleted and all their patients were unassigned.\n\nNote: You still need to manually delete this coach from the 'Authentication' tab in the Firebase Console.");
+      }
+
       onConfirm();
     } catch (e) {
-      console.error(e);
-      alert('Failed to delete. Check Firestore rules.');
+      console.error('Delete error:', e);
+      alert('Failed to delete. Check Firestore rules or console logs.');
     }
     setDeleting(false);
   };
