@@ -331,13 +331,34 @@ Widget build(BuildContext context) {
                     const Icon(Icons.verified_rounded, color: GelatoTheme.purpleDark, size: 14),
                   ],
                 ),
-                const Text(
-                  'Online',
-                  style: TextStyle(
-                    color: GelatoTheme.greenDark,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                  ),
+                StreamBuilder<bool>(
+                  stream: _assignedCoachId != null
+                      ? ChatService.getCoachOnlineStatusStream(_assignedCoachId!)
+                      : Stream.value(true),
+                  builder: (context, snapshot) {
+                    final isOnline = snapshot.data ?? true;
+                    return Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: isOnline ? GelatoTheme.greenDark : Colors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isOnline ? 'Online' : 'Offline',
+                          style: TextStyle(
+                            color: isOnline ? GelatoTheme.greenDark : Colors.grey,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

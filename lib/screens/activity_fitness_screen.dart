@@ -41,7 +41,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
   final ScrollController _scrollController = ScrollController();
   late final HealthSyncService _healthSync;
   ActivityStats? _stats;
-  bool _isConnected = false;
   DateTime? _lastSyncTime;
   bool _isLoading = true;
 
@@ -129,7 +128,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
           _dailyScoreFeedback = prefs.getString('hc_cached_feedback') ?? "";
           _currentWeeklyMinutes = prefs.getInt('hc_cached_weekly_mins') ?? 0;
           _weeklyTargetMinutes = NdppConstants.getWeeklyTargetForWeek(_programWeek);
-          _isConnected = true;
           _onboardingState = HealthConnectOnboardingState.connected;
           _isLoading = false;
         });
@@ -312,7 +310,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
 
         if (mounted) {
           setState(() {
-            _isConnected = true;
             _lastSyncTime = DateTime.now();
             _stats = stats;
             _pastDays = pastDays;
@@ -374,7 +371,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
 
         if (mounted) {
           setState(() {
-            _isConnected = true;
             _lastSyncTime = DateTime.now();
             _stats = ActivityStats(
               steps: stepsToUse,

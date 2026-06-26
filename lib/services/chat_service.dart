@@ -80,4 +80,22 @@ class ChatService {
         .orderBy('timestamp', descending: false)
         .snapshots();
   }
+
+  /// Sets the online status of a coach
+  static Future<void> setCoachOnlineStatus(String coachId, bool isOnline) async {
+    await _firestore.collection('coaches').doc(coachId).set(
+      {'isOnline': isOnline},
+      SetOptions(merge: true),
+    );
+  }
+
+  /// Returns a stream of the coach's online status
+  static Stream<bool> getCoachOnlineStatusStream(String coachId) {
+    return _firestore.collection('coaches').doc(coachId).snapshots().map((snapshot) {
+      if (snapshot.exists && snapshot.data() != null) {
+        return snapshot.data()!['isOnline'] as bool? ?? true;
+      }
+      return true; // Default to true if not set
+    });
+  }
 }

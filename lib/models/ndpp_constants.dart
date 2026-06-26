@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 /// SOURCE OF TRUTH — NDPP RULES (do not deviate)
 class NdppConstants {

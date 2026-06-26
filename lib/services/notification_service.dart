@@ -6,6 +6,8 @@ import '../models/food_log.dart';
 import 'dart:io' show Platform;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dpp_app/services/auth_service.dart';
+import 'dart:async';
+import 'chat_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -210,12 +212,28 @@ class NotificationService {
     }
   }
 
+  bool _isCoachOnline = true;
+  StreamSubscription? _coachStatusSub;
+
   void _listenToCoachChats() {
+    _coachStatusSub?.cancel();
+    _coachStatusSub = ChatService.getCoachOnlineStatusStream(_currentUserId!).listen((isOnline) {
+      final wasOffline = !_isCoachOnline;
+      _isCoachOnline = isOnline;
+      
+      if (wasOffline && isOnline) {
+        _triggerMissedCoachNotifications();
+      }
+    });
+
     FirebaseFirestore.instance
         .collection('Coachuserchats')
         .where('coachId', isEqualTo: _currentUserId)
         .snapshots()
         .listen((snapshot) {
+      
+      if (!_isCoachOnline) return;
+
       for (var change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.modified || change.type == DocumentChangeType.added) {
           final data = change.doc.data();
@@ -241,6 +259,27 @@ class NotificationService {
         }
       }
     });
+  }
+
+  void _triggerMissedCoachNotifications() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Coachuserchats')
+        .where('coachId', isEqualTo: _currentUserId)
+        .where('unreadByCoach', isGreaterThan: 0)
+        .get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final lastMessageText = data['lastMessageText'] as String? ?? '';
+      
+      _getUserName(data['patientId']).then((name) {
+        _showChatNotification(
+          id: (doc.id.hashCode.abs() % 100000),
+          title: 'You have a message from $name',
+          body: lastMessageText,
+        );
+      });
+    }
   }
 
   void _listenToPatientChats() {

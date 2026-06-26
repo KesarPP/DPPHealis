@@ -5,6 +5,7 @@ import 'package:dpp_app/screens/clinician_dashboard_screen.dart';
 import 'package:dpp_app/screens/clinician_profile_screen.dart';
 import 'package:dpp_app/screens/patient_chat_screen.dart';
 import '../services/auth_service.dart';
+import '../services/chat_service.dart';
 import '../models/coach_profile.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
@@ -29,6 +30,14 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
     _searchController.addListener(() {
       setState(() {});
     });
+    
+    // Fetch initial online status
+    final coachId = AuthService().currentUser?.uid;
+    if (coachId != null) {
+      ChatService.getCoachOnlineStatusStream(coachId).first.then((isOnline) {
+        if (mounted) setState(() => _isOnline = isOnline);
+      });
+    }
   }
 
   @override
@@ -152,7 +161,14 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                         ),
                         const Spacer(),
                         GestureDetector(
-                          onTap: () => setState(() => _isOnline = !_isOnline),
+                          onTap: () async {
+                            final newStatus = !_isOnline;
+                            setState(() => _isOnline = newStatus);
+                            final coachId = AuthService().currentUser?.uid;
+                            if (coachId != null) {
+                              await ChatService.setCoachOnlineStatus(coachId, newStatus);
+                            }
+                          },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 250),
                             padding: const EdgeInsets.symmetric(
@@ -441,23 +457,8 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                       ),
                     ),
                   )
-                else if (entry.isActive)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'ACTIVE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF388E3C),
-                      ),
-                    ),
-                  ),
+                else
+                  const SizedBox(height: 24),
               ],
             ),
           ],
@@ -519,7 +520,6 @@ class _InboxEntry {
   final Color avatarBg;
   final Color avatarFg;
   final int? badgeCount;
-  final bool isActive;
 
   const _InboxEntry({
     required this.uid,
@@ -530,6 +530,5 @@ class _InboxEntry {
     required this.avatarBg,
     required this.avatarFg,
     this.badgeCount,
-    this.isActive = false,
   });
 }
