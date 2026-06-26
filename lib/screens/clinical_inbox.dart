@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dpp_app/screens/clinician_dashboard_screen.dart';
 import 'package:dpp_app/screens/clinician_profile_screen.dart';
 import 'package:dpp_app/screens/patient_chat_screen.dart';
@@ -22,52 +23,13 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
   bool _isOnline = true;
   final _searchController = TextEditingController();
 
-  // All inbox entries in one place — easy to extend
-  final List<_InboxEntry> _entries = const [
-    _InboxEntry(
-      name: 'Sara Sanders',
-      initials: 'SS',
-      preview: 'Glucose levels seem stable af...',
-      time: '12:35',
-      avatarBg: Color(0xFFE3F2FD),
-      avatarFg: Color(0xFF4A88C5),
-      badgeCount: 100,
-    ),
-    _InboxEntry(
-      name: 'Doris Diaz',
-      initials: 'DD',
-      preview: "I've attached the new laborat...",
-      time: '12:35',
-      avatarBg: Color(0xFFEDE7F6),
-      avatarFg: Color(0xFF7B1FA2),
-      badgeCount: 99,
-    ),
-    _InboxEntry(
-      name: 'Dorothy Oliver',
-      initials: 'DO',
-      preview: 'Thank you for the dietary ...',
-      time: '12:35',
-      avatarBg: Color(0xFFE8F5E9),
-      avatarFg: Color(0xFF388E3C),
-      isActive: true,
-    ),
-    _InboxEntry(
-      name: 'Rebecca Fox',
-      initials: 'RF',
-      preview: 'What do you need for the next ap...',
-      time: '12:35',
-      avatarBg: Color(0xFFFFF3E0),
-      avatarFg: Color(0xFFF57C00),
-    ),
-    _InboxEntry(
-      name: 'Louisa McCoy',
-      initials: 'LM',
-      preview: 'My insulin levels were higher this ...',
-      time: '12:35',
-      avatarBg: Color(0xFFE3F2FD),
-      avatarFg: Color(0xFF4A88C5),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   void dispose() {
@@ -80,6 +42,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => PatientChatScreen(
+          patientUid: entry.uid,
           patientName: entry.name,
           patientInitials: entry.initials,
           avatarBg: entry.avatarBg,
@@ -267,13 +230,81 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                     const SizedBox(height: 20),
 
                     // Message list
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _entries.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        return _buildMessageRow(_entries[index]);
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('Coachuserchats')
+                          .where('coachId', isEqualTo: AuthService().currentUser?.uid)
+                          .orderBy('lastMessageTime', descending: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return const Center(child: Text('Error loading inbox'));
+                        }
+
+                        final docs = snapshot.data?.docs ?? [];
+                        
+                        if (docs.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32.0),
+                            child: Center(
+                              child: Text(
+                                'No conversations yet.',
+                                style: TextStyle(color: _slateGrey, fontSize: 16),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: docs.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final chatDoc = docs[index];
+                            final chatData = chatDoc.data() as Map<String, dynamic>;
+                            final patientId = chatData['patientId'] as String? ?? '';
+                            final badgeCount = chatData['unreadByCoach'] as int? ?? 0;
+                            final preview = chatData['lastMessageText'] as String? ?? 'No messages yet';
+                            
+                            // We use a FutureBuilder to get the patient's name
+                            return FutureBuilder<DocumentSnapshot>(
+                              future: FirebaseFirestore.instance.collection('users').doc(patientId).get(),
+                              builder: (context, userSnapshot) {
+                                if (!userSnapshot.hasData) return const SizedBox();
+                                
+                                final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
+                                final name = userData?['name'] as String? ?? 'Unknown Patient';
+                                
+                                // Filter by search query if any
+                                final query = _searchController.text.trim().toLowerCase();
+                                if (query.isNotEmpty && !name.toLowerCase().contains(query) && !preview.toLowerCase().contains(query)) {
+                                  return const SizedBox();
+                                }
+                                
+                                final initials = _getInitials(name);
+                                final avatarBg = const Color(0xFFE3F2FD);
+                                final avatarFg = const Color(0xFF4A88C5);
+
+                                final entry = _InboxEntry(
+                                  uid: patientId,
+                                  name: name,
+                                  initials: initials,
+                                  preview: preview,
+                                  time: '', // We could format lastMessageTime if needed
+                                  avatarBg: avatarBg,
+                                  avatarFg: avatarFg,
+                                  badgeCount: badgeCount,
+                                );
+
+                                return _buildMessageRow(entry);
+                              },
+                            );
+                          },
+                        );
                       },
                     ),
                     const SizedBox(height: 32),
@@ -391,7 +422,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                       const TextStyle(fontSize: 12, color: _slateGrey),
                 ),
                 const SizedBox(height: 4),
-                if (entry.badgeCount != null)
+                if (entry.badgeCount != null && entry.badgeCount! > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 7, vertical: 3),
@@ -479,8 +510,8 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
   }
 }
 
-// Simple immutable data model for inbox entries
 class _InboxEntry {
+  final String uid;
   final String name;
   final String initials;
   final String preview;
@@ -491,6 +522,7 @@ class _InboxEntry {
   final bool isActive;
 
   const _InboxEntry({
+    required this.uid,
     required this.name,
     required this.initials,
     required this.preview,

@@ -86,8 +86,8 @@ class MainShellState extends State<MainShell> {
           setState(() {});
         }
       }).catchError((_) {});
-
       _checkMissingAssessments(user.uid);
+      NotificationService().startChatListener();
     }
   }
 

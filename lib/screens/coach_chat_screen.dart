@@ -7,6 +7,7 @@ import 'coach_profile_screen.dart';
 import 'coach_selection_screen.dart';
 import '../services/auth_service.dart';
 import '../models/coach_profile.dart';
+import '../services/chat_service.dart';
 
 class CoachChatScreen extends StatefulWidget {
   const CoachChatScreen({super.key});
@@ -77,45 +78,43 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
     }
   }
 
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'isUser': false,
-      'text': 'Hi Jannice! I am Dr. Sarah Mitchell, your dedicated health coach. How are you feeling today?',
-      'time': '09:00 AM',
-    },
-    {
-      'isUser': true,
-      'text': 'I am feeling great, but a little hungry!',
-      'time': '09:05 AM',
-    },
-    {
-      'isUser': false,
-      'text': 'It is totally normal! Remember your goals, you can have a healthy snack like almonds or an apple.',
-      'time': '09:06 AM',
-    },
-  ];
-
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _assignedCoachId == null) return;
     _messageController.clear();
-    _handleNewUserMessage(text);
-  }
+    
+    final currentUserId = AuthService().currentUser?.uid;
+    if (currentUserId == null) return;
 
-  void _handleNewUserMessage(String text) {
-    setState(() {
-      _messages.add({
-        'isUser': true,
-        'text': text,
-        'time': _getCurrentTime(),
-      });
-    });
+    await ChatService.sendMessage(
+      patientId: currentUserId,
+      coachId: _assignedCoachId!,
+      text: text,
+      senderId: currentUserId,
+      isFromPatient: true,
+    );
     _scrollToBottom();
-    _simulateResponse(text);
   }
 
-  String _getCurrentTime() {
-    final now = DateTime.now();
+  void _sendDirectMessage(String text) async {
+    if (text.isEmpty || _assignedCoachId == null) return;
+    
+    final currentUserId = AuthService().currentUser?.uid;
+    if (currentUserId == null) return;
+
+    await ChatService.sendMessage(
+      patientId: currentUserId,
+      coachId: _assignedCoachId!,
+      text: text,
+      senderId: currentUserId,
+      isFromPatient: true,
+    );
+    _scrollToBottom();
+  }
+
+  String _formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return 'Just now';
+    final now = timestamp.toDate();
     final hour = now.hour > 12 ? now.hour - 12 : now.hour == 0 ? 12 : now.hour;
     final minute = now.minute.toString().padLeft(2, '0');
     final ampm = now.hour >= 12 ? 'PM' : 'AM';
@@ -133,39 +132,6 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
       }
     });
   }
-
-void _simulateResponse(String userText) {
-  setState(() {
-    _isTyping = true;
-  });
-  _scrollToBottom();
-
-  String responseText = "Thanks for letting me know! Let's continue working on your health targets. Let me know if you have any questions.";
-  final lowerText = userText.toLowerCase();
-
-  if (lowerText.contains('meal') || lowerText.contains('food') || lowerText.contains('snack') || lowerText.contains('hungry')) {
-    responseText = "Eating regular, nutrient-dense meals is key. I'd love to review your food logs. Make sure to pair carbohydrates with healthy fats or proteins (like Greek yogurt or nuts) to keep blood sugar stable!";
-  } else if (lowerText.contains('glucose') || lowerText.contains('sugar') || lowerText.contains('blood')) {
-    responseText = "Tracking your glucose levels consistently gives us great insights. A quick 10-15 minute walk right after meals can significantly blunt any post-meal glucose spikes. Try it out today!";
-  } else if (lowerText.contains('activity') || lowerText.contains('goal') || lowerText.contains('exercise') || lowerText.contains('walk')) {
-    responseText = "To help lower your insulin resistance, we target 150 minutes of moderate activity weekly. Let's adjust your current plan slightly—maybe adding 5 minutes to each session this week?";
-  } else if (lowerText.contains('motivation') || lowerText.contains('unmotivated') || lowerText.contains('hard') || lowerText.contains('tired')) {
-    responseText = "Be kind to yourself! Progress is not linear. Even small adjustments like choosing water over juice or standing up every hour makes a huge difference. You've got this, Jannice!";
-  }
-
-  Future.delayed(const Duration(seconds: 2), () {
-    if (!mounted) return;
-    setState(() {
-      _isTyping = false;
-      _messages.add({
-        'isUser': false,
-        'text': responseText,
-        'time': _getCurrentTime(),
-      });
-    });
-    _scrollToBottom();
-  });
-}
 
 @override
 void dispose() {
@@ -413,20 +379,43 @@ Widget build(BuildContext context) {
     body: Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: _messages.length + 1, // +1 for the welcome header card
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _buildWelcomeCard(_coachProfile?.name ?? 'Dr. Sarah Mitchell');
+          child: StreamBuilder<QuerySnapshot>(
+            stream: _assignedCoachId != null
+                ? ChatService.getChatStream(AuthService().currentUser!.uid, _assignedCoachId!)
+                : const Stream.empty(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
               }
-              final message = _messages[index - 1];
-              final isUser = message['isUser'] as bool;
-              return _buildChatBubble(
-                message['text'] as String,
-                isUser,
-                message['time'] as String,
+
+              if (snapshot.hasData && _assignedCoachId != null) {
+                // Clear the unread count since we are viewing the chat
+                ChatService.markChatAsRead(
+                  patientId: AuthService().currentUser!.uid,
+                  coachId: _assignedCoachId!,
+                  isCoach: false,
+                );
+              }
+
+              final docs = snapshot.data?.docs ?? [];
+              return ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: docs.length + 1, // +1 for the welcome header card
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _buildWelcomeCard(_coachProfile?.name ?? 'Dr. Sarah Mitchell');
+                  }
+                  final data = docs[index - 1].data() as Map<String, dynamic>;
+                  final isUser = data['isFromPatient'] as bool? ?? false;
+                  final timeStr = _formatTimestamp(data['timestamp'] as Timestamp?);
+
+                  return _buildChatBubble(
+                    data['text'] as String? ?? '',
+                    isUser,
+                    timeStr,
+                  );
+                },
               );
             },
           ),
@@ -635,7 +624,7 @@ Widget _buildQuickChips() {
       itemBuilder: (context, index) {
         final chip = chips[index];
         return GestureDetector(
-          onTap: () => _handleNewUserMessage(chip['label']!),
+          onTap: () => _sendDirectMessage(chip['label']!),
           child: Container(
             margin: const EdgeInsets.only(right: 8, bottom: 4, top: 4),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
