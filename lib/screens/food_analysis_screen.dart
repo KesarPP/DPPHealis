@@ -5,6 +5,7 @@ import '../main.dart'; // MainShell
 import '../services/ffq_calculator_service.dart';
 import '../services/auth_service.dart';
 import 'taste_preferences_screen.dart';
+import '../data/nutrition_database.dart';
 
 // ── FFQ Calorie breakdown result ─────────────────────────────────────────────
 class FoodCalorieEntry {
@@ -258,12 +259,14 @@ class FfqAnswer {
   int timesPerDay;
   String size;
   double quantityAtTime;
+  String? selectedVariety;
 
   FfqAnswer({
     this.frequency = 'Never',
     this.timesPerDay = 1,
     this.size = 'Medium',
     this.quantityAtTime = 1.0,
+    this.selectedVariety,
   });
 }
 
@@ -311,6 +314,7 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
       timesPerDay: existing?.timesPerDay ?? 1,
       size: existing?.size ?? (item.sizes.length > 1 ? item.sizes[1] : item.sizes[0]),
       quantityAtTime: existing?.quantityAtTime ?? 1.0,
+      selectedVariety: existing?.selectedVariety,
     );
 
     // Compute global question number (1-based flat index)
@@ -504,7 +508,7 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${totalCalories.toStringAsFixed(0)} kcal / day',
+                  '${totalCalories.toStringAsFixed(2)} kcal / day',
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: GelatoTheme.purpleDark),
                   textAlign: TextAlign.center,
                 ),
@@ -534,7 +538,7 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                           ],
                         ),
                       ),
-                      Text('${item.caloriesPerDay.toStringAsFixed(0)} kcal',
+                      Text('${item.caloriesPerDay.toStringAsFixed(2)} kcal',
                           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: GelatoTheme.purpleDark)),
                     ],
                   ),
@@ -1078,6 +1082,8 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
   late int _timesPerDay;
   late String _size;
   late double _quantity;
+  String? _selectedVariety;
+  List<FoodVariety> _availableVarieties = [];
 
   // Used only when unit == 'piece' — free-text number input
   late final TextEditingController _pieceController;
@@ -1103,6 +1109,26 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
         _size = widget.item.sizes[widget.item.sizes.length > 1 ? 1 : 0];
       }
     }
+
+    _selectedVariety = widget.initialAnswer.selectedVariety;
+    final cleanFoodName = widget.item.name.toLowerCase().trim();
+    List<FoodVariety> matchingVarieties = [];
+    for (final group in kMajorFoodGroups) {
+      for (final item in group.items) {
+        final cleanItemName = item.name.toLowerCase().replaceAll(RegExp(r'^\d+\)\s*'), '').trim();
+        if (cleanItemName.isNotEmpty && (cleanItemName.contains(cleanFoodName) || cleanFoodName.contains(cleanItemName))) {
+          matchingVarieties.addAll(item.varieties);
+        }
+      }
+    }
+    final uniqueVarieties = <String, FoodVariety>{};
+    for (final v in matchingVarieties) {
+      uniqueVarieties[v.name] = v;
+    }
+    _availableVarieties = uniqueVarieties.values.toList();
+    if (_availableVarieties.isNotEmpty && _selectedVariety == null) {
+      _selectedVariety = _availableVarieties.first.name;
+    }
   }
 
   @override
@@ -1123,6 +1149,7 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
       timesPerDay: _timesPerDay,
       size: _isPieceUnit ? 'piece' : _size,
       quantityAtTime: qty,
+      selectedVariety: _selectedVariety,
     ), goToNext);
   }
 
@@ -1250,6 +1277,62 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                     ),
                     const SizedBox(height: 24),
 
+                    // Q0 – Specific Variety Dropdown (if available)
+                    if (_availableVarieties.isNotEmpty) ...[
+                      _SectionLabel(
+                        text: 'Select specific variety of ${item.name}:',
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 0,
+                              offset: const Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedVariety ?? _availableVarieties.first.name,
+                            isExpanded: true,
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: GelatoTheme.textDark),
+                            dropdownColor: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            style: const TextStyle(
+                              color: GelatoTheme.textDark,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _selectedVariety = val);
+                              }
+                            },
+                            items: _availableVarieties.map((v) {
+                              return DropdownMenuItem<String>(
+                                value: v.name,
+                                child: Text(
+                                  v.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
                     // Q1 – Frequency
                     _SectionLabel(
                       text: 'How often did you have ${item.name} in the last 30 days?',
@@ -1345,13 +1428,21 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                             ] else ...[
                               _SectionLabel(text: 'What size ${item.unit} did you use?'),
                               const SizedBox(height: 10),
-                              _SizeSelector(
-                                selected: _size,
-                                options: item.sizes,
-                                activeColor: cat.color,
-                                activeDarkColor: cat.darkColor,
-                                onChanged: (v) => setState(() => _size = v),
-                              ),
+                              if (item.unit == 'cup')
+                                _CupSizeSlider(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
+                              else
+                                _SizeSelector(
+                                  selected: _size,
+                                  options: item.sizes,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                ),
                               const SizedBox(height: 20),
                               _SectionLabel(
                                 text: 'How many ${item.unit}s did you have at a time?',
@@ -1571,6 +1662,126 @@ class _SizeSelector extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _CupSizeSlider extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _CupSizeSlider({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double currentValue = 100.0;
+    final match = RegExp(r'\(([\d.]+)\s*(g|ml)\)').firstMatch(selected);
+    if (match != null) {
+      currentValue = double.tryParse(match.group(1)!) ?? 100.0;
+    } else if (selected.contains('50')) {
+      currentValue = 50.0;
+    } else if (selected.contains('200')) {
+      currentValue = 200.0;
+    }
+    if (currentValue < 50.0) currentValue = 50.0;
+    if (currentValue > 200.0) currentValue = 200.0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // ── SELECTED PORTION Typography ──
+          const Text(
+            'SELECTED PORTION',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: GelatoTheme.textLight,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${currentValue.toInt()} ml',
+            style: TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.w900,
+              color: activeDarkColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Cup UI (Exactly the image provided by the user) ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Image.asset(
+              'assets/images/cups_slidebar.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback display if the image file is not yet placed in assets
+                return Container(
+                  height: 140,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    '[assets/images/cups_slidebar.png]\n(Please place your cups image here)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.black54, fontSize: 13),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ── Flexible Touch Slidebar ──
+          SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: activeDarkColor,
+              inactiveTrackColor: Colors.black12,
+              thumbColor: activeDarkColor,
+              overlayColor: activeDarkColor.withValues(alpha: 0.2),
+              valueIndicatorColor: activeDarkColor,
+              trackHeight: 8,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 14),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 26),
+            ),
+            child: Slider(
+              value: currentValue,
+              min: 50,
+              max: 200,
+              divisions: 150, // Flexible 1 ml steps from 50 to 200 ml
+              onChanged: (val) {
+                onChanged('Cup (${val.toInt()} ml)');
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
