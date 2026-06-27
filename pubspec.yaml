@@ -32,6 +32,7 @@ dependencies:
   timezone: ^0.11.0
   firebase_ai: ^3.13.0
   flutter_timezone: ^5.1.0
+  firebase_app_check: ^0.4.5
 
 dev_dependencies:
   flutter_test:

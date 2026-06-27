@@ -1435,6 +1435,20 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                                   activeDarkColor: cat.darkColor,
                                   onChanged: (v) => setState(() => _size = v),
                                 )
+                              else if (item.unit == 'bowl')
+                                _BowlSizeSelector(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
+                              else if (item.unit == 'spoon_set' || item.unit == 'spoon' || item.unit == 'tbsp' || item.unit == 'tsp' || item.unit == 'teaspoon' || item.unit == 'tablespoon')
+                                _SpoonSizeSelector(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
                               else
                                 _SizeSelector(
                                   selected: _size,
@@ -1681,108 +1695,504 @@ class _CupSizeSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double currentValue = 100.0;
-    final match = RegExp(r'\(([\d.]+)\s*(g|ml)\)').firstMatch(selected);
-    if (match != null) {
-      currentValue = double.tryParse(match.group(1)!) ?? 100.0;
-    } else if (selected.contains('50')) {
-      currentValue = 50.0;
-    } else if (selected.contains('200')) {
-      currentValue = 200.0;
-    }
-    if (currentValue < 50.0) currentValue = 50.0;
-    if (currentValue > 200.0) currentValue = 200.0;
+    // Cups data: {label: height, width, ml}
+    final cups = [
+      {'label': '50 ml',  'height': 60.0, 'width': 45.0, 'ml': 50},
+      {'label': '100 ml', 'height': 90.0, 'width': 60.0, 'ml': 100},
+      {'label': '200 ml', 'height': 120.0, 'width': 75.0, 'ml': 200},
+    ];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 0,
             offset: const Offset(3, 3),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // ── SELECTED PORTION Typography ──
-          const Text(
-            'SELECTED PORTION',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: GelatoTheme.textLight,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${currentValue.toInt()} ml',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              color: activeDarkColor,
-            ),
-          ),
-          const SizedBox(height: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: cups.map((cup) {
+          final label = cup['label'] as String;
+          final height = cup['height'] as double;
+          final width = cup['width'] as double;
+          final ml = cup['ml'] as int;
+          
+          final sizeString = label;
+          final isSel = selected == sizeString || selected.contains(ml.toString());
 
-          // ── Cup UI (Exactly the image provided by the user) ──
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Image.asset(
-              'assets/images/cups_slidebar.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                // Fallback display if the image file is not yet placed in assets
-                return Container(
-                  height: 140,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.black12),
+          return GestureDetector(
+            onTap: () => onChanged(sizeString),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: height,
+                    width: width,
+                    decoration: BoxDecoration(
+                      color: isSel ? activeColor : const Color(0xFFF2E6D8), // Kraft paper color
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
+                      border: Border.all(
+                        color: isSel ? activeDarkColor : Colors.black45,
+                        width: isSel ? 2.5 : 1.0,
+                      ),
+                      boxShadow: isSel ? [
+                        BoxShadow(color: activeDarkColor.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))
+                      ] : [],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Corrugated vertical lines
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(
+                            (width / 4).floor(),
+                            (index) => Container(
+                              width: 1,
+                              color: Colors.black12,
+                            ),
+                          ),
+                        ),
+                        // Top Rim
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: isSel ? activeDarkColor.withValues(alpha: 0.2) : Colors.white,
+                              border: const Border(bottom: BorderSide(color: Colors.black26)),
+                            ),
+                          ),
+                        ),
+                        // Green bottom stripe (like the image)
+                        Positioned(
+                          bottom: 8,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 12,
+                            color: isSel ? activeDarkColor.withValues(alpha: 0.8) : const Color(0xFF2C5E48), // Dark green stripe
+                            child: Center(
+                              child: Container(
+                                height: 2,
+                                width: width * 0.6,
+                                color: Colors.white.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    '[assets/images/cups_slidebar.png]\n(Please place your cups image here)',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.black54, fontSize: 13),
+                  const SizedBox(height: 12),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                      color: isSel ? activeDarkColor : Colors.black87,
+                    ),
                   ),
-                );
-              },
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
 
-          // ── Flexible Touch Slidebar ──
-          SliderTheme(
-            data: SliderThemeData(
-              activeTrackColor: activeDarkColor,
-              inactiveTrackColor: Colors.black12,
-              thumbColor: activeDarkColor,
-              overlayColor: activeDarkColor.withValues(alpha: 0.2),
-              valueIndicatorColor: activeDarkColor,
-              trackHeight: 8,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 14),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 26),
-            ),
-            child: Slider(
-              value: currentValue,
-              min: 50,
-              max: 200,
-              divisions: 150, // Flexible 1 ml steps from 50 to 200 ml
-              onChanged: (val) {
-                onChanged('Cup (${val.toInt()} ml)');
-              },
-            ),
+class _BowlSizeSelector extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _BowlSizeSelector({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bowls = [
+      {'label': 'Small Bowl\n100 ml', 'height': 45.0, 'width': 65.0, 'ml': 100},
+      {'label': 'Medium Bowl\n150 ml', 'height': 55.0, 'width': 85.0, 'ml': 150},
+      {'label': 'Large Bowl\n200 ml', 'height': 70.0, 'width': 105.0, 'ml': 200},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
           ),
         ],
       ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: bowls.map((bowl) {
+          final label = bowl['label'] as String;
+          final height = bowl['height'] as double;
+          final width = bowl['width'] as double;
+          final ml = bowl['ml'] as int;
+          
+          final sizeString = '$ml ml';
+          final isSel = selected == sizeString || selected.contains(ml.toString());
+
+          return GestureDetector(
+            onTap: () => onChanged(sizeString),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (context, value, child) {
+                      return CustomPaint(
+                        size: Size(width, height),
+                        painter: _SingleBowlPainter(
+                          animationValue: value,
+                          activeColor: activeColor,
+                          activeDarkColor: activeDarkColor,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                      color: isSel ? activeDarkColor : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
+  }
+}
+
+class _SingleBowlPainter extends CustomPainter {
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+
+  _SingleBowlPainter({
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    
+    final cx = w / 2;
+    final cy = h / 2;
+    final bw = w;
+    final bh = h;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
+    final liquidColor = Color.lerp(const Color(0xFF0F2537).withValues(alpha: 0.2), activeDarkColor.withValues(alpha: 0.5), animationValue)!;
+    final shadowAlpha = 0.4 * animationValue;
+    final strokeWidth = 1.5 + (1.0 * animationValue);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+      
+    final liquidLinePaint = Paint()
+      ..color = liquidColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    // Bowl base shape
+    final bowlPath = Path();
+    bowlPath.moveTo(cx - bw / 2, cy - bh / 2);
+    bowlPath.quadraticBezierTo(cx - bw / 2.2, cy + bh / 2, cx - bw / 4, cy + bh / 2);
+    bowlPath.lineTo(cx + bw / 4, cy + bh / 2);
+    bowlPath.quadraticBezierTo(cx + bw / 2.2, cy + bh / 2, cx + bw / 2, cy - bh / 2);
+    
+    // Shadow when selected
+    if (shadowAlpha > 0) {
+      canvas.drawShadow(bowlPath, activeDarkColor.withValues(alpha: shadowAlpha), 6.0, true);
+    }
+    
+    canvas.drawPath(bowlPath, fillPaint);
+    canvas.drawPath(bowlPath, outlinePaint);
+
+    // Top rim ellipse
+    final rimRect = Rect.fromCenter(center: Offset(cx, cy - bh / 2), width: bw + 4, height: bh * 0.3);
+    canvas.drawOval(rimRect, fillPaint);
+    canvas.drawOval(rimRect, outlinePaint);
+
+    // Inner rim ring
+    final innerRimRect = Rect.fromCenter(center: Offset(cx, cy - bh / 2), width: bw * 0.85, height: bh * 0.2);
+    canvas.drawOval(innerRimRect, outlinePaint);
+
+    // Liquid line inside
+    final liquidRect = Rect.fromCenter(center: Offset(cx, cy - bh * 0.1), width: bw * 0.75, height: bh * 0.15);
+    canvas.drawArc(liquidRect, 0, 3.14159, false, liquidLinePaint);
+    canvas.drawArc(liquidRect, 3.14159, 3.14159, false, liquidLinePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleBowlPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue || 
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor;
+  }
+}
+
+class _SpoonSizeSelector extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _SpoonSizeSelector({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final spoons = [
+      {'label': '5 ml', 'height': 75.0, 'width': 26.0, 'ml': 5},
+      {'label': '10 ml', 'height': 110.0, 'width': 38.0, 'ml': 10},
+      {'label': '15 ml', 'height': 145.0, 'width': 54.0, 'ml': 15},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: spoons.map((spoon) {
+          final label = spoon['label'] as String;
+          final height = spoon['height'] as double;
+          final width = spoon['width'] as double;
+          final ml = spoon['ml'] as int;
+          
+          final sizeString = '$ml ml';
+          final isSel = selected == sizeString || selected.contains(ml.toString());
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(sizeString),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
+                      duration: const Duration(milliseconds: 200),
+                      builder: (context, value, child) {
+                        return CustomPaint(
+                          size: Size(width, height),
+                          painter: _SingleSpoonPainter(
+                            animationValue: value,
+                            activeColor: activeColor,
+                            activeDarkColor: activeDarkColor,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                        color: isSel ? activeDarkColor : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SingleSpoonPainter extends CustomPainter {
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+
+  _SingleSpoonPainter({
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
+    final shadowAlpha = 0.4 * animationValue;
+    final strokeWidth = 1.5 + (1.0 * animationValue);
+
+    // Flawless, single continuous path for the entire spoon outline
+    final spoonPath = Path();
+    spoonPath.moveTo(w * 0.5, 0.0);
+    
+    // Left side of bowl (smooth ellipse down to the neck)
+    spoonPath.cubicTo(
+      w * 0.0, 0.0, 
+      w * 0.0, h * 0.4, 
+      w * 0.28, h * 0.45
+    );
+    // Left neck (smooth inward curve)
+    spoonPath.cubicTo(
+      w * 0.38, h * 0.48, 
+      w * 0.38, h * 0.55, 
+      w * 0.35, h * 0.65
+    );
+    // Left handle (straight flare to the bottom)
+    spoonPath.lineTo(w * 0.30, h * 0.94);
+    
+    // Bottom round
+    spoonPath.cubicTo(
+      w * 0.30, h * 1.02, 
+      w * 0.70, h * 1.02, 
+      w * 0.70, h * 0.94
+    );
+    
+    // Right handle (straight up)
+    spoonPath.lineTo(w * 0.65, h * 0.65);
+    
+    // Right neck (smooth outward curve to bowl)
+    spoonPath.cubicTo(
+      w * 0.62, h * 0.55, 
+      w * 0.62, h * 0.48, 
+      w * 0.72, h * 0.45
+    );
+    // Right side of bowl (smooth ellipse to top center)
+    spoonPath.cubicTo(
+      w * 1.0, h * 0.4, 
+      w * 1.0, 0.0, 
+      w * 0.5, 0.0
+    );
+    spoonPath.close();
+
+    if (shadowAlpha > 0) {
+      canvas.drawShadow(spoonPath, activeDarkColor.withValues(alpha: shadowAlpha), 6.0, true);
+    }
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(spoonPath, fillPaint);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(spoonPath, outlinePaint);
+
+    // Inner sketch lines to perfectly match the sketch aesthetic
+    final sketchPaint = Paint()
+      ..color = outlineColor.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+
+    // Concentric ovals in the head
+    canvas.drawOval(Rect.fromLTRB(w * 0.15, h * 0.05, w * 0.85, h * 0.40), sketchPaint);
+    canvas.drawOval(Rect.fromLTRB(w * 0.25, h * 0.10, w * 0.75, h * 0.35), sketchPaint);
+    canvas.drawOval(Rect.fromLTRB(w * 0.35, h * 0.15, w * 0.65, h * 0.30), sketchPaint);
+
+    // Inner contour line on the handle
+    final handleInner = Path();
+    handleInner.moveTo(w * 0.35, h * 0.48);
+    handleInner.cubicTo(
+      w * 0.43, h * 0.55, 
+      w * 0.43, h * 0.65, 
+      w * 0.38, h * 0.92
+    );
+    handleInner.cubicTo(
+      w * 0.38, h * 0.98, 
+      w * 0.62, h * 0.98, 
+      w * 0.62, h * 0.92
+    );
+    handleInner.cubicTo(
+      w * 0.57, h * 0.65, 
+      w * 0.57, h * 0.55, 
+      w * 0.65, h * 0.48
+    );
+    canvas.drawPath(handleInner, sketchPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleSpoonPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue || 
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor;
   }
 }
 
