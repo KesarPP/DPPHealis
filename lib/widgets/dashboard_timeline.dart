@@ -11,6 +11,7 @@ class DashboardTimeline extends StatefulWidget {
   final bool weightLogged;
   final bool lessonCompleted;
   final bool journalLogged;
+  final Function(int)? onToggleItem;
 
   const DashboardTimeline({
     super.key,
@@ -20,6 +21,7 @@ class DashboardTimeline extends StatefulWidget {
     this.weightLogged = true,
     this.lessonCompleted = true,
     this.journalLogged = false,
+    this.onToggleItem,
   });
 
   @override
@@ -129,6 +131,9 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
   void didUpdateWidget(DashboardTimeline oldWidget) {
     super.didUpdateWidget(oldWidget);
     _buildItems();
+    _progressAnim = Tween<double>(begin: 0.0, end: doneCount.toDouble()).animate(
+      CurvedAnimation(parent: _introController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -175,20 +180,28 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Today's Mission",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: GelatoTheme.textDark,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Today's Mission",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: GelatoTheme.textDark,
+                            ),
                           ),
                         ),
-                        Text(
-                          "Small steps, big transformation",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: GelatoTheme.textLight,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Small steps, big transformation",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: GelatoTheme.textLight,
+                            ),
                           ),
                         ),
                       ],
@@ -230,7 +243,7 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
 
               // Horizontal Timeline
               SizedBox(
-                height: 180, // Increased height for new layout
+                height: 215, // Increased height for new layout
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final screenWidth = constraints.maxWidth;
@@ -285,152 +298,156 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                                 final Color lightBg = it.done ? const Color(0xFFE8F5E9) : const Color(0xFFFFF7ED); // Light orange bg
                                 final Color darkText = it.done ? GelatoTheme.greenDark : const Color(0xFFC2410C); // Dark orange text
 
-                                return SizedBox(
-                                  width: itemWidth,
-                                  child: Column(
-                                    children: [
-                                      // Node Stack
-                                      SizedBox(
-                                        width: 80, // Increased size to allow glow
-                                        height: 80,
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            // Smooth circular glow background
-                                            if (isItemDone)
-                                              Container(
-                                                width: 80,
-                                                height: 80,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  gradient: RadialGradient(
-                                                    colors: [
-                                                      GelatoTheme.greenBright.withValues(alpha: 0.6),
-                                                      GelatoTheme.greenBright.withValues(alpha: 0.0),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            if (!it.done)
-                                              Container(
-                                                width: 64 + (16 * pulseValue),
-                                                height: 64 + (16 * pulseValue),
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  gradient: RadialGradient(
-                                                    colors: [
-                                                      const Color(0xFFFB923C).withValues(alpha: 0.4 * pulseValue),
-                                                      const Color(0xFFFB923C).withValues(alpha: 0.0),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            // Main Circle
-                                            Transform.scale(
-                                              scale: isItemDone ? introScale : 1.0,
-                                              child: Container(
-                                                width: 56,
-                                                height: 56,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  shape: BoxShape.circle,
-                                                  border: Border.all(
-                                                    color: mainColor,
-                                                    width: 2.5,
-                                                  ),
-                                                ),
-                                                child: Icon(it.mainIcon, color: mainColor, size: 28),
-                                              ),
-                                            ),
-                                            // Top right checkmark badge
-                                            if (isItemDone)
-                                              Positioned(
-                                                top: 0,
-                                                right: 0,
-                                                child: Transform.scale(
-                                                  scale: introScale,
-                                                  child: Container(
-                                                    width: 20,
-                                                    height: 20,
-                                                    decoration: const BoxDecoration(
-                                                      color: GelatoTheme.greenBright,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: const Icon(Icons.check, color: Colors.white, size: 14),
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      // Text
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          it.text,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            height: 1.2,
-                                            fontWeight: FontWeight.w800,
-                                            color: GelatoTheme.textDark,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      // Time Pill
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: lightBg,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            it.timeText,
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w700,
-                                              color: darkText,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      // Status Pill
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: lightBg,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
+                                return GestureDetector(
+                                  onTap: () => widget.onToggleItem?.call(index),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: SizedBox(
+                                    width: itemWidth,
+                                    child: Column(
+                                      children: [
+                                        // Node Stack
+                                        SizedBox(
+                                          width: 80, // Increased size to allow glow
+                                          height: 80,
+                                          child: Stack(
+                                            alignment: Alignment.center,
                                             children: [
-                                              if (it.statusEmoji != null) ...[
-                                                Text(it.statusEmoji!, style: const TextStyle(fontSize: 10)),
-                                                const SizedBox(width: 4),
-                                              ] else if (it.statusIcon != null) ...[
-                                                Icon(it.statusIcon, size: 10, color: darkText),
-                                                const SizedBox(width: 4),
-                                              ],
-                                              Text(
-                                                it.statusText,
-                                                style: TextStyle(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: darkText,
+                                              // Smooth circular glow background
+                                              if (isItemDone)
+                                                Container(
+                                                  width: 80,
+                                                  height: 80,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    gradient: RadialGradient(
+                                                      colors: [
+                                                        GelatoTheme.greenBright.withValues(alpha: 0.6),
+                                                        GelatoTheme.greenBright.withValues(alpha: 0.0),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (!it.done)
+                                                Container(
+                                                  width: 64 + (16 * pulseValue),
+                                                  height: 64 + (16 * pulseValue),
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    gradient: RadialGradient(
+                                                      colors: [
+                                                        const Color(0xFFFB923C).withValues(alpha: 0.4 * pulseValue),
+                                                        const Color(0xFFFB923C).withValues(alpha: 0.0),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              // Main Circle
+                                              Transform.scale(
+                                                scale: isItemDone ? introScale : 1.0,
+                                                child: Container(
+                                                  width: 56,
+                                                  height: 56,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color: mainColor,
+                                                      width: 2.5,
+                                                    ),
+                                                  ),
+                                                  child: Icon(it.mainIcon, color: mainColor, size: 28),
                                                 ),
                                               ),
+                                              // Top right checkmark badge
+                                              if (isItemDone)
+                                                Positioned(
+                                                  top: 0,
+                                                  right: 0,
+                                                  child: Transform.scale(
+                                                    scale: introScale,
+                                                    child: Container(
+                                                      width: 20,
+                                                      height: 20,
+                                                      decoration: const BoxDecoration(
+                                                        color: GelatoTheme.greenBright,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(Icons.check, color: Colors.white, size: 14),
+                                                    ),
+                                                  ),
+                                                ),
                                             ],
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 12),
+                                        // Text
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            it.text,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              height: 1.2,
+                                              fontWeight: FontWeight.w800,
+                                              color: GelatoTheme.textDark,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        // Time Pill
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: lightBg,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              it.timeText,
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w700,
+                                                color: darkText,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        // Status Pill
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: lightBg,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (it.statusEmoji != null) ...[
+                                                  Text(it.statusEmoji!, style: const TextStyle(fontSize: 10)),
+                                                  const SizedBox(width: 4),
+                                                ] else if (it.statusIcon != null) ...[
+                                                  Icon(it.statusIcon, size: 10, color: darkText),
+                                                  const SizedBox(width: 4),
+                                                ],
+                                                Text(
+                                                  it.statusText,
+                                                  style: TextStyle(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: darkText,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 );
                               }),
@@ -457,12 +474,15 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                   children: const [
                     Icon(Icons.auto_awesome, color: GelatoTheme.pinkDark, size: 16),
                     SizedBox(width: 8),
-                    Text(
-                      "You're on fire! Keep going!",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: GelatoTheme.pinkDark,
+                    Flexible(
+                      child: Text(
+                        "You're on fire! Keep going!",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: GelatoTheme.pinkDark,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

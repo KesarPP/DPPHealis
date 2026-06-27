@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../models/activity_log.dart';
+import '../services/firestore_activity_log_service.dart';
 
 class ActivityFeed extends StatelessWidget {
-  const ActivityFeed({super.key});
+  final VoidCallback? onActivityLogged;
+
+  const ActivityFeed({super.key, this.onActivityLogged});
 
   @override
   Widget build(BuildContext context) {
@@ -115,13 +119,16 @@ class ActivityFeed extends StatelessWidget {
             shrinkWrap: true,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 1.8,
+              childAspectRatio: 1.55,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
             itemCount: activities.length,
             itemBuilder: (context, index) {
-              return _ActivityCard(activity: activities[index]);
+              return _ActivityCard(
+                activity: activities[index],
+                onActivityLogged: onActivityLogged,
+              );
             },
           ),
         ],
@@ -132,8 +139,9 @@ class ActivityFeed extends StatelessWidget {
 
 class _ActivityCard extends StatefulWidget {
   final _ActivityData activity;
+  final VoidCallback? onActivityLogged;
 
-  const _ActivityCard({required this.activity});
+  const _ActivityCard({required this.activity, this.onActivityLogged});
 
   @override
   State<_ActivityCard> createState() => _ActivityCardState();
@@ -298,15 +306,28 @@ class _ActivityCardState extends State<_ActivityCard> {
                         ),
                         elevation: 0,
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${widget.activity.title} logged for ${duration.toInt()} mins!'),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
+                      onPressed: () async {
+                        final newLog = ActivityLog(
+                          id: '',
+                          activityName: widget.activity.title,
+                          durationMinutes: duration.toInt(),
+                          frequency: frequency,
+                          createdAt: DateTime.now(),
                         );
+                        try {
+                          await FirestoreActivityLogService().saveActivityLog(newLog);
+                        } catch (_) {}
+                        widget.onActivityLogged?.call();
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${widget.activity.title} logged for ${duration.toInt()} mins!'),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+                        }
                       },
                       child: const Text(
                         'Save Activity',
@@ -347,59 +368,57 @@ class _ActivityCardState extends State<_ActivityCard> {
             border: GelatoTheme.cardBorder,
             boxShadow: _pressed ? [] : GelatoTheme.cardShadow,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          widget.activity.icon,
+                          color: widget.activity.iconColor,
+                          size: 16,
+                        ),
                       ),
                     ),
-                    child: Center(
-                      child: Icon(
-                        widget.activity.icon,
-                        color: widget.activity.iconColor,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
+                    const SizedBox(width: 8),
+                    Text(
                       widget.activity.type,
                       style: const TextStyle(
                         fontSize: 10,
                         color: GelatoTheme.textDark,
                         fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.activity.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                  color: Colors.black,
-                  height: 1.1,
+                  ],
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  widget.activity.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: Colors.black,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

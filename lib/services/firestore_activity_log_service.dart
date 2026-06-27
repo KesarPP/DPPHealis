@@ -15,8 +15,6 @@ class FirestoreActivityLogService
 
   @override
   Future<List<ActivityLog>> getTodayActivityLogs() async {
-    @override
-    Future<List<ActivityLog>> getTodayActivityLogs() async {
       final user = _auth.currentUser;
 
       if (user == null) {
@@ -61,6 +59,22 @@ class FirestoreActivityLogService
           data: doc.data(),
         );
       }).toList();
-    }
+  }
+
+  @override
+  Future<void> saveActivityLog(ActivityLog log) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _firestore
+        .collection('logs')
+        .doc(user.uid)
+        .collection('activity_entries')
+        .add({
+      'activityName': log.activityName,
+      'durationMinutes': log.durationMinutes,
+      'frequency': log.frequency,
+      'createdAt': Timestamp.fromDate(log.createdAt),
+    });
   }
 }

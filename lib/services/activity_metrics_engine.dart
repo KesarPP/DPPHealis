@@ -38,19 +38,16 @@ class ActivityMetricsEngine {
   /// Returns the current streak of consecutive active days.
   static int getCurrentStreak(List<DailyAggregate> pastDays) {
     int streak = 0;
-    // pastDays is assumed to be ordered chronologically, today at the end.
-    // However, for streak, we look backward.
     for (int i = pastDays.length - 1; i >= 0; i--) {
       final day = pastDays[i];
-      if (day.isActiveDay) {
+      final bool active = day.isActiveDay || day.totalSteps >= 3000 || day.qualifyingActiveMinutes >= 10 || day.totalActiveMinutes >= 10;
+      if (active) {
         streak++;
       } else {
-        // If today is not active, but yesterday was, we don't break the streak yet,
-        // it's just "in progress" today.
         if (i == pastDays.length - 1) {
-          continue; // Today hasn't broken it yet
+          continue;
         }
-        break; // Streak broken
+        break;
       }
     }
     return streak;
@@ -374,16 +371,18 @@ class ActivityMissionEngine {
     for (var day in trailing30Days) {
       final d = DateTime(day.date.year, day.date.month, day.date.day);
       if (!d.isBefore(monday)) {
-        completedMins += day.qualifyingActiveMinutes;
+        completedMins += max(day.qualifyingActiveMinutes, day.totalActiveMinutes);
         completedCals += day.totalCalories;
       }
     }
 
     int baseMins = NdppConstants.getWeeklyTargetForWeek(programWeek);
+    int kcalGoal = (baseMins * 700.0 / 150.0).round();
+
     if (mode == MissionGoalMode.ndppStretch) {
       baseMins = (baseMins * stretchMultiplier).round();
+      kcalGoal = (kcalGoal * stretchMultiplier).round();
     }
-    final int kcalGoal = (baseMins * kcalRate).round();
 
     final double ratioMins = completedMins / max(1, baseMins);
     final double ratioCals = completedCals / max(1, kcalGoal);
@@ -395,8 +394,8 @@ class ActivityMissionEngine {
       completedMinutes: completedMins,
       completedKcal: completedCals.round(),
       progressPercentage: progressPct,
-      goalText: '$baseMins Active Mins / ${_formatNumber(kcalGoal)} kcal',
-      completedText: '$completedMins Active Mins / ${_formatNumber(completedCals.round())} kcal',
+      goalText: '$baseMins Active Mins / ~${_formatNumber(kcalGoal)} cal',
+      completedText: '$completedMins Active Mins / ${_formatNumber(completedCals.round())} cal',
     );
   }
 
@@ -405,6 +404,8 @@ class ActivityMissionEngine {
     required List<DailyAggregate> trailing30Days,
     required int programWeek,
     required double kcalRate,
+    MissionGoalMode mode = MissionGoalMode.ndppStrict,
+    double stretchMultiplier = 1.0,
   }) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -416,23 +417,39 @@ class ActivityMissionEngine {
 
     for (var day in trailing30Days) {
       if (day.date.year == now.year && day.date.month == now.month) {
-        completedMins += day.qualifyingActiveMinutes;
+        completedMins += max(day.qualifyingActiveMinutes, day.totalActiveMinutes);
         completedCals += day.totalCalories;
       }
     }
 
-    // Monthly goal built from actual mix of overlapping ramp weeks
-    double totalMonthMins = 0;
-    final int daysInMonth = lastDayOfMonth.difference(firstDayOfMonth).inDays + 1;
-    for (int i = 0; i < daysInMonth; i++) {
-      final d = firstDayOfMonth.add(Duration(days: i));
-      final int diffDays = d.difference(today).inDays;
-      final int weekForD = max(1, programWeek + (diffDays / 7).floor());
-      totalMonthMins += NdppConstants.getWeeklyTargetForWeek(weekForD) / 7.0;
+    int baseMins;
+    int kcalGoal;
+
+    if (programWeek >= 8) {
+      // Steady-state user (Week 8+, the common case): using an average of 4.345 weeks/month
+      baseMins = 652; // 150 * 4.345 ≈ 651.75
+      kcalGoal = 3041; // 700 * 4.345 ≈ 3041.5
+    } else {
+      // Mid-ramp user: derive monthly goals from summing actual mix of weeks in calendar month
+      double totalMonthMins = 0;
+      double totalMonthKcal = 0;
+      final int daysInMonth = lastDayOfMonth.difference(firstDayOfMonth).inDays + 1;
+      for (int i = 0; i < daysInMonth; i++) {
+        final d = firstDayOfMonth.add(Duration(days: i));
+        final int diffDays = d.difference(today).inDays;
+        final int weekForD = max(1, programWeek + (diffDays / 7).floor());
+        final int wTarget = NdppConstants.getWeeklyTargetForWeek(weekForD);
+        totalMonthMins += wTarget / 7.0;
+        totalMonthKcal += (wTarget * 700.0 / 150.0) / 7.0;
+      }
+      baseMins = totalMonthMins.round();
+      kcalGoal = totalMonthKcal.round();
     }
 
-    final int baseMins = totalMonthMins.round();
-    final int kcalGoal = (baseMins * kcalRate).round();
+    if (mode == MissionGoalMode.ndppStretch) {
+      baseMins = (baseMins * stretchMultiplier).round();
+      kcalGoal = (kcalGoal * stretchMultiplier).round();
+    }
 
     final double ratioMins = completedMins / max(1, baseMins);
     final double ratioCals = completedCals / max(1, kcalGoal);
@@ -444,8 +461,8 @@ class ActivityMissionEngine {
       completedMinutes: completedMins,
       completedKcal: completedCals.round(),
       progressPercentage: progressPct,
-      goalText: '$baseMins Active Mins / ${_formatNumber(kcalGoal)} kcal',
-      completedText: '$completedMins Active Mins / ${_formatNumber(completedCals.round())} kcal',
+      goalText: '$baseMins Active Mins / ~${_formatNumber(kcalGoal)} cal',
+      completedText: '$completedMins Active Mins / ${_formatNumber(completedCals.round())} cal',
     );
   }
 

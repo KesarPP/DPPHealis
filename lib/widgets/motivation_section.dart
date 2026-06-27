@@ -66,13 +66,13 @@ class _MotivationSectionState extends State<MotivationSection>
     _activeDays = [];
     final daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     
-    // Assuming pastDays is chronologically ordered, ending with today.
-    for (var day in widget.pastDays) {
+    final last7 = widget.pastDays.length > 7 ? widget.pastDays.sublist(widget.pastDays.length - 7) : widget.pastDays;
+    for (var day in last7) {
       _days.add(daysOfWeek[day.date.weekday - 1]);
-      _activeDays.add(day.isActiveDay);
+      final bool active = day.isActiveDay || day.totalSteps >= 3000 || day.qualifyingActiveMinutes >= 10 || day.totalActiveMinutes >= 10;
+      _activeDays.add(active);
     }
     
-    // Pad to 7 if pastDays is less than 7 for some reason
     while (_days.length < 7) {
       _days.insert(0, '-');
       _activeDays.insert(0, false);
@@ -155,30 +155,35 @@ class _MotivationSectionState extends State<MotivationSection>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          AnimatedBuilder(
-                            animation: _flameAnim,
-                            builder: (context, child) => Transform.scale(
-                              scale: _flameAnim.value,
-                              child: const Icon(
-                                Icons.local_fire_department_rounded,
-                                color: streakColor,
-                                size: 26,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            AnimatedBuilder(
+                              animation: _flameAnim,
+                              builder: (context, child) => Transform.scale(
+                                scale: _flameAnim.value,
+                                child: const Icon(
+                                  Icons.local_fire_department_rounded,
+                                  color: streakColor,
+                                  size: 26,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Consistency Streak',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              color: GelatoTheme.textDark,
-                              letterSpacing: 0.5,
+                            const SizedBox(width: 8),
+                            const Flexible(
+                              child: Text(
+                                'Consistency Streak',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: GelatoTheme.textDark,
+                                  letterSpacing: 0.5,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

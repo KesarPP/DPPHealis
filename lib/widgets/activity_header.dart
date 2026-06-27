@@ -152,14 +152,7 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
 
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted) {
-        setState(() {
-          _showPointer = false;
-        });
-        _pointerAnim.stop();
-      }
-    });
+    // Pointer tab kept visible to guide users on updating activity data
   }
 
   @override
@@ -170,8 +163,11 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 12,
+      runSpacing: 10,
       children: [
         Container(
           height: 54,
@@ -266,7 +262,7 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
                 children: [
                   Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18),
                   SizedBox(width: 4),
-                  Text('CLICK TO SYNC', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+                  Text('Update your activity data', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
                 ],
               ),
             ),
