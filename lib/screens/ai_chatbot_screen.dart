@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/chat_message.dart';
 import '../repositories/chat_repository.dart';
@@ -22,9 +23,11 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   final ScrollController _scrollController = ScrollController();
   final ChatRepository _chatRepository = ChatRepository();
   final stt.SpeechToText _speechToText = stt.SpeechToText();
+  final FlutterTts _flutterTts = FlutterTts();
   
   bool _isTyping = false;
   bool _isListening = false;
+  bool _wasLastMessageSpoken = false;
 
   final Map<String, String> _qaMap = {
     "What is prediabetes?": "Prediabetes means your blood sugar levels are higher than normal, but not yet high enough to be diagnosed as type 2 diabetes. It is a warning sign, but it can be reversed with lifestyle changes.",
@@ -39,6 +42,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   @override
   void initState() {
     super.initState();
+    _initTts();
     _currentSessionMessages.add(
       ChatMessage(
         text: 'Hello! I am your AI Chatbot. I can answer specific questions about diabetes prevention.',
@@ -47,6 +51,24 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
         timestamp: DateTime.now(),
       ),
     );
+  }
+
+  Future<void> _initTts() async {
+    try {
+      await _flutterTts.setVolume(1.0);
+      await _flutterTts.setSpeechRate(0.5);
+      await _flutterTts.setPitch(1.0);
+      await _flutterTts.setIosAudioCategory(
+        IosTextToSpeechAudioCategory.playback,
+        [
+          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+        ],
+      );
+    } catch (e) {
+      debugPrint('TTS Init Error: $e');
+    }
   }
 
   void _toggleListening() async {
@@ -76,6 +98,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
             onResult: (result) {
               setState(() {
                 _messageController.text = result.recognizedWords;
+                _wasLastMessageSpoken = true;
               });
               if (result.finalResult) {
                 if (mounted) setState(() => _isListening = false);
@@ -166,11 +189,26 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     }
   }
 
+  String _cleanTextForSpeech(String text) {
+    return text
+        .replaceAll(RegExp(r'\*\*'), '')
+        .replaceAll(RegExp(r'\*'), '')
+        .replaceAll(RegExp(r'#+'), '')
+        .replaceAll(RegExp(r'•'), '')
+        .replaceAll(RegExp(r'```.*?```', dotAll: true), '')
+        .replaceAll(RegExp(r'`'), '')
+        .trim();
+  }
+
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     
+    final wasSpoken = _wasLastMessageSpoken;
+    _wasLastMessageSpoken = false;
     _messageController.clear();
+
+    debugPrint('Sending message: "$text" (wasSpoken: $wasSpoken)');
 
     final userMessage = ChatMessage(
       text: text,
@@ -207,6 +245,17 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       _scrollToBottom();
       
       await _chatRepository.saveMessage(aiMessage);
+
+      if (wasSpoken) {
+        debugPrint('Triggering TTS speak for AI response...');
+        try {
+          await _flutterTts.speak(_cleanTextForSpeech(aiResponseText));
+        } catch (e) {
+          debugPrint('TTS Speak Error: $e');
+        }
+      } else {
+        debugPrint('Message was typed, skipping TTS.');
+      }
     }
   }
 
@@ -249,6 +298,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     _speechToText.stop();
+    _flutterTts.stop();
     super.dispose();
   }
 
@@ -407,6 +457,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                       ),
                       onPressed: () {
                         _messageController.text = question;
+                        _wasLastMessageSpoken = false;
                         _sendMessage();
                       },
                     ),
