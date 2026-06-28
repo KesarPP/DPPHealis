@@ -1513,6 +1513,27 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                                   activeDarkColor: cat.darkColor,
                                   onChanged: (v) => setState(() => _size = v),
                                 )
+                              else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('apricot'))
+                                _ApricotSizeSelector(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
+                              else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('cashew'))
+                                _CashewSizeSelector(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
+                              else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('custard'))
+                                _CustardAppleSizeSelector(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
                               else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('pineapple'))
                                 _PineappleSizeSelector(
                                   selected: _size,
@@ -3870,6 +3891,927 @@ class _SingleBreadPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SingleBreadPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue || 
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor;
+  }
+}
+
+class _ApricotSizeSelector extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _ApricotSizeSelector({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final balls = [
+      {'label': 'Small', 'width': 35.0, 'id': 'S'},
+      {'label': 'Medium', 'width': 60.0, 'id': 'M'},
+      {'label': 'Large', 'width': 85.0, 'id': 'L'},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: balls.map((ball) {
+          final label = ball['label'] as String;
+          final sizeVal = ball['width'] as double;
+          final id = ball['id'] as String;
+          
+          final isSel = selected.startsWith(id);
+
+          return GestureDetector(
+            onTap: () => onChanged('$id (${label.toLowerCase()})'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (context, value, child) {
+                      return CustomPaint(
+                        size: Size(sizeVal, sizeVal),
+                        painter: _SingleApricotPainter(
+                          sizeId: id,
+                          animationValue: value,
+                          activeColor: activeColor,
+                          activeDarkColor: activeDarkColor,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                      color: isSel ? activeDarkColor : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SingleApricotPainter extends CustomPainter {
+  final String sizeId;
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+
+  _SingleApricotPainter({
+    required this.sizeId,
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h / 2 + h * 0.08;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
+    final strokeWidth = 1.5 + (1.0 * animationValue);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+      
+    final sketchPaint = Paint()
+      ..color = outlineColor.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    if (sizeId == 'S') {
+      // --- Small Apricot ---
+      final r = w * 0.30;
+      
+      // Main body path (slightly indented at the top)
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, cy - r * 0.9);
+      // Right side
+      bodyPath.cubicTo(cx + r * 1.1, cy - r * 0.9, cx + r * 1.1, cy + r * 0.9, cx, cy + r);
+      // Left side
+      bodyPath.cubicTo(cx - r * 1.1, cy + r * 0.9, cx - r * 1.1, cy - r * 0.9, cx, cy - r * 0.9);
+      bodyPath.close();
+      
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // Crease line (curved down the middle-left)
+      final creasePath = Path();
+      creasePath.moveTo(cx, cy - r * 0.9);
+      creasePath.quadraticBezierTo(cx - r * 0.2, cy, cx - r * 0.1, cy + r * 0.95);
+      canvas.drawPath(creasePath, outlinePaint..strokeWidth = strokeWidth * 0.7);
+
+      // Stem and twig
+      final stemPath = Path();
+      stemPath.moveTo(cx, cy - r * 0.9);
+      stemPath.quadraticBezierTo(cx - w * 0.05, cy - r - h * 0.1, cx - w * 0.03, cy - r - h * 0.18);
+      canvas.drawPath(stemPath, outlinePaint..strokeWidth = strokeWidth * 0.8);
+      
+      // Twig (running horizontally across the stem tip)
+      final twigPath = Path();
+      twigPath.moveTo(cx - w * 0.28, cy - r - h * 0.12);
+      twigPath.quadraticBezierTo(cx - w * 0.03, cy - r - h * 0.18, cx + w * 0.20, cy - r - h * 0.26);
+      canvas.drawPath(twigPath, outlinePaint..strokeWidth = strokeWidth * 0.9);
+
+    } else if (sizeId == 'M') {
+      // --- Medium Apricot ---
+      final r = w * 0.32;
+
+      // Main body path (rounded, indented at top)
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, cy - r * 0.92);
+      bodyPath.cubicTo(cx + r * 1.15, cy - r * 0.92, cx + r * 1.15, cy + r * 0.95, cx, cy + r * 1.02);
+      bodyPath.cubicTo(cx - r * 1.15, cy + r * 0.95, cx - r * 1.15, cy - r * 0.92, cx, cy - r * 0.92);
+      bodyPath.close();
+
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // Vertical crease line
+      final creasePath = Path();
+      creasePath.moveTo(cx, cy - r * 0.92);
+      creasePath.quadraticBezierTo(cx - r * 0.25, cy, cx - r * 0.12, cy + r * 1.0);
+      canvas.drawPath(creasePath, outlinePaint..strokeWidth = strokeWidth * 0.75);
+
+      // Tiny stem opening nub
+      final stemPath = Path();
+      stemPath.moveTo(cx, cy - r * 0.92);
+      stemPath.lineTo(cx, cy - r * 1.05);
+      canvas.drawPath(stemPath, outlinePaint..strokeWidth = strokeWidth * 0.95);
+
+    } else {
+      // --- Large Apricot (Cut in half showing empty cavity) ---
+      final r = w * 0.35;
+
+      // 1. Outer skin boundary
+      final outerPath = Path();
+      outerPath.moveTo(cx, cy - r * 0.95);
+      outerPath.cubicTo(cx + r * 1.15, cy - r * 0.95, cx + r * 1.15, cy + r * 0.95, cx, cy + r * 1.02);
+      outerPath.cubicTo(cx - r * 1.15, cy + r * 0.95, cx - r * 1.15, cy - r * 0.95, cx, cy - r * 0.95);
+      outerPath.close();
+
+      canvas.drawPath(outerPath, fillPaint);
+      canvas.drawPath(outerPath, outlinePaint);
+
+      // 2. Inner flesh boundary (offset inwards by about 4-6 pixels)
+      final innerPath = Path();
+      final ir = r * 0.88;
+      innerPath.moveTo(cx, cy - ir * 0.93);
+      innerPath.cubicTo(cx + ir * 1.12, cy - ir * 0.93, cx + ir * 1.12, cy + ir * 0.93, cx, cy + ir * 1.0);
+      innerPath.cubicTo(cx - ir * 1.12, cy + ir * 0.93, cx - ir * 1.12, cy - ir * 0.93, cx, cy - ir * 0.93);
+      innerPath.close();
+      canvas.drawPath(innerPath, outlinePaint..strokeWidth = strokeWidth * 0.5);
+
+      // Top indent crease inside
+      final innerCrease = Path();
+      innerCrease.moveTo(cx, cy - r * 0.95);
+      innerCrease.lineTo(cx, cy - ir * 0.93);
+      canvas.drawPath(innerCrease, outlinePaint..strokeWidth = strokeWidth * 0.5);
+
+      // Bottom indent crease inside
+      final bottomCrease = Path();
+      bottomCrease.moveTo(cx, cy + r * 1.02);
+      bottomCrease.lineTo(cx, cy + ir * 1.0);
+      canvas.drawPath(bottomCrease, outlinePaint..strokeWidth = strokeWidth * 0.5);
+
+      // 3. Central hollow cavity outline (no seed/pit)
+      final cavityWidth = w * 0.14;
+      final cavityHeight = h * 0.22;
+      final cavityRect = Rect.fromCenter(
+        center: Offset(cx, cy - h * 0.02),
+        width: cavityWidth,
+        height: cavityHeight,
+      );
+      canvas.drawOval(cavityRect, outlinePaint..strokeWidth = strokeWidth * 0.55);
+    }
+
+    // Ground line at bottom
+    canvas.drawLine(Offset(cx - w * 0.6, h), Offset(cx + w * 0.6, h), sketchPaint..strokeWidth = 0.6);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleApricotPainter oldDelegate) {
+    return oldDelegate.sizeId != sizeId ||
+           oldDelegate.animationValue != animationValue || 
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor;
+  }
+}
+
+class _CustardAppleSizeSelector extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _CustardAppleSizeSelector({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final balls = [
+      {'label': 'Small', 'width': 35.0, 'id': 'S'},
+      {'label': 'Medium', 'width': 60.0, 'id': 'M'},
+      {'label': 'Large', 'width': 85.0, 'id': 'L'},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: balls.map((ball) {
+          final label = ball['label'] as String;
+          final sizeVal = ball['width'] as double;
+          final id = ball['id'] as String;
+          
+          final isSel = selected.startsWith(id);
+
+          return GestureDetector(
+            onTap: () => onChanged('$id (${label.toLowerCase()})'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (context, value, child) {
+                      return CustomPaint(
+                        size: Size(sizeVal, sizeVal),
+                        painter: _SingleCustardApplePainter(
+                          sizeId: id,
+                          animationValue: value,
+                          activeColor: activeColor,
+                          activeDarkColor: activeDarkColor,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                      color: isSel ? activeDarkColor : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SingleCustardApplePainter extends CustomPainter {
+  final String sizeId;
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+
+  _SingleCustardApplePainter({
+    required this.sizeId,
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+  });
+
+  void _drawLeaf(Canvas canvas, Offset center, double scale, double angle, Paint fill, Paint stroke) {
+    final path = Path();
+    final rx = scale * 1.35;
+    final ry = scale * 0.65;
+    
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+    
+    path.moveTo(-rx, 0);
+    path.quadraticBezierTo(0, -ry, rx, 0);
+    path.quadraticBezierTo(0, ry, -rx, 0);
+    path.close();
+    
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, stroke);
+    
+    // Leaf vein
+    canvas.drawLine(Offset(-rx, 0), Offset(rx, 0), stroke..strokeWidth = stroke.strokeWidth * 0.6);
+    canvas.restore();
+  }
+
+  void _drawScale(Canvas canvas, double sx, double sy, double sr, Paint fill, Paint stroke) {
+    final path = Path();
+    path.moveTo(sx - sr * 0.65, sy - sr * 0.35);
+    path.quadraticBezierTo(sx, sy - sr * 0.55, sx + sr * 0.65, sy - sr * 0.35);
+    path.cubicTo(sx + sr * 0.8, sy + sr * 0.45, sx + sr * 0.4, sy + sr * 0.75, sx, sy + sr * 0.85);
+    path.cubicTo(sx - sr * 0.4, sy + sr * 0.75, sx - sr * 0.8, sy + sr * 0.45, sx - sr * 0.65, sy - sr * 0.35);
+    path.close();
+    
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, stroke);
+    
+    // Tiny texture accent curve inside scale
+    final accent = Path();
+    accent.moveTo(sx - sr * 0.25, sy + sr * 0.15);
+    accent.quadraticBezierTo(sx, sy + sr * 0.4, sx + sr * 0.25, sy + sr * 0.15);
+    canvas.drawPath(accent, stroke..strokeWidth = stroke.strokeWidth * 0.55);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
+    final strokeWidth = 1.5 + (1.0 * animationValue);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+      
+    final sketchPaint = Paint()
+      ..color = outlineColor.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    if (sizeId == 'S') {
+      // --- Small Custard Apple ---
+      final ah = h * 0.35; // apple height
+      final aw = w * 0.35; // apple width
+      final ay = h - ah * 0.45; // compute ay so the bottom of the apple sits on y = h
+      
+      // 1. Draw stem with leaves first (so body overlays the stem base)
+      final stem = Path();
+      stem.moveTo(cx, ay - ah * 0.35);
+      stem.quadraticBezierTo(cx - w * 0.05, ay - ah * 0.85, cx - w * 0.20, ay - ah * 1.15);
+      canvas.drawPath(stem, outlinePaint..strokeWidth = strokeWidth * 0.95);
+
+      // Draw 3 leaves on the stem branches
+      _drawLeaf(canvas, Offset(cx - w * 0.32, ay - ah * 1.05), w * 0.16, -0.4, fillPaint, outlinePaint);
+      _drawLeaf(canvas, Offset(cx - w * 0.18, ay - ah * 1.25), w * 0.15, 0.2, fillPaint, outlinePaint);
+      _drawLeaf(canvas, Offset(cx + w * 0.16, ay - ah * 0.95), w * 0.16, 0.6, fillPaint, outlinePaint);
+
+      // 2. Draw solid body base to mask behind
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, ay - ah * 0.32);
+      bodyPath.quadraticBezierTo(cx + aw * 0.5, ay - ah * 0.45, cx + aw * 0.8, ay - ah * 0.2);
+      bodyPath.cubicTo(cx + aw * 0.95, ay + ah * 0.1, cx + aw * 0.75, ay + ah * 0.4, cx + aw * 0.3, ay + ah * 0.45);
+      bodyPath.quadraticBezierTo(cx, ay + ah * 0.35, cx - aw * 0.3, ay + ah * 0.45);
+      bodyPath.cubicTo(cx - aw * 0.75, ay + ah * 0.4, cx - aw * 0.95, ay + ah * 0.1, cx - aw * 0.8, ay - ah * 0.2);
+      bodyPath.quadraticBezierTo(cx - aw * 0.5, ay - ah * 0.45, cx, ay - ah * 0.32);
+      bodyPath.close();
+
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // 3. Draw overlapping scales inside the body using a clipped grid
+      canvas.save();
+      canvas.clipPath(bodyPath);
+      
+      final scaleSize = aw * 0.28;
+      final rowHeight = scaleSize * 0.75;
+      final colWidth = scaleSize * 1.3;
+      final numRows = (2 * ah / rowHeight).ceil() + 1;
+      
+      for (int row = 0; row < numRows; row++) {
+        final y = ay - ah + row * rowHeight;
+        final isOdd = row % 2 == 1;
+        final startX = cx - aw - (isOdd ? colWidth / 2 : 0);
+        final numCols = (2 * aw / colWidth).ceil() + 2;
+        
+        for (int col = 0; col < numCols; col++) {
+          final x = startX + col * colWidth;
+          _drawScale(canvas, x, y, scaleSize, fillPaint, outlinePaint);
+        }
+      }
+      canvas.restore();
+
+      // Redraw the main body outline on top to ensure smooth border
+      canvas.drawPath(bodyPath, outlinePaint);
+
+    } else if (sizeId == 'M') {
+      // --- Medium Custard Apple ---
+      final ah = h * 0.60;
+      final aw = w * 0.60;
+      final ay = h - ah * 0.45;
+
+      // 1. Draw thick stem first
+      final stem = Path();
+      stem.moveTo(cx - aw * 0.05, ay - ah * 0.42);
+      stem.cubicTo(cx - aw * 0.08, ay - ah * 0.7, cx - aw * 0.15, ay - ah * 0.8, cx - aw * 0.12, ay - ah * 0.82);
+      stem.lineTo(cx + aw * 0.05, ay - ah * 0.82);
+      stem.cubicTo(cx + aw * 0.02, ay - ah * 0.8, cx + aw * 0.08, ay - ah * 0.7, cx + aw * 0.05, ay - ah * 0.42);
+      canvas.drawPath(stem, fillPaint);
+      canvas.drawPath(stem, outlinePaint);
+
+      // 2. Draw solid body
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, ay - ah * 0.32);
+      bodyPath.quadraticBezierTo(cx + aw * 0.5, ay - ah * 0.45, cx + aw * 0.8, ay - ah * 0.2);
+      bodyPath.cubicTo(cx + aw * 0.95, ay + ah * 0.1, cx + aw * 0.75, ay + ah * 0.4, cx + aw * 0.3, ay + ah * 0.45);
+      bodyPath.quadraticBezierTo(cx, ay + ah * 0.35, cx - aw * 0.3, ay + ah * 0.45);
+      bodyPath.cubicTo(cx - aw * 0.75, ay + ah * 0.4, cx - aw * 0.95, ay + ah * 0.1, cx - aw * 0.8, ay - ah * 0.2);
+      bodyPath.quadraticBezierTo(cx - aw * 0.5, ay - ah * 0.45, cx, ay - ah * 0.32);
+      bodyPath.close();
+
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // 3. Draw overlapping scales inside the body using a clipped grid
+      canvas.save();
+      canvas.clipPath(bodyPath);
+      
+      final scaleSize = aw * 0.24;
+      final rowHeight = scaleSize * 0.75;
+      final colWidth = scaleSize * 1.3;
+      final numRows = (2 * ah / rowHeight).ceil() + 1;
+      
+      for (int row = 0; row < numRows; row++) {
+        final y = ay - ah + row * rowHeight;
+        final isOdd = row % 2 == 1;
+        final startX = cx - aw - (isOdd ? colWidth / 2 : 0);
+        final numCols = (2 * aw / colWidth).ceil() + 2;
+        
+        for (int col = 0; col < numCols; col++) {
+          final x = startX + col * colWidth;
+          _drawScale(canvas, x, y, scaleSize, fillPaint, outlinePaint);
+        }
+      }
+      canvas.restore();
+
+      // Redraw outline
+      canvas.drawPath(bodyPath, outlinePaint);
+
+    } else {
+      // --- Large Custard Apple (Complete, not halved!) ---
+      final ah = h * 0.62;
+      final aw = w * 0.62;
+      final ay = h - ah * 0.45;
+
+      // 1. Draw thick stem
+      final stem = Path();
+      stem.moveTo(cx - aw * 0.05, ay - ah * 0.42);
+      stem.cubicTo(cx - aw * 0.08, ay - ah * 0.7, cx - aw * 0.15, ay - ah * 0.82, cx - aw * 0.12, ay - ah * 0.84);
+      stem.lineTo(cx + aw * 0.05, ay - ah * 0.84);
+      stem.cubicTo(cx + aw * 0.02, ay - ah * 0.82, cx + aw * 0.08, ay - ah * 0.7, cx + aw * 0.05, ay - ah * 0.42);
+      canvas.drawPath(stem, fillPaint);
+      canvas.drawPath(stem, outlinePaint);
+
+      // 2. Draw solid body
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, ay - ah * 0.32);
+      bodyPath.quadraticBezierTo(cx + aw * 0.5, ay - ah * 0.45, cx + aw * 0.8, ay - ah * 0.2);
+      bodyPath.cubicTo(cx + aw * 0.95, ay + ah * 0.1, cx + aw * 0.75, ay + ah * 0.4, cx + aw * 0.3, ay + ah * 0.45);
+      bodyPath.quadraticBezierTo(cx, ay + ah * 0.35, cx - aw * 0.3, ay + ah * 0.45);
+      bodyPath.cubicTo(cx - aw * 0.75, ay + ah * 0.4, cx - aw * 0.95, ay + ah * 0.1, cx - aw * 0.8, ay - ah * 0.2);
+      bodyPath.quadraticBezierTo(cx - aw * 0.5, ay - ah * 0.45, cx, ay - ah * 0.32);
+      bodyPath.close();
+
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // 3. Draw overlapping scales inside the body using a clipped grid
+      canvas.save();
+      canvas.clipPath(bodyPath);
+      
+      final scaleSize = aw * 0.22;
+      final rowHeight = scaleSize * 0.75;
+      final colWidth = scaleSize * 1.3;
+      final numRows = (2 * ah / rowHeight).ceil() + 1;
+      
+      for (int row = 0; row < numRows; row++) {
+        final y = ay - ah + row * rowHeight;
+        final isOdd = row % 2 == 1;
+        final startX = cx - aw - (isOdd ? colWidth / 2 : 0);
+        final numCols = (2 * aw / colWidth).ceil() + 2;
+        
+        for (int col = 0; col < numCols; col++) {
+          final x = startX + col * colWidth;
+          _drawScale(canvas, x, y, scaleSize, fillPaint, outlinePaint);
+        }
+      }
+      canvas.restore();
+
+      // Redraw outline
+      canvas.drawPath(bodyPath, outlinePaint);
+    }
+
+    // Ground line at bottom
+    canvas.drawLine(Offset(cx - w * 0.6, h), Offset(cx + w * 0.6, h), sketchPaint..strokeWidth = 0.6);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleCustardApplePainter oldDelegate) {
+    return oldDelegate.sizeId != sizeId ||
+           oldDelegate.animationValue != animationValue || 
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor;
+  }
+}
+
+class _CashewSizeSelector extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _CashewSizeSelector({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final balls = [
+      {'label': 'Small', 'width': 35.0, 'id': 'S'},
+      {'label': 'Medium', 'width': 60.0, 'id': 'M'},
+      {'label': 'Large', 'width': 85.0, 'id': 'L'},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: balls.map((ball) {
+          final label = ball['label'] as String;
+          final sizeVal = ball['width'] as double;
+          final id = ball['id'] as String;
+          
+          final isSel = selected.startsWith(id);
+
+          return GestureDetector(
+            onTap: () => onChanged('$id (${label.toLowerCase()})'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (context, value, child) {
+                      return CustomPaint(
+                        size: Size(sizeVal, sizeVal),
+                        painter: _SingleCashewPainter(
+                          sizeId: id,
+                          animationValue: value,
+                          activeColor: activeColor,
+                          activeDarkColor: activeDarkColor,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                      color: isSel ? activeDarkColor : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SingleCashewPainter extends CustomPainter {
+  final String sizeId;
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+
+  _SingleCashewPainter({
+    required this.sizeId,
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+  });
+
+  void _drawLeaf(Canvas canvas, Offset center, double scale, double angle, Paint fill, Paint stroke) {
+    final path = Path();
+    final rx = scale * 1.3;
+    final ry = scale * 0.65;
+    
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+    
+    path.moveTo(-rx, 0);
+    path.quadraticBezierTo(0, -ry, rx, 0);
+    path.quadraticBezierTo(0, ry, -rx, 0);
+    path.close();
+    
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, stroke);
+    
+    // Leaf vein
+    canvas.drawLine(Offset(-rx, 0), Offset(rx, 0), stroke..strokeWidth = stroke.strokeWidth * 0.65);
+    canvas.restore();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h / 2 + h * 0.06;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
+    final strokeWidth = 1.5 + (1.0 * animationValue);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+      
+    final sketchPaint = Paint()
+      ..color = outlineColor.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    // Common Cashew Nut Drawer (C-shaped crescent sitting on top)
+    void drawCashewNut(double nx, double ny, double nw, double nh) {
+      final nutPath = Path();
+      // Start at top-left hook
+      nutPath.moveTo(nx - nw * 0.4, ny - nh * 0.3);
+      // Outer curve: top and right side down to bottom hook
+      nutPath.cubicTo(
+        nx + nw * 0.8, ny - nh * 0.7,
+        nx + nw * 0.9, ny + nh * 0.6,
+        nx - nw * 0.2, ny + nh * 0.4
+      );
+      // Bottom-left curve of the hook
+      nutPath.quadraticBezierTo(nx - nw * 0.6, ny + nh * 0.3, nx - nw * 0.5, ny + nh * 0.1);
+      // Inner notch curve (concave side, curving back to start)
+      nutPath.cubicTo(
+        nx - nw * 0.1, ny + nh * 0.1,
+        nx - nw * 0.1, ny - nh * 0.2,
+        nx - nw * 0.4, ny - nh * 0.3
+      );
+      nutPath.close();
+
+      canvas.drawPath(nutPath, fillPaint);
+      canvas.drawPath(nutPath, outlinePaint);
+    }
+
+    if (sizeId == 'S') {
+      // --- Small Cashew ---
+      final ah = h * 0.65; // apple height
+      final aw = w * 0.40; // apple width
+      final ay = h - ah * 0.45; // compute ay so the bottom of the apple sits on y = h
+      
+      // Draw cashew apple (bell/pear shaped body with top and bottom clefts)
+      final applePath = Path();
+      applePath.moveTo(cx, ay - ah * 0.32);
+      applePath.quadraticBezierTo(cx + aw * 0.5, ay - ah * 0.45, cx + aw * 0.8, ay - ah * 0.2);
+      applePath.cubicTo(cx + aw * 0.95, ay + ah * 0.1, cx + aw * 0.75, ay + ah * 0.4, cx + aw * 0.3, ay + ah * 0.45);
+      applePath.quadraticBezierTo(cx, ay + ah * 0.35, cx - aw * 0.3, ay + ah * 0.45);
+      applePath.cubicTo(cx - aw * 0.75, ay + ah * 0.4, cx - aw * 0.95, ay + ah * 0.1, cx - aw * 0.8, ay - ah * 0.2);
+      applePath.quadraticBezierTo(cx - aw * 0.5, ay - ah * 0.45, cx, ay - ah * 0.32);
+      applePath.close();
+
+      canvas.drawPath(applePath, fillPaint);
+      canvas.drawPath(applePath, outlinePaint);
+
+      // Cashew nut on top
+      final nx = cx;
+      final ny = ay - ah * 0.52;
+      final nw = w * 0.20;
+      final nh = h * 0.26;
+      drawCashewNut(nx, ny, nw, nh);
+
+    } else if (sizeId == 'M') {
+      // --- Medium Cashew ---
+      final ah = h * 0.70;
+      final aw = w * 0.42;
+      final ay = h - ah * 0.45;
+
+      // Draw cashew apple
+      final applePath = Path();
+      applePath.moveTo(cx, ay - ah * 0.32);
+      applePath.quadraticBezierTo(cx + aw * 0.5, ay - ah * 0.45, cx + aw * 0.8, ay - ah * 0.2);
+      applePath.cubicTo(cx + aw * 0.95, ay + ah * 0.1, cx + aw * 0.75, ay + ah * 0.4, cx + aw * 0.3, ay + ah * 0.45);
+      applePath.quadraticBezierTo(cx, ay + ah * 0.35, cx - aw * 0.3, ay + ah * 0.45);
+      applePath.cubicTo(cx - aw * 0.75, ay + ah * 0.4, cx - aw * 0.95, ay + ah * 0.1, cx - aw * 0.8, ay - ah * 0.2);
+      applePath.quadraticBezierTo(cx - aw * 0.5, ay - ah * 0.45, cx, ay - ah * 0.32);
+      applePath.close();
+
+      canvas.drawPath(applePath, fillPaint);
+      canvas.drawPath(applePath, outlinePaint);
+
+      // Vertical ridges inside the apple
+      final ridges = Path();
+      // Center line
+      ridges.moveTo(cx, ay - ah * 0.32);
+      ridges.quadraticBezierTo(cx - aw * 0.05, ay, cx, ay + ah * 0.35);
+      // Left ridge
+      ridges.moveTo(cx - aw * 0.35, ay - ah * 0.32);
+      ridges.quadraticBezierTo(cx - aw * 0.45, ay, cx - aw * 0.22, ay + ah * 0.38);
+      // Right ridge
+      ridges.moveTo(cx + aw * 0.35, ay - ah * 0.32);
+      ridges.quadraticBezierTo(cx + aw * 0.45, ay, cx + aw * 0.22, ay + ah * 0.38);
+      canvas.drawPath(ridges, outlinePaint..strokeWidth = strokeWidth * 0.55);
+
+      // Cashew nut on top
+      final nx = cx;
+      final ny = ay - ah * 0.52;
+      final nw = w * 0.22;
+      final nh = h * 0.28;
+      drawCashewNut(nx, ny, nw, nh);
+
+    } else {
+      // --- Large Cashew (Halved) ---
+      final ah = h * 0.72;
+      final aw = w * 0.44;
+      final ay = h - ah * 0.45;
+
+      // 1. Outer skin boundary
+      final applePath = Path();
+      applePath.moveTo(cx, ay - ah * 0.32);
+      applePath.quadraticBezierTo(cx + aw * 0.5, ay - ah * 0.45, cx + aw * 0.8, ay - ah * 0.2);
+      applePath.cubicTo(cx + aw * 0.95, ay + ah * 0.1, cx + aw * 0.75, ay + ah * 0.4, cx + aw * 0.3, ay + ah * 0.45);
+      applePath.quadraticBezierTo(cx, ay + ah * 0.35, cx - aw * 0.3, ay + ah * 0.45);
+      applePath.cubicTo(cx - aw * 0.75, ay + ah * 0.4, cx - aw * 0.95, ay + ah * 0.1, cx - aw * 0.8, ay - ah * 0.2);
+      applePath.quadraticBezierTo(cx - aw * 0.5, ay - ah * 0.45, cx, ay - ah * 0.32);
+      applePath.close();
+
+      canvas.drawPath(applePath, fillPaint);
+      canvas.drawPath(applePath, outlinePaint);
+
+      // 2. Inner flesh boundary
+      final innerFleshPath = Path();
+      final faw = aw * 0.85;
+      final fah = ah * 0.85;
+      innerFleshPath.moveTo(cx, ay - fah * 0.32);
+      innerFleshPath.quadraticBezierTo(cx + faw * 0.5, ay - fah * 0.45, cx + faw * 0.8, ay - fah * 0.2);
+      innerFleshPath.cubicTo(cx + faw * 0.95, ay + fah * 0.1, cx + faw * 0.75, ay + fah * 0.4, cx + faw * 0.3, ay + fah * 0.45);
+      innerFleshPath.quadraticBezierTo(cx, ay + fah * 0.35, cx - faw * 0.3, ay + fah * 0.45);
+      innerFleshPath.cubicTo(cx - faw * 0.75, ay + fah * 0.4, cx - faw * 0.95, ay + fah * 0.1, cx - faw * 0.8, ay - fah * 0.2);
+      innerFleshPath.quadraticBezierTo(cx - faw * 0.5, ay - fah * 0.45, cx, ay - fah * 0.32);
+      innerFleshPath.close();
+      canvas.drawPath(innerFleshPath, outlinePaint..strokeWidth = strokeWidth * 0.5);
+
+      // 3. Central hollow seed/cavity outline (C-shaped crescent cavity)
+      final cavPath = Path();
+      final cxCav = cx;
+      final cyCav = ay;
+      final cwCav = aw * 0.20;
+      final chCav = ah * 0.38;
+      
+      cavPath.moveTo(cxCav - cwCav * 0.4, cyCav - chCav * 0.3);
+      cavPath.cubicTo(
+        cxCav + cwCav * 0.8, cyCav - chCav * 0.7,
+        cxCav + cwCav * 0.9, cyCav + chCav * 0.6,
+        cxCav - cwCav * 0.2, cyCav + chCav * 0.4
+      );
+      cavPath.quadraticBezierTo(cxCav - cwCav * 0.6, cyCav + chCav * 0.3, cxCav - cwCav * 0.5, cyCav + chCav * 0.1);
+      cavPath.cubicTo(
+        cxCav - cwCav * 0.1, cyCav + chCav * 0.1,
+        cxCav - cwCav * 0.1, cyCav - chCav * 0.2,
+        cxCav - cwCav * 0.4, cyCav - chCav * 0.3
+      );
+      cavPath.close();
+      
+      canvas.drawPath(cavPath, outlinePaint..strokeWidth = strokeWidth * 0.65);
+      
+      // Cavity inner offset line
+      final cavInnerPath = Path();
+      final ccw = cwCav * 0.75;
+      final cch = chCav * 0.75;
+      cavInnerPath.moveTo(cxCav - ccw * 0.4, cyCav - cch * 0.3);
+      cavInnerPath.cubicTo(
+        cxCav + ccw * 0.8, cyCav - cch * 0.7,
+        cxCav + ccw * 0.9, cyCav + cch * 0.6,
+        cxCav - ccw * 0.2, cyCav + cch * 0.4
+      );
+      cavInnerPath.quadraticBezierTo(cxCav - ccw * 0.6, cyCav + cch * 0.3, cxCav - ccw * 0.5, cyCav + cch * 0.1);
+      cavInnerPath.cubicTo(
+        cxCav - ccw * 0.1, cyCav + cch * 0.1,
+        cxCav - ccw * 0.1, cyCav - cch * 0.2,
+        cxCav - ccw * 0.4, cyCav - cch * 0.3
+      );
+      cavInnerPath.close();
+      canvas.drawPath(cavInnerPath, outlinePaint..strokeWidth = strokeWidth * 0.45);
+
+      // Cashew nut sitting on top of the halved apple
+      final nx = cx;
+      final ny = ay - ah * 0.52;
+      final nw = w * 0.22;
+      final nh = h * 0.28;
+      drawCashewNut(nx, ny, nw, nh);
+    }
+
+    // Ground line at bottom
+    canvas.drawLine(Offset(cx - w * 0.6, h), Offset(cx + w * 0.6, h), sketchPaint..strokeWidth = 0.6);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleCashewPainter oldDelegate) {
+    return oldDelegate.sizeId != sizeId ||
+           oldDelegate.animationValue != animationValue || 
            oldDelegate.activeColor != activeColor ||
            oldDelegate.activeDarkColor != activeDarkColor;
   }
