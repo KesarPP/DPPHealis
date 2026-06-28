@@ -1527,6 +1527,13 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                                   activeDarkColor: cat.darkColor,
                                   onChanged: (v) => setState(() => _size = v),
                                 )
+                              else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('chikoo'))
+                                _ChikooSizeSelector(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
                               else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('custard'))
                                 _CustardAppleSizeSelector(
                                   selected: _size,
@@ -4142,6 +4149,269 @@ class _SingleApricotPainter extends CustomPainter {
   }
 }
 
+class _ChikooSizeSelector extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _ChikooSizeSelector({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final balls = [
+      {'label': 'Small', 'width': 35.0, 'id': 'S'},
+      {'label': 'Medium', 'width': 60.0, 'id': 'M'},
+      {'label': 'Large', 'width': 85.0, 'id': 'L'},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: balls.map((ball) {
+          final label = ball['label'] as String;
+          final sizeVal = ball['width'] as double;
+          final id = ball['id'] as String;
+          
+          final isSel = selected.startsWith(id);
+
+          return GestureDetector(
+            onTap: () => onChanged('$id (${label.toLowerCase()})'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (context, value, child) {
+                      return CustomPaint(
+                        size: Size(sizeVal, sizeVal),
+                        painter: _SingleChikooPainter(
+                          sizeId: id,
+                          animationValue: value,
+                          activeColor: activeColor,
+                          activeDarkColor: activeDarkColor,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                      color: isSel ? activeDarkColor : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SingleChikooPainter extends CustomPainter {
+  final String sizeId;
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+
+  _SingleChikooPainter({
+    required this.sizeId,
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+  });
+
+  void _drawLeaf(Canvas canvas, Offset center, double scale, double angle, Paint fill, Paint stroke) {
+    final path = Path();
+    final rx = scale * 1.35;
+    final ry = scale * 0.65;
+    
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+    
+    path.moveTo(-rx, 0);
+    path.quadraticBezierTo(0, -ry, rx, 0);
+    path.quadraticBezierTo(0, ry, -rx, 0);
+    path.close();
+    
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, stroke);
+    
+    // Leaf vein
+    final origWidth = stroke.strokeWidth;
+    stroke.strokeWidth = origWidth * 0.6;
+    canvas.drawLine(Offset(-rx, 0), Offset(rx, 0), stroke);
+    stroke.strokeWidth = origWidth;
+    canvas.restore();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
+    final strokeWidth = 1.5 + (1.0 * animationValue);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+      
+    final sketchPaint = Paint()
+      ..color = outlineColor.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    void drawSepalCap(double ax, double ty, double cw, double ch) {
+      final capPath = Path();
+      capPath.moveTo(ax, ty);
+      capPath.lineTo(ax + cw * 0.4, ty - ch * 0.2);
+      capPath.lineTo(ax + cw * 0.75, ty + ch * 0.5); // point 1
+      capPath.lineTo(ax + cw * 0.3, ty + ch * 0.15);
+      capPath.lineTo(ax, ty + ch * 0.75); // point 2
+      capPath.lineTo(ax - cw * 0.3, ty + ch * 0.15);
+      capPath.lineTo(ax - cw * 0.75, ty + ch * 0.5); // point 3
+      capPath.lineTo(ax - cw * 0.4, ty - ch * 0.2);
+      capPath.close();
+      
+      canvas.drawPath(capPath, fillPaint);
+      canvas.drawPath(capPath, outlinePaint);
+    }
+
+    if (sizeId == 'S') {
+      // --- Small Chikoo ---
+      final ah = h * 0.25;
+      final aw = w * 0.20;
+      final ay = h - ah * 0.95;
+      final ty = ay - ah;
+
+      // 1. Draw stem with leaves first
+      final stem = Path();
+      stem.moveTo(cx, ty);
+      stem.quadraticBezierTo(cx - w * 0.05, ty - h * 0.25, cx - w * 0.18, ty - h * 0.42);
+      canvas.drawPath(stem, outlinePaint..strokeWidth = strokeWidth * 0.95);
+
+      _drawLeaf(canvas, Offset(cx - w * 0.26, ty - h * 0.36), w * 0.16, -0.3, fillPaint, outlinePaint);
+      _drawLeaf(canvas, Offset(cx - w * 0.12, ty - h * 0.24), w * 0.15, 0.45, fillPaint, outlinePaint);
+      _drawLeaf(canvas, Offset(cx - w * 0.32, ty - h * 0.18), w * 0.16, -0.7, fillPaint, outlinePaint);
+
+      // 2. Draw Chikoo egg body
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, ty);
+      bodyPath.cubicTo(cx + aw * 1.05, ay - ah * 0.7, cx + aw * 0.95, ay + ah * 0.7, cx, ay + ah * 0.95);
+      bodyPath.cubicTo(cx - aw * 0.95, ay + ah * 0.7, cx - aw * 1.05, ay - ah * 0.7, cx, ty);
+      bodyPath.close();
+
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // 3. Draw sepal cap on top
+      drawSepalCap(cx, ty, aw * 0.42, ah * 0.35);
+
+    } else if (sizeId == 'M') {
+      // --- Medium Chikoo ---
+      final ah = h * 0.36;
+      final aw = w * 0.28;
+      final ay = h - ah * 0.95;
+      final ty = ay - ah;
+
+      // 1. Draw curved stem first
+      final stem = Path();
+      stem.moveTo(cx, ty);
+      stem.quadraticBezierTo(cx - aw * 0.1, ty - ah * 0.3, cx - aw * 0.15, ty - ah * 0.4);
+      canvas.drawPath(stem, outlinePaint..strokeWidth = strokeWidth * 0.95);
+
+      // 2. Draw Chikoo body
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, ty);
+      bodyPath.cubicTo(cx + aw * 1.05, ay - ah * 0.7, cx + aw * 0.95, ay + ah * 0.7, cx, ay + ah * 0.95);
+      bodyPath.cubicTo(cx - aw * 0.95, ay + ah * 0.7, cx - aw * 1.05, ay - ah * 0.7, cx, ty);
+      bodyPath.close();
+
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // 3. Draw sepal cap
+      drawSepalCap(cx, ty, aw * 0.40, ah * 0.35);
+
+    } else {
+      // --- Large Chikoo (Complete!) ---
+      final ah = h * 0.38;
+      final aw = w * 0.30;
+      final ay = h - ah * 0.95;
+      final ty = ay - ah;
+
+      // 1. Draw stem first
+      final stem = Path();
+      stem.moveTo(cx, ty);
+      stem.quadraticBezierTo(cx - aw * 0.1, ty - ah * 0.3, cx - aw * 0.15, ty - ah * 0.4);
+      canvas.drawPath(stem, outlinePaint..strokeWidth = strokeWidth * 0.95);
+
+      // 2. Draw body
+      final bodyPath = Path();
+      bodyPath.moveTo(cx, ty);
+      bodyPath.cubicTo(cx + aw * 1.05, ay - ah * 0.7, cx + aw * 0.95, ay + ah * 0.7, cx, ay + ah * 0.95);
+      bodyPath.cubicTo(cx - aw * 0.95, ay + ah * 0.7, cx - aw * 1.05, ay - ah * 0.7, cx, ty);
+      bodyPath.close();
+
+      canvas.drawPath(bodyPath, fillPaint);
+      canvas.drawPath(bodyPath, outlinePaint);
+
+      // 3. Draw sepal cap
+      drawSepalCap(cx, ty, aw * 0.38, ah * 0.35);
+    }
+
+    // Ground line at bottom
+    canvas.drawLine(Offset(cx - w * 0.6, h), Offset(cx + w * 0.6, h), sketchPaint..strokeWidth = 0.6);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleChikooPainter oldDelegate) {
+    return oldDelegate.sizeId != sizeId ||
+           oldDelegate.animationValue != animationValue || 
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor;
+  }
+}
+
 class _CustardAppleSizeSelector extends StatelessWidget {
   final String selected;
   final Color activeColor;
@@ -4260,8 +4530,11 @@ class _SingleCustardApplePainter extends CustomPainter {
     canvas.drawPath(path, fill);
     canvas.drawPath(path, stroke);
     
-    // Leaf vein
-    canvas.drawLine(Offset(-rx, 0), Offset(rx, 0), stroke..strokeWidth = stroke.strokeWidth * 0.6);
+    // Leaf vein (using temporary modified width to prevent side effects)
+    final origWidth = stroke.strokeWidth;
+    stroke.strokeWidth = origWidth * 0.6;
+    canvas.drawLine(Offset(-rx, 0), Offset(rx, 0), stroke);
+    stroke.strokeWidth = origWidth;
     canvas.restore();
   }
 
@@ -4280,7 +4553,11 @@ class _SingleCustardApplePainter extends CustomPainter {
     final accent = Path();
     accent.moveTo(sx - sr * 0.25, sy + sr * 0.15);
     accent.quadraticBezierTo(sx, sy + sr * 0.4, sx + sr * 0.25, sy + sr * 0.15);
-    canvas.drawPath(accent, stroke..strokeWidth = stroke.strokeWidth * 0.55);
+    
+    final origWidth = stroke.strokeWidth;
+    stroke.strokeWidth = origWidth * 0.55;
+    canvas.drawPath(accent, stroke);
+    stroke.strokeWidth = origWidth;
   }
 
   @override
@@ -4602,7 +4879,10 @@ class _SingleCashewPainter extends CustomPainter {
     canvas.drawPath(path, stroke);
     
     // Leaf vein
-    canvas.drawLine(Offset(-rx, 0), Offset(rx, 0), stroke..strokeWidth = stroke.strokeWidth * 0.65);
+    final origWidth = stroke.strokeWidth;
+    stroke.strokeWidth = origWidth * 0.65;
+    canvas.drawLine(Offset(-rx, 0), Offset(rx, 0), stroke);
+    stroke.strokeWidth = origWidth;
     canvas.restore();
   }
 
