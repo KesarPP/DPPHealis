@@ -4419,8 +4419,6 @@ class _SingleChikooPainter extends CustomPainter {
   }
 }
 
-}
-
 class _PlumsSizeSelector extends StatelessWidget {
   final String selected;
   final Color activeColor;
