@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/gelato_theme.dart';
+import 'risk_assessment_step1_screen.dart';
 import '../main.dart'; // To access MainShell
 
 class CoachSelectionScreen extends StatefulWidget {
-  const CoachSelectionScreen({super.key});
+  final bool isFromSignup;
+  const CoachSelectionScreen({super.key, this.isFromSignup = false});
 
   @override
   State<CoachSelectionScreen> createState() => _CoachSelectionScreenState();
@@ -73,17 +75,7 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
         });
       }
 
-      // Add the "Let Us Decide" option last
-      loadedCoaches.add({
-        'id': 'ADMIN_PENDING',
-        'name': 'Let Us Decide',
-        'email': '',
-        'specialty': 'We will assign the best coach for you',
-        'about': 'Skip the choice and let our matching algorithm find the perfect coach for your specific needs and goals.',
-        'assignedCount': 0,
-        'isFull': false,
-        'isCustom': true,
-      });
+
 
       setState(() {
         _coaches = loadedCoaches;
@@ -112,11 +104,18 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
         });
       }
       
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
+       if (!mounted) return;
+      if (widget.isFromSignup) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const RiskAssessmentStep1Screen(isFromSignup: true)),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainShell()),
+        );
+      }
     } catch (e) {
       debugPrint('Error saving coach selection: $e');
       ScaffoldMessenger.of(context).showSnackBar(

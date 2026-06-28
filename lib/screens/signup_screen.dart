@@ -2,7 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'clinician_dashboard_screen.dart';
-import 'risk_assessment_step1_screen.dart';
+import 'coach_selection_screen.dart';
 import 'coach_profile_setup_screen.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
@@ -85,7 +85,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const RiskAssessmentStep1Screen(isFromSignup: true),
+            builder: (_) => const CoachSelectionScreen(isFromSignup: true),
           ),
         );
       }
