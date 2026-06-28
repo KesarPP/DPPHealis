@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'clinician_dashboard_screen.dart';
 import '../data/gelato_theme.dart';
+import '../models/coach_profile.dart';
 import '../services/auth_service.dart';
 
 class CoachProfileSetupScreen extends StatefulWidget {
@@ -49,17 +50,27 @@ class _CoachProfileSetupScreenState extends State<CoachProfileSetupScreen> {
 
     try {
       final authService = AuthService();
-      await authService.saveCoachProfile(
+      final profile = CoachProfile(
         uid: widget.uid,
         name: widget.name,
         email: widget.email,
-        phoneNumber: widget.phoneNumber,
-        tagline: _taglineController.text.trim(),
+        title: _taglineController.text.trim(),
         about: _aboutController.text.trim(),
-        specializations: _specializationsController.text.trim(),
-        credentials: _credentialsController.text.trim(),
-        avatarIndex: _selectedAvatarIndex,
+        specializations: _specializationsController.text.trim()
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList(),
+        credentials: [
+          {
+            'title': _credentialsController.text.trim(),
+            'subtitle': '',
+            'icon': 'verified',
+          }
+        ],
+        localImagePath: 'avatar_$_selectedAvatarIndex',
       );
+      await authService.saveCoachProfile(profile);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -193,9 +204,13 @@ class _CoachProfileSetupScreenState extends State<CoachProfileSetupScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  CustomPaint(
-                                    size: const Size(60, 60),
-                                    painter: CoachAvatarPainter(index: index),
+                                  ClipOval(
+                                    child: Image.asset(
+                                      'assets/images/coaches/coach_${index + 1}.png',
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
@@ -335,248 +350,3 @@ class _CoachProfileSetupScreenState extends State<CoachProfileSetupScreen> {
   }
 }
 
-class CoachAvatarPainter extends CustomPainter {
-  final int index;
-
-  CoachAvatarPainter({required this.index});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width / 2;
-
-    // Define colors
-    final isDarkSkin = (index == 4 || index == 7);
-    final skinPaint = Paint()
-      ..color = isDarkSkin ? const Color(0xFF8D5524) : const Color(0xFFFFDBAC)
-      ..style = PaintingStyle.fill;
-
-    final eyePaint = Paint()
-      ..color = Colors.black87
-      ..style = PaintingStyle.fill;
-
-    final lipPaint = Paint()
-      ..color = const Color(0xFFE57373)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-
-    final whitePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    final outlinePaint = Paint()
-      ..color = Colors.black87
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeJoin = StrokeJoin.round;
-
-    // 1. Draw Hair (Back Layer if applicable)
-    final hairPaint = Paint()
-      ..color = (index == 0 || index == 1 || index == 5 || index == 8 || index == 9)
-          ? const Color(0xFF5D4037) // Brown
-          : const Color(0xFF212121); // Dark grey/black
-    hairPaint.style = PaintingStyle.fill;
-
-    if (index == 0 || index == 5 || index == 6) {
-      // Long hair back block
-      final hairPath = Path();
-      hairPath.moveTo(cx - r * 0.7, cy);
-      hairPath.quadraticBezierTo(cx - r * 0.9, cy + r * 0.8, cx - r * 0.6, cy + r * 0.9);
-      hairPath.lineTo(cx + r * 0.6, cy + r * 0.9);
-      hairPath.quadraticBezierTo(cx + r * 0.9, cy + r * 0.8, cx + r * 0.7, cy);
-      canvas.drawPath(hairPath, hairPaint);
-      canvas.drawPath(hairPath, outlinePaint);
-    } else if (index == 1) {
-      // Bun on top of head
-      canvas.drawCircle(Offset(cx, cy - r * 0.85), r * 0.3, hairPaint);
-      canvas.drawCircle(Offset(cx, cy - r * 0.85), r * 0.3, outlinePaint);
-    }
-
-    // 2. Draw Body / Clothes
-    final bodyPath = Path();
-    bodyPath.moveTo(cx - r * 0.5, cy + r * 0.6);
-    bodyPath.lineTo(cx + r * 0.5, cy + r * 0.6);
-    bodyPath.lineTo(cx + r * 0.7, cy + r);
-    bodyPath.lineTo(cx - r * 0.7, cy + r);
-    bodyPath.close();
-
-    final isScrubs = (index == 5 || index == 7 || index == 8);
-    final clothesColor = isScrubs ? const Color(0xFF1E88E5) : const Color(0xFFEDE7F6);
-    final clothesPaint = Paint()
-      ..color = clothesColor
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(bodyPath, clothesPaint);
-    canvas.drawPath(bodyPath, outlinePaint);
-
-    if (!isScrubs) {
-      // Draw doctor coat lapels and shirt
-      final shirtColor = (index == 0) ? const Color(0xFFBBDEFB) :
-                         (index == 1) ? const Color(0xFF37474F) :
-                         (index == 3) ? const Color(0xFFE1BEE7) :
-                         (index == 4) ? const Color(0xFF90CAF9) :
-                         (index == 6) ? const Color(0xFFFFF59D) :
-                         const Color(0xFFFFCDD2); // tie shirt
-      final shirtPaint = Paint()..color = shirtColor..style = PaintingStyle.fill;
-      
-      final shirtPath = Path();
-      shirtPath.moveTo(cx - r * 0.25, cy + r * 0.6);
-      shirtPath.lineTo(cx + r * 0.25, cy + r * 0.6);
-      shirtPath.lineTo(cx + r * 0.15, cy + r * 0.9);
-      shirtPath.lineTo(cx - r * 0.15, cy + r * 0.9);
-      shirtPath.close();
-      canvas.drawPath(shirtPath, shirtPaint);
-      canvas.drawPath(shirtPath, outlinePaint);
-
-      // Red Tie for index 9
-      if (index == 9) {
-        final tiePath = Path();
-        tiePath.moveTo(cx - r * 0.05, cy + r * 0.7);
-        tiePath.lineTo(cx + r * 0.05, cy + r * 0.7);
-        tiePath.lineTo(cx + r * 0.08, cy + r * 0.92);
-        tiePath.lineTo(cx, cy + r * 0.97);
-        tiePath.lineTo(cx - r * 0.08, cy + r * 0.92);
-        tiePath.close();
-        canvas.drawPath(tiePath, Paint()..color = Colors.red.shade700..style = PaintingStyle.fill);
-        canvas.drawPath(tiePath, outlinePaint);
-      }
-    } else {
-      // V-neck scrubs line
-      final vNeck = Path();
-      vNeck.moveTo(cx - r * 0.2, cy + r * 0.6);
-      vNeck.lineTo(cx, cy + r * 0.75);
-      vNeck.lineTo(cx + r * 0.2, cy + r * 0.6);
-      canvas.drawPath(vNeck, outlinePaint);
-    }
-
-    // 3. Draw Stethoscope (if index is 2, 5, 8, 9)
-    if (index == 2 || index == 5 || index == 8 || index == 9) {
-      final stethPaint = Paint()
-        ..color = Colors.grey.shade600
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0;
-      final stethPath = Path();
-      stethPath.moveTo(cx - r * 0.35, cy + r * 0.65);
-      stethPath.quadraticBezierTo(cx, cy + r * 0.88, cx + r * 0.35, cy + r * 0.65);
-      canvas.drawPath(stethPath, stethPaint);
-
-      final bellPath = Path();
-      bellPath.moveTo(cx + r * 0.15, cy + r * 0.78);
-      bellPath.lineTo(cx + r * 0.15, cy + r * 0.88);
-      canvas.drawPath(bellPath, stethPaint);
-      canvas.drawCircle(Offset(cx + r * 0.15, cy + r * 0.90), 3, Paint()..color = Colors.grey.shade800);
-    }
-
-    // 4. Draw Head
-    canvas.drawCircle(Offset(cx, cy - r * 0.1), r * 0.65, skinPaint);
-    canvas.drawCircle(Offset(cx, cy - r * 0.1), r * 0.65, outlinePaint);
-
-    // 5. Draw Hair (Front Cap Layer)
-    if (index == 0 || index == 5 || index == 6) {
-      // Long hair top cap
-      final hairCap = Path();
-      hairCap.addArc(Rect.fromCircle(center: Offset(cx, cy - r * 0.1), radius: r * 0.65), -3.14, 3.14);
-      hairCap.quadraticBezierTo(cx - r * 0.5, cy - r * 0.15, cx - r * 0.65, cy);
-      hairCap.lineTo(cx - r * 0.65, cy - r * 0.15);
-      hairCap.quadraticBezierTo(cx, cy - r * 0.35, cx + r * 0.65, cy - r * 0.15);
-      hairCap.lineTo(cx + r * 0.65, cy);
-      hairCap.quadraticBezierTo(cx + r * 0.5, cy - r * 0.15, cx, cy - r * 0.1);
-      hairCap.close();
-      canvas.drawPath(hairCap, hairPaint);
-      canvas.drawPath(hairCap, outlinePaint);
-    } else if (index == 1) {
-      // Short bun style front cap
-      final hairCap = Path();
-      hairCap.addArc(Rect.fromCircle(center: Offset(cx, cy - r * 0.1), radius: r * 0.65), -3.0, 3.0);
-      hairCap.quadraticBezierTo(cx, cy - r * 0.35, cx - r * 0.65, cy - r * 0.1);
-      hairCap.close();
-      canvas.drawPath(hairCap, hairPaint);
-      canvas.drawPath(hairCap, outlinePaint);
-    } else if (index == 2) {
-      // Wavy short hair
-      final hairCap = Path();
-      hairCap.moveTo(cx - r * 0.65, cy - r * 0.1);
-      hairCap.quadraticBezierTo(cx - r * 0.3, cy - r * 0.65, cx, cy - r * 0.7);
-      hairCap.quadraticBezierTo(cx + r * 0.3, cy - r * 0.65, cx + r * 0.65, cy - r * 0.1);
-      hairCap.quadraticBezierTo(cx + r * 0.75, cy - r * 0.3, cx + r * 0.6, cy - r * 0.5);
-      hairCap.quadraticBezierTo(cx, cy - r * 0.85, cx - r * 0.6, cy - r * 0.5);
-      hairCap.quadraticBezierTo(cx - r * 0.75, cy - r * 0.3, cx - r * 0.65, cy - r * 0.1);
-      canvas.drawPath(hairCap, hairPaint);
-      canvas.drawPath(hairCap, outlinePaint);
-    } else if (index == 3 || index == 4 || index == 9) {
-      // Male spiked/cropped hair
-      final hairCap = Path();
-      hairCap.moveTo(cx - r * 0.66, cy - r * 0.2);
-      hairCap.quadraticBezierTo(cx - r * 0.4, cy - r * 0.78, cx, cy - r * 0.82);
-      hairCap.quadraticBezierTo(cx + r * 0.4, cy - r * 0.78, cx + r * 0.66, cy - r * 0.2);
-      hairCap.quadraticBezierTo(cx + r * 0.3, cy - r * 0.55, cx, cy - r * 0.45);
-      hairCap.quadraticBezierTo(cx - r * 0.3, cy - r * 0.55, cx - r * 0.66, cy - r * 0.2);
-      canvas.drawPath(hairCap, hairPaint);
-      canvas.drawPath(hairCap, outlinePaint);
-    } else if (index == 7) {
-      // Nurse cap overlay (dark blue)
-      final capPaint = Paint()..color = const Color(0xFF0D47A1)..style = PaintingStyle.fill;
-      final capPath = Path();
-      capPath.moveTo(cx - r * 0.55, cy - r * 0.45);
-      capPath.quadraticBezierTo(cx, cy - r * 0.68, cx + r * 0.55, cy - r * 0.45);
-      capPath.lineTo(cx + r * 0.45, cy - r * 0.78);
-      capPath.quadraticBezierTo(cx, cy - r * 0.85, cx - r * 0.45, cy - r * 0.78);
-      capPath.close();
-      canvas.drawPath(capPath, capPaint);
-      canvas.drawPath(capPath, outlinePaint);
-    }
-
-    // 6. Beard (index 3, 4, 8)
-    if (index == 3 || index == 4 || index == 8) {
-      final beardPaint = Paint()..color = hairPaint.color..style = PaintingStyle.fill;
-      final beardPath = Path();
-      beardPath.moveTo(cx - r * 0.52, cy + r * 0.1);
-      beardPath.quadraticBezierTo(cx - r * 0.5, cy + r * 0.45, cx, cy + r * 0.55);
-      beardPath.quadraticBezierTo(cx + r * 0.5, cy + r * 0.45, cx + r * 0.52, cy + r * 0.1);
-      beardPath.lineTo(cx + r * 0.42, cy + r * 0.1);
-      beardPath.quadraticBezierTo(cx + r * 0.35, cy + r * 0.35, cx, cy + r * 0.42);
-      beardPath.quadraticBezierTo(cx - r * 0.35, cy + r * 0.35, cx - r * 0.42, cy + r * 0.1);
-      beardPath.close();
-      canvas.drawPath(beardPath, beardPaint);
-      canvas.drawPath(beardPath, outlinePaint);
-    }
-
-    // 7. Face Details (Eyes, Cheeks, Smile, Glasses)
-    // Eyes
-    canvas.drawCircle(Offset(cx - r * 0.22, cy - r * 0.08), 3.5, eyePaint);
-    canvas.drawCircle(Offset(cx + r * 0.22, cy - r * 0.08), 3.5, eyePaint);
-    
-    // Eye highlights (white dots)
-    canvas.drawCircle(Offset(cx - r * 0.20, cy - r * 0.10), 1.0, whitePaint);
-    canvas.drawCircle(Offset(cx + r * 0.24, cy - r * 0.10), 1.0, whitePaint);
-
-    // Cheeks
-    final cheekPaint = Paint()..color = const Color(0xFFFF8A80).withValues(alpha: 0.55)..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx - r * 0.38, cy + r * 0.08), 4.5, cheekPaint);
-    canvas.drawCircle(Offset(cx + r * 0.38, cy + r * 0.08), 4.5, cheekPaint);
-
-    // Smiling mouth
-    final mouth = Path();
-    mouth.moveTo(cx - r * 0.08, cy + r * 0.12);
-    mouth.quadraticBezierTo(cx, cy + r * 0.22, cx + r * 0.08, cy + r * 0.12);
-    canvas.drawPath(mouth, lipPaint);
-
-    // Glasses (index 1 and 9)
-    if (index == 1 || index == 9) {
-      final glassesPaint = Paint()
-        ..color = Colors.black87
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0;
-      canvas.drawCircle(Offset(cx - r * 0.22, cy - r * 0.08), r * 0.18, glassesPaint);
-      canvas.drawCircle(Offset(cx + r * 0.22, cy - r * 0.08), r * 0.18, glassesPaint);
-      canvas.drawLine(Offset(cx - r * 0.04, cy - r * 0.08), Offset(cx + r * 0.04, cy - r * 0.08), glassesPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _CoachAvatarPainter oldDelegate) {
-    return oldDelegate.index != index;
-  }
-}

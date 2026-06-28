@@ -96,8 +96,27 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                       future: AuthService().getCoachProfile(AuthService().currentUser?.uid ?? 'default_coach'),
                       builder: (context, snapshot) {
                         final localPath = snapshot.data?.localImagePath;
+                        final isAvatar = localPath != null && localPath.startsWith('avatar_');
                         final fileExists = localPath != null && File(localPath).existsSync();
-                        if (fileExists) {
+                        if (isAvatar) {
+                          final idx = int.tryParse(localPath.replaceFirst('avatar_', '')) ?? 0;
+                          return Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black87, width: 1.5),
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/images/coaches/coach_${idx + 1}.png',
+                                width: 42,
+                                height: 42,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          );
+                        } else if (fileExists) {
                           return ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.file(

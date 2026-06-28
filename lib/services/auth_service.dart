@@ -441,45 +441,7 @@ class AuthService {
     }
   }
 
-  /// Persist the complete profile of the coach to Firestore and SharedPreferences.
-  Future<void> saveCoachProfile({
-    required String uid,
-    required String name,
-    required String email,
-    required String phoneNumber,
-    required String tagline,
-    required String about,
-    required String specializations,
-    required String credentials,
-    required int avatarIndex,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (isFirebaseInitialized && _firestore != null) {
-      await _firestore!.collection('coaches').doc(uid).set({
-        'uid': uid,
-        'name': name,
-        'email': email,
-        'phoneNumber': phoneNumber,
-        'tagline': tagline,
-        'specialty': specializations,
-        'about': about,
-        'specializations': specializations,
-        'credentials': credentials,
-        'avatarIndex': avatarIndex,
-        'role': 'coach',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
 
-    // Save login status and local caches
-    await prefs.setBool('is_logged_in', true);
-    await prefs.setString('user_role', 'coach');
-    await prefs.setBool('coach_profile_complete_$uid', true);
-    await prefs.setBool('coach_profile_complete_mock_uid', true); // fallback for mock
-    await prefs.setString('last_user_name', name);
-    await prefs.setString('last_user_email', email);
-    await prefs.setInt('local_avatar_index_$uid', avatarIndex);
-  }
 
   /// Sign out the current user.
   Future<void> signOut() async {
@@ -625,7 +587,26 @@ class AuthService {
       // Save to Firestore if available
       final firestore = _firestore;
       if (firestore != null) {
-        await firestore.collection('coaches').doc(profile.uid).set(profileMap, SetOptions(merge: true));
+        final firestoreMap = Map<String, dynamic>.from(profileMap);
+        firestoreMap['role'] = 'coach';
+        if (profile.specializations.isNotEmpty) {
+          firestoreMap['specialty'] = profile.specializations.join(', ');
+        }
+        await firestore.collection('coaches').doc(profile.uid).set(firestoreMap, SetOptions(merge: true));
+      }
+
+      // Save login status and local caches
+      await prefs.setBool('is_logged_in', true);
+      await prefs.setString('user_role', 'coach');
+      await prefs.setBool('coach_profile_complete_${profile.uid}', true);
+      await prefs.setBool('coach_profile_complete_mock_uid', true); // fallback for mock
+      await prefs.setString('last_user_name', profile.name);
+      await prefs.setString('last_user_email', profile.email);
+      if (profile.localImagePath != null && profile.localImagePath!.startsWith('avatar_')) {
+        final idx = int.tryParse(profile.localImagePath!.replaceFirst('avatar_', ''));
+        if (idx != null) {
+          await prefs.setInt('local_avatar_index_${profile.uid}', idx);
+        }
       }
     } catch (_) {}
   }

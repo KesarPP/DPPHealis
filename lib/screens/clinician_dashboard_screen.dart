@@ -129,15 +129,34 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             child: FutureBuilder<CoachProfile>(
               future: AuthService().getCoachProfile(uid),
               builder: (context, snapshot) {
-                final localPath = snapshot.data?.localImagePath;
-                final fileExists = localPath != null && File(localPath).existsSync();
-                if (fileExists) {
-                  return CircleAvatar(
-                    radius: 21,
-                    backgroundColor: Colors.transparent,
-                    backgroundImage: FileImage(File(localPath)),
-                  );
-                }
+                 final localPath = snapshot.data?.localImagePath;
+                 final isAvatar = localPath != null && localPath.startsWith('avatar_');
+                 final fileExists = localPath != null && File(localPath).existsSync();
+                 if (isAvatar) {
+                   final idx = int.tryParse(localPath.replaceFirst('avatar_', '')) ?? 0;
+                   return Container(
+                     width: 42,
+                     height: 42,
+                     decoration: BoxDecoration(
+                       shape: BoxShape.circle,
+                       border: Border.all(color: Colors.black87, width: 1.5),
+                     ),
+                     child: ClipOval(
+                       child: Image.asset(
+                         'assets/images/coaches/coach_${idx + 1}.png',
+                         width: 40,
+                         height: 40,
+                         fit: BoxFit.cover,
+                       ),
+                     ),
+                   );
+                 } else if (fileExists) {
+                   return CircleAvatar(
+                     radius: 21,
+                     backgroundColor: Colors.transparent,
+                     backgroundImage: FileImage(File(localPath)),
+                   );
+                 }
                 
                 final initials = snapshot.data != null ? _getInitials(snapshot.data!.name) : 'CP';
                 return CircleAvatar(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'coach_profile_setup_screen.dart';
 import '../data/gelato_theme.dart';
 import '../main.dart'; // To access MainShell
 
@@ -20,11 +19,19 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
   bool _isLoading = true;
   String? _selectedCoachId;
   bool _isSaving = false;
+  late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(viewportFraction: 0.82);
     _fetchCoaches();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchCoaches() async {
@@ -32,18 +39,6 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
       final snapshot = await _firestore.collection('coaches').get();
       
       List<Map<String, dynamic>> loadedCoaches = [];
-      
-      // Add the "Let Us Decide" option first
-      loadedCoaches.add({
-        'id': 'ADMIN_PENDING',
-        'name': 'Let Us Decide',
-        'email': '',
-        'specialty': 'We will assign the best coach for you',
-        'about': 'Skip the choice and let our matching algorithm find the perfect coach for your specific needs and goals.',
-        'assignedCount': 0,
-        'isFull': false,
-        'isCustom': true,
-      });
 
       for (var doc in snapshot.docs) {
         final data = doc.data();
@@ -58,18 +53,37 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
         
         final assignedCount = countQuery.count ?? 0;
         
+        final localPath = data['localImagePath'] as String?;
+        int? avatarIndex;
+        if (localPath != null && localPath.startsWith('avatar_')) {
+          avatarIndex = int.tryParse(localPath.replaceFirst('avatar_', ''));
+        }
+        avatarIndex ??= data['avatarIndex'] as int?;
+
         loadedCoaches.add({
           'id': coachId,
           'name': data['name'] ?? 'Unnamed Coach',
           'email': data['email'] ?? '',
           'specialty': data['specialty'] ?? 'Diabetes Prevention Coach',
           'about': data['about'] ?? 'I am dedicated to helping you achieve your health goals through personalized guidance, continuous support, and actionable steps tailored to your lifestyle.',
-          'avatarIndex': data['avatarIndex'],
+          'avatarIndex': avatarIndex,
           'assignedCount': assignedCount,
           'isFull': assignedCount >= 10,
           'isCustom': false,
         });
       }
+
+      // Add the "Let Us Decide" option last
+      loadedCoaches.add({
+        'id': 'ADMIN_PENDING',
+        'name': 'Let Us Decide',
+        'email': '',
+        'specialty': 'We will assign the best coach for you',
+        'about': 'Skip the choice and let our matching algorithm find the perfect coach for your specific needs and goals.',
+        'assignedCount': 0,
+        'isFull': false,
+        'isCustom': true,
+      });
 
       setState(() {
         _coaches = loadedCoaches;
@@ -122,6 +136,7 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
         backgroundColor: GelatoTheme.bg,
         elevation: 0,
         automaticallyImplyLeading: false,
+        centerTitle: true,
         title: const Text(
           'Select Your Coach',
           style: TextStyle(
@@ -149,11 +164,11 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
                 Expanded(
                   child: PageView.builder(
                     itemCount: _coaches.length,
-                    controller: PageController(viewportFraction: 0.85),
+                    controller: _pageController,
                     itemBuilder: (context, index) {
                       final c = _coaches[index];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                        padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 16.0, bottom: 20.0),
                         child: CoachSwipeCard(
                           coach: c,
                           isSelected: _selectedCoachId == c['id'],
@@ -279,94 +294,129 @@ class _CoachSwipeCardState extends State<CoachSwipeCard> {
           borderRadius: BorderRadius.circular(22),
           child: Stack(
             children: [
+              // Selected Badge
+              if (widget.isSelected)
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: GelatoTheme.greenDark,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ),
               // Front Content
-              Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: isCustom ? GelatoTheme.purple : GelatoTheme.blue,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black, width: 3),
-                      ),
-                      child: Center(
-                        child: isCustom
-                            ? const Icon(
-                                Icons.auto_awesome,
-                                color: Colors.black,
-                                size: 60,
-                              )
-                            : (widget.coach['avatarIndex'] != null
-                                ? ClipOval(
-                                    child: CustomPaint(
-                                      size: const Size(114, 114),
-                                      painter: CoachAvatarPainter(index: widget.coach['avatarIndex'] as int),
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.person,
-                                    color: Colors.black,
-                                    size: 60,
-                                  )),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      widget.coach['name'],
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: isFull ? Colors.grey.shade600 : GelatoTheme.textDark,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.coach['specialty'],
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isFull ? Colors.grey.shade500 : GelatoTheme.textLight,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    if (!isCustom)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isFull ? Colors.red.shade100 : Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.black, width: 1.5),
-                        ),
-                        child: Text(
-                          isFull ? 'FULL' : '${widget.coach['assignedCount']}/10 assigned',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black,
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (isCustom)
+                        Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            color: GelatoTheme.purple,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black, width: 3),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.auto_awesome, color: Colors.black, size: 60),
+                          ),
+                        )
+                      else if (widget.coach['avatarIndex'] != null)
+                        Container(
+                          width: 160,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: GelatoTheme.blue.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/images/coaches/coach_${(widget.coach['avatarIndex'] as int) + 1}.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            color: GelatoTheme.blue,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black, width: 3),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.person, color: Colors.black, size: 60),
                           ),
                         ),
+                      const SizedBox(height: 24),
+                      Text(
+                        widget.coach['name'],
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: isFull ? Colors.grey.shade600 : GelatoTheme.textDark,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    const Spacer(),
-                    Icon(
-                      Icons.keyboard_arrow_up,
-                      color: Colors.black54,
-                      size: 32,
-                    ),
-                    const Text(
-                      'Swipe up to learn more',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.coach['specialty'],
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isFull ? Colors.grey.shade500 : GelatoTheme.textLight,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      if (!isCustom)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isFull ? Colors.red.shade100 : Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.black, width: 1.5),
+                          ),
+                          child: Text(
+                            isFull ? 'FULL' : '${widget.coach['assignedCount']}/10 assigned',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      const Spacer(),
+                      Icon(
+                        Icons.keyboard_arrow_up,
                         color: Colors.black54,
+                        size: 32,
                       ),
-                    ),
-                  ],
+                      const Text(
+                        'Swipe up to learn more',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               
@@ -469,4 +519,3 @@ class _CoachSwipeCardState extends State<CoachSwipeCard> {
     );
   }
 }
-
