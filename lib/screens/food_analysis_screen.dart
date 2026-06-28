@@ -1541,6 +1541,13 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                                   activeDarkColor: cat.darkColor,
                                   onChanged: (v) => setState(() => _size = v),
                                 )
+                              else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('plum'))
+                                _PlumsSizeSelector(
+                                  selected: _size,
+                                  activeColor: cat.color,
+                                  activeDarkColor: cat.darkColor,
+                                  onChanged: (v) => setState(() => _size = v),
+                                )
                               else if (item.unit == 'ball_set' && item.name.toLowerCase().contains('pineapple'))
                                 _PineappleSizeSelector(
                                   selected: _size,
@@ -4405,6 +4412,187 @@ class _SingleChikooPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SingleChikooPainter oldDelegate) {
+    return oldDelegate.sizeId != sizeId ||
+           oldDelegate.animationValue != animationValue || 
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor;
+  }
+}
+
+}
+
+class _PlumsSizeSelector extends StatelessWidget {
+  final String selected;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final ValueChanged<String> onChanged;
+
+  const _PlumsSizeSelector({
+    required this.selected,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final balls = [
+      {'label': 'Small', 'width': 35.0, 'id': 'S'},
+      {'label': 'Medium', 'width': 60.0, 'id': 'M'},
+      {'label': 'Large', 'width': 85.0, 'id': 'L'},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 0,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: balls.map((ball) {
+          final label = ball['label'] as String;
+          final sizeVal = ball['width'] as double;
+          final id = ball['id'] as String;
+          
+          final isSel = selected.startsWith(id);
+
+          return GestureDetector(
+            onTap: () => onChanged('$id (${label.toLowerCase()})'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 200),
+                    builder: (context, value, child) {
+                      return CustomPaint(
+                        size: Size(sizeVal, sizeVal),
+                        painter: _SinglePlumsPainter(
+                          sizeId: id,
+                          animationValue: value,
+                          activeColor: activeColor,
+                          activeDarkColor: activeDarkColor,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                      color: isSel ? activeDarkColor : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SinglePlumsPainter extends CustomPainter {
+  final String sizeId;
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+
+  _SinglePlumsPainter({
+    required this.sizeId,
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
+    final strokeWidth = 1.5 + (1.0 * animationValue);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+      
+    final sketchPaint = Paint()
+      ..color = outlineColor.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    // Determine size parameters
+    double ah, aw;
+    if (sizeId == 'S') {
+      ah = h * 0.45;
+      aw = w * 0.45;
+    } else if (sizeId == 'M') {
+      ah = h * 0.48;
+      aw = w * 0.48;
+    } else {
+      ah = h * 0.50;
+      aw = w * 0.50;
+    }
+
+    final ay = h - ah * 0.45;
+
+    // 1. Draw stem first
+    final stem = Path();
+    stem.moveTo(cx, ay - ah * 0.35);
+    stem.quadraticBezierTo(cx - aw * 0.08, ay - ah * 0.75, cx - aw * 0.12, ay - ah * 0.85);
+    canvas.drawPath(stem, outlinePaint..strokeWidth = strokeWidth * 0.95);
+
+    // 2. Draw Plum body
+    final bodyPath = Path();
+    bodyPath.moveTo(cx, ay - ah * 0.35);
+    bodyPath.quadraticBezierTo(cx + aw * 0.5, ay - ah * 0.45, cx + aw * 0.8, ay - ah * 0.2);
+    bodyPath.cubicTo(cx + aw * 0.95, ay + ah * 0.1, cx + aw * 0.75, ay + ah * 0.4, cx + aw * 0.3, ay + ah * 0.45);
+    bodyPath.quadraticBezierTo(cx, ay + ah * 0.38, cx - aw * 0.3, ay + ah * 0.45);
+    bodyPath.cubicTo(cx - aw * 0.75, ay + ah * 0.4, cx - aw * 0.95, ay + ah * 0.1, cx - aw * 0.8, ay - ah * 0.2);
+    bodyPath.quadraticBezierTo(cx - aw * 0.5, ay - ah * 0.45, cx, ay - ah * 0.35);
+    bodyPath.close();
+
+    canvas.drawPath(bodyPath, fillPaint);
+    canvas.drawPath(bodyPath, outlinePaint);
+
+    // 3. Draw curved vertical crease line (offset to left for 3D depth)
+    final crease = Path();
+    crease.moveTo(cx, ay - ah * 0.35);
+    crease.quadraticBezierTo(cx - aw * 0.25, ay + ah * 0.05, cx, ay + ah * 0.38);
+    canvas.drawPath(crease, outlinePaint..strokeWidth = strokeWidth * 0.7);
+
+    // Ground line at bottom
+    canvas.drawLine(Offset(cx - w * 0.6, h), Offset(cx + w * 0.6, h), sketchPaint..strokeWidth = 0.6);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SinglePlumsPainter oldDelegate) {
     return oldDelegate.sizeId != sizeId ||
            oldDelegate.animationValue != animationValue || 
            oldDelegate.activeColor != activeColor ||
