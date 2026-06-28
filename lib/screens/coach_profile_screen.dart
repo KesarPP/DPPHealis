@@ -147,6 +147,7 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
                                           width: 108,
                                           height: 108,
                                           fit: BoxFit.cover,
+                                          alignment: Alignment.topCenter,
                                         )
                                       : (_profile?.localImagePath != null && File(_profile!.localImagePath!).existsSync())
                                           ? Image.file(

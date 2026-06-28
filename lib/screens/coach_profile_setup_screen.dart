@@ -210,6 +210,7 @@ class _CoachProfileSetupScreenState extends State<CoachProfileSetupScreen> {
                                       width: 60,
                                       height: 60,
                                       fit: BoxFit.cover,
+                                      alignment: Alignment.topCenter,
                                     ),
                                   ),
                                   const SizedBox(height: 8),

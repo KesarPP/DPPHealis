@@ -280,6 +280,7 @@ Widget build(BuildContext context) {
                             width: 38,
                             height: 38,
                             fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
                           )
                         : (_coachProfile?.localImagePath != null && File(_coachProfile!.localImagePath!).existsSync())
                             ? Image.file(

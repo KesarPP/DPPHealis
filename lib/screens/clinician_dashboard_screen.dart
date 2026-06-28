@@ -147,6 +147,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
                          width: 40,
                          height: 40,
                          fit: BoxFit.cover,
+                         alignment: Alignment.topCenter,
                        ),
                      ),
                    );

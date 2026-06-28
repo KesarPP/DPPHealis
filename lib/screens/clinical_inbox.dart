@@ -113,6 +113,7 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                                 width: 42,
                                 height: 42,
                                 fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
                               ),
                             ),
                           );

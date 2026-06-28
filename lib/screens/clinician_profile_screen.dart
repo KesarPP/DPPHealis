@@ -155,6 +155,7 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
                                       width: 96,
                                       height: 96,
                                       fit: BoxFit.cover,
+                                      alignment: Alignment.topCenter,
                                     ),
                                   ),
                                 )
