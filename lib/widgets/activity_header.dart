@@ -163,12 +163,36 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 12,
-      runSpacing: 10,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
+        if (_showPointer) ...[
+          AnimatedBuilder(
+            animation: _pointerAnim,
+            builder: (ctx, child) => Transform.translate(
+              offset: Offset(0, 6 * _pointerAnim.value),
+              child: child,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: GelatoTheme.orangeDark,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black, width: 1.5),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Update your progress & activity data', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                  SizedBox(width: 6),
+                  Icon(Icons.arrow_downward_rounded, color: Colors.white, size: 18),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         Container(
           height: 54,
           decoration: BoxDecoration(
@@ -241,33 +265,6 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
             ),
           ),
         ),
-        if (_showPointer) ...[
-          const SizedBox(width: 12),
-          AnimatedBuilder(
-            animation: _pointerAnim,
-            builder: (ctx, child) => Transform.translate(
-              offset: Offset(-8 * _pointerAnim.value, 0),
-              child: child,
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: GelatoTheme.orangeDark,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black, width: 1.5),
-                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3))],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18),
-                  SizedBox(width: 4),
-                  Text('Update your activity data', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
-                ],
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

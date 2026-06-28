@@ -41,6 +41,11 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
   }
 
   @override
+  Future<List<ActivityLog>> getLogsForInterval(DateTime startTime, DateTime endTime) async {
+    return _service.getLogsForInterval(startTime, endTime);
+  }
+
+  @override
   Future<void> saveActivityLog(ActivityLog log) async {
     await _service.saveActivityLog(log);
     invalidateCache();

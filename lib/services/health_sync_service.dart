@@ -46,7 +46,9 @@ class HealthSyncService {
     final startDate = DateTime(startTime.year, startTime.month, startTime.day);
     final endDay = DateTime(endTime.year, endTime.month, endTime.day);
     final int daysCount = endDay.difference(startDate).inDays + 1;
+    final now = DateTime.now();
     final startOfDayEnd = DateTime(endDay.year, endDay.month, endDay.day, 23, 59, 59);
+    final fetchEndTime = startOfDayEnd.isAfter(now) ? now : startOfDayEnd;
 
     // Initialize empty aggregates
     Map<String, DailyAggregate> dailyMap = {};
@@ -58,14 +60,18 @@ class HealthSyncService {
 
     try {
       List<HealthDataPoint> data = [];
-      try {
-        final pts = await _health.getHealthDataFromTypes(
-          startTime: startDate,
-          endTime: startOfDayEnd,
-          types: _syncTypes,
-        ).timeout(const Duration(seconds: 15));
-        data.addAll(_health.removeDuplicates(pts));
-      } catch (_) {}
+      for (var type in _syncTypes) {
+        try {
+          final pts = await _health.getHealthDataFromTypes(
+            startTime: startDate,
+            endTime: fetchEndTime,
+            types: [type],
+          ).timeout(const Duration(seconds: 15));
+          data.addAll(_health.removeDuplicates(pts));
+        } catch (e) {
+          debugPrint("[SYNC_TELEMETRY] Error fetching $type: $e");
+        }
+      }
       debugPrint("[SYNC_TELEMETRY] Stage 1: Raw Fetch completed. Fetched ${data.length} health data points.");
 
       Map<String, int> dailySteps = {};
@@ -117,6 +123,23 @@ class HealthSyncService {
           }
         }
       }
+
+      // Stage 1.5: Query native step aggregation per day to guarantee Google Fit step imports are captured
+      await Future.wait(dailyMap.keys.map((dKey) async {
+        final day = dailyMap[dKey]!.date;
+        final startOfDay = DateTime(day.year, day.month, day.day);
+        final endOfDay = DateTime(day.year, day.month, day.day, 23, 59, 59);
+        final queryEnd = endOfDay.isAfter(now) ? now : endOfDay;
+        try {
+          final s = await _health.getTotalStepsInInterval(startOfDay, queryEnd).timeout(const Duration(seconds: 4));
+          if (s != null && s > 0) {
+            final current = dailySteps[dKey] ?? 0;
+            if (s > current) {
+              dailySteps[dKey] = s;
+            }
+          }
+        } catch (_) {}
+      }));
 
       debugPrint("[SYNC_TELEMETRY] Stage 2: Parsed workout sessions to ActivitySession.");
       debugPrint("[SYNC_TELEMETRY] Stage 3: Aggregating daily steps, calories, and qualifying NDPP minutes.");
@@ -199,20 +222,23 @@ class HealthSyncService {
       await prefs.setBool('hc_demo_purged_v5', true);
     }
 
-    int manualMinsToday = 0;
+    final now = DateTime.now();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 31));
+    Map<String, int> manualMinsByDate = {};
     try {
-      final manualLogs = await FirestoreActivityLogService().getTodayActivityLogs().timeout(const Duration(seconds: 2));
+      final manualLogs = await FirestoreActivityLogService()
+          .getLogsForInterval(thirtyDaysAgo, now.add(const Duration(days: 1)))
+          .timeout(const Duration(seconds: 3));
       for (var log in manualLogs) {
-        manualMinsToday += log.durationMinutes;
+        final key = _dateKey(log.createdAt);
+        manualMinsByDate[key] = (manualMinsByDate[key] ?? 0) + log.durationMinutes;
       }
     } catch (_) {}
-
-    final now = DateTime.now();
-    final todayKey = _dateKey(now);
 
     for (int i = 0; i < aggregates.length; i++) {
       final agg = aggregates[i];
       final key = _dateKey(agg.date);
+      final manMins = manualMinsByDate[key] ?? 0;
 
       int steps = agg.totalSteps;
       double dist = agg.totalDistance;
@@ -220,10 +246,10 @@ class HealthSyncService {
       int act = agg.totalActiveMinutes;
       int qual = agg.qualifyingActiveMinutes;
 
-      if (key == todayKey && manualMinsToday > 0) {
-        act += manualMinsToday;
-        qual += manualMinsToday;
-        cals += manualMinsToday * 5.8;
+      if (manMins > 0) {
+        act += manMins;
+        qual += manMins;
+        cals += manMins * 5.8;
       }
 
       if (steps > 0 || qual > 0 || act > 0) {
@@ -233,7 +259,7 @@ class HealthSyncService {
         await prefs.setInt('hc_persist_act_mins_$key', act);
         await prefs.setInt('hc_persist_qual_mins_$key', qual);
 
-        if (steps != agg.totalSteps || qual != agg.qualifyingActiveMinutes) {
+        if (steps != agg.totalSteps || qual != agg.qualifyingActiveMinutes || manMins > 0) {
           aggregates[i] = DailyAggregate(
             date: agg.date,
             totalSteps: steps,
@@ -241,7 +267,7 @@ class HealthSyncService {
             totalCalories: cals,
             totalActiveMinutes: act,
             qualifyingActiveMinutes: qual,
-            isActiveDay: qual >= NdppConstants.minQualifyingSessionMinutes,
+            isActiveDay: qual >= NdppConstants.minQualifyingSessionMinutes || steps >= 3000,
             coreSessions: agg.coreSessions,
             lifestyleSessions: agg.lifestyleSessions,
           );
@@ -249,23 +275,23 @@ class HealthSyncService {
       } else {
         final pSteps = prefs.getInt('hc_persist_steps_$key');
         final pQual = prefs.getInt('hc_persist_qual_mins_$key');
-        if ((pSteps != null && pSteps > 0) || (pQual != null && pQual > 0) || (key == todayKey && manualMinsToday > 0)) {
+        if ((pSteps != null && pSteps > 0) || (pQual != null && pQual > 0) || manMins > 0) {
           final rSteps = pSteps ?? 0;
           final rDist = prefs.getDouble('hc_persist_dist_$key') ?? (rSteps * 0.00076);
           final rCals = prefs.getDouble('hc_persist_cals_$key') ?? 0.0;
           int rAct = prefs.getInt('hc_persist_act_mins_$key') ?? 0;
           int rQual = max(pQual ?? 0, rAct);
 
-          if (key == todayKey && manualMinsToday > 0) {
-            rAct += manualMinsToday;
-            rQual += manualMinsToday;
+          if (manMins > 0) {
+            rAct += manMins;
+            rQual += manMins;
           }
 
           aggregates[i] = DailyAggregate(
             date: agg.date,
             totalSteps: rSteps,
             totalDistance: rDist,
-            totalCalories: rCals + (key == todayKey ? manualMinsToday * 5.8 : 0),
+            totalCalories: rCals + (manMins * 5.8),
             totalActiveMinutes: rAct,
             qualifyingActiveMinutes: rQual,
             isActiveDay: rQual >= NdppConstants.minQualifyingSessionMinutes || rSteps >= 3000,

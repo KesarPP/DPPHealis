@@ -274,24 +274,32 @@ Widget build(BuildContext context) {
                     border: Border.all(color: Colors.black87, width: 1.5),
                   ),
                   child: ClipOval(
-                    child: (_coachProfile?.localImagePath != null && File(_coachProfile!.localImagePath!).existsSync())
-                        ? Image.file(
-                            File(_coachProfile!.localImagePath!),
+                    child: (_coachProfile?.localImagePath != null && _coachProfile!.localImagePath!.startsWith('avatar_'))
+                        ? Image.asset(
+                            'assets/images/coaches/coach_${(int.tryParse(_coachProfile!.localImagePath!.replaceFirst('avatar_', '')) ?? 0) + 1}.png',
                             width: 38,
                             height: 38,
                             fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
                           )
-                        : Image.asset(
-                            'assets/images/clinician_avatar.png',
-                            width: 38,
-                            height: 38,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const CircleAvatar(
-                              radius: 19,
-                              backgroundColor: GelatoTheme.purple,
-                              child: Icon(Icons.person_rounded, color: GelatoTheme.textDark, size: 22),
-                            ),
-                          ),
+                        : (_coachProfile?.localImagePath != null && File(_coachProfile!.localImagePath!).existsSync())
+                            ? Image.file(
+                                File(_coachProfile!.localImagePath!),
+                                width: 38,
+                                height: 38,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                'assets/images/clinician_avatar.png',
+                                width: 38,
+                                height: 38,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const CircleAvatar(
+                                  radius: 19,
+                                  backgroundColor: GelatoTheme.purple,
+                                  child: Icon(Icons.person_rounded, color: GelatoTheme.textDark, size: 22),
+                                ),
+                              ),
                   ),
                 ),
                 Positioned(

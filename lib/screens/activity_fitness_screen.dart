@@ -175,7 +175,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
           );
         }
         _weeklyTargetMinutes = NdppConstants.getWeeklyTargetForWeek(_programWeek);
-        _isConnected = true;
         _onboardingState = HealthConnectOnboardingState.connected;
         _isLoading = false;
       });
@@ -260,39 +259,24 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     }
 
     if (!hasPerms) {
-      if (mounted && _onboardingState != HealthConnectOnboardingState.permissionsMissing) {
-        setState(() {
-          _onboardingState = HealthConnectOnboardingState.permissionsMissing;
-          _isLoading = false;
-        });
+      if (!isSilent) {
+        try {
+          hasPerms = await _healthSync.requestPermissions().timeout(const Duration(seconds: 15));
+        } catch (_) {}
       }
-      return;
+      if (!hasPerms) {
+        if (mounted && _onboardingState != HealthConnectOnboardingState.permissionsMissing) {
+          setState(() {
+            _onboardingState = HealthConnectOnboardingState.permissionsMissing;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
     }
 
     // Permissions granted! Fetch real live activity stats strictly from Health Connect.
     // ZERO static or mock data is generated.
-    if (isAndroid && _onboardingState != HealthConnectOnboardingState.connected && isSilent) {
-      int fastSteps = 0;
-      try {
-        final now = DateTime.now();
-        final startOfDay = DateTime(now.year, now.month, now.day);
-        final rawSteps = await Health().getHealthDataFromTypes(
-          startTime: startOfDay,
-          endTime: now,
-          types: const [HealthDataType.STEPS],
-        ).timeout(const Duration(milliseconds: 800));
-        for (var p in rawSteps) {
-          try {
-            final num v = (p.value as dynamic).numericValue as num;
-            fastSteps += v.toInt();
-          } catch (_) {
-            fastSteps += int.tryParse(p.value.toString()) ?? 0;
-          }
-        }
-      } catch (_) {}
-      if (fastSteps == 0) return;
-    }
-
     final now = DateTime.now();
     final thirtyDaysAgo = now.subtract(const Duration(days: 29));
     List<DailyAggregate> pastDays = [];

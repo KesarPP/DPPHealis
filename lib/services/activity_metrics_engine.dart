@@ -37,16 +37,35 @@ class ActivityMetricsEngine {
   /// STREAK / CONSISTENCY
   /// Returns the current streak of consecutive active days.
   static int getCurrentStreak(List<DailyAggregate> pastDays) {
+    if (pastDays.isEmpty) return 0;
+
+    bool isDayActive(DailyAggregate day) {
+      return day.isActiveDay || day.totalSteps >= 3000 || day.qualifyingActiveMinutes >= 10 || day.totalActiveMinutes >= 10;
+    }
+
+    // Find the starting point of the current streak (looking up to 7 days back so visible marked days count)
+    int startIndex = -1;
+    for (int i = pastDays.length - 1; i >= 0 && i >= pastDays.length - 7; i--) {
+      if (isDayActive(pastDays[i])) {
+        startIndex = i;
+        break;
+      }
+    }
+
+    if (startIndex == -1) return 0;
+
     int streak = 0;
-    for (int i = pastDays.length - 1; i >= 0; i--) {
+    for (int i = startIndex; i >= 0; i--) {
       final day = pastDays[i];
-      final bool active = day.isActiveDay || day.totalSteps >= 3000 || day.qualifyingActiveMinutes >= 10 || day.totalActiveMinutes >= 10;
+      final bool active = isDayActive(day);
+      final bool isWeekend = day.date.weekday == DateTime.saturday || day.date.weekday == DateTime.sunday;
+
       if (active) {
         streak++;
+      } else if (isWeekend) {
+        // Saturday and Sunday are treated as rest days if inactive, preserving the streak
+        continue;
       } else {
-        if (i == pastDays.length - 1) {
-          continue;
-        }
         break;
       }
     }
