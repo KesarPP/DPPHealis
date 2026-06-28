@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'clinician_dashboard_screen.dart';
 import 'risk_assessment_step1_screen.dart';
+import 'coach_profile_setup_screen.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -160,7 +161,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       final authService = AuthService();
-      await authService.signUpCoachWithEmailAndPassword(
+      final user = await authService.signUpCoachWithEmailAndPassword(
         email: email,
         password: password,
         name: name,
@@ -170,14 +171,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Coach Registration Successful!'),
+            content: Text('Account Created! Let\'s setup your profile.'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
         );
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const ClinicianDashboardScreen(),
+            builder: (_) => CoachProfileSetupScreen(
+              uid: user?.uid ?? 'mock_coach_uid',
+              name: name,
+              email: email,
+              phoneNumber: phone,
+            ),
           ),
         );
       }

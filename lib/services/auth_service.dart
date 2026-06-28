@@ -382,10 +382,7 @@ class AuthService {
         // Verify this account is registered as a coach, not a patient.
         final doc = await _firestore!.collection('coaches').doc(user.uid).get();
         if (!doc.exists) {
-          await auth.signOut();
-          throw Exception(
-            'No coach account found. Please sign up first or use Patient login.',
-          );
+          throw Exception('PROFILE_INCOMPLETE');
         }
         await prefs.setBool('is_logged_in', true);
         await prefs.setString('user_role', 'coach');
@@ -394,6 +391,10 @@ class AuthService {
     } else {
       // Mock mode for testing/local-only runs.
       await Future.delayed(const Duration(milliseconds: 200));
+      final isComplete = prefs.getBool('coach_profile_complete_mock_uid') ?? false;
+      if (!isComplete) {
+        throw Exception('PROFILE_INCOMPLETE');
+      }
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
       await prefs.setString('last_user_name', 'Dr. Sarah Mitchell');
@@ -403,7 +404,7 @@ class AuthService {
   }
 
   /// Register a coach with email, password, and name.
-  /// Validates healis.org domain AND creates a Firestore document under 'coaches/{uid}'.
+  /// Validates healis.org domain and creates a Firebase Auth user.
   /// Throws if the email is not a healis.org address, or on Firebase failure.
   Future<User?> signUpCoachWithEmailAndPassword({
     required String email,
@@ -429,29 +430,55 @@ class AuthService {
         
         await prefs.setString('last_user_name', name);
         await prefs.setString('last_user_email', email);
-
-        // Tag this account as a 'coach' in Firestore.
-        await _firestore!.collection('coaches').doc(user.uid).set({
-          'uid': user.uid,
-          'name': name,
-          'email': email,
-          'phoneNumber': phoneNumber,
-          'role': 'coach',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setString('user_role', 'coach');
       }
       return _auth!.currentUser;
     } else {
       // Mock mode for testing/local-only runs.
       await Future.delayed(const Duration(milliseconds: 200));
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setString('user_role', 'coach');
       await prefs.setString('last_user_name', name);
       await prefs.setString('last_user_email', email);
       return null;
     }
+  }
+
+  /// Persist the complete profile of the coach to Firestore and SharedPreferences.
+  Future<void> saveCoachProfile({
+    required String uid,
+    required String name,
+    required String email,
+    required String phoneNumber,
+    required String tagline,
+    required String about,
+    required String specializations,
+    required String credentials,
+    required int avatarIndex,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (isFirebaseInitialized && _firestore != null) {
+      await _firestore!.collection('coaches').doc(uid).set({
+        'uid': uid,
+        'name': name,
+        'email': email,
+        'phoneNumber': phoneNumber,
+        'tagline': tagline,
+        'specialty': specializations,
+        'about': about,
+        'specializations': specializations,
+        'credentials': credentials,
+        'avatarIndex': avatarIndex,
+        'role': 'coach',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Save login status and local caches
+    await prefs.setBool('is_logged_in', true);
+    await prefs.setString('user_role', 'coach');
+    await prefs.setBool('coach_profile_complete_$uid', true);
+    await prefs.setBool('coach_profile_complete_mock_uid', true); // fallback for mock
+    await prefs.setString('last_user_name', name);
+    await prefs.setString('last_user_email', email);
+    await prefs.setInt('local_avatar_index_$uid', avatarIndex);
   }
 
   /// Sign out the current user.

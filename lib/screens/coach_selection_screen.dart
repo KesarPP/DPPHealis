@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'coach_profile_setup_screen.dart';
 import '../data/gelato_theme.dart';
 import '../main.dart'; // To access MainShell
 
@@ -63,6 +64,7 @@ class _CoachSelectionScreenState extends State<CoachSelectionScreen> {
           'email': data['email'] ?? '',
           'specialty': data['specialty'] ?? 'Diabetes Prevention Coach',
           'about': data['about'] ?? 'I am dedicated to helping you achieve your health goals through personalized guidance, continuous support, and actionable steps tailored to your lifestyle.',
+          'avatarIndex': data['avatarIndex'],
           'assignedCount': assignedCount,
           'isFull': assignedCount >= 10,
           'isCustom': false,
@@ -292,11 +294,24 @@ class _CoachSwipeCardState extends State<CoachSwipeCard> {
                         border: Border.all(color: Colors.black, width: 3),
                       ),
                       child: Center(
-                        child: Icon(
-                          isCustom ? Icons.auto_awesome : Icons.person,
-                          color: Colors.black,
-                          size: 60,
-                        ),
+                        child: isCustom
+                            ? const Icon(
+                                Icons.auto_awesome,
+                                color: Colors.black,
+                                size: 60,
+                              )
+                            : (widget.coach['avatarIndex'] != null
+                                ? ClipOval(
+                                    child: CustomPaint(
+                                      size: const Size(114, 114),
+                                      painter: CoachAvatarPainter(index: widget.coach['avatarIndex'] as int),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.person,
+                                    color: Colors.black,
+                                    size: 60,
+                                  )),
                       ),
                     ),
                     const SizedBox(height: 24),
