@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
+import '../services/chat_service.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
 
 class PatientChatScreen extends StatefulWidget {
+  final String patientUid;
   final String patientName;
   final String patientInitials;
   final Color avatarBg;
@@ -11,6 +15,7 @@ class PatientChatScreen extends StatefulWidget {
 
   const PatientChatScreen({
     super.key,
+    required this.patientUid,
     required this.patientName,
     required this.patientInitials,
     required this.avatarBg,
@@ -25,56 +30,36 @@ class _PatientChatScreenState extends State<PatientChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final List<_ChatMessage> _messages = [
-    _ChatMessage(
-      text: 'Good morning! My glucose levels seem stable this week.',
-      isFromPatient: true,
-      time: '9:10 AM',
-    ),
-    _ChatMessage(
-      text: "That's great to hear! Keep maintaining your current diet and exercise routine.",
-      isFromPatient: false,
-      time: '9:12 AM',
-    ),
-    _ChatMessage(
-      text: 'Should I increase my walking duration?',
-      isFromPatient: true,
-      time: '9:13 AM',
-    ),
-    _ChatMessage(
-      text: 'Yes, try adding 10 more minutes each day this week and let me know how it feels.',
-      isFromPatient: false,
-      time: '9:15 AM',
-    ),
-    _ChatMessage(
-      text: 'Will do! Also my weight was 182 lbs this morning.',
-      isFromPatient: true,
-      time: '12:35 PM',
-    ),
-  ];
-
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
-    setState(() {
-      _messages.add(_ChatMessage(
-        text: text,
-        isFromPatient: false,
-        time: _currentTime(),
-      ));
-    });
     _messageController.clear();
+    
+    final currentCoachId = AuthService().currentUser?.uid;
+    if (currentCoachId == null) return;
+
+    await ChatService.sendMessage(
+      patientId: widget.patientUid,
+      coachId: currentCoachId,
+      text: text,
+      senderId: currentCoachId,
+      isFromPatient: false,
+    );
+
     Future.delayed(const Duration(milliseconds: 100), () {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
-  String _currentTime() {
-    final now = DateTime.now();
+  String _formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return 'Just now';
+    final now = timestamp.toDate();
     final hour = now.hour > 12 ? now.hour - 12 : now.hour == 0 ? 12 : now.hour;
     final minute = now.minute.toString().padLeft(2, '0');
     final period = now.hour >= 12 ? 'PM' : 'AM';
@@ -192,22 +177,47 @@ class _PatientChatScreenState extends State<PatientChatScreen> {
 
             // Messages area
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  final showDateLabel = index == 0;
-                  return Column(
-                    children: [
-                      if (showDateLabel) ...[
-                        _buildDateLabel('Today'),
-                        const SizedBox(height: 12),
-                      ],
-                      _buildBubble(msg),
-                      const SizedBox(height: 8),
-                    ],
+              child: StreamBuilder<QuerySnapshot>(
+                stream: ChatService.getChatStream(widget.patientUid, AuthService().currentUser!.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasData) {
+                    ChatService.markChatAsRead(
+                      patientId: widget.patientUid,
+                      coachId: AuthService().currentUser!.uid,
+                      isCoach: true,
+                    );
+                  }
+
+                  final docs = snapshot.data?.docs ?? [];
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final data = docs[index].data() as Map<String, dynamic>;
+                      final showDateLabel = index == 0;
+                      
+                      final msg = _ChatMessage(
+                        text: data['text'] as String? ?? '',
+                        isFromPatient: data['isFromPatient'] as bool? ?? true,
+                        time: _formatTimestamp(data['timestamp'] as Timestamp?),
+                      );
+
+                      return Column(
+                        children: [
+                          if (showDateLabel) ...[
+                            _buildDateLabel('Today'),
+                            const SizedBox(height: 12),
+                          ],
+                          _buildBubble(msg),
+                          const SizedBox(height: 8),
+                        ],
+                      );
+                    },
                   );
                 },
               ),

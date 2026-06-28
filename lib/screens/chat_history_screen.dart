@@ -121,26 +121,6 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     );
   }
 
-  Widget _buildDateLabel(String label) {
-    return Row(
-      children: [
-        const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: _slateGrey,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-      ],
-    );
-  }
-
   Widget _buildBubble(ChatMessage msg, bool isUserMsg) {
     return Align(
       alignment: isUserMsg ? Alignment.centerRight : Alignment.centerLeft,

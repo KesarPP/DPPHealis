@@ -15,50 +15,50 @@ class FirestoreActivityLogService
 
   @override
   Future<List<ActivityLog>> getTodayActivityLogs() async {
-      final user = _auth.currentUser;
+    final user = _auth.currentUser;
 
-      if (user == null) {
-        return [];
-      }
+    if (user == null) {
+      return [];
+    }
 
-      final now = DateTime.now();
+    final now = DateTime.now();
 
-      final startOfDay = DateTime(
-        now.year,
-        now.month,
-        now.day,
+    final startOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    );
+
+    final startOfTomorrow = startOfDay.add(
+      const Duration(days: 1),
+    );
+
+    final snapshot = await _firestore
+        .collection('logs')
+        .doc(user.uid)
+        .collection('activity_entries')
+        .where(
+      'createdAt',
+      isGreaterThanOrEqualTo:
+      Timestamp.fromDate(startOfDay),
+    )
+        .where(
+      'createdAt',
+      isLessThan:
+      Timestamp.fromDate(startOfTomorrow),
+    )
+        .orderBy(
+      'createdAt',
+      descending: true,
+    )
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return ActivityLog.fromFirestore(
+        id: doc.id,
+        data: doc.data(),
       );
-
-      final startOfTomorrow = startOfDay.add(
-        const Duration(days: 1),
-      );
-
-      final snapshot = await _firestore
-          .collection('logs')
-          .doc(user.uid)
-          .collection('activity_entries')
-          .where(
-        'createdAt',
-        isGreaterThanOrEqualTo:
-        Timestamp.fromDate(startOfDay),
-      )
-          .where(
-        'createdAt',
-        isLessThan:
-        Timestamp.fromDate(startOfTomorrow),
-      )
-          .orderBy(
-        'createdAt',
-        descending: true,
-      )
-          .get();
-
-      return snapshot.docs.map((doc) {
-        return ActivityLog.fromFirestore(
-          id: doc.id,
-          data: doc.data(),
-        );
-      }).toList();
+    }).toList();
   }
 
   @override

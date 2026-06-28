@@ -7,6 +7,7 @@ import 'patient_chat_screen.dart';
 import 'patient_profile_screen.dart';
 import '../services/auth_service.dart';
 import '../models/coach_profile.dart';
+import '../services/notification_service.dart';
 
 // Brand colors
 const _navy     = Color(0xFF1B3D6D);
@@ -70,6 +71,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
   void initState() {
     super.initState();
     _currentTabIndex = widget.initialTabIndex;
+    NotificationService().startChatListener();
   }
 
   @override
@@ -1017,6 +1019,7 @@ class PatientsListScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => PatientChatScreen(
+                                  patientUid: p.id,
                                   patientName: p.name,
                                   patientInitials: p.initials,
                                   avatarBg: p.avatarBg,

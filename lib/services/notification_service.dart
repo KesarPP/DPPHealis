@@ -4,6 +4,10 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import '../models/food_log.dart';
 import 'dart:io' show Platform;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dpp_app/services/auth_service.dart';
+import 'dart:async';
+import 'chat_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -185,5 +189,162 @@ class NotificationService {
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
+  }
+
+  // --- Chat Notifications ---
+  
+  static String? _currentUserId;
+  static String? _currentUserRole;
+
+  void startChatListener() async {
+    if (!_initialized) await init();
+
+    final user = AuthService().currentUser;
+    if (user == null) return;
+    _currentUserId = user.uid;
+
+    _currentUserRole = await AuthService().getUserRole();
+
+    if (_currentUserRole == 'coach') {
+      _listenToCoachChats();
+    } else {
+      _listenToPatientChats();
+    }
+  }
+
+  bool _isCoachOnline = true;
+  StreamSubscription? _coachStatusSub;
+
+  void _listenToCoachChats() {
+    _coachStatusSub?.cancel();
+    _coachStatusSub = ChatService.getCoachOnlineStatusStream(_currentUserId!).listen((isOnline) {
+      final wasOffline = !_isCoachOnline;
+      _isCoachOnline = isOnline;
+      
+      if (wasOffline && isOnline) {
+        _triggerMissedCoachNotifications();
+      }
+    });
+
+    FirebaseFirestore.instance
+        .collection('Coachuserchats')
+        .where('coachId', isEqualTo: _currentUserId)
+        .snapshots()
+        .listen((snapshot) {
+      
+      if (!_isCoachOnline) return;
+
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.modified || change.type == DocumentChangeType.added) {
+          final data = change.doc.data();
+          if (data == null) continue;
+          
+          final unreadByCoach = data['unreadByCoach'] as int? ?? 0;
+          final lastMessageText = data['lastMessageText'] as String? ?? '';
+          
+          print('DEBUG: _listenToCoachChats - unreadByCoach: $unreadByCoach');
+
+          if (unreadByCoach > 0) {
+            _getUserName(data['patientId']).then((name) {
+              print('DEBUG: _listenToCoachChats - showing notification for coach');
+              _showChatNotification(
+                id: (change.doc.id.hashCode.abs() % 100000),
+                title: 'You have a message from $name',
+                body: lastMessageText,
+              );
+            }).catchError((e) {
+              print('DEBUG: _listenToCoachChats - error: $e');
+            });
+          }
+        }
+      }
+    });
+  }
+
+  void _triggerMissedCoachNotifications() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Coachuserchats')
+        .where('coachId', isEqualTo: _currentUserId)
+        .where('unreadByCoach', isGreaterThan: 0)
+        .get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final lastMessageText = data['lastMessageText'] as String? ?? '';
+      
+      _getUserName(data['patientId']).then((name) {
+        _showChatNotification(
+          id: (doc.id.hashCode.abs() % 100000),
+          title: 'You have a message from $name',
+          body: lastMessageText,
+        );
+      });
+    }
+  }
+
+  void _listenToPatientChats() {
+    FirebaseFirestore.instance
+        .collection('Coachuserchats')
+        .where('patientId', isEqualTo: _currentUserId)
+        .snapshots()
+        .listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.modified || change.type == DocumentChangeType.added) {
+          final data = change.doc.data();
+          if (data == null) continue;
+          
+          final unreadByPatient = data['unreadByPatient'] as int? ?? 0;
+          final lastMessageText = data['lastMessageText'] as String? ?? '';
+          
+          print('DEBUG: _listenToPatientChats - unreadByPatient: $unreadByPatient');
+
+          if (unreadByPatient > 0) {
+            print('DEBUG: _listenToPatientChats - showing notification for patient');
+            _showChatNotification(
+              id: (change.doc.id.hashCode.abs() % 100000),
+              title: 'You have a message from coach',
+              body: lastMessageText,
+            );
+          }
+        }
+      }
+    });
+  }
+
+  Future<void> _showChatNotification({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    await _plugin.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'chat_channel',
+          'Chat Messages',
+          channelDescription: 'Notifications for incoming chat messages',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  Future<String> _getUserName(String? uid) async {
+    if (uid == null) return 'Patient';
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      return doc.data()?['name'] ?? 'Patient';
+    } catch (e) {
+      return 'Patient';
+    }
   }
 }

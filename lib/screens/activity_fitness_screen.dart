@@ -51,7 +51,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
   bool _isLoadingLogs = false;
   String? _logsError;
   ActivityStats? _stats;
-  bool _isConnected = false;
   DateTime? _lastSyncTime;
   bool _isLoading = true;
 
@@ -356,7 +355,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
 
         if (mounted) {
           setState(() {
-            _isConnected = true;
             _lastSyncTime = DateTime.now();
             _stats = stats;
             _pastDays = pastDays;
@@ -415,7 +413,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
 
         if (mounted) {
           setState(() {
-            _isConnected = true;
             _lastSyncTime = DateTime.now();
             _stats = ActivityStats(
               steps: stepsToUse,

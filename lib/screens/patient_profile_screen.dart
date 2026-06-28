@@ -53,6 +53,7 @@ class PatientProfileScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => PatientChatScreen(
+                          patientUid: patient.id,
                           patientName: patient.name,
                           patientInitials: patient.initials,
                           avatarBg: patient.avatarBg,
