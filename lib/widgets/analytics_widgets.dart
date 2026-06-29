@@ -14,45 +14,43 @@ class WeeklyTrendChartCard extends StatefulWidget {
 }
 
 class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
-  bool _showNetCalories = false;
   int _touchedIndex = -1;
   @override
   Widget build(BuildContext context) {
     final foodNotifier = context.watch<FoodDiaryNotifier>();
     
-    final List<double> _grossCalories = List.filled(7, 0.0);
+    final List<double> grossCalories = List.filled(7, 0.0);
     double totalLast7Days = 0.0;
     int countDays = 0;
     
     DateTime now = DateTime.now();
+    final String todayStr = now.toIso8601String().split('T')[0];
     for (int i = 0; i < 7; i++) {
       DateTime d = now.subtract(Duration(days: 6 - i));
       String dateStr = d.toIso8601String().split('T')[0];
       
       final log = foodNotifier.allLogsList.where((l) => l.date == dateStr).firstOrNull;
       if (log != null) {
-        _grossCalories[i] = log.totalCalories;
+        grossCalories[i] = log.totalCalories;
       }
       
-      // Override today if it's the currently selected date in the notifier
-      if (i == 6 && foodNotifier.selectedDate == dateStr && foodNotifier.dailyLog != null) {
-        _grossCalories[6] = foodNotifier.dailyLog!.totalCalories;
+      // Override if it's the currently selected date or today's active snapshot
+      if (foodNotifier.selectedDate == dateStr && foodNotifier.dailyLog != null) {
+        grossCalories[i] = foodNotifier.dailyLog!.totalCalories;
+      } else if (dateStr == todayStr && foodNotifier.dailyLog != null && foodNotifier.dailyLog!.date == todayStr) {
+        grossCalories[i] = foodNotifier.dailyLog!.totalCalories;
       }
       
-      if (_grossCalories[i] > 0) {
-        totalLast7Days += _grossCalories[i];
+      if (grossCalories[i] > 0) {
+        totalLast7Days += grossCalories[i];
         countDays++;
       }
     }
     
     double avg = countDays > 0 ? totalLast7Days / countDays : 0.0;
-    final List<double> _netCalories = List.generate(7, (i) => _grossCalories[i] > 0 ? (_grossCalories[i] - 300).clamp(0.0, double.infinity) : 0.0);
-    double avgNet = countDays > 0 ? (totalLast7Days - (300 * countDays)) / countDays : 0.0;
-    if (avgNet < 0) avgNet = 0.0;
-
-    final data = _showNetCalories ? _netCalories : _grossCalories;
+    final data = grossCalories;
     // Light background so the bright analytics pop
-    final bgColor = Colors.white; 
+    const bgColor = Colors.white; 
     // Dark green line graph as requested
     final chartColor = Colors.green.shade800;
 
@@ -74,35 +72,26 @@ class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _showNetCalories ? 'Avg Net: ${avgNet.toStringAsFixed(0)} kcal' : 'Avg: ${avg.toStringAsFixed(0)} kcal',
+                'Daily Intake Trend (Avg: ${avg.toStringAsFixed(0)} kcal)',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: GelatoTheme.textDark,
                 ),
               ),
-              // Toggle
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _showNetCalories = !_showNetCalories;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: GelatoTheme.textDark, width: 1.5),
-                  ),
-                  child: Text(
-                    _showNetCalories ? 'Net Cal' : 'Gross Cal',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: GelatoTheme.textDark,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.green.shade800, width: 1.5),
+                ),
+                child: Text(
+                  'Live Data',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.green.shade800,
                   ),
                 ),
               ),
@@ -176,13 +165,15 @@ class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
                       reservedSize: 22,
                       interval: 1,
                       getTitlesWidget: (value, meta) {
-                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        if (value.toInt() >= 0 && value.toInt() < days.length) {
+                        if (value.toInt() >= 0 && value.toInt() <= 6) {
                           final isTouched = value.toInt() == _touchedIndex;
+                          final d = DateTime.now().subtract(Duration(days: 6 - value.toInt()));
+                          const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                          final label = value.toInt() == 6 ? 'Today' : weekDays[d.weekday - 1];
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
-                              days[value.toInt()],
+                              label,
                               style: TextStyle(
                                 color: isTouched ? chartColor : GelatoTheme.textDark.withValues(alpha: 0.6),
                                 fontSize: 11,
@@ -200,7 +191,9 @@ class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
                 minX: 0,
                 maxX: 6,
                 minY: 0,
-                maxY: 3000,
+                maxY: (grossCalories.fold(0.0, (m, c) => c > m ? c : m) > foodNotifier.calorieGoal
+                        ? grossCalories.fold(0.0, (m, c) => c > m ? c : m)
+                        : foodNotifier.calorieGoal) * 1.3,
                 lineBarsData: [
                   LineChartBarData(
                     spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
@@ -286,7 +279,10 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
   @override
   Widget build(BuildContext context) {
     final foodNotifier = context.watch<FoodDiaryNotifier>();
-    final log = foodNotifier.dailyLog;
+    final String todayStr = DateTime.now().toIso8601String().split('T')[0];
+    final log = (foodNotifier.selectedDate == todayStr && foodNotifier.dailyLog != null)
+        ? foodNotifier.dailyLog
+        : (foodNotifier.allLogsList.where((l) => l.date == todayStr).firstOrNull ?? foodNotifier.dailyLog);
     
     final totalProtein = log?.totalProtein ?? 0.0;
     final totalCarbs = log?.totalCarbs ?? 0.0;
@@ -296,17 +292,17 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
     final targetCarbs = (foodNotifier.calorieGoal * 0.5) / 4.0;
     final targetFat = (foodNotifier.calorieGoal * 0.2) / 9.0;
 
-    final List<Map<String, dynamic>> _macroData = [
+    final List<Map<String, dynamic>> macroData = [
       {'name': 'Protein', 'value': totalProtein, 'target': targetProtein, 'color': GelatoTheme.purple},
       {'name': 'Carbs', 'value': totalCarbs, 'target': targetCarbs, 'color': GelatoTheme.yellow},
       {'name': 'Fats', 'value': totalFat, 'target': targetFat, 'color': GelatoTheme.pink},
     ];
 
-    double total = _macroData.fold(0, (sum, item) => sum + item['value']);
+    double total = macroData.fold(0, (sum, item) => sum + item['value']);
     
     final displayData = total == 0 
-        ? _macroData.map((e) => {...e, 'value': 1.0}).toList() 
-        : _macroData;
+        ? [{'name': 'None Logged', 'value': 1.0, 'target': 0.0, 'color': Colors.grey.withValues(alpha: 0.3)}] 
+        : macroData;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -382,7 +378,8 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                         setState(() {
                           if (!event.isInterestedForInteractions ||
                               pieTouchResponse == null ||
-                              pieTouchResponse.touchedSection == null) {
+                              pieTouchResponse.touchedSection == null ||
+                              total == 0) {
                             _touchedIndex = -1;
                             return;
                           }
@@ -394,8 +391,8 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                     borderData: FlBorderData(show: false),
                     sectionsSpace: 4,
                     centerSpaceRadius: 50,
-                    sections: List.generate(3, (i) {
-                      final isTouched = i == _touchedIndex;
+                    sections: List.generate(displayData.length, (i) {
+                      final isTouched = i == _touchedIndex && total > 0;
                       final radius = isTouched ? 35.0 : 25.0;
                       final data = displayData[i];
                       final value = data['value'] as double;
@@ -416,7 +413,7 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                                   border: Border.all(color: GelatoTheme.textDark, width: 2),
                                   boxShadow: GelatoTheme.cardShadow,
                                 ),
-                                child: Icon(Icons.bolt, size: 16, color: GelatoTheme.textDark),
+                                child: const Icon(Icons.bolt, size: 16, color: GelatoTheme.textDark),
                               )
                             : null,
                         badgePositionPercentageOffset: 1.1,
@@ -430,8 +427,32 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                 Center(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
-                    child: _touchedIndex == -1
-                        ? Column(
+                    child: total == 0
+                        ? const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            key: ValueKey('empty'),
+                            children: [
+                              Text(
+                                '0g',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.grey,
+                                  letterSpacing: -1,
+                                ),
+                              ),
+                              Text(
+                                'No Meals Logged',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          )
+                        : _touchedIndex == -1
+                            ? Column(
                             mainAxisSize: MainAxisSize.min,
                             key: const ValueKey('total'),
                             children: [
@@ -460,8 +481,8 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                             children: [
                               Text(
                                 _showPercentages
-                                    ? '${total > 0 ? ((_macroData[_touchedIndex]['value'] / total) * 100).toStringAsFixed(0) : 0}%'
-                                    : '${_macroData[_touchedIndex]['value'].toInt()}g',
+                                    ? '${total > 0 ? ((macroData[_touchedIndex]['value'] / total) * 100).toStringAsFixed(0) : 0}%'
+                                    : '${macroData[_touchedIndex]['value'].toInt()}g',
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
@@ -470,7 +491,7 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
                                 ),
                               ),
                               Text(
-                                _macroData[_touchedIndex]['name'],
+                                macroData[_touchedIndex]['name'],
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
@@ -488,7 +509,7 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
           // Legend
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: _macroData.asMap().entries.map((entry) {
+            children: macroData.asMap().entries.map((entry) {
               final idx = entry.key;
               final data = entry.value;
               final isTouched = _touchedIndex == idx;
@@ -567,47 +588,57 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
     // Compute score for past 7 days
     List<Map<String, dynamic>> dynamicScatterSpots = [];
     DateTime now = DateTime.now();
+    final String todayStr = now.toIso8601String().split('T')[0];
     double currentScoreValue = 0.0;
     
     for (int i = 0; i < 7; i++) {
       DateTime d = now.subtract(Duration(days: 6 - i));
       String dateStr = d.toIso8601String().split('T')[0];
       
-      final log = foodNotifier.allLogsList.where((l) => l.date == dateStr).firstOrNull;
-      
-      double calories = 0.0;
-      if (log != null) {
-        calories = log.totalCalories;
+      var log = foodNotifier.allLogsList.where((l) => l.date == dateStr).firstOrNull;
+      if (foodNotifier.selectedDate == dateStr && foodNotifier.dailyLog != null) {
+        log = foodNotifier.dailyLog;
+      } else if (dateStr == todayStr && foodNotifier.dailyLog != null && foodNotifier.dailyLog!.date == todayStr) {
+        log = foodNotifier.dailyLog;
       }
       
-      // Override today if selected
-      if (i == 6 && foodNotifier.selectedDate == dateStr && foodNotifier.dailyLog != null) {
-        calories = foodNotifier.dailyLog!.totalCalories;
-      }
+      double calories = log?.totalCalories ?? 0.0;
+      int entriesCount = log?.entries.length ?? 0;
       
       double score = 0.0;
-      if (calories > 0) {
+      if (entriesCount > 0 || calories > 0) {
+        double calScore = 0.0;
         final ratio = calories / goal;
         if (ratio > 1.2) {
-           score = 70.0;
+          calScore = 35.0;
         } else if (ratio > 1.0) {
-           score = (90.0 - ((ratio - 1.0) * 100)).clamp(0.0, 100.0); 
+          calScore = 45.0;
         } else if (ratio >= 0.8) {
-           score = 95.0;
+          calScore = 50.0;
         } else {
-           score = (ratio * 100).clamp(0.0, 100.0); 
+          calScore = (ratio * 50.0).clamp(10.0, 50.0);
         }
+        
+        double proteinScore = (log != null && log.totalProtein > 20) ? 25.0 : 15.0;
+        double fiberScore = (log != null && log.totalFiber > 10) ? 25.0 : 15.0;
+        
+        score = (calScore + proteinScore + fiberScore).clamp(0.0, 100.0);
       }
       
-      if (i == 6) {
+      if (foodNotifier.selectedDate == dateStr || (i == 6 && currentScoreValue == 0)) {
         currentScoreValue = score / 100.0;
       }
       
       Color color = GelatoTheme.blueBright;
-      if (score >= 90) color = GelatoTheme.greenBright;
-      else if (score >= 70) color = GelatoTheme.purpleBright;
-      else if (score > 0) color = GelatoTheme.pinkBright;
-      else color = Colors.grey;
+      if (score >= 90) {
+        color = GelatoTheme.greenBright;
+      } else if (score >= 70) {
+        color = GelatoTheme.purpleBright;
+      } else if (score > 0) {
+        color = GelatoTheme.pinkBright;
+      } else {
+        color = Colors.grey;
+      }
       
       double radius = (score > 0) ? (score / 10.0).clamp(6.0, 16.0) : 6.0;
       
@@ -616,10 +647,28 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
         'y': score,
         'color': color,
         'radius': radius,
+        'entriesCount': entriesCount,
       });
     }
 
     double scoreValue = currentScoreValue;
+    String statusTitle = 'No Meals Logged';
+    String statusDesc = 'Log today\'s meals to calculate your nutrition score and see your trend.';
+    Color statusColor = Colors.grey.shade700;
+
+    if (scoreValue >= 0.9) {
+      statusTitle = 'Great Balance!';
+      statusDesc = 'Your nutrition is on track today. Tap to see everyday trend.';
+      statusColor = GelatoTheme.greenDark;
+    } else if (scoreValue >= 0.7) {
+      statusTitle = 'Good Effort!';
+      statusDesc = 'You are close to your target intake today. Keep logging!';
+      statusColor = GelatoTheme.purpleDark;
+    } else if (scoreValue > 0) {
+      statusTitle = 'Needs Attention';
+      statusDesc = 'Your intake today is further from target goal. Tap to inspect trend.';
+      statusColor = GelatoTheme.pinkDark;
+    }
 
     return GestureDetector(
       onTap: () {
@@ -700,18 +749,18 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Great Balance!',
+                      Text(
+                        statusTitle,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          color: GelatoTheme.greenDark,
+                          color: statusColor,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Your nutrition is on track. Tap to see everyday trend.',
-                        style: TextStyle(
+                        statusDesc,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: GelatoTheme.blueDark,
@@ -789,12 +838,14 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
                                 interval: 1,
                                 getTitlesWidget: (value, meta) {
                                   if (value != value.roundToDouble()) return const SizedBox.shrink();
-                                  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                                  if (value.toInt() >= 0 && value.toInt() < days.length) {
+                                  if (value.toInt() >= 0 && value.toInt() <= 6) {
+                                    final d = DateTime.now().subtract(Duration(days: 6 - value.toInt()));
+                                    const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                                    final label = value.toInt() == 6 ? 'Now' : weekDays[d.weekday - 1];
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 8.0),
                                       child: Text(
-                                        days[value.toInt()],
+                                        label,
                                         style: const TextStyle(
                                           color: Colors.black,
                                           fontSize: 11,
@@ -834,8 +885,13 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
                             touchTooltipData: ScatterTouchTooltipData(
                               getTooltipColor: (spot) => GelatoTheme.blueDark,
                               getTooltipItems: (touchedSpot) {
+                                final int idx = touchedSpot.x.toInt();
+                                final spotData = (idx >= 0 && idx < dynamicScatterSpots.length)
+                                    ? dynamicScatterSpots[idx]
+                                    : <String, dynamic>{};
+                                final count = spotData['entriesCount'] ?? 0;
                                 return ScatterTooltipItem(
-                                  'Score: ${touchedSpot.y.toInt()}',
+                                  'Score: ${touchedSpot.y.toInt()}\n$count items logged',
                                   textStyle: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,

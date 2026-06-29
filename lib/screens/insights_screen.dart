@@ -42,7 +42,7 @@ class InsightsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
-            _buildSectionTitle('AI Insights'),
+            _buildSectionTitle('Recommendations'),
             const HorizontalInsightsCarousel(),
             const SizedBox(height: 30),
             _buildSectionTitle('Weekly Calories Trend'),
@@ -90,83 +90,176 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
   List<Map<String, dynamic>> _generateInsights(BuildContext context) {
     final notifier = Provider.of<FoodDiaryNotifier>(context);
     final logs = notifier.allLogsList;
+    final currentLog = notifier.dailyLog;
     List<Map<String, dynamic>> insights = [];
 
-    // 1. Dinner Analysis
+    // Check if user has zero meals logged anywhere
+    final bool hasNoCurrentEntries = currentLog == null || currentLog.entries.isEmpty;
+    if (hasNoCurrentEntries && logs.isEmpty) {
+      return [
+        {
+          'title': 'Start Logging Meals',
+          'desc': 'Log your breakfast, lunch, or dinner today to receive smart nutrition recommendations based on your actual intake.',
+          'icon': Icons.restaurant_menu_rounded,
+          'color': GelatoTheme.blue,
+          'iconColor': GelatoTheme.blue,
+        },
+        {
+          'title': 'Track Your Macros',
+          'desc': 'Adding food items allows us to track your live protein, carbs, fats, and fiber balance.',
+          'icon': Icons.pie_chart_rounded,
+          'color': GelatoTheme.purple,
+          'iconColor': GelatoTheme.purple,
+        },
+      ];
+    }
+
+    // 1. Current Day Calorie Status
+    if (currentLog != null && currentLog.totalCalories > 0) {
+      final cal = currentLog.totalCalories;
+      final goal = notifier.calorieGoal;
+      if (cal > goal * 1.1) {
+        insights.add({
+          'title': 'Calorie Goal Exceeded',
+          'desc': 'You logged ${cal.toInt()} kcal today, exceeding your target goal of ${goal.toInt()} kcal.',
+          'icon': Icons.local_fire_department_rounded,
+          'color': GelatoTheme.pink,
+          'iconColor': GelatoTheme.pink,
+        });
+      } else if (cal >= goal * 0.85) {
+        insights.add({
+          'title': 'Spot On Calorie Intake!',
+          'desc': 'You logged ${cal.toInt()} kcal today, right on track for your ${goal.toInt()} kcal target.',
+          'icon': Icons.check_circle_rounded,
+          'color': GelatoTheme.green,
+          'iconColor': GelatoTheme.green,
+        });
+      } else {
+        final remaining = (goal - cal).toInt().clamp(0, 9999);
+        insights.add({
+          'title': 'Calories Remaining Today',
+          'desc': 'You logged ${cal.toInt()} kcal today. You still have $remaining kcal remaining to hit your target.',
+          'icon': Icons.bolt_rounded,
+          'color': GelatoTheme.blue,
+          'iconColor': GelatoTheme.blue,
+        });
+      }
+    }
+
+    // 2. Highest Calorie Item Logged Today
+    if (currentLog != null && currentLog.entries.isNotEmpty) {
+      var topEntry = currentLog.entries.first;
+      double maxCal = topEntry.food.calories * topEntry.quantity;
+      for (var e in currentLog.entries) {
+        double c = e.food.calories * e.quantity;
+        if (c > maxCal) {
+          maxCal = c;
+          topEntry = e;
+        }
+      }
+      insights.add({
+        'title': 'Top Calorie Contributor',
+        'desc': '${topEntry.food.name} provided ${maxCal.toInt()} kcal in your ${topEntry.mealType} today.',
+        'icon': Icons.star_rounded,
+        'color': GelatoTheme.yellow,
+        'iconColor': GelatoTheme.yellow,
+      });
+    }
+
+    // 3. Meal Timing & Dinner Analysis across logs
     double dinnerCal = 0;
     int dinnerCount = 0;
     for (var log in logs) {
-       for (var entry in log.entries) {
-          if (entry.mealType == 'Dinner') {
-            dinnerCal += entry.food.calories * entry.quantity;
-            dinnerCount++;
-          }
-       }
+      for (var entry in log.entries) {
+        if (entry.mealType == 'Dinner') {
+          dinnerCal += entry.food.calories * entry.quantity;
+          dinnerCount++;
+        }
+      }
     }
-    if (dinnerCount > 0 && (dinnerCal / dinnerCount) > notifier.calorieGoal * 0.4) {
+    if (dinnerCount > 0) {
+      double avgDinner = dinnerCal / dinnerCount;
+      if (avgDinner > notifier.calorieGoal * 0.4) {
+        insights.add({
+          'title': 'Heavy Dinners Detected',
+          'desc': 'Your logged dinners average ${avgDinner.toInt()} kcal. Keeping evening meals lighter can aid restful sleep.',
+          'icon': Icons.nightlight_round,
+          'color': GelatoTheme.purple,
+          'iconColor': GelatoTheme.purple,
+        });
+      } else {
+        insights.add({
+          'title': 'Balanced Evening Meals',
+          'desc': 'Your logged dinners average ${avgDinner.toInt()} kcal, keeping your evening nutrition well-proportioned.',
+          'icon': Icons.nightlight_round,
+          'color': GelatoTheme.purple,
+          'iconColor': GelatoTheme.purple,
+        });
+      }
+    } else if (currentLog != null && currentLog.entries.any((e) => e.mealType == 'Breakfast')) {
       insights.add({
-        'title': 'Heavy Dinners',
-        'desc': 'Your dinner calories are quite high. Consider lighter dinners to improve digestion and rest.',
-        'icon': Icons.nightlight_round,
-        'color': GelatoTheme.purple,
-        'iconColor': GelatoTheme.purple,
-      });
-    } else {
-      insights.add({
-        'title': 'Balanced Dinners',
-        'desc': 'You are doing great at keeping your evening meals balanced! This is great for your sleep.',
-        'icon': Icons.nightlight_round,
+        'title': 'Breakfast Logged!',
+        'desc': 'Starting your day by logging breakfast sets a healthy routine for steady metabolism.',
+        'icon': Icons.wb_sunny_rounded,
         'color': GelatoTheme.purple,
         'iconColor': GelatoTheme.purple,
       });
     }
 
-    // 2. Protein Consistency
-    int proteinHitCount = 0;
-    double targetProtein = (notifier.calorieGoal * 0.3) / 4.0;
-    for (var log in logs) {
-      if (log.totalProtein >= targetProtein * 0.8) proteinHitCount++;
-    }
-    
-    int daysLogged = logs.length;
-    if (proteinHitCount < 4 && daysLogged > 0) {
-      insights.add({
-        'title': 'Protein is Inconsistent',
-        'desc': 'You hit your protein goal $proteinHitCount out of ${daysLogged > 7 ? 7 : daysLogged} days recently. Try adding more lean meats.',
-        'icon': Icons.fitness_center_rounded,
-        'color': GelatoTheme.blue,
-        'iconColor': GelatoTheme.blue,
-      });
-    } else {
-       insights.add({
-        'title': 'Protein Powerhouse',
-        'desc': 'Great job! You consistently hit your protein goals. Keep feeding those muscles!',
-        'icon': Icons.fitness_center_rounded,
-        'color': GelatoTheme.blue,
-        'iconColor': GelatoTheme.blue,
-      });
+    // 4. Protein Trend
+    if (logs.isNotEmpty) {
+      double totalProteinAll = logs.fold(0.0, (sum, l) => sum + l.totalProtein);
+      double avgProtein = totalProteinAll / logs.length;
+      double targetProtein = (notifier.calorieGoal * 0.3) / 4.0;
+      if (avgProtein >= targetProtein * 0.8) {
+        insights.add({
+          'title': 'Strong Protein Trend',
+          'desc': 'You are averaging ${avgProtein.toInt()}g of protein per logged day (Target: ~${targetProtein.toInt()}g).',
+          'icon': Icons.fitness_center_rounded,
+          'color': GelatoTheme.blue,
+          'iconColor': GelatoTheme.blue,
+        });
+      } else {
+        insights.add({
+          'title': 'Boost Protein Intake',
+          'desc': 'You average ${avgProtein.toInt()}g of protein per logged day. Aim closer to ${targetProtein.toInt()}g for optimal recovery.',
+          'icon': Icons.fitness_center_rounded,
+          'color': GelatoTheme.blue,
+          'iconColor': GelatoTheme.blue,
+        });
+      }
     }
 
-    // 3. Fiber Analysis
-    int fiberHitCount = 0;
-    for (var log in logs) {
-       if (log.totalFiber >= 20.0) fiberHitCount++;
+    // 5. Fiber Trend
+    if (logs.isNotEmpty) {
+      double totalFiberAll = logs.fold(0.0, (sum, l) => sum + l.totalFiber);
+      double avgFiber = totalFiberAll / logs.length;
+      if (avgFiber >= 20.0) {
+        insights.add({
+          'title': 'Excellent Fiber Intake',
+          'desc': 'You average ${avgFiber.toStringAsFixed(1)}g of fiber per logged day, promoting great digestion.',
+          'icon': Icons.eco_rounded,
+          'color': GelatoTheme.green,
+          'iconColor': GelatoTheme.green,
+        });
+      } else {
+        insights.add({
+          'title': 'Increase Fiber Intake',
+          'desc': 'Your logged fiber averages ${avgFiber.toStringAsFixed(1)}g per day. Try adding vegetables or legumes to hit 25g.',
+          'icon': Icons.eco_rounded,
+          'color': GelatoTheme.green,
+          'iconColor': GelatoTheme.green,
+        });
+      }
     }
-    if (fiberHitCount < (daysLogged / 2) && daysLogged > 0) {
-       insights.add({
-        'title': 'More Fiber Needed',
-        'desc': 'Fiber helps with digestion and keeping you full. Try adding more leafy greens and whole grains!',
-        'icon': Icons.eco_rounded,
-        'color': GelatoTheme.green,
-        'iconColor': GelatoTheme.green,
-      });
-    } else {
+
+    if (insights.isEmpty) {
       insights.add({
-        'title': 'Fantastic Fiber!',
-        'desc': 'You are getting plenty of fiber in your diet, which is amazing for your gut health!',
-        'icon': Icons.eco_rounded,
-        'color': GelatoTheme.green,
-        'iconColor': GelatoTheme.green,
+        'title': 'Keep Logging Meals',
+        'desc': 'Log more meals throughout the week to generate personalized nutritional recommendations.',
+        'icon': Icons.insights_rounded,
+        'color': GelatoTheme.blue,
+        'iconColor': GelatoTheme.blue,
       });
     }
 

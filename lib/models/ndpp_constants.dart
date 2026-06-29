@@ -103,8 +103,8 @@ class DailyAggregate {
     required this.totalActiveMinutes,
     required this.qualifyingActiveMinutes,
     required this.isActiveDay,
-    required this.coreSessions,
-    required this.lifestyleSessions,
+    this.coreSessions = const [],
+    this.lifestyleSessions = const [],
   });
 
   factory DailyAggregate.empty(DateTime date) {

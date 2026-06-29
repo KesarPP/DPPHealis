@@ -111,13 +111,13 @@ class ActivityMetricsEngine {
     });
   }
 
-  static int getGoalAchievedCount(List<DailyAggregate> pastDays, int tabIndex, {int stepGoal = 10000, double calGoal = 500, double distGoal = 5.0}) {
+  static int getGoalAchievedCount(List<DailyAggregate> pastDays, int tabIndex, {int stepGoal = 5000, double calGoal = 200, double distGoal = 3.0}) {
     int count = 0;
     for (var day in pastDays) {
       if (tabIndex == 0 && day.totalSteps >= stepGoal) count++;
       else if (tabIndex == 1 && day.totalCalories >= calGoal) count++;
       else if (tabIndex == 2 && day.totalDistance >= distGoal) count++;
-      else if (tabIndex == 3 && day.isActiveDay) count++;
+      else if (tabIndex == 3 && (day.isActiveDay || day.qualifyingActiveMinutes >= 20 || day.totalActiveMinutes >= 20)) count++;
     }
     return count;
   }

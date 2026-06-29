@@ -153,6 +153,7 @@ class _ActivityCardState extends State<_ActivityCard> {
   void _showLogActivityModal(BuildContext context) {
     double duration = 30;
     String frequency = 'Once';
+    final TextEditingController customNameController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -161,7 +162,10 @@ class _ActivityCardState extends State<_ActivityCard> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Container(
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: SingleChildScrollView(
+                child: Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
                 color: Colors.white,
@@ -218,6 +222,38 @@ class _ActivityCardState extends State<_ActivityCard> {
                     ],
                   ),
                   const SizedBox(height: 24),
+                  if (widget.activity.type == 'Other') ...[
+                    Text(
+                      'Activity Name',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: widget.activity.iconColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: customNameController,
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Cycling, Yoga, Tennis...',
+                        hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: widget.activity.iconColor, width: 2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                   Text(
                     'Duration (minutes)',
                     style: TextStyle(
@@ -307,9 +343,13 @@ class _ActivityCardState extends State<_ActivityCard> {
                         elevation: 0,
                       ),
                       onPressed: () async {
+                        String activityTitle = widget.activity.title;
+                        if (widget.activity.type == 'Other' && customNameController.text.trim().isNotEmpty) {
+                          activityTitle = customNameController.text.trim();
+                        }
                         final newLog = ActivityLog(
                           id: '',
-                          activityName: widget.activity.title,
+                          activityName: activityTitle,
                           durationMinutes: duration.toInt(),
                           frequency: frequency,
                           createdAt: DateTime.now(),
@@ -322,7 +362,7 @@ class _ActivityCardState extends State<_ActivityCard> {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('${widget.activity.title} logged for ${duration.toInt()} mins!'),
+                              content: Text('$activityTitle logged for ${duration.toInt()} mins!'),
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
@@ -341,7 +381,9 @@ class _ActivityCardState extends State<_ActivityCard> {
                   const SizedBox(height: 16),
                 ],
               ),
-            );
+            ),
+          ),
+        );
           },
         );
       },
