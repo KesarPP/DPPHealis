@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/gelato_theme.dart';
 import '../widgets/analytics_widgets.dart';
+import '../providers/food_notifiers.dart';
 
 class InsightsScreen extends StatelessWidget {
   const InsightsScreen({super.key});
