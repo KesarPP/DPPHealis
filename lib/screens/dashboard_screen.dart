@@ -46,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   final FirebaseAuth _auth = FirebaseAuth.instance;
   Map<String, dynamic>? _selectedCoach;
   bool _isLoadingCoach = true;
-  bool _showTourGuide = true;
+  bool _showTourGuide = false;
   bool _isPlayingVoice = false;
   late FlutterTts _flutterTts;
   int _tourStep = 0;
@@ -79,6 +79,19 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   Future<void> _initQuickRestore() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final hasCompleted = prefs.getBool('has_completed_tour') ?? false;
+      if (!hasCompleted) {
+        setState(() {
+          _showTourGuide = true;
+        });
+        // Delay speaking slightly to allow layout to settle
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && _showTourGuide) {
+            _speakIntro();
+          }
+        });
+      }
+
       final bool purgedV5 = prefs.getBool('hc_demo_purged_v5') ?? false;
       if (!purgedV5) {
         final keys = prefs.getKeys().toList();
@@ -122,6 +135,11 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _completeTour() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_completed_tour', true);
   }
 
   @override
@@ -181,6 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   }
 
   Future<void> _speakIntro() async {
+    if (!_showTourGuide) return;
     if (_selectedCoach == null) return;
     
     final isFemale = _isFemaleCoach();
@@ -400,6 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                                 onPressed: () {
                                   _flutterTts.stop();
                                   _scaffoldKey.currentState?.closeEndDrawer();
+                                  _completeTour();
                                   setState(() {
                                     _showTourGuide = false;
                                     _isPlayingVoice = false;
@@ -428,6 +448,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                                   } else {
                                     _flutterTts.stop();
                                     _scaffoldKey.currentState?.closeEndDrawer();
+                                    _completeTour();
                                     setState(() {
                                       _showTourGuide = false;
                                       _isPlayingVoice = false;
