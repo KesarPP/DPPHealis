@@ -517,9 +517,9 @@ class _AchievementCard extends StatelessWidget {
                       children: [
                         // Icon Area (65%)
                         Expanded(
-                          flex: 70,
+                          flex: 60,
                           child: Transform.translate(
-                            offset: Offset(imageOffsetX, -40 + imageOffsetY),
+                            offset: Offset(imageOffsetX, -45 + imageOffsetY),
                             child: Center(
                               child: imagePath != null
                                   ? FractionallySizedBox(
@@ -540,7 +540,7 @@ class _AchievementCard extends StatelessWidget {
                         Expanded(
                           flex: 50,
                           child: Transform.translate(
-                            offset: const Offset(0, -10), // Moved up less to leave bottom space
+                            offset: const Offset(0, -35), // Pull text area UP to leave bottom space
                             child: OverflowBox(
                               maxHeight: double.infinity,
                               child: title != null
@@ -658,7 +658,7 @@ class _AchievementCard extends StatelessWidget {
                                           ),
                                         ],
                                         if (description != null) ...[
-                                          const SizedBox(height: 4),
+                                          const SizedBox(height: 6),
                                           Transform.translate(
                                             offset: const Offset(0, -2), // Adjust description position
                                             child: Text(
