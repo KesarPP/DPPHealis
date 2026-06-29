@@ -339,7 +339,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: '7 days of pure focus. No excuses, just logging!',
                 completedDays: consistencyStreak.clamp(0, 7),
                 totalDays: 7,
-                imageScale: 1.1, // Adjusted scale to fit inner border
+                imageScale: 1.3, // Adjusted scale to fit inner border
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFB6C1),
@@ -361,8 +361,8 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: '12 months of flawless tracking. We should build a statue of you!',
                 completedDays: (consistencyStreak ~/ 30).clamp(0, 12), 
                 totalDays: 12,
-                imageScale: 1.1, // Adjusted scale to fit inner border
-                imageOffsetX: 0,
+                imageScale: 1.3, // Adjusted scale to fit inner border
+                imageOffsetX: 4.5,
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFD8BFD8),
@@ -540,7 +540,7 @@ class _AchievementCard extends StatelessWidget {
                         Expanded(
                           flex: 50,
                           child: Transform.translate(
-                            offset: const Offset(0, -35), // Pull text area UP to leave bottom space
+                            offset: const Offset(0, -30), // Pull text area UP to leave bottom space
                             child: OverflowBox(
                               maxHeight: double.infinity,
                               child: title != null
@@ -548,7 +548,7 @@ class _AchievementCard extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Transform.translate(
-                                          offset: const Offset(0, 0), // Adjust title position
+                                          offset: const Offset(0, 5), // Adjust title position
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
                                             child: Text(
