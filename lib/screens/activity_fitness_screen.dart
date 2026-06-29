@@ -131,6 +131,8 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
       totalActiveMinutes: 42,
       qualifyingActiveMinutes: 42,
       isActiveDay: true,
+      coreSessions: const [],
+      lifestyleSessions: const [],
     );
     for (int i = list.length - 2; i >= 0; i--) {
       if (list[i].totalSteps > 0) {

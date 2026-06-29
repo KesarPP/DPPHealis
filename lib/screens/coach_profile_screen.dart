@@ -110,7 +110,7 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
           ),
           title: const Text(
             'Request Coach Change',
-            style: TextStyle(fontWeight: FontWeight.black, color: GelatoTheme.textDark),
+            style: TextStyle(fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
