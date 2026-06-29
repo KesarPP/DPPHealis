@@ -314,8 +314,8 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
       }
     }
     
-    int totalConsistencyDays = completedDaysMap.values.where((v) => v).length;
-    int totalNinjaDays = ninjaDaysMap.values.where((v) => v).length;
+    DateTime now = DateTime.now();
+    int daysInCurrentMonth = DateTime(now.year, now.month + 1, 0).day;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,10 +336,10 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 imagePath: 'assets/images/Weekly_Consistency_Champion.png',
                 title: 'CONSISTENCY\nCHAMPION',
                 subtitle: 'WEEKLY',
-                description: 'Logged Food 7 days in a row!',
+                description: '7 days of pure focus. No excuses, just logging!',
                 completedDays: consistencyStreak.clamp(0, 7),
                 totalDays: 7,
-                imageScale: 1.4, // Shrunk slightly to give text room
+                imageScale: 1.4, // Keep fractionally sized
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFB6C1),
@@ -347,9 +347,10 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 imagePath: 'assets/images/Monthly_Consistency_Champion.png',
                 title: 'CONSISTENCY\nCHAMPION',
                 subtitle: 'MONTHLY',
-                description: 'Logged Food the entire month!',
-                completedDays: totalConsistencyDays.clamp(0, 30),
-                totalDays: 30,
+                description: 'An entire month of perfection. You are a logging machine!',
+                completedDays: consistencyStreak.clamp(0, daysInCurrentMonth),
+                totalDays: daysInCurrentMonth,
+                imageScale: 1.4,
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFD54F),
@@ -357,11 +358,11 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 imagePath: 'assets/images/Yearly_Consistency_Champion.png',
                 title: 'CONSISTENCY\nCHAMPION',
                 subtitle: 'YEARLY',
-                description: 'Logged for an entire Yearrr!!!',
-                completedDays: totalConsistencyDays.clamp(0, 365), 
-                totalDays: 365,
-                imageScale: 1.5, // Shrunk slightly to give text room
-                imageOffsetX: 5.0, // Push the medal to the right to center it
+                description: '12 months of flawless tracking. We should build a statue of you!',
+                completedDays: (consistencyStreak ~/ 30).clamp(0, 12), 
+                totalDays: 12,
+                imageScale: 1.5,
+                imageOffsetX: 5.0,
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFD8BFD8),
@@ -369,10 +370,10 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 imagePath: 'assets/images/Weekly_Nutrition_Ninja.png',
                 title: 'NUTRITION\nNINJA',
                 subtitle: 'WEEKLY',
-                description: 'Hit calorie goals 7 days in a row!',
+                description: 'A full week hitting your calorie goals. Your metabolism is terrified!',
                 completedDays: ninjaStreak.clamp(0, 7),
                 totalDays: 7,
-                imageScale: 0.85, // Made smaller
+                imageScale: 0.85, 
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFA0E8E8),
@@ -380,10 +381,10 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 imagePath: 'assets/images/Monthly_Nutrition_Ninja.png',
                 title: 'NUTRITION\nNINJA',
                 subtitle: 'MONTHLY',
-                description: 'Hit calorie goals the entire month!',
-                completedDays: totalNinjaDays.clamp(0, 30),
-                totalDays: 30,
-                imageScale: 0.85, // Made smaller again
+                description: 'A whole month in the green. You bend calories to your will!',
+                completedDays: ninjaStreak.clamp(0, daysInCurrentMonth),
+                totalDays: daysInCurrentMonth,
+                imageScale: 0.85,
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFB347),
@@ -391,11 +392,11 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 imagePath: 'assets/images/Yearly_Nutrition_Ninja.png',
                 title: 'NUTRITION\nNINJA',
                 subtitle: 'YEARLY',
-                description: 'Hit calorie goals for an entire Yearrr!!!',
-                completedDays: totalNinjaDays.clamp(0, 365),
-                totalDays: 365,
-                imageScale: 0.85, // Made smaller
-                imageOffsetY: -10.0, // Shift upwards!
+                description: '12 straight months of ninja precision. You are a nutritional legend!',
+                completedDays: (ninjaStreak ~/ 30).clamp(0, 12),
+                totalDays: 12,
+                imageScale: 0.85,
+                imageOffsetY: -10.0,
               ),
             ],
           ),
