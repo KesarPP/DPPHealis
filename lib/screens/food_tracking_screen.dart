@@ -339,7 +339,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: '7 days of pure focus. No excuses, just logging!',
                 completedDays: consistencyStreak.clamp(0, 7),
                 totalDays: 7,
-                imageScale: 1.4, // Keep fractionally sized
+                imageScale: 1.0, // Reduced scale so it doesn't overlap text/crown
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFB6C1),
@@ -350,7 +350,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: 'An entire month of perfection. You are a logging machine!',
                 completedDays: consistencyStreak.clamp(0, daysInCurrentMonth),
                 totalDays: daysInCurrentMonth,
-                imageScale: 1.4,
+                imageScale: 1.0, // Reduced scale
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFD54F),
@@ -361,7 +361,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: '12 months of flawless tracking. We should build a statue of you!',
                 completedDays: (consistencyStreak ~/ 30).clamp(0, 12), 
                 totalDays: 12,
-                imageScale: 1.5,
+                imageScale: 1.1, // Reduced scale
                 imageOffsetX: 5.0,
               ),
               _AchievementCard(
