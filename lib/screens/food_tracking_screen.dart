@@ -339,7 +339,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: '7 days of pure focus. No excuses, just logging!',
                 completedDays: consistencyStreak.clamp(0, 7),
                 totalDays: 7,
-                imageScale: 1.4, // Keep fractionally sized
+                imageScale: 1.1, // Adjusted scale to fit inner border
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFB6C1),
@@ -350,7 +350,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: 'An entire month of perfection. You are a logging machine!',
                 completedDays: consistencyStreak.clamp(0, daysInCurrentMonth),
                 totalDays: daysInCurrentMonth,
-                imageScale: 1.4,
+                imageScale: 1.0, // Adjusted scale to fit inner border
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFFFD54F),
@@ -361,8 +361,8 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                 description: '12 months of flawless tracking. We should build a statue of you!',
                 completedDays: (consistencyStreak ~/ 30).clamp(0, 12), 
                 totalDays: 12,
-                imageScale: 1.5,
-                imageOffsetX: 5.0,
+                imageScale: 1.1, // Adjusted scale to fit inner border
+                imageOffsetX: 0,
               ),
               _AchievementCard(
                 bgColor: const Color(0xFFD8BFD8),
@@ -517,7 +517,7 @@ class _AchievementCard extends StatelessWidget {
                       children: [
                         // Icon Area (65%)
                         Expanded(
-                          flex: 85,
+                          flex: 60,
                           child: Transform.translate(
                             offset: Offset(imageOffsetX, -25 + imageOffsetY),
                             child: Center(
@@ -538,9 +538,9 @@ class _AchievementCard extends StatelessWidget {
                         const SizedBox(height: 12),
                         // Text Area (35%)
                         Expanded(
-                          flex: 35,
+                          flex: 50,
                           child: Transform.translate(
-                            offset: const Offset(0, -25), // Moved up by 15 pixels
+                            offset: const Offset(0, -35), // Pull text area UP to leave bottom space
                             child: OverflowBox(
                               maxHeight: double.infinity,
                               child: title != null
@@ -586,7 +586,7 @@ class _AchievementCard extends StatelessWidget {
                                         if (completedDays != null && totalDays != null) ...[
                                           const SizedBox(height: 6),
                                           Transform.translate(
-                                            offset: const Offset(0, -10), // Adjust slider position
+                                            offset: const Offset(0, -5), // Adjust slider position
                                             child: FittedBox(
                                               fit: BoxFit.scaleDown,
                                               child: Row(
@@ -658,9 +658,9 @@ class _AchievementCard extends StatelessWidget {
                                           ),
                                         ],
                                         if (description != null) ...[
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 6),
                                           Transform.translate(
-                                            offset: const Offset(0, -14), // Adjust description position
+                                            offset: const Offset(0, -2), // Adjust description position
                                             child: Text(
                                               description!,
                                               textAlign: TextAlign.center,
