@@ -127,7 +127,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
     for (int t = 0; t < 4; t++) {
       double avg = ActivityMetricsEngine.getAverage(processingDays, t);
       DailyAggregate? best = ActivityMetricsEngine.getBestDay(processingDays, t);
-      int achieved = ActivityMetricsEngine.getGoalAchievedCount(processingDays, t);
+      int achieved = ActivityMetricsEngine.getGoalAchievedCount(processingDays, t, stepGoal: 5000, calGoal: 200, distGoal: 3.0);
 
       _avgPerDay.add(_formatStat(avg, t));
       
