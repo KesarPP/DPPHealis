@@ -29,6 +29,10 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   bool _isListening = false;
   bool _wasLastMessageSpoken = false;
 
+  int? _playingMessageIndex;
+  bool _isPlaying = false;
+  bool _isPaused = false;
+
   final Map<String, String> _qaMap = {
     "What is prediabetes?": "Prediabetes means your blood sugar levels are higher than normal, but not yet high enough to be diagnosed as type 2 diabetes. It is a warning sign, but it can be reversed with lifestyle changes.",
     "How can I lower my blood sugar naturally?": "You can lower your blood sugar naturally by exercising regularly, eating more fiber, staying hydrated, managing stress, and getting enough sleep.",
@@ -66,6 +70,44 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
           IosTextToSpeechAudioCategoryOptions.mixWithOthers,
         ],
       );
+
+      _flutterTts.setStartHandler(() {
+        if (mounted) {
+          setState(() {
+            _isPlaying = true;
+            _isPaused = false;
+          });
+        }
+      });
+
+      _flutterTts.setCompletionHandler(() {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _isPaused = false;
+            _playingMessageIndex = null;
+          });
+        }
+      });
+
+      _flutterTts.setPauseHandler(() {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _isPaused = true;
+          });
+        }
+      });
+
+      _flutterTts.setCancelHandler(() {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _isPaused = false;
+            _playingMessageIndex = null;
+          });
+        }
+      });
     } catch (e) {
       debugPrint('TTS Init Error: $e');
     }
@@ -249,6 +291,11 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       if (wasSpoken) {
         debugPrint('Triggering TTS speak for AI response...');
         try {
+          setState(() {
+            _playingMessageIndex = _currentSessionMessages.length - 1;
+            _isPlaying = true;
+            _isPaused = false;
+          });
           await _flutterTts.speak(_cleanTextForSpeech(aiResponseText));
         } catch (e) {
           debugPrint('TTS Speak Error: $e');
@@ -424,7 +471,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
                         _buildDateLabel('Today'),
                         const SizedBox(height: 12),
                       ],
-                      _buildBubble(msg),
+                      _buildBubble(msg, index),
                       const SizedBox(height: 8),
                     ],
                   );
@@ -566,8 +613,12 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     );
   }
 
-  Widget _buildBubble(ChatMessage msg) {
+  Widget _buildBubble(ChatMessage msg, int index) {
     final isUserMsg = msg.isUser;
+    final isCurrentPlaying = _playingMessageIndex == index;
+    final isPlaying = isCurrentPlaying && _isPlaying;
+    final isPaused = isCurrentPlaying && _isPaused;
+
     return Align(
       alignment: isUserMsg ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
@@ -600,13 +651,118 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
             ),
             child: _buildFormattedText(msg.text, isUserMsg),
           ),
-          const SizedBox(height: 3),
-          Text(
-            msg.time,
-            style: const TextStyle(
-              fontSize: 11,
-              color: _slateGrey,
-            ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                msg.time,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: _slateGrey,
+                ),
+              ),
+              if (!isUserMsg) ...[
+                const SizedBox(width: 12),
+                // Start / Resume Button
+                GestureDetector(
+                  onTap: () async {
+                    if (isPlaying) return; // already playing
+                    if (isCurrentPlaying && isPaused) {
+                      // Resume where it stopped
+                      setState(() {
+                        _isPlaying = true;
+                        _isPaused = false;
+                      });
+                      await _flutterTts.speak(_cleanTextForSpeech(msg.text));
+                    } else {
+                      // Start playing new message
+                      await _flutterTts.stop();
+                      setState(() {
+                        _playingMessageIndex = index;
+                        _isPlaying = true;
+                        _isPaused = false;
+                      });
+                      await _flutterTts.speak(_cleanTextForSpeech(msg.text));
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isPlaying ? const Color(0xFFE2E8F0) : const Color(0xFFEBF2FA),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: isPlaying ? const Color(0xFFCBD5E1) : const Color(0xFFDCCCEC)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isPlaying ? Icons.volume_up_rounded : Icons.play_arrow_rounded,
+                          size: 14,
+                          color: isPlaying ? _slateGrey : _brandColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isPlaying ? 'Playing' : (isPaused ? 'Resume' : 'Start'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isPlaying ? _slateGrey : _brandColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Stop Button
+                GestureDetector(
+                  onTap: () async {
+                    if (isPlaying) {
+                      await _flutterTts.pause();
+                      setState(() {
+                        _isPlaying = false;
+                        _isPaused = true;
+                      });
+                    } else if (isPaused) {
+                      await _flutterTts.stop();
+                      setState(() {
+                        _isPlaying = false;
+                        _isPaused = false;
+                        _playingMessageIndex = null;
+                      });
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (isPlaying || isPaused) ? const Color(0xFFFFEBEE) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: (isPlaying || isPaused) ? const Color(0xFFFFCDD2) : const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isPaused ? Icons.stop_rounded : Icons.pause_rounded,
+                          size: 14,
+                          color: (isPlaying || isPaused) ? Colors.red : _slateGrey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Stop',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: (isPlaying || isPaused) ? Colors.red : _slateGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),

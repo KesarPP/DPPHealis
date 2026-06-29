@@ -56,6 +56,7 @@ flutter:
     - assets/images/ffq/meat_fish_eggs/
     - assets/images/ffq/pulses_legumes/
     - assets/images/ffq/snacks_sweets/
+    - assets/images/ffq/soups/
     - assets/images/ffq/vegetables/
 
 flutter_launcher_icons:

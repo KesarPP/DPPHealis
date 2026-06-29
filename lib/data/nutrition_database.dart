@@ -23,7 +23,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
     category: 'Beverages',
     items: [
       FoodItemGroup(
-        name: '1) Tea',
+        name: 'Tea',
         varieties: [
           FoodVariety(name: 'Hot tea (Garam Chai)', calories: 16.14),
           FoodVariety(name: 'Kashmiri tea (Kehwa)', calories: 24.90),
@@ -31,7 +31,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '2) Coffee',
+        name: 'Coffee',
         varieties: [
           FoodVariety(name: 'Instant coffee', calories: 23.16),
           FoodVariety(name: 'Cold coffee with ice cream', calories: 67.85),
@@ -43,32 +43,35 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '3) Fruit Juice',
+        name: 'Fruit juice',
         varieties: [
           FoodVariety(name: 'Raw mango drink (Aam panna)', calories: 35.92),
           FoodVariety(name: 'Fruit Punch (with fresh juices)', calories: 36.12),
           FoodVariety(name: 'Fruit Punch (with squashes)', calories: 23.13),
           FoodVariety(name: 'Lemonade', calories: 20.80),
           FoodVariety(name: 'Lem-o-gin', calories: 21.52),
+          FoodVariety(name: 'Woodapple juice (Bel ka sharbat)', calories: 34.18),
+          FoodVariety(name: 'Cucumber sharbat (Kheere ka sharbat)', calories: 27.28),
+          FoodVariety(name: 'Nannari sharbat', calories: 88.79),
         ],
       ),
       FoodItemGroup(
-        name: '4) Vegetable Juice',
+        name: 'Vegetable juice',
         varieties: [
           FoodVariety(name: 'mixed vegetable juice', calories: 29.00),
         ],
       ),
       FoodItemGroup(
-        name: '5) Sweetened Soft drinks',
+        name: 'Sweetened soft drinks',
         varieties: [
-          FoodVariety(name: 'Coca-Cola*', calories: 140.00),
-          FoodVariety(name: 'Pepsi*', calories: 155.00),
-          FoodVariety(name: 'Sprite*', calories: 151.00),
-          FoodVariety(name: 'Orange soda*', calories: 195.00),
+          FoodVariety(name: 'Coca-Cola', calories: 140.00),
+          FoodVariety(name: 'Pepsi', calories: 155.00),
+          FoodVariety(name: 'Sprite', calories: 151.00),
+          FoodVariety(name: 'Orange soda', calories: 195.00),
         ],
       ),
       FoodItemGroup(
-        name: '6) Unsweetened (diet) soft drinks',
+        name: 'Unsweetened (diet) soft drinks',
         varieties: [
           FoodVariety(name: 'Diet Coke / Coca-Cola', calories: 0.00),
           FoodVariety(name: 'Diet Pepsi / Pepsi Zero', calories: 0.00),
@@ -76,7 +79,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '7) Wine',
+        name: 'Wine',
         varieties: [
           FoodVariety(name: 'Dry White Wines', calories: 110.00),
           FoodVariety(name: 'Sparkling Wines', calories: 110.00),
@@ -87,7 +90,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '8) Other alcoholic drinks',
+        name: 'Other alcoholic drinks',
         varieties: [
           FoodVariety(name: 'Spirits (Vodka, Gin, Tequila, Whiskey)', calories: 100.00),
           FoodVariety(name: 'Light Beer', calories: 100.00),
@@ -101,7 +104,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
     ],
   ),
   MajorFoodGroup(
-    category: 'Dairy',
+    category: 'Dairy & Milk Products',
     items: [
       FoodItemGroup(
         name: 'Milk',
@@ -113,7 +116,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: 'Lassi**',
+        name: 'Lassi',
         varieties: [
           FoodVariety(name: 'Lassi', calories: 18.84),
           FoodVariety(name: 'Meethi Lassi', calories: 35.66),
@@ -126,9 +129,6 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Lemon curd filling', calories: 225.62),
           FoodVariety(name: 'Poha with curd', calories: 173.32),
           FoodVariety(name: 'Potato with curd', calories: 73.18),
-          FoodVariety(name: 'Curd dip', calories: 79.95),
-          FoodVariety(name: 'Curd vegtable dip', calories: 56.21),
-          FoodVariety(name: 'Curd mint dip', calories: 76.13),
         ],
       ),
       FoodItemGroup(
@@ -143,7 +143,6 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         name: 'Raita',
         varieties: [
           FoodVariety(name: 'Tomato onion raita', calories: 59.00),
-          FoodVariety(name: 'Peanut raita', calories: 150.39),
           FoodVariety(name: 'Peanut raita (Mungfali ka raita)', calories: 150.39),
           FoodVariety(name: 'Sprouted moong raita', calories: 60.89),
           FoodVariety(name: 'Bottle gourd raita (Ghiya/Lauki ka raita)', calories: 56.31),
@@ -172,6 +171,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
       FoodItemGroup(
         name: 'Buttermilk',
         varieties: [
+          FoodVariety(name: 'Buttermilk', calories: 40.00),
           FoodVariety(name: 'Buttermilk biscuit', calories: 40.00),
         ],
       ),
@@ -193,7 +193,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: 'MilkShakes**',
+        name: 'MilkShakes',
         varieties: [
           FoodVariety(name: 'Banana Milkshake', calories: 65.31),
           FoodVariety(name: 'Mango milkshake', calories: 56.90),
@@ -206,13 +206,58 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Pineapple Milkshake', calories: 55.72),
         ],
       ),
+      FoodItemGroup(
+        name: 'khoa/milk sweets (solid)',
+        varieties: [
+          FoodVariety(name: 'Plain burfi (Burfi)', calories: 408.32),
+          FoodVariety(name: 'Khoa coconut burfi', calories: 411.45),
+          FoodVariety(name: 'Danedar burfi', calories: 102.68),
+          FoodVariety(name: 'Khoa ladoo', calories: 396.02),
+          FoodVariety(name: 'Semolina ladoo with khoya (Suji/Rava aur khoye ke ladoo )', calories: 428.71),
+          FoodVariety(name: 'Chenna murki', calories: 252.69),
+          FoodVariety(name: 'Milk cake', calories: 127.41),
+          FoodVariety(name: 'Gulab Jamun with khoya', calories: 586.06),
+          FoodVariety(name: 'Gulab jamun with milk powder', calories: 471.15),
+          FoodVariety(name: 'Rasgulla', calories: 118.64),
+          FoodVariety(name: 'Chum chum', calories: 130.05),
+          FoodVariety(name: 'Dil bahar', calories: 130.05),
+          FoodVariety(name: 'Rasbhari', calories: 130.05),
+          FoodVariety(name: 'Rajbogh', calories: 133.70),
+          FoodVariety(name: 'Chhena poda', calories: 344.57),
+          FoodVariety(name: 'Sweetened yogurt (Shrikhand)', calories: 107.18),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Milk sweets (liquid)',
+        varieties: [
+          FoodVariety(name: 'Rasmalai', calories: 135.55),
+          FoodVariety(name: 'Thickened sweetened milk (Rabri)', calories: 102.79),
+          FoodVariety(name: 'Rice kheer (Chawal ki kheer)', calories: 75.03),
+          FoodVariety(name: 'Makhana kheer', calories: 107.85),
+          FoodVariety(name: 'Vermicelli kheer (Semiya/Seviyan ki kheer)', calories: 120.07),
+          FoodVariety(name: 'Semolina kheer (Suji/Rava kheer)', calories: 113.21),
+          FoodVariety(name: 'Paneer kheer', calories: 105.31),
+          FoodVariety(name: 'Cabbage kheer (Pattagobhi ki kheer)', calories: 83.51),
+          FoodVariety(name: 'Carrot kheer (Gajar ki kheer)', calories: 85.35),
+          FoodVariety(name: 'Cauliflower kheer (Phoolgobhi ki kheer)', calories: 81.95),
+          FoodVariety(name: 'Moong dal kheer', calories: 77.16),
+          FoodVariety(name: 'Phirni', calories: 116.12),
+          FoodVariety(name: 'Shahi tukre', calories: 189.81),
+          FoodVariety(name: 'Bottle gourd kheer (Ghiya/Lauki kheer)', calories: 84.07),
+          FoodVariety(name: 'Pumpkin kheer (Kaddu ki kheer)', calories: 86.35),
+          FoodVariety(name: 'Apple kheer (Seb ki kheer)', calories: 81.30),
+          FoodVariety(name: 'Black rice kheer (Chak-hao kheer)', calories: 147.94),
+          FoodVariety(name: 'Coconut kheer (Nariyal ki kheer)', calories: 162.61),
+          FoodVariety(name: 'Apple sago payasam (Seb aur sabudana ki kheer)', calories: 136.50),
+        ],
+      ),
     ],
   ),
   MajorFoodGroup(
-    category: 'Cereals, Breads & preparations',
+    category: 'Cereals, Breads & Preparations',
     items: [
       FoodItemGroup(
-        name: '1) Biscuits',
+        name: 'Biscuits',
         varieties: [
           FoodVariety(name: 'Sweet plain biscuit', calories: 380.76),
           FoodVariety(name: 'Chocolate biscuit', calories: 379.76),
@@ -227,39 +272,38 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Ginger biscuit (Adarak ke biscuit)', calories: 417.91),
           FoodVariety(name: 'Sesame biscuit (Til ke biscuit)', calories: 424.03),
           FoodVariety(name: 'Finger millet biscuit (Ragi biscuit)', calories: 458.56),
-          FoodVariety(name: 'Buttermilk biscuit', calories: 322.54),
           FoodVariety(name: 'Sweet potato biscuit (Shakarkand ke biscuit)', calories: 296.40),
           FoodVariety(name: 'Olive biscuit', calories: 438.29),
           FoodVariety(name: 'Tutti fruitti biscuit', calories: 420.78),
         ],
       ),
       FoodItemGroup(
-        name: '2) White Bread',
+        name: 'White bread',
         varieties: [
           FoodVariety(name: 'White bread', calories: 245.00),
         ],
       ),
       FoodItemGroup(
-        name: '3) Whole wheat bread',
+        name: 'Whole wheat bread',
         varieties: [
           FoodVariety(name: 'Whole wheat bread', calories: 247.00),
         ],
       ),
       FoodItemGroup(
-        name: '4) Pav',
+        name: 'Pav',
         varieties: [
           FoodVariety(name: 'Plain pav', calories: 240.00),
         ],
       ),
       FoodItemGroup(
-        name: '5) Pav bhaji',
+        name: 'Pav bhaji',
         varieties: [
           FoodVariety(name: 'Pav bhaji masala', calories: 230.47),
           FoodVariety(name: 'Pav bhaji', calories: 96.53),
         ],
       ),
       FoodItemGroup(
-        name: '6) Sandwich',
+        name: 'Sandwich',
         varieties: [
           FoodVariety(name: 'Cheese and chilli sandwich', calories: 218.11),
           FoodVariety(name: 'Egg sandwich (Ande ka sandwich)', calories: 285.96),
@@ -306,19 +350,21 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '7) Naan',
+        name: 'Nan',
         varieties: [
           FoodVariety(name: 'Naan', calories: 286.45),
         ],
       ),
       FoodItemGroup(
-        name: '8) Chapati',
+        name: 'Chapati',
         varieties: [
           FoodVariety(name: 'Chapati/Roti', calories: 202.31),
+          FoodVariety(name: 'Makki ki roti', calories: 263.97),
+          FoodVariety(name: 'Paushtik roti', calories: 149.26),
         ],
       ),
       FoodItemGroup(
-        name: '9) Stuffed Paratha',
+        name: 'Stuffed paratha',
         varieties: [
           FoodVariety(name: 'Plain parantha/paratha', calories: 298.30),
           FoodVariety(name: 'Potato parantha/paratha (Aloo ka parantha/paratha)', calories: 205.04),
@@ -336,7 +382,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '10) Deep fried wheat snacks',
+        name: 'Deep fried wheat breads',
         varieties: [
           FoodVariety(name: 'Poori', calories: 737.63),
           FoodVariety(name: 'Spinach poori (Palak poori)', calories: 684.25),
@@ -347,10 +393,11 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Gram flour poori (Besan poori)', calories: 697.66),
           FoodVariety(name: 'Beetroot poori (Chukandar ki poori)', calories: 527.66),
           FoodVariety(name: 'Peas poori (Matar ki poori)', calories: 592.83),
+          FoodVariety(name: 'Bhatura', calories: 793.20),
         ],
       ),
       FoodItemGroup(
-        name: '11) Bhakri (jowar, bajra, nachni)',
+        name: 'Bhakri (jowar, bajra, nachni)',
         varieties: [
           FoodVariety(name: 'jowar bhakri', calories: 330.00),
           FoodVariety(name: 'bajra bhakri', calories: 350.00),
@@ -358,13 +405,13 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '12) Rice bhakri',
+        name: 'Rice bhakri',
         varieties: [
           FoodVariety(name: 'rice bhakri', calories: 220.00),
         ],
       ),
       FoodItemGroup(
-        name: '13) Idli',
+        name: 'Idli',
         varieties: [
           FoodVariety(name: 'Idli', calories: 137.54),
           FoodVariety(name: 'Instant idli (with semolina)', calories: 247.29),
@@ -372,7 +419,7 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '14) Dosa',
+        name: 'Dosa',
         varieties: [
           FoodVariety(name: 'Masala dosa', calories: 164.58),
           FoodVariety(name: 'Semolina dosa (Suji/Rava dosa)', calories: 227.05),
@@ -381,10 +428,13 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Masala dosa paneer fillings', calories: 243.12),
           FoodVariety(name: 'Moong bean dosa (Pesarattu)', calories: 285.96),
           FoodVariety(name: 'Jowar dosa', calories: 294.35),
+          FoodVariety(name: 'Onion tomato uttapam', calories: 462.02),
+          FoodVariety(name: 'Uttapam', calories: 255.95),
+          FoodVariety(name: 'Appam', calories: 267.70),
         ],
       ),
       FoodItemGroup(
-        name: '15) Papad',
+        name: 'Papad',
         varieties: [
           FoodVariety(name: 'Urad / Black Gram Papad', calories: 320.00),
           FoodVariety(name: 'Punjabi Masala Papad', calories: 370.00),
@@ -395,9 +445,14 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '16) Rice (plain) & Preparations',
+        name: 'Rice (plain)',
         varieties: [
           FoodVariety(name: 'Boiled rice (Uble chawal)', calories: 117.19),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Rice preparations',
+        varieties: [
           FoodVariety(name: 'Plain pulao', calories: 140.21),
           FoodVariety(name: 'Mixed vegetable pulao', calories: 113.05),
           FoodVariety(name: 'Mushroom pulao', calories: 124.29),
@@ -430,17 +485,17 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
         ],
       ),
       FoodItemGroup(
-        name: '17) Poha',
+        name: 'Poha',
         varieties: [
-          FoodVariety(name: 'Flattened rice cutlet (Chirwa cutlet/Chivda cutlet/Poha cutlet)', calories: 701.71),
-          FoodVariety(name: 'Sprouted moong poha', calories: 192.60),
           FoodVariety(name: 'Poha', calories: 294.53),
           FoodVariety(name: 'Vegetable poha', calories: 180.52),
           FoodVariety(name: 'Poha with curd (Poha aur dahi)', calories: 173.32),
+          FoodVariety(name: 'Sprouted moong poha', calories: 192.60),
+          FoodVariety(name: 'Flattened rice cutlet (Chirwa cutlet/Chivda cutlet/Poha cutlet)', calories: 701.71),
         ],
       ),
       FoodItemGroup(
-        name: '18) Upma',
+        name: 'Upma',
         varieties: [
           FoodVariety(name: 'Semolina upma (Suji/Rava upma)', calories: 147.89),
           FoodVariety(name: 'Vermicelli upma (Semiya/Seviyan upma)', calories: 149.11),
@@ -453,53 +508,241 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
     ],
   ),
   MajorFoodGroup(
-    category: 'Pulses',
+    category: 'Pulses & Legumes',
     items: [
       FoodItemGroup(
-        name: 'Dal Preparations',
+        name: 'Dal preparations',
         varieties: [
           FoodVariety(name: 'Washed moong dal (Dhuli moong ki dal)', calories: 50.00),
           FoodVariety(name: 'Washed urad dal (Dhuli urad ki dal)', calories: 61.32),
           FoodVariety(name: 'Split bengal gram with bottle gourd (Channa dal with ghiya/lauki)', calories: 73.25),
-          FoodVariety(name: 'Dry washed urad', calories: 124.71),
           FoodVariety(name: 'Mixed dal', calories: 61.93),
           FoodVariety(name: 'Whole moong (Moong ki dal)', calories: 53.70),
           FoodVariety(name: 'Whole masoor (Masoor ki dal)', calories: 54.05),
           FoodVariety(name: 'Whole moth (Moth ki dal)', calories: 55.00),
           FoodVariety(name: 'Whole urad (Urad ki dal)', calories: 53.80),
           FoodVariety(name: 'Moti mahal dal (Urad rajmah mix dal)', calories: 103.13),
+          FoodVariety(name: 'Sambar', calories: 96.92),
+          FoodVariety(name: 'Dal moong', calories: 43.69),
+          FoodVariety(name: 'Sour lentils (Khatti dal)', calories: 34.79),
+          FoodVariety(name: 'Arhar with spinach (Arhar dal aur palak)', calories: 52.84),
+          FoodVariety(name: 'Dal makhani', calories: 74.04),
+          FoodVariety(name: 'Panchmel dal', calories: 111.22),
+          FoodVariety(name: 'Dal dhokli', calories: 68.74),
+          FoodVariety(name: 'Split bengal gram dal (Channa dal)', calories: 99.67),
+          FoodVariety(name: 'Horsegram dal (Kulthi dal)', calories: 55.65),
+          FoodVariety(name: 'Dalma', calories: 118.93),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Wet pulses (dry curry)',
+        varieties: [
+          FoodVariety(name: 'Dry washed urad', calories: 124.71),
+          FoodVariety(name: 'Urad sabut special', calories: 79.39),
+          FoodVariety(name: 'Green gram whole with baghar (Sabut moong dal with tadka)', calories: 63.43),
+          FoodVariety(name: 'Classic seasoned black beans', calories: 28.78),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Wet pulses (gravy curry)',
+        varieties: [
           FoodVariety(name: 'Black channa curry/Bengal gram curry (Kale chane ki curry)', calories: 140.68),
           FoodVariety(name: 'Chickpeas curry (Safed channa curry)', calories: 163.43),
           FoodVariety(name: 'Lobia curry', calories: 148.99),
           FoodVariety(name: 'Soyabean curry', calories: 163.28),
           FoodVariety(name: 'Kidney bean curry (Rajmah curry)', calories: 143.73),
           FoodVariety(name: 'Khatta channa', calories: 202.57),
-          FoodVariety(name: 'Sprouted moong dal chat', calories: 32.47),
-          FoodVariety(name: 'Mixed pulse and vegetable salad', calories: 83.12),
-          FoodVariety(name: 'Sprouted moong salad', calories: 37.81),
-          FoodVariety(name: 'Sprouted moong daliya', calories: 111.56),
-          FoodVariety(name: 'Sprouted moong poha', calories: 192.60),
-          FoodVariety(name: 'Green gram whole with baghar (Sabut moong dal with tadka)', calories: 63.43),
-          FoodVariety(name: 'Urad sabut special', calories: 79.39),
           FoodVariety(name: 'Kabuli channa curry', calories: 68.57),
-          FoodVariety(name: 'Channa murmura premix', calories: 339.09),
-          FoodVariety(name: 'Cracked wheat and green gram dal premix (Dalia moong dal premix)', calories: 362.16),
-          FoodVariety(name: 'Rice flakes and roasted channa', calories: 333.40),
-          FoodVariety(name: 'Dal moong', calories: 43.69),
+          FoodVariety(name: 'Besan gatte curry', calories: 189.38),
         ],
       ),
     ],
   ),
   MajorFoodGroup(
-    category: 'Meat, fish and egg',
+    category: 'Vegetables',
     items: [
       FoodItemGroup(
-        name: 'chicken',
+        name: 'Potato',
         varieties: [
-          FoodVariety(name: 'Chicken stock', calories: 29.88),
-          FoodVariety(name: 'Chicken chowmein', calories: 151.33),
-          FoodVariety(name: 'Chicken lasagne', calories: 187.49),
-          FoodVariety(name: 'Chicken yakhni', calories: 99.00),
+          FoodVariety(name: 'Dry potato (Sookhe aloo)', calories: 103.15),
+          FoodVariety(name: 'Potato curry (Aloo ki sabzi)', calories: 89.56),
+          FoodVariety(name: 'Potato cauliflower (Aloo gobhi)', calories: 106.18),
+          FoodVariety(name: 'Potato capsicum (Shimla mirch aloo)', calories: 125.53),
+          FoodVariety(name: 'Potato fenugreek (Aloo methi)', calories: 135.15),
+          FoodVariety(name: 'Dum aloo', calories: 682.33),
+          FoodVariety(name: 'Curd with potatoes (Dahi aloo)', calories: 59.90),
+          FoodVariety(name: 'Potato kofta curry (Aloo kofta curry)', calories: 455.40),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Leafy vegetables',
+        varieties: [
+          FoodVariety(name: 'Dry Palak Sabji (Spinach)', calories: 49.00),
+          FoodVariety(name: 'Dry Methi Sabji (Fenugreek)', calories: 60.00),
+          FoodVariety(name: 'Spinach Curry/Sabji', calories: 55.00),
+          FoodVariety(name: 'Meethi Leaves Wet Curry', calories: 95.00),
+          FoodVariety(name: 'Chawli Bhaji (Amaranth Leaves wet curry)', calories: 85.00),
+          FoodVariety(name: 'Sarson ka saag', calories: 87.84),
+          FoodVariety(name: 'Spinach paneer (Palak paneer)', calories: 77.68),
+          FoodVariety(name: 'Methi chaman', calories: 475.62),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Beans',
+        varieties: [
+          FoodVariety(name: 'Beans with coconut (Nariyal aur sem/phali; Beans thoran)', calories: 131.63),
+          FoodVariety(name: 'Beans foogath', calories: 105.06),
+          FoodVariety(name: 'Dry beans', calories: 85.00),
+          FoodVariety(name: 'Wet beans', calories: 120.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Gourds',
+        varieties: [
+          FoodVariety(name: 'Lauki Kofta Curry', calories: 115.00),
+          FoodVariety(name: 'Ghiya/Lauki Kofta Curry', calories: 638.71),
+          FoodVariety(name: 'Stuffed bottle gourd (Stuffed ghiya/lauki)', calories: 93.19),
+          FoodVariety(name: 'Stuffed bittergourd (wet) (Bharwa karele)', calories: 162.36),
+          FoodVariety(name: 'Stuffed bittergourd (dry) (Bharwa karela)', calories: 217.65),
+          FoodVariety(name: 'Stuffed round gourd (Bharwa tinde)', calories: 72.80),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Peas',
+        varieties: [
+          FoodVariety(name: 'Pea potato curry (Aloo matar)', calories: 100.92),
+          FoodVariety(name: 'Pea paneer curry (Matar paneer)', calories: 134.83),
+          FoodVariety(name: 'Pea mushroom curry (Matar mushroom)', calories: 93.30),
+          FoodVariety(name: 'Pea curry (Matar ki sabzi)', calories: 102.99),
+          FoodVariety(name: 'Pea kofta curry (Matar kofta curry)', calories: 595.66),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Cauliflower',
+        varieties: [
+          FoodVariety(name: 'Gobhi Matar Sabzi', calories: 85.00),
+          FoodVariety(name: 'Gobhi Matar Tariwali', calories: 65.00),
+          FoodVariety(name: 'Cauliflower with coconut (Nariyal ke saath phoolgobhi)', calories: 132.11),
+          FoodVariety(name: 'Cauliflower kofta curry (Phoolgobhi kofta curry)', calories: 641.10),
+          FoodVariety(name: 'Cauliflower musallam (Phoolgobhi musallam)', calories: 58.83),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Drumstick',
+        varieties: [
+          FoodVariety(name: 'Drumstick Masala Dry', calories: 95.00),
+          FoodVariety(name: 'Drumstick Sambar', calories: 75.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Yam',
+        varieties: [
+          FoodVariety(name: 'Suran Stir-Fry', calories: 130.00),
+          FoodVariety(name: 'Suran Rasedar Curry', calories: 105.00),
+          FoodVariety(name: 'Yam kofta curry (Zimikand/Suran kofta curry)', calories: 322.88),
+          FoodVariety(name: 'Yam fried (Zimikand/Suran fried)', calories: 491.76),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Lady finger',
+        varieties: [
+          FoodVariety(name: 'Bhindi Fry', calories: 110.00),
+          FoodVariety(name: 'Dahi Bhindi', calories: 90.00),
+          FoodVariety(name: 'Stuffed okra (Bharwa bhindi)', calories: 94.34),
+          FoodVariety(name: 'Okra/Lady\'s fingers fry (Bhindi sabzi/sabji/subji)', calories: 110.81),
+          FoodVariety(name: 'Crispy okra/Crispy lady\'s fingers (Karare bhindi)', calories: 657.76),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Onion',
+        varieties: [
+          FoodVariety(name: 'Pyaz Besan Sabzi', calories: 150.00),
+          FoodVariety(name: 'Pyaz Ka Salan', calories: 145.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Brinjal',
+        varieties: [
+          FoodVariety(name: 'Baingan Bhaja', calories: 120.00),
+          FoodVariety(name: 'Baingan Ka Salan', calories: 140.00),
+          FoodVariety(name: 'Brinjal bhartha (Baingan ka bhartha)', calories: 65.12),
+          FoodVariety(name: 'Stuffed brinjal (Bharwa baingan)', calories: 93.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Other vegetables (dry & wet forms)',
+        varieties: [
+          FoodVariety(name: 'Jackfruit sabzi (Kathal ki sabzi)', calories: 625.40),
+          FoodVariety(name: 'Jackfruit kofta curry (Kathal ka kofta curry)', calories: 321.08),
+          FoodVariety(name: 'Avial', calories: 124.56),
+          FoodVariety(name: 'Stuffed capsicum (Bharwa shimla mirch)', calories: 90.94),
+          FoodVariety(name: 'Stuffed tomatoes (Bharwa tamatar)', calories: 93.35),
+          FoodVariety(name: 'Dry arbi (Sookhi arbi)', calories: 134.95),
+          FoodVariety(name: 'Masala arbi', calories: 185.38),
+          FoodVariety(name: 'Cabbage rolls (dry) ((Pattagobhi rolls) (dry))', calories: 142.48),
+          FoodVariety(name: 'Cabbage rolls (curry) ((Pattagobhi rolls)(curry))', calories: 124.63),
+          FoodVariety(name: 'Mooli bhujia', calories: 91.20),
+          FoodVariety(name: 'Bathua bhujia', calories: 90.90),
+          FoodVariety(name: 'Vegetable jalfrezi', calories: 68.48),
+          FoodVariety(name: 'Vegetables stir fry', calories: 30.78),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Green chillies',
+        varieties: [
+          FoodVariety(name: 'Green chilli (Hari mirch)', calories: 40.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Garlic',
+        varieties: [
+          FoodVariety(name: 'Garlic (Lahasun)', calories: 149.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Onions (raw)',
+        varieties: [
+          FoodVariety(name: 'Onion (Pyaaz)', calories: 40.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Carrots (raw)',
+        varieties: [
+          FoodVariety(name: 'Carrots (Gajar)', calories: 41.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Cabbage (raw)',
+        varieties: [
+          FoodVariety(name: 'Cabbage (Pattagobhi)', calories: 25.00),
+        ],
+      ),
+    ],
+  ),
+  MajorFoodGroup(
+    category: 'Meat, Fish & Eggs',
+    items: [
+      FoodItemGroup(
+        name: 'Egg',
+        varieties: [
+          FoodVariety(name: 'Boiled egg (Ubla anda)', calories: 45.35),
+          FoodVariety(name: 'Fried Egg', calories: 223.67),
+          FoodVariety(name: 'Poached egg', calories: 123.87),
+          FoodVariety(name: 'Scrambled egg (Ande ki bhurji)', calories: 155.97),
+          FoodVariety(name: 'Baked egg', calories: 218.85),
+          FoodVariety(name: 'Plain omelette/omlet', calories: 272.41),
+          FoodVariety(name: 'Stuffed egg omelette/omlet', calories: 203.51),
+          FoodVariety(name: 'Scotch egg', calories: 676.89),
+          FoodVariety(name: 'Deviled egg', calories: 98.56),
+          FoodVariety(name: 'Egg curry (Anda curry)', calories: 117.52),
+          FoodVariety(name: 'Egg cutlet (Anda cutlet)', calories: 575.02),
+          FoodVariety(name: 'Egg in a pepper', calories: 128.78),
+          FoodVariety(name: 'Spinach mushroom scrambled egg (Palak mushroom bhurji)', calories: 158.85),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Chicken',
+        varieties: [
           FoodVariety(name: 'Chicken curry', calories: 129.22),
           FoodVariety(name: 'Tandoori chicken', calories: 145.20),
           FoodVariety(name: 'Butter chicken', calories: 137.00),
@@ -507,23 +750,17 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Chilli chicken', calories: 198.83),
           FoodVariety(name: 'Fried chicken with tomato sauce (Fried chicken tamatar ki chutney kay saath)', calories: 125.03),
           FoodVariety(name: 'Chicken stew', calories: 127.55),
-          FoodVariety(name: 'Minced meat pancake (with chicken)', calories: 116.04),
           FoodVariety(name: 'Roast chicken', calories: 199.90),
           FoodVariety(name: 'Shahi chicken masala', calories: 163.70),
           FoodVariety(name: 'Tomato chicken', calories: 111.68),
           FoodVariety(name: 'Creamy chicken', calories: 152.87),
-          FoodVariety(name: 'Broccoli chicken ala king', calories: 119.56),
           FoodVariety(name: 'Ginger chicken', calories: 129.17),
-          FoodVariety(name: 'Chicken sweet and sour', calories: 445.09),
           FoodVariety(name: 'Chicken korma', calories: 147.96),
-          FoodVariety(name: 'Chicken and tomato towers', calories: 100.55),
           FoodVariety(name: 'Afghani chicken', calories: 151.51),
           FoodVariety(name: 'Chicken manchurian', calories: 142.34),
           FoodVariety(name: 'Handi chicken', calories: 166.02),
           FoodVariety(name: 'Lemon chicken', calories: 169.79),
           FoodVariety(name: 'Cajun chicken', calories: 184.94),
-          FoodVariety(name: 'Chicken salad', calories: 338.19),
-          FoodVariety(name: 'Chicken and cheese souffle', calories: 182.35),
         ],
       ),
       FoodItemGroup(
@@ -534,75 +771,39 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Mutton yakhni', calories: 104.13),
           FoodVariety(name: 'Mutton do piaza', calories: 183.30),
           FoodVariety(name: 'Mutton chops', calories: 663.64),
-          FoodVariety(name: 'Meat consomme (with mutton)', calories: 29.76),
           FoodVariety(name: 'Mutton korma', calories: 115.64),
           FoodVariety(name: 'Mutton seekh kebab', calories: 133.94),
           FoodVariety(name: 'Shahi keema kofta curry', calories: 418.13),
-          FoodVariety(name: 'Minced meat ball curry', calories: 109.79),
           FoodVariety(name: 'Boti kebab', calories: 132.86),
           FoodVariety(name: 'Indian lamb and egg curry (Nargisi kofta)', calories: 335.75),
         ],
       ),
       FoodItemGroup(
-        name: 'Egg',
-        varieties: [
-          FoodVariety(name: 'Egg nog', calories: 97.14),
-          FoodVariety(name: 'Boiled egg (Ubla anda)', calories: 45.35),
-          FoodVariety(name: 'Fried Egg', calories: 223.67),
-          FoodVariety(name: 'Poached egg', calories: 123.87),
-          FoodVariety(name: 'Scrambled egg (Ande ki bhurji)', calories: 155.97),
-          FoodVariety(name: 'Baked egg', calories: 218.85),
-          FoodVariety(name: 'Plain omelette/omlet', calories: 272.41),
-          FoodVariety(name: 'Stuffed egg omelette/omlet', calories: 203.51),
-          FoodVariety(name: 'Vegetarian egg kofta curry', calories: 627.41),
-          FoodVariety(name: 'Scotch egg', calories: 676.89),
-          FoodVariety(name: 'Deviled egg', calories: 98.56),
-          FoodVariety(name: 'Egg halwa (Ande ka halwa)', calories: 299.74),
-          FoodVariety(name: 'Egg pakora/pakoda (Ande ke pakode)', calories: 710.51),
-          FoodVariety(name: 'Vegeterian scotch egg', calories: 681.67),
-          FoodVariety(name: 'Indian style egg bhujia (Anda bhujia (Indian style))', calories: 102.83),
-          FoodVariety(name: 'French omelette/omlet', calories: 211.04),
-          FoodVariety(name: 'Puffy omelette/omlet', calories: 188.15),
-          FoodVariety(name: 'Orange omelette/omlet', calories: 194.66),
-          FoodVariety(name: 'Cheese and mushroom omelette/omlet', calories: 205.63),
-          FoodVariety(name: 'Spanish omelette/omlet', calories: 157.45),
-          FoodVariety(name: 'Home made egg noodles', calories: 240.84),
-          FoodVariety(name: 'Egg curry (Anda curry)', calories: 117.52),
-          FoodVariety(name: 'Beetroot and egg salad (Chukandar aur ande ka salad)', calories: 84.92),
-          FoodVariety(name: 'Mayonnaise without eggs', calories: 329.05),
-          FoodVariety(name: 'Egg cutlet (Anda cutlet)', calories: 575.02),
-          FoodVariety(name: 'Baked eggs in tomato sauce', calories: 80.05),
-          FoodVariety(name: 'Egg in a pepper', calories: 128.78),
-          FoodVariety(name: 'Spinach mushroom scrambled egg (Palak mushroom bhurji)', calories: 158.85),
-          FoodVariety(name: 'Corn omelette/omlet', calories: 166.93),
-          FoodVariety(name: 'Egg sauce', calories: 146.85),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Fish',
+        name: 'Fresh fish/prawns (dry & wet)',
         varieties: [
           FoodVariety(name: 'Fish curry (Machli curry)', calories: 111.13),
-          FoodVariety(name: 'Fried fish (Indian style) (Tali hui machli)', calories: 658.54),
-          FoodVariety(name: 'Fried fish and Chips (English Style) (Tali hui machli aur chips)', calories: 651.75),
-          FoodVariety(name: 'Tomato fish', calories: 489.79),
-          FoodVariety(name: 'Baked fish with cheese sauce', calories: 113.96),
-          FoodVariety(name: 'Fish tikka', calories: 117.33),
-          FoodVariety(name: 'Tandoori fish', calories: 95.98),
-          FoodVariety(name: 'Fish cutlet (Machli ka cutlet)', calories: 654.64),
-          FoodVariety(name: 'Hot fish souffle', calories: 142.92),
           FoodVariety(name: 'Bengal fish curry (Bengali machli curry)', calories: 109.43),
-          FoodVariety(name: 'Fish finger', calories: 542.90),
-          FoodVariety(name: 'Fish in coconut milk (Nariyal ke doodh ke saath machli)', calories: 86.21),
-          FoodVariety(name: 'Baked stuffed fish', calories: 121.96),
-          FoodVariety(name: 'Fish pie', calories: 120.90),
-          FoodVariety(name: 'Crispy baked fish', calories: 138.40),
-          FoodVariety(name: 'Fish souffle', calories: 139.71),
+          FoodVariety(name: 'Prawn curry (with coconut) (Jhinga curry)', calories: 109.55),
+          FoodVariety(name: 'Fish tikka', calories: 117.33),
           FoodVariety(name: 'Hariyali Fish Tikka', calories: 150.24),
+          FoodVariety(name: 'Tandoori fish', calories: 95.98),
+          FoodVariety(name: 'Fish in coconut milk (Nariyal ke doodh ke saath machli)', calories: 86.21),
           FoodVariety(name: 'Lemon butter fish', calories: 160.25),
         ],
       ),
       FoodItemGroup(
-        name: 'Crab',
+        name: 'Dry fish/prawns (dry & wet)',
+        varieties: [
+          FoodVariety(name: 'Fried fish (Indian style) (Tali hui machli)', calories: 658.54),
+          FoodVariety(name: 'Fried fish and Chips (English Style) (Tali hui machli aur chips)', calories: 651.75),
+          FoodVariety(name: 'Fish finger', calories: 542.90),
+          FoodVariety(name: 'Crispy baked fish', calories: 138.40),
+          FoodVariety(name: 'Fish cutlet (Machli ka cutlet)', calories: 654.64),
+          FoodVariety(name: 'Baked fish with cheese sauce', calories: 113.96),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Crab preparations (dry & wet)',
         varieties: [
           FoodVariety(name: 'Crabs dry gravy', calories: 110.00),
           FoodVariety(name: 'Crabs wet gravy', calories: 150.00),
@@ -611,204 +812,10 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
     ],
   ),
   MajorFoodGroup(
-    category: 'Vegetables (dry and wet forms) Raw vegetables',
-    items: [
-      FoodItemGroup(
-        name: 'potato',
-        varieties: [
-          FoodVariety(name: 'Dry potato (Sookhe aloo)', calories: 103.15),
-          FoodVariety(name: 'Potato curry (Aloo ki sabzi)', calories: 89.56),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'leafy vegetables',
-        varieties: [
-          FoodVariety(name: 'Dry Palak Sabji (Spinach)', calories: 49.00),
-          FoodVariety(name: 'Dry Methi Sabji (Fenugreek)', calories: 60.00),
-          FoodVariety(name: 'Spinach Curry/Sabji', calories: 55.00),
-          FoodVariety(name: 'Meethi Leaves Wet Curry', calories: 95.00),
-          FoodVariety(name: 'Chawli Bhaji (Amaranth Leaves wet curry)', calories: 85.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'beans',
-        varieties: [
-          FoodVariety(name: 'Dry', calories: 85.00),
-          FoodVariety(name: 'Wet', calories: 120.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Cauliflower & Peas',
-        varieties: [
-          FoodVariety(name: 'Gobhi Matar Sabzi', calories: 0.00),
-          FoodVariety(name: 'Gobhi Matar Tariwali', calories: 0.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Lady\'s Finger',
-        varieties: [
-          FoodVariety(name: 'Bhindi Fry', calories: 0.00),
-          FoodVariety(name: 'Dahi Bhindi', calories: 0.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Brinjal',
-        varieties: [
-          FoodVariety(name: 'Baingan Bhaja', calories: 0.00),
-          FoodVariety(name: 'Baingan Ka Salan', calories: 0.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Gourds',
-        varieties: [
-          FoodVariety(name: 'Lauki Kofta Curry', calories: 0.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Yam',
-        varieties: [
-          FoodVariety(name: 'Suran Stir-Fry', calories: 0.00),
-          FoodVariety(name: 'Suran Rasedar Curry', calories: 0.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Drumstick',
-        varieties: [
-          FoodVariety(name: 'Drumstick Masala Dry', calories: 0.00),
-          FoodVariety(name: 'Drumstick Sambar', calories: 0.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Onion',
-        varieties: [
-          FoodVariety(name: 'Pyaz Besan Sabzi', calories: 0.00),
-          FoodVariety(name: 'Pyaz Ka Salan', calories: 0.00),
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Green chilli',
-        varieties: [
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Garlic',
-        varieties: [
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Onion',
-        varieties: [
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Carrots',
-        varieties: [
-        ],
-      ),
-      FoodItemGroup(
-        name: 'Cabbage',
-        varieties: [
-        ],
-      ),
-    ],
-  ),
-  MajorFoodGroup(
-    category: 'Condiments & side items',
-    items: [
-      FoodItemGroup(
-        name: '1) Salad',
-        varieties: [
-          FoodVariety(name: 'Paneer, apple and pineapple salad', calories: 95.08),
-          FoodVariety(name: 'Russian salad', calories: 114.83),
-          FoodVariety(name: 'Pasta salad', calories: 190.36),
-          FoodVariety(name: 'Deviled egg', calories: 98.56),
-          FoodVariety(name: 'Hawain salad', calories: 175.23),
-          FoodVariety(name: 'Mixed pulse and vegetable salad', calories: 83.12),
-          FoodVariety(name: 'Sprouted moong salad', calories: 37.81),
-          FoodVariety(name: 'Tossed salad', calories: 62.96),
-          FoodVariety(name: 'Mixed vegetable salad with curd sauce', calories: 60.28),
-          FoodVariety(name: 'Potato salad (Aloo ka salaad)', calories: 89.91),
-          FoodVariety(name: 'Waldroff salad', calories: 141.75),
-          FoodVariety(name: 'Fruit salad (Phalon ka salaad)', calories: 78.14),
-          FoodVariety(name: 'Beetroot and egg salad (Chukandar aur ande ka salad)', calories: 84.92),
-          FoodVariety(name: 'Sour cream potato salad', calories: 121.90),
-          FoodVariety(name: 'Tossed green salad', calories: 49.88),
-          FoodVariety(name: 'Spring basket salad', calories: 160.46),
-          FoodVariety(name: 'Cucumber and yogurt salad (Kheere aur dahi ka salad)', calories: 36.13),
-          FoodVariety(name: 'Jellied sunshine fruit salad', calories: 48.86),
-          FoodVariety(name: 'Frozen frosty fruit salad (Phalon ka salaad)', calories: 103.51),
-          FoodVariety(name: 'Chicken salad', calories: 338.19),
-          FoodVariety(name: 'Macaroni salad', calories: 262.19),
-          FoodVariety(name: 'Kale salad', calories: 177.71),
-        ],
-      ),
-      FoodItemGroup(
-        name: '2) Chutney',
-        varieties: [
-          FoodVariety(name: 'Fried chicken with tomato sauce (Fried chicken tamatar ki chutney kay saath)', calories: 125.03),
-          FoodVariety(name: 'Saunth/Sonth chutney with tamarind/imli', calories: 141.53),
-          FoodVariety(name: 'Dry mango chutney (Sookhe aam ki chutney)', calories: 298.13),
-          FoodVariety(name: 'Peanut chutney (Mungfali ki chutney)', calories: 258.37),
-          FoodVariety(name: 'Coconut chutney (Nariyal ki chutney)', calories: 265.92),
-          FoodVariety(name: 'Mint and coriander chutney (Pudinay aur dhaniye ki chutney)', calories: 102.60),
-          FoodVariety(name: 'Tomato ginger chutney (Tamatar adarak ki chutney)', calories: 44.66),
-          FoodVariety(name: 'Mint tomato chutney (Pudinay aur tamatar ki chutney)', calories: 43.65),
-          FoodVariety(name: 'Coriander chutney (Hare dhaniye ki chutney)', calories: 42.86),
-          FoodVariety(name: 'Gooseberry chutney (Amla chutney)', calories: 43.02),
-          FoodVariety(name: 'Walnut chutney (Akhrot ki chutney)', calories: 370.43),
-          FoodVariety(name: 'Saunth/Sonth chutney with ginger', calories: 84.22),
-          FoodVariety(name: 'Gun powder chutney', calories: 312.34),
-          FoodVariety(name: 'Dessicated coconut chutney (Sookhe kase nariyal ki chutney)', calories: 346.36),
-          FoodVariety(name: 'Garlic chutney/Poondu chutney (Lahasun ki chutney)', calories: 255.51),
-          FoodVariety(name: 'Schezwan chutney', calories: 205.19),
-          FoodVariety(name: 'Onion chutney (Pyaaz ki chutney/Vengaya chutney)', calories: 143.94),
-          FoodVariety(name: 'Dates chutney (Khajoor ki chutney)', calories: 103.57),
-          FoodVariety(name: 'Tamarind chutney (Chintapandu pachadi/Puli chutney)', calories: 109.15),
-          FoodVariety(name: 'Green chutney', calories: 79.42),
-          FoodVariety(name: 'Plum chutney (Aloo bukhara ki chutney)', calories: 177.11),
-          FoodVariety(name: 'Raw mango chutney (Kachhe aam/Kairi ki chutney)', calories: 193.13),
-          FoodVariety(name: 'Tomato chutney (Tamatar ki chutney)', calories: 176.07),
-        ],
-      ),
-      FoodItemGroup(
-        name: '3) Pickle',
-        varieties: [
-          FoodVariety(name: 'Gooseberry pickle (Amla ka achaar)', calories: 278.58),
-          FoodVariety(name: 'Lotus stem pickle (Kamal kakdi ka achar)', calories: 102.69),
-          FoodVariety(name: 'Date pickle (Khajoor ka achaar)', calories: 182.29),
-          FoodVariety(name: 'Garlic pickle (Lahasun ka achar)', calories: 413.62),
-          FoodVariety(name: 'Fermented bamboo shoot pickle (Mesu pickle)', calories: 59.83),
-          FoodVariety(name: 'Sweet peach pickle (Aadoo ka achaar)', calories: 144.64),
-          FoodVariety(name: 'Pickled mustard greens', calories: 13.12),
-          FoodVariety(name: 'Small onion pickle', calories: 16.86),
-          FoodVariety(name: 'Green tomato pickle (Haray tamatar ka achaar)', calories: 193.26),
-          FoodVariety(name: 'Pickled cabbage', calories: 13.69),
-          FoodVariety(name: 'Coconut pickle (Nariyal ka aachar)', calories: 517.26),
-          FoodVariety(name: 'Potato pickle (Aloo ka achaar)', calories: 369.14),
-          FoodVariety(name: 'Mango pickle (Aam ka achaar)', calories: 192.12),
-          FoodVariety(name: 'Mixed vegetable pickle (Sabziyoon ka achaar)', calories: 211.20),
-          FoodVariety(name: 'Sweet lemon pickle (Neembu ka meetha achaar)', calories: 69.54),
-          FoodVariety(name: 'Lemon green chilli pickle (Nimboo aur hari mirch ka achaar)', calories: 14.07),
-          FoodVariety(name: 'Brinjal pickle (Baingan ka achaar)', calories: 139.01),
-          FoodVariety(name: 'Sweet and sour tomato pickle (Khatta meetha tamatar ka achaar)', calories: 60.88),
-        ],
-      ),
-      FoodItemGroup(
-        name: '4) Dip **',
-        varieties: [
-          FoodVariety(name: 'Curd mint dip', calories: 76.13),
-          FoodVariety(name: 'Curd vegetable dip', calories: 56.21),
-          FoodVariety(name: 'Mayonnaise vegetable dip', calories: 241.27),
-          FoodVariety(name: 'Curd dip', calories: 79.95),
-        ],
-      ),
-    ],
-  ),
-  MajorFoodGroup(
     category: 'Soups',
     items: [
       FoodItemGroup(
-        name: 'Soup**',
+        name: 'Soup',
         varieties: [
           FoodVariety(name: 'Clear tomato soup (Tamatar ka soup)', calories: 80.07),
           FoodVariety(name: 'Lentil soup', calories: 31.17),
@@ -848,6 +855,424 @@ const List<MajorFoodGroup> kMajorFoodGroups = [
           FoodVariety(name: 'Curried Cauliflower soup', calories: 37.32),
           FoodVariety(name: 'Millet soup', calories: 55.99),
           FoodVariety(name: 'Lemon coriander soup', calories: 108.06),
+        ],
+      ),
+    ],
+  ),
+  MajorFoodGroup(
+    category: 'Condiments & Side Items',
+    items: [
+      FoodItemGroup(
+        name: 'Salad',
+        varieties: [
+          FoodVariety(name: 'Paneer, apple and pineapple salad', calories: 95.08),
+          FoodVariety(name: 'Russian salad', calories: 114.83),
+          FoodVariety(name: 'Pasta salad', calories: 190.36),
+          FoodVariety(name: 'Deviled egg', calories: 98.56),
+          FoodVariety(name: 'Hawain salad', calories: 175.23),
+          FoodVariety(name: 'Mixed pulse and vegetable salad', calories: 83.12),
+          FoodVariety(name: 'Sprouted moong salad', calories: 37.81),
+          FoodVariety(name: 'Tossed salad', calories: 62.96),
+          FoodVariety(name: 'Mixed vegetable salad with curd sauce', calories: 60.28),
+          FoodVariety(name: 'Potato salad (Aloo ka salaad)', calories: 89.91),
+          FoodVariety(name: 'Waldroff salad', calories: 141.75),
+          FoodVariety(name: 'Fruit salad (Phalon ka salaad)', calories: 78.14),
+          FoodVariety(name: 'Beetroot and egg salad (Chukandar aur ande ka salad)', calories: 84.92),
+          FoodVariety(name: 'Sour cream potato salad', calories: 121.90),
+          FoodVariety(name: 'Tossed green salad', calories: 49.88),
+          FoodVariety(name: 'Spring basket salad', calories: 160.46),
+          FoodVariety(name: 'Cucumber and yogurt salad (Kheere aur dahi ka salad)', calories: 36.13),
+          FoodVariety(name: 'Jellied sunshine fruit salad', calories: 48.86),
+          FoodVariety(name: 'Frozen frosty fruit salad (Phalon ka salaad)', calories: 103.51),
+          FoodVariety(name: 'Chicken salad', calories: 338.19),
+          FoodVariety(name: 'Macaroni salad', calories: 262.19),
+          FoodVariety(name: 'Kale salad', calories: 177.71),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Chutney',
+        varieties: [
+          FoodVariety(name: 'Saunth/Sonth chutney with tamarind/imli', calories: 141.53),
+          FoodVariety(name: 'Dry mango chutney (Sookhe aam ki chutney)', calories: 298.13),
+          FoodVariety(name: 'Peanut chutney (Mungfali ki chutney)', calories: 258.37),
+          FoodVariety(name: 'Coconut chutney (Nariyal ki chutney)', calories: 265.92),
+          FoodVariety(name: 'Mint and coriander chutney (Pudinay aur dhaniye ki chutney)', calories: 102.60),
+          FoodVariety(name: 'Tomato ginger chutney (Tamatar adarak ki chutney)', calories: 44.66),
+          FoodVariety(name: 'Mint tomato chutney (Pudinay aur tamatar ki chutney)', calories: 43.65),
+          FoodVariety(name: 'Coriander chutney (Hare dhaniye ki chutney)', calories: 42.86),
+          FoodVariety(name: 'Gooseberry chutney (Amla chutney)', calories: 43.02),
+          FoodVariety(name: 'Walnut chutney (Akhrot ki chutney)', calories: 370.43),
+          FoodVariety(name: 'Saunth/Sonth chutney with ginger', calories: 84.22),
+          FoodVariety(name: 'Gun powder chutney', calories: 312.34),
+          FoodVariety(name: 'Dessicated coconut chutney (Sookhe kase nariyal ki chutney)', calories: 346.36),
+          FoodVariety(name: 'Garlic chutney/Poondu chutney (Lahasun ki chutney)', calories: 255.51),
+          FoodVariety(name: 'Schezwan chutney', calories: 205.19),
+          FoodVariety(name: 'Onion chutney (Pyaaz ki chutney/Vengaya chutney)', calories: 143.94),
+          FoodVariety(name: 'Dates chutney (Khajoor ki chutney)', calories: 103.57),
+          FoodVariety(name: 'Tamarind chutney (Chintapandu pachadi/Puli chutney)', calories: 109.15),
+          FoodVariety(name: 'Green chutney', calories: 79.42),
+          FoodVariety(name: 'Plum chutney (Aloo bukhara ki chutney)', calories: 177.11),
+          FoodVariety(name: 'Raw mango chutney (Kachhe aam/Kairi ki chutney)', calories: 193.13),
+          FoodVariety(name: 'Tomato chutney (Tamatar ki chutney)', calories: 176.07),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Pickle',
+        varieties: [
+          FoodVariety(name: 'Gooseberry pickle (Amla ka achaar)', calories: 278.58),
+          FoodVariety(name: 'Lotus stem pickle (Kamal kakdi ka achar)', calories: 102.69),
+          FoodVariety(name: 'Date pickle (Khajoor ka achaar)', calories: 182.29),
+          FoodVariety(name: 'Garlic pickle (Lahasun ka achar)', calories: 413.62),
+          FoodVariety(name: 'Fermented bamboo shoot pickle (Mesu pickle)', calories: 59.83),
+          FoodVariety(name: 'Sweet peach pickle (Aadoo ka achaar)', calories: 144.64),
+          FoodVariety(name: 'Pickled mustard greens', calories: 13.12),
+          FoodVariety(name: 'Small onion pickle', calories: 16.86),
+          FoodVariety(name: 'Green tomato pickle (Haray tamatar ka achaar)', calories: 193.26),
+          FoodVariety(name: 'Pickled cabbage', calories: 13.69),
+          FoodVariety(name: 'Coconut pickle (Nariyal ka aachar)', calories: 517.26),
+          FoodVariety(name: 'Potato pickle (Aloo ka achaar)', calories: 369.14),
+          FoodVariety(name: 'Mango pickle (Aam ka achaar)', calories: 192.12),
+          FoodVariety(name: 'Mixed vegetable pickle (Sabziyoon ka achaar)', calories: 211.20),
+          FoodVariety(name: 'Sweet lemon pickle (Neembu ka meetha achaar)', calories: 69.54),
+          FoodVariety(name: 'Lemon green chilli pickle (Nimboo aur hari mirch ka achaar)', calories: 14.07),
+          FoodVariety(name: 'Brinjal pickle (Baingan ka achaar)', calories: 139.01),
+          FoodVariety(name: 'Sweet and sour tomato pickle (Khatta meetha tamatar ka achaar)', calories: 60.88),
+          FoodVariety(name: 'Jhatpat achar with carrot (Jhatpat achaar gajar ke saath)', calories: 91.21),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Dip',
+        varieties: [
+          FoodVariety(name: 'Curd mint dip', calories: 76.13),
+          FoodVariety(name: 'Curd vegetable dip', calories: 56.21),
+          FoodVariety(name: 'Mayonnaise vegetable dip', calories: 241.27),
+          FoodVariety(name: 'Curd dip', calories: 79.95),
+        ],
+      ),
+    ],
+  ),
+  MajorFoodGroup(
+    category: 'Snacks & Sweets',
+    items: [
+      FoodItemGroup(
+        name: 'Deep-fried snacks',
+        varieties: [
+          FoodVariety(name: 'Potato pakora/pakoda (Aloo pakoda)', calories: 677.19),
+          FoodVariety(name: 'Onion pakora/pakoda (Pyaaz ke pakode)', calories: 674.61),
+          FoodVariety(name: 'Cauliflower pakora/pakoda (Phoolgobhi ke pakode)', calories: 671.63),
+          FoodVariety(name: 'Mixed vegetable pakora/pakoda', calories: 673.81),
+          FoodVariety(name: 'Spinach pakora/pakoda (Palak pakoda)', calories: 712.62),
+          FoodVariety(name: 'Methi pakora/pakoda (Methi ke pakode)', calories: 713.25),
+          FoodVariety(name: 'Bread pakora/pakoda', calories: 710.99),
+          FoodVariety(name: 'Paneer pakora/pakoda', calories: 718.12),
+          FoodVariety(name: 'Potato bonda (Aloo bonda)', calories: 632.84),
+          FoodVariety(name: 'Potato samosa (Aloo ka samosa)', calories: 577.39),
+          FoodVariety(name: 'Vegetable samosa', calories: 443.11),
+          FoodVariety(name: 'Mathri', calories: 805.12),
+          FoodVariety(name: 'Khasta kachori', calories: 712.73),
+          FoodVariety(name: 'Masala vada', calories: 826.02),
+          FoodVariety(name: 'Peanut sago vada (Sabudana mungfali vada)', calories: 749.89),
+          FoodVariety(name: 'Spring roll', calories: 623.87),
+          FoodVariety(name: 'Sago cutlet/vadas (Sabudana cutlet/vadas)', calories: 558.76),
+          FoodVariety(name: 'Plain urad dal vada (Uzunne vada/Minapa garelu/Ulundu vadai/Medu vada)', calories: 745.50),
+          FoodVariety(name: 'Masala urad dal vada', calories: 703.78),
+          FoodVariety(name: 'Gujarati handvo', calories: 207.09),
+          FoodVariety(name: 'Jackfruit fritters (Ponsa mulik/Kathal ka pakora)', calories: 597.79),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Namkin',
+        varieties: [
+          FoodVariety(name: 'Sev (Omapodi/Karapusa)', calories: 609.14),
+          FoodVariety(name: 'Papdi', calories: 708.96),
+          FoodVariety(name: 'Khakhra', calories: 178.50),
+          FoodVariety(name: 'Soyabean namak paras', calories: 838.46),
+          FoodVariety(name: 'Spinach peanut namak paras (Palak moongfali namak paras)', calories: 740.16),
+          FoodVariety(name: 'Poshtik namak paras', calories: 613.39),
+          FoodVariety(name: 'Vegetable namkeen jave', calories: 112.23),
+          FoodVariety(name: 'Namkeen daliya', calories: 295.11),
+          FoodVariety(name: 'Banana chips (Kele ke chips)', calories: 665.67),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Nuts',
+        varieties: [
+          FoodVariety(name: 'Almond', calories: 609.23),
+          FoodVariety(name: 'Cashew nut', calories: 582.70),
+          FoodVariety(name: 'Peanut brittle (Moongfali ki chikki)', calories: 320.46),
+          FoodVariety(name: 'Soya chikki', calories: 423.70),
+          FoodVariety(name: 'Murmura chikki', calories: 253.82),
+          FoodVariety(name: 'Sesame chickpeas brittle (Til aur channe ki chikki)', calories: 282.74),
+          FoodVariety(name: 'Arecanut, fresh', calories: 244.74),
+          FoodVariety(name: 'Coconut, kernel, fresh', calories: 408.94),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Puffed grains',
+        varieties: [
+          FoodVariety(name: 'Murmura (Puffed rice)', calories: 113.32),
+          FoodVariety(name: 'Puffed wheat (Murmure/Moori)', calories: 113.32),
+          FoodVariety(name: 'Rice flakes (Chiwda/Aval)', calories: 112.44),
+          FoodVariety(name: 'Wheat flakes', calories: 112.44),
+          FoodVariety(name: 'Cornflakes with milk', calories: 117.33),
+          FoodVariety(name: 'Popcorn', calories: 375),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Chaat',
+        varieties: [
+          FoodVariety(name: 'Dahi vadas/Dahi bhalla', calories: 667.73),
+          FoodVariety(name: 'Bhel puri', calories: 509.89),
+          FoodVariety(name: 'Khakhra chaat', calories: 358.66),
+          FoodVariety(name: 'Spicy corn chaat', calories: 479.80),
+          FoodVariety(name: 'Sprouted moong dal chat', calories: 32.47),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Other sweets (solid)',
+        varieties: [
+          FoodVariety(name: 'Semolina halwa (Suji ka halwa)', calories: 225.65),
+          FoodVariety(name: 'Shahi suji halwa', calories: 382.34),
+          FoodVariety(name: 'Carrot halwa (Gajar ka halwa)', calories: 172.64),
+          FoodVariety(name: 'Potato halwa (Aloo ka halwa)', calories: 151.66),
+          FoodVariety(name: 'Pumpkin halwa (Kaddu ka halwa)', calories: 190.27),
+          FoodVariety(name: 'Moong dal halwa', calories: 349.80),
+          FoodVariety(name: 'Gram flour halwa (Besan halwa)', calories: 276.79),
+          FoodVariety(name: 'Lotus seed halwa (Kamal gattay ka halwa)', calories: 370.55),
+          FoodVariety(name: 'Coconut burfi (Nariyal ki burfi)', calories: 467.64),
+          FoodVariety(name: 'Bottle gourd burfi (Ghiya/Lauki burfi)', calories: 275.96),
+          FoodVariety(name: 'Chocolate burfi', calories: 339.33),
+          FoodVariety(name: 'Cashewnut burfi (Kaju burfi/Kaju katli)', calories: 421.74),
+          FoodVariety(name: 'Gram flour burfi (Besan burfi)', calories: 421.79),
+          FoodVariety(name: 'Semolina burfi (Suji/Rava burfi)', calories: 348.67),
+          FoodVariety(name: 'Pumpkin coconut burfi (Kaddu aur nariyal ki burfi)', calories: 186.18),
+          FoodVariety(name: 'Peanut burfi (Moongfali ki burfi)', calories: 550.99),
+          FoodVariety(name: 'Wheat flour and moong dal burfi (Atta aur moong dal ki burfi)', calories: 441.08),
+          FoodVariety(name: 'Spinach burfi (Palak burfi)', calories: 121.17),
+          FoodVariety(name: 'Oats burfi', calories: 425.19),
+          FoodVariety(name: 'Semolina ladoo with coconut (Suji/Rava aur nariyal ke ladoo )', calories: 464.43),
+          FoodVariety(name: 'Gram flour ladoo (Besan ladoo)', calories: 476.91),
+          FoodVariety(name: 'Sesame ladoo (Til ke ladoo)', calories: 396.96),
+          FoodVariety(name: 'Wheat and gram flour ladoo (Atta besan ladoo)', calories: 501.70),
+          FoodVariety(name: 'Semolina ladoo with nuts (Suji/Rava ladoo with nuts)', calories: 441.84),
+          FoodVariety(name: 'Amaranth ladoo (Rajgira ladoo)', calories: 454.15),
+          FoodVariety(name: 'Ghujia/Lavang latika', calories: 768.98),
+          FoodVariety(name: 'Mal pua', calories: 566.68),
+          FoodVariety(name: 'Mango malpua', calories: 334.64),
+          FoodVariety(name: 'Kesari bath', calories: 244.57),
+          FoodVariety(name: 'Putharekulu', calories: 318.30),
+          FoodVariety(name: 'Sweet couscous dessert', calories: 196.20),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Puran poli',
+        varieties: [
+          FoodVariety(name: 'Sweet split chickpea roti (Sweet channa dal roti/Puranpoli)', calories: 366.59),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Other sweets (liquid)',
+        varieties: [
+          FoodVariety(name: 'Sweet wheat porridge (Sweet dalia)', calories: 140.66),
+          FoodVariety(name: 'Cracked wheat porridge (Meetha daliya)', calories: 81.57),
+          FoodVariety(name: 'Semolina porridge (Suji/Rava daliya)', calories: 100.89),
+          FoodVariety(name: 'Vermicelli porridge (Semiya/Seviyan porridge)', calories: 78.40),
+          FoodVariety(name: 'Lentils and semolina porridge (Dal suji porridge/daliya)', calories: 117.29),
+          FoodVariety(name: 'Split bengal gram sweet rice (Channa dal sweet rice)', calories: 190.21),
+          FoodVariety(name: 'Sweet rice (Meethe chawal)', calories: 215.41),
+        ],
+      ),
+    ],
+  ),
+  MajorFoodGroup(
+    category: 'Fruits (Seasonal & Regular)',
+    items: [
+      FoodItemGroup(
+        name: 'Orange',
+        varieties: [
+          FoodVariety(name: 'Orange', calories: 47),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Mango',
+        varieties: [
+          FoodVariety(name: 'Mango, ripe, banganapalli', calories: 41.83),
+          FoodVariety(name: 'Mango, ripe, gulabkhas', calories: 49.95),
+          FoodVariety(name: 'Mango, ripe, himsagar', calories: 44.69),
+          FoodVariety(name: 'Mango, ripe, kesar', calories: 55.21),
+          FoodVariety(name: 'Mango, ripe, neelam', calories: 42.54),
+          FoodVariety(name: 'Mango, ripe, paheri', calories: 44.93),
+          FoodVariety(name: 'Mango, ripe, totapari', calories: 59.27),
+          FoodVariety(name: 'Mango, green, raw', calories: 49.00),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Guava',
+        varieties: [
+          FoodVariety(name: 'Guava, white flesh', calories: 32.27),
+          FoodVariety(name: 'Guava, pink flesh', calories: 46.61),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Sweet lime',
+        varieties: [
+          FoodVariety(name: 'sweet lime', calories: 43),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Amla',
+        varieties: [
+          FoodVariety(name: 'amla', calories: 58),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Banana',
+        varieties: [
+          FoodVariety(name: 'Banana, ripe, montham', calories: 110.66),
+          FoodVariety(name: 'Banana, ripe, poovam', calories: 106.36),
+          FoodVariety(name: 'Banana, ripe, red', calories: 111.62),
+          FoodVariety(name: 'Banana, ripe, robusta', calories: 105.16),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Apple',
+        varieties: [
+          FoodVariety(name: 'Apple, big', calories: 62.38),
+          FoodVariety(name: 'Apple, green', calories: 51.15),
+          FoodVariety(name: 'Apple, small', calories: 63.81),
+          FoodVariety(name: 'Apple, small, Kashmir', calories: 64.29),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Fig',
+        varieties: [
+          FoodVariety(name: 'Fig', calories: 81.50),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Berries',
+        varieties: [
+          FoodVariety(name: 'Black berry', calories: 54.25),
+          FoodVariety(name: 'Cherries, red', calories: 59.75),
+          FoodVariety(name: 'Currants, black', calories: 54.25),
+          FoodVariety(name: 'Strawberry', calories: 24.62),
+          FoodVariety(name: 'Phalsa', calories: 71.46),
+          FoodVariety(name: 'Karonda fruit', calories: 33.70),
+          FoodVariety(name: 'Blue Berry', calories: 57),
+          FoodVariety(name: 'Raspberry', calories: 52),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Apricot',
+        varieties: [
+          FoodVariety(name: 'Apricot, dried', calories: 315.73),
+          FoodVariety(name: 'Apricot, processed', calories: 56.41),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Cashew fruit',
+        varieties: [
+          FoodVariety(name: 'Cashew fruit', calories: 48),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Chikoo',
+        varieties: [
+          FoodVariety(name: 'Chikoo', calories: 83),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Lichi',
+        varieties: [
+          FoodVariety(name: 'Litchi', calories: 53.78),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Custard apple',
+        varieties: [
+          FoodVariety(name: 'Custard apple', calories: 98.95),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Plums',
+        varieties: [
+          FoodVariety(name: 'Plum', calories: 56.88),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Peach',
+        varieties: [
+          FoodVariety(name: 'Peach', calories: 40.15),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Pineapple',
+        varieties: [
+          FoodVariety(name: 'Pineapple', calories: 43.02),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Papaya',
+        varieties: [
+          FoodVariety(name: 'Papaya, ripe', calories: 23.90),
+          FoodVariety(name: 'Papaya, raw', calories: 23.90),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Jackfruit',
+        varieties: [
+          FoodVariety(name: 'Jack fruit, ripe', calories: 72.18),
+          FoodVariety(name: 'Jack fruit, raw', calories: 26.29),
+          FoodVariety(name: 'Jack fruit, seed, mature', calories: 76.96),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Lemon',
+        varieties: [
+          FoodVariety(name: 'Lemon, juice', calories: 36.57),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Grapes',
+        varieties: [
+          FoodVariety(name: 'Grapes, seeded, round, black', calories: 60.71),
+          FoodVariety(name: 'Grapes, seeded, round, green', calories: 56.17),
+          FoodVariety(name: 'Grapes, seeded, round, red', calories: 58.32),
+          FoodVariety(name: 'Grapes, seedless, oval, black', calories: 94.41),
+          FoodVariety(name: 'Grapes, seedless, round, green', calories: 53.54),
+          FoodVariety(name: 'Grapes, seedless, round, black', calories: 89.39),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Pomegranate',
+        varieties: [
+          FoodVariety(name: 'Pomegranate, maroon seeds', calories: 54.73),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'Melons',
+        varieties: [
+          FoodVariety(name: 'Musk melon, orange flesh', calories: 23.18),
+          FoodVariety(name: 'Musk melon, yellow flesh', calories: 27.72),
+          FoodVariety(name: 'Water melon, dark green (sugar baby)', calories: 20.32),
+          FoodVariety(name: 'Water melon, pale green', calories: 16.73),
+        ],
+      ),
+      FoodItemGroup(
+        name: 'All other fruits',
+        varieties: [
+          FoodVariety(name: 'Avocado fruit', calories: 144.36),
+          FoodVariety(name: 'Bael fruit', calories: 135.99),
+          FoodVariety(name: 'Mangosteen', calories: 52.34),
+          FoodVariety(name: 'Manila tamarind', calories: 81.74),
+          FoodVariety(name: 'Palm fruit, tender', calories: 24.14),
+          FoodVariety(name: 'Pear', calories: 37.52),
+          FoodVariety(name: 'Rambutan', calories: 73.14),
+          FoodVariety(name: 'Soursop', calories: 62.14),
+          FoodVariety(name: 'Star fruit', calories: 26.29),
+          FoodVariety(name: 'Tamarind, pulp', calories: 288.48),
+          FoodVariety(name: 'Wood Apple', calories: 78.15),
+          FoodVariety(name: 'Zizyphus', calories: 48.76),
         ],
       ),
     ],
@@ -2472,4 +2897,9 @@ const Map<String, double> kNutritionDatabase = {
   'Chawli Bhaji (Amaranth Leaves wet curry)': 85.00,
   'Dry': 85.00,
   'Wet': 120.00,
+  'Buttermilk': 40.00,
+  'Milkshake': 65.31,
+  'Dip': 76.13,
+  'Soup': 80.07,
+  'Soups': 80.07,
 };

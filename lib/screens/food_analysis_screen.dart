@@ -92,6 +92,8 @@ const List<FfqCategory> kFfqCategories = [
     darkColor: GelatoTheme.blueDark,
     items: [
       FfqItem(name: 'Milk', unit: 'cup', sizes: ['C1 (50 ml)', 'C2 (100 ml)', 'C3 (200 ml)'], imagePath: 'assets/images/ffq/dairy_milk/milk.png'),
+      FfqItem(name: 'Lassi', unit: 'cup', sizes: ['C1 (50 ml)', 'C2 (100 ml)', 'C3 (200 ml)'], imagePath: 'assets/images/ffq/dairy_milk/lassi.jpg'),
+      FfqItem(name: 'Milkshake', unit: 'cup', sizes: ['C1 (50 ml)', 'C2 (100 ml)', 'C3 (200 ml)'], imagePath: 'assets/images/ffq/dairy_milk/milkshake.jpg'),
       FfqItem(name: 'Curd', unit: 'bowl', sizes: ['K1 (100 ml)', 'K2 (150 ml)', 'K3 (200 ml)'], imagePath: 'assets/images/ffq/dairy_milk/curd.png'),
       FfqItem(name: 'Kadi', unit: 'bowl', sizes: ['K1 (100 ml)', 'K2 (150 ml)', 'K3 (200 ml)'], imagePath: 'assets/images/ffq/dairy_milk/kadi.png'),
       FfqItem(name: 'Raita', unit: 'bowl', sizes: ['K1 (100 ml)', 'K2 (150 ml)', 'K3 (200 ml)'], imagePath: 'assets/images/ffq/dairy_milk/raita.png'),
@@ -201,7 +203,17 @@ const List<FfqCategory> kFfqCategories = [
       FfqItem(name: 'Salad', unit: 'bowl', sizes: ['K1 (100 ml)', 'K2 (150 ml)', 'K3 (200 ml)'], imagePath: 'assets/images/ffq/condiments_sideitems/salad.png'),
       FfqItem(name: 'Pickle', unit: 'spoon_set', sizes: ['S1 (5 ml)', 'S2 (10 ml)', 'S3 (15 ml)'], imagePath: 'assets/images/ffq/condiments_sideitems/pickle.png'),
       FfqItem(name: 'Chutney', unit: 'spoon_set', sizes: ['S1 (5 ml)', 'S2 (10 ml)', 'S3 (15 ml)'], imagePath: 'assets/images/ffq/condiments_sideitems/chutney.png'),
+      FfqItem(name: 'Dip', unit: 'spoon_set', sizes: ['S1 (5 ml)', 'S2 (10 ml)', 'S3 (15 ml)'], imagePath: 'assets/images/ffq/condiments_sideitems/dip.jpg'),
     ],
+  ),
+   FfqCategory(
+    title: 'Soups',
+    emoji: '🧂',
+    color: GelatoTheme.orange,
+    darkColor: GelatoTheme.orangeDark,
+    items: [
+      FfqItem(name: 'Soups', unit: 'bowl', sizes: ['K1 (100 ml)', 'K2 (150 ml)', 'K3 (200 ml)'], imagePath: 'assets/images/ffq/soups/soup.jpg'),
+      ],
   ),
   FfqCategory(
     title: 'Snacks & Sweets',
@@ -1112,23 +1124,139 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
     }
 
     _selectedVariety = widget.initialAnswer.selectedVariety;
-    final cleanFoodName = widget.item.name.toLowerCase().trim();
+
+    String getExpectedGroupName(String catTitle, String ffqItem) {
+      final name = ffqItem.trim();
+      if (catTitle == 'Dairy & Milk Products') {
+        if (name == 'Milkshake') return 'MilkShakes';
+        if (name == 'Khoa / milk sweets (solid)') return 'khoa/milk sweets (solid)';
+        if (name == 'Ice creams') return 'Ice Creams';
+      } else if (catTitle == 'Vegetables') {
+        if (name.contains('Green leafy')) return 'Leafy vegetables';
+        if (name.contains('Gourd')) return 'Gourds';
+        if (name.contains('Brinjal')) return 'Brinjal';
+        if (name.contains('Cauliflower')) return 'Cauliflower';
+        if (name.contains('Drumstick')) return 'Drumstick';
+        if (name.contains('Green peas')) return 'Peas';
+        if (name.contains('Potato')) return 'Potato';
+        if (name.contains('Yams')) return 'Yam';
+        if (name == 'Green beans') return 'Beans';
+        if (name.contains('Other vegetables')) return 'Other vegetables (dry & wet forms)';
+        if (name == 'Onion bhaji') return 'Onion';
+        if (name.contains('Green chillies')) return 'Green chillies';
+        if (name.contains('Garlic')) return 'Garlic';
+        if (name == 'Onion (raw)') return 'Onions (raw)';
+        if (name == 'Carrot (raw)') return 'Carrots (raw)';
+        if (name == 'Cabbage (raw)') return 'Cabbage (raw)';
+      } else if (catTitle == 'Meat, Fish & Eggs') {
+        if (name.contains('Egg')) return 'Egg';
+        if (name.contains('Chicken')) return 'Chicken';
+        if (name.contains('Mutton')) return 'Mutton';
+        if (name.contains('Fresh Fish')) return 'Fresh fish/prawns (dry & wet)';
+        if (name.contains('Dry fish')) return 'Dry fish/prawns (dry & wet)';
+        if (name.contains('Crab')) return 'Crab preparations (dry & wet)';
+      } else if (catTitle == 'Soups') {
+        if (name == 'Soups') return 'Soup';
+      } else if (catTitle == 'Snacks & Sweets') {
+        if (name == 'Namkeen') return 'Namkin';
+        if (name.contains('Deep fried snacks')) return 'Deep-fried snacks';
+        if (name.contains('Chaat')) return 'Chaat';
+        if (name == 'Puranpoli') return 'Puran poli';
+        if (name.contains('Other sweets (liquid')) return 'Other sweets (liquid)';
+        if (name.contains('Puffed grains')) return 'Puffed grains';
+      } else if (catTitle == 'Fruits') {
+        if (name == 'Litchi') return 'Lichi';
+        if (name.contains('All other fruits')) return 'All other fruits';
+      }
+      return name;
+    }
+
+    final expectedGroupName = getExpectedGroupName(widget.category.title, widget.item.name);
     List<FoodVariety> matchingVarieties = [];
     for (final group in kMajorFoodGroups) {
+      final matchCategory = (widget.category.title == 'Fruits' && group.category == 'Fruits (Seasonal & Regular)') ||
+                            (group.category == widget.category.title);
+      if (!matchCategory) continue;
+
       for (final item in group.items) {
         final cleanItemName = item.name.toLowerCase().replaceAll(RegExp(r'^\d+\)\s*'), '').trim();
-        if (cleanItemName.isNotEmpty && (cleanItemName.contains(cleanFoodName) || cleanFoodName.contains(cleanItemName))) {
+        if (cleanItemName == expectedGroupName.toLowerCase().trim()) {
           matchingVarieties.addAll(item.varieties);
         }
       }
     }
+
+    bool isWetVariety(String varietyName) {
+      final name = varietyName.toLowerCase();
+      if (name.contains('(wet)')) return true;
+      if (name.contains('(dry)')) return false;
+      if (name.contains('dry gravy')) return false;
+      if (name.contains('fried chicken')) return false;
+      if (name.contains('stuffed')) return false;
+      if (name.contains('dry palak')) return false;
+      if (name.contains('dry methi')) return false;
+
+      if (name.contains('curry') ||
+          name.contains('gravy') ||
+          name.contains('stew') ||
+          name.contains('korma') ||
+          name.contains('salan') ||
+          name.contains('sambar') ||
+          name.contains('tariwali') ||
+          name.contains('rasedar') ||
+          name.contains('saag') ||
+          name.contains('palak paneer') ||
+          name.contains('methi chaman') ||
+          name.contains('dum aloo') ||
+          name.contains('dahi aloo') ||
+          name.contains('dahi bhindi') ||
+          name.contains('avial') ||
+          name.contains('cabbage rolls (curry)') ||
+          name.contains('musallam') ||
+          name.contains('sauce') ||
+          name.contains('milk') ||
+          name.contains('butter chicken') ||
+          name.contains('shahi chicken masala') ||
+          name.contains('tomato chicken') ||
+          name.contains('creamy chicken') ||
+          name.contains('ginger chicken') ||
+          name.contains('afghani chicken') ||
+          name.contains('chicken manchurian') ||
+          name.contains('handi chicken') ||
+          name.contains('lemon chicken') ||
+          name.contains('spinach mutton') ||
+          name.contains('gushtaba') ||
+          name.contains('yakhni') ||
+          name.contains('do piaza') ||
+          name.contains('kofta') ||
+          name.contains('lemon butter fish')) {
+        return true;
+      }
+      return false;
+    }
+
+    final ffqItemLower = widget.item.name.toLowerCase();
+    if (ffqItemLower.contains('(dry)')) {
+      final dryList = matchingVarieties.where((v) => !isWetVariety(v.name)).toList();
+      if (dryList.isNotEmpty) {
+        matchingVarieties = dryList;
+      }
+    } else if (ffqItemLower.contains('(wet)') || ffqItemLower.contains('(wet/curry)')) {
+      final wetList = matchingVarieties.where((v) => isWetVariety(v.name)).toList();
+      if (wetList.isNotEmpty) {
+        matchingVarieties = wetList;
+      }
+    }
+
     final uniqueVarieties = <String, FoodVariety>{};
     for (final v in matchingVarieties) {
       uniqueVarieties[v.name] = v;
     }
     _availableVarieties = uniqueVarieties.values.toList();
-    if (_availableVarieties.isNotEmpty && _selectedVariety == null) {
-      _selectedVariety = _availableVarieties.first.name;
+    if (_availableVarieties.isNotEmpty) {
+      if (_selectedVariety == null || !_availableVarieties.any((v) => v.name == _selectedVariety)) {
+        _selectedVariety = _availableVarieties.first.name;
+      }
     }
   }
 
@@ -1249,20 +1377,30 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                         children: [
                           // Show food photo if available, else fall back to emoji
                           if (item.imagePath != null)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                item.imagePath!,
-                                height: 120,
-                                width: double.infinity,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) =>
-                                    Text(cat.emoji, style: const TextStyle(fontSize: 40)),
+                            Container(
+                              width: double.infinity,
+                              height: 180,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.black, width: 1.5),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(14.5),
+                                child: Image.asset(
+                                  item.imagePath!,
+                                  width: double.infinity,
+                                  height: 180,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => Center(
+                                    child: Text(cat.emoji, style: const TextStyle(fontSize: 40)),
+                                  ),
+                                ),
                               ),
                             )
                           else
                             Text(cat.emoji, style: const TextStyle(fontSize: 40)),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 14),
                           Text(
                             item.name.toUpperCase(),
                             textAlign: TextAlign.center,

@@ -24,20 +24,6 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
   ];
 
   final Map<String, int> _rankings = {};
-  
-  final TextEditingController _commentsController = TextEditingController();
-  final TextEditingController _endTimeController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
-
-  @override
-  void dispose() {
-    _commentsController.dispose();
-    _endTimeController.dispose();
-    _dateController.dispose();
-    _locationController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,21 +71,6 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
               const SizedBox(height: 20),
               
               ..._tastes.map((taste) => _buildTasteRow(taste)),
-              
-              const SizedBox(height: 24),
-              const Text(
-                'Other Details',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: GelatoTheme.textDark,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildTextField('COMMENTS', _commentsController, maxLines: 3),
-              _buildTextField('INTERVIEW END TIME', _endTimeController),
-              _buildTextField('INTERVIEW DATE', _dateController),
-              _buildTextField('INTERVIEW LOCATION', _locationController),
               
               const SizedBox(height: 30),
               SizedBox(
@@ -182,46 +153,6 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
                 ),
               );
             }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: GelatoTheme.textLight,
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            maxLines: maxLines,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.black26, width: 1),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.black26, width: 1),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GelatoTheme.purpleDark, width: 2),
-              ),
-            ),
           ),
         ],
       ),
