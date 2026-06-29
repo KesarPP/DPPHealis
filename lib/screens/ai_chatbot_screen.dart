@@ -143,7 +143,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
 
   // ─── VERCEL AI BACKEND CONFIGURATION ───────────────────────────────────────
   // Paste your deployed Vercel URL here (e.g., https://my-dpp-backend.vercel.app/api/chat)
-  final String _vercelEndpoint = "https://vercel-ai-backend-xi.vercel.app/api/chat";
+  final String _vercelEndpoint = "https://dpp-ai-backend-kesars-projects-d3331681.vercel.app/api/chat";
 
   Future<String> _getVercelResponse(String query) async {
     // If the Vercel endpoint hasn't been configured yet, fallback to mock response
