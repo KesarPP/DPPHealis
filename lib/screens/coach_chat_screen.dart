@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../data/gelato_theme.dart';
 import 'coach_profile_screen.dart';
 import 'coach_selection_screen.dart';
@@ -23,6 +25,10 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
   String? _assignedCoachId;
   bool _isLoadingStatus = true;
   CoachProfile? _coachProfile;
+
+  String? _selectedAttachmentName;
+  String? _selectedAttachmentType;
+  String? _selectedAttachmentPath;
 
   StreamSubscription<DocumentSnapshot>? _userSubscription;
 
@@ -80,20 +86,101 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
 
   void _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty || _assignedCoachId == null) return;
+    if (text.isEmpty && _selectedAttachmentName == null) return;
+    if (_assignedCoachId == null) return;
     _messageController.clear();
     
     final currentUserId = AuthService().currentUser?.uid;
     if (currentUserId == null) return;
 
+    final attachmentName = _selectedAttachmentName;
+    final attachmentType = _selectedAttachmentType;
+    final attachmentPath = _selectedAttachmentPath;
+
+    setState(() {
+      _selectedAttachmentName = null;
+      _selectedAttachmentType = null;
+      _selectedAttachmentPath = null;
+    });
+
     await ChatService.sendMessage(
       patientId: currentUserId,
       coachId: _assignedCoachId!,
-      text: text,
+      text: text.isEmpty ? (attachmentType == 'image' ? 'Sent an image' : 'Sent a document') : text,
       senderId: currentUserId,
       isFromPatient: true,
+      attachmentName: attachmentName,
+      attachmentType: attachmentType,
+      attachmentPath: attachmentPath,
     );
     _scrollToBottom();
+  }
+
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.image_outlined, color: GelatoTheme.purpleDark),
+                title: const Text('Pick Image from Gallery', style: TextStyle(fontWeight: FontWeight.bold)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  _pickImageAttachment();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.insert_drive_file_outlined, color: GelatoTheme.purpleDark),
+                title: const Text('Attach Document (PDF, Word, etc.)', style: TextStyle(fontWeight: FontWeight.bold)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickDocumentAttachment();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImageAttachment() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _selectedAttachmentName = image.name;
+          _selectedAttachmentType = 'image';
+          _selectedAttachmentPath = image.path;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickDocumentAttachment() async {
+    try {
+      final FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = result.files.single;
+        setState(() {
+          _selectedAttachmentName = file.name;
+          _selectedAttachmentType = 'document';
+          _selectedAttachmentPath = file.path;
+        });
+      }
+    } catch (_) {}
   }
 
   void _sendDirectMessage(String text) async {
@@ -443,6 +530,9 @@ Widget build(BuildContext context) {
                     data['text'] as String? ?? '',
                     isUser,
                     timeStr,
+                    attachmentName: data['attachmentName'] as String?,
+                    attachmentType: data['attachmentType'] as String?,
+                    attachmentPath: data['attachmentPath'] as String?,
                   );
                 },
               );
@@ -522,7 +612,14 @@ Widget _buildWelcomeCard(String coachName) {
   );
 }
 
-Widget _buildChatBubble(String text, bool isUser, String time) {
+Widget _buildChatBubble(
+  String text,
+  bool isUser,
+  String time, {
+  String? attachmentName,
+  String? attachmentType,
+  String? attachmentPath,
+}) {
   return Align(
     alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
     child: Container(
@@ -550,14 +647,74 @@ Widget _buildChatBubble(String text, bool isUser, String time) {
                 ),
               ],
             ),
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: GelatoTheme.textDark,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                height: 1.4,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (attachmentName != null) ...[
+                  GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Opening attachment: $attachmentName'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.black26, width: 1.0),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            attachmentType == 'image'
+                                ? Icons.image_rounded
+                                : Icons.insert_drive_file_rounded,
+                            color: GelatoTheme.purpleDark,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                attachmentName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: GelatoTheme.textDark,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              Text(
+                                attachmentType == 'image' ? 'Image File' : 'PDF Document',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: GelatoTheme.textLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                Text(
+                  text,
+                  style: const TextStyle(
+                    color: GelatoTheme.textDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 6),
@@ -691,95 +848,136 @@ Widget _buildQuickChips() {
 }
 
 Widget _buildMessageInput() {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(
-        top: BorderSide(color: Colors.black87, width: 2.0),
-      ),
-    ),
-    child: SafeArea(
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('File attachment selected.'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: GelatoTheme.orange,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black87, width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(1.5, 1.5),
-                    blurRadius: 0,
-                  ),
-                ],
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (_selectedAttachmentName != null)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: Colors.grey.shade50,
+          child: Row(
+            children: [
+              Icon(
+                _selectedAttachmentType == 'image'
+                    ? Icons.image_rounded
+                    : Icons.insert_drive_file_rounded,
+                color: GelatoTheme.purpleDark,
+                size: 20,
               ),
-              child: const Icon(Icons.add_rounded, color: GelatoTheme.textDark, size: 20),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: GelatoTheme.bg,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.black87, width: 1.5),
-              ),
-              child: TextField(
-                controller: _messageController,
-                decoration: const InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(
-                    color: Colors.black38,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _selectedAttachmentName!,
+                  style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
+                    color: GelatoTheme.textDark,
                   ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                style: const TextStyle(
-                  color: GelatoTheme.textDark,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                onSubmitted: (_) => _sendMessage(),
               ),
-            ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedAttachmentName = null;
+                    _selectedAttachmentType = null;
+                    _selectedAttachmentPath = null;
+                  });
+                },
+                child: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.red,
+                  size: 20,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _sendMessage,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: GelatoTheme.pink,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black87, width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    offset: const Offset(2, 2),
-                    blurRadius: 0,
+        ),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.black87, width: 2.0),
+          ),
+        ),
+        child: SafeArea(
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _showAttachmentOptions,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: GelatoTheme.orange,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black87, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        offset: const Offset(1.5, 1.5),
+                        blurRadius: 0,
+                      ),
+                    ],
                   ),
-                ],
+                  child: const Icon(Icons.add_rounded, color: GelatoTheme.textDark, size: 20),
+                ),
               ),
-              child: const Icon(Icons.send_rounded, color: GelatoTheme.textDark, size: 20),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: GelatoTheme.bg,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.black87, width: 1.5),
+                  ),
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: const InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: TextStyle(
+                        color: Colors.black38,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    style: const TextStyle(
+                      color: GelatoTheme.textDark,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: _sendMessage,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: GelatoTheme.pink,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black87, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        offset: const Offset(2, 2),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.send_rounded, color: GelatoTheme.textDark, size: 20),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
+    ],
   );
 }
 }

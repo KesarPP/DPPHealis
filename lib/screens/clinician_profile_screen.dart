@@ -1,10 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'login_screen.dart';
 import '../services/auth_service.dart';
 import '../models/coach_profile.dart';
-import 'crop_image_screen.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -476,12 +474,17 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
     final titleController = TextEditingController(text: _profile!.title);
     String? tempLocalImagePath = _profile!.localImagePath;
 
+    // Ensure we start with a valid avatar index if none is set or if it's legacy
+    if (tempLocalImagePath == null || !tempLocalImagePath.startsWith('avatar_')) {
+      tempLocalImagePath = 'avatar_0';
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final hasPhoto = tempLocalImagePath != null && File(tempLocalImagePath!).existsSync();
+            final idx = int.tryParse(tempLocalImagePath!.replaceFirst('avatar_', '')) ?? 0;
 
             return AlertDialog(
               backgroundColor: Colors.white,
@@ -497,77 +500,102 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Center(
-                      child: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: _brandColor, width: 2),
-                            ),
-                            child: CircleAvatar(
-                              radius: 40,
-                              backgroundColor: const Color(0xFFEBF3FC),
-                              foregroundImage: hasPhoto ? FileImage(File(tempLocalImagePath!)) : null,
-                              child: Text(
-                                _getInitials(nameController.text),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: _brandColor,
-                                ),
-                              ),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _brandColor, width: 2.5),
+                        ),
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundColor: const Color(0xFFEBF3FC),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/coaches/coach_${idx + 1}.png',
+                              width: 76,
+                              height: 76,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
                             ),
                           ),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: GestureDetector(
-                              onTap: () async {
-                                final ImagePicker picker = ImagePicker();
-                                try {
-                                  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                                  if (image != null) {
-                                    final File? croppedFile = await Navigator.push<File>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => CropImageScreen(imageFile: File(image.path)),
-                                      ),
-                                    );
-                                    if (croppedFile != null) {
-                                      final savedPath = await _authService.saveLocalProfileImage(croppedFile);
-                                      if (savedPath != null) {
-                                        setDialogState(() {
-                                          tempLocalImagePath = savedPath;
-                                        });
-                                      }
-                                    }
-                                  }
-                                } catch (_) {}
-                              },
-                              child: const CircleAvatar(
-                                radius: 14,
-                                backgroundColor: _brandColor,
-                                child: Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                    if (hasPhoto) ...[
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () {
-                          setDialogState(() {
-                            tempLocalImagePath = null;
-                          });
-                        },
-                        child: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
                     const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Select Profile Avatar',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: _brandColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 85,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F9FC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: Row(
+                          children: List.generate(10, (index) {
+                            final avatarKey = 'avatar_$index';
+                            final isSelected = tempLocalImagePath == avatarKey;
+                            return GestureDetector(
+                              onTap: () {
+                                setDialogState(() {
+                                  tempLocalImagePath = avatarKey;
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                width: 65,
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? _brandColor.withValues(alpha: 0.1) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? _brandColor : Colors.grey.shade300,
+                                    width: isSelected ? 2.0 : 1.0,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ClipOval(
+                                      child: Image.asset(
+                                        'assets/images/coaches/coach_${index + 1}.png',
+                                        width: 40,
+                                        height: 40,
+                                        fit: BoxFit.cover,
+                                        alignment: Alignment.topCenter,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Option ${index + 1}',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected ? _brandColor : _slateGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     TextField(
                       controller: nameController,
                       onChanged: (_) => setDialogState(() {}),
