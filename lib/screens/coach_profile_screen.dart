@@ -141,25 +141,32 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
                                   ],
                                 ),
                                 child: ClipOval(
-                                  child: (_profile?.localImagePath != null &&
-                                          File(_profile!.localImagePath!).existsSync())
-                                      ? Image.file(
-                                          File(_profile!.localImagePath!),
+                                  child: (_profile?.localImagePath != null && _profile!.localImagePath!.startsWith('avatar_'))
+                                      ? Image.asset(
+                                          'assets/images/coaches/coach_${(int.tryParse(_profile!.localImagePath!.replaceFirst('avatar_', '')) ?? 0) + 1}.png',
                                           width: 108,
                                           height: 108,
                                           fit: BoxFit.cover,
+                                          alignment: Alignment.topCenter,
                                         )
-                                      : Image.asset(
-                                          'assets/images/clinician_avatar.png',
-                                          width: 108,
-                                          height: 108,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => const CircleAvatar(
-                                            radius: 54,
-                                            backgroundColor: GelatoTheme.purple,
-                                            child: Icon(Icons.person_rounded, size: 54, color: GelatoTheme.textDark),
-                                          ),
-                                        ),
+                                      : (_profile?.localImagePath != null && File(_profile!.localImagePath!).existsSync())
+                                          ? Image.file(
+                                              File(_profile!.localImagePath!),
+                                              width: 108,
+                                              height: 108,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Image.asset(
+                                              'assets/images/clinician_avatar.png',
+                                              width: 108,
+                                              height: 108,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => const CircleAvatar(
+                                                radius: 54,
+                                                backgroundColor: GelatoTheme.purple,
+                                                child: Icon(Icons.person_rounded, size: 54, color: GelatoTheme.textDark),
+                                              ),
+                                            ),
                                 ),
                               ),
                               Positioned(

@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/app_state.dart';
 import '../main.dart'; // MainShell
 import '../data/gelato_theme.dart';
-import 'coach_selection_screen.dart';
 
 class GPAQResultsScreen extends StatefulWidget {
   final bool isFromSignup;
@@ -352,21 +351,12 @@ class _GPAQResultsScreenState extends State<GPAQResultsScreen> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    if (widget.isFromSignup) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CoachSelectionScreen(),
-                        ),
-                      );
-                    } else {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MainShell(),
-                        ),
-                      );
-                    }
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MainShell(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: GelatoTheme.purple,

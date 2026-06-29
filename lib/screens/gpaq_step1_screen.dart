@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 // MainShell
 import '../data/gelato_theme.dart';
 import 'gpaq_step2_screen.dart';
@@ -23,6 +27,294 @@ class _GPAQStep1ScreenState extends State<GPAQStep1Screen> {
   int _workModerateHours = 1;
   int _workModerateMins = 0;
   bool _showModerateHelp = false;
+
+  // Coach Tour Guide State
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  Map<String, dynamic>? _selectedCoach;
+  bool _isLoadingCoach = true;
+  bool _showTourGuide = true;
+  bool _isPlayingVoice = false;
+  late FlutterTts _flutterTts;
+
+  @override
+  void initState() {
+    super.initState();
+    _flutterTts = FlutterTts();
+    _fetchAssignedCoach();
+  }
+
+  Future<void> _fetchAssignedCoach() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        final userDoc = await _firestore.collection('users').doc(user.uid).get();
+        final coachId = userDoc.data()?['assignedCoachId'];
+        if (coachId != null) {
+          final coachDoc = await _firestore.collection('coaches').doc(coachId).get();
+          if (coachDoc.exists) {
+            setState(() {
+              _selectedCoach = coachDoc.data();
+              _isLoadingCoach = false;
+            });
+            _speakIntro();
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching assigned coach: $e');
+    }
+    setState(() {
+      _isLoadingCoach = false;
+    });
+  }
+
+  int _getCoachAvatarIndex() {
+    if (_selectedCoach == null) return 1;
+    final localPath = _selectedCoach!['localImagePath'] as String?;
+    int? avatarIndex;
+    if (localPath != null && localPath.startsWith('avatar_')) {
+      avatarIndex = int.tryParse(localPath.replaceFirst('avatar_', ''));
+    }
+    avatarIndex ??= _selectedCoach!['avatarIndex'] as int?;
+    return (avatarIndex ?? 0) + 1; // 1-based index matching new files
+  }
+
+  bool _isFemaleCoach() {
+    final fileIndex = _getCoachAvatarIndex();
+    return fileIndex % 2 == 0;
+  }
+
+  Future<void> _speakIntro() async {
+    if (_selectedCoach == null) return;
+    
+    final coachName = _selectedCoach!['name'] ?? 'Coach';
+    final isFemale = _isFemaleCoach();
+    final text = "Hi! I'm coach $coachName. The next step is to fill the GPAQ assessment which helps us understand your daily physical activity levels across work, travel, and recreation.";
+
+    if (mounted) {
+      setState(() {
+        _isPlayingVoice = true;
+      });
+    }
+
+    await _flutterTts.setLanguage("en-US");
+    
+    try {
+      List<dynamic> voices = await _flutterTts.getVoices;
+      Map<String, String>? targetVoice;
+      
+      for (var voice in voices) {
+        if (voice is Map) {
+          final name = voice['name']?.toString().toLowerCase() ?? '';
+          final locale = voice['locale']?.toString() ?? '';
+          if (locale.startsWith('en')) {
+            if (isFemale && (name.contains('female') || name.contains('zira') || name.contains('samantha') || name.contains('a') || name.contains('c') || name.contains('d') || name.contains('network'))) {
+              targetVoice = Map<String, String>.from(voice.cast<String, String>());
+              break;
+            } else if (!isFemale && (name.contains('male') || name.contains('david') || name.contains('b') || name.contains('e') || name.contains('keynote'))) {
+              targetVoice = Map<String, String>.from(voice.cast<String, String>());
+              break;
+            }
+          }
+        }
+      }
+      
+      if (targetVoice != null) {
+        await _flutterTts.setVoice(targetVoice);
+      } else {
+        await _flutterTts.setPitch(isFemale ? 1.35 : 0.85);
+      }
+    } catch (e) {
+      await _flutterTts.setPitch(isFemale ? 1.35 : 0.85);
+    }
+
+    _flutterTts.setCompletionHandler(() {
+      if (mounted) {
+        setState(() {
+          _isPlayingVoice = false;
+        });
+      }
+    });
+
+    _flutterTts.setErrorHandler((_) {
+      if (mounted) {
+        setState(() {
+          _isPlayingVoice = false;
+        });
+      }
+    });
+
+    await _flutterTts.speak(text);
+  }
+
+  Widget _buildTourGuideOverlay() {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // Blurred background
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.25),
+              ),
+            ),
+          ),
+          
+          // Tour guide content at the bottom
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Cloud Thought Bubble
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.black, width: 2.5),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 12,
+                        offset: Offset(4, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        _selectedCoach?['name'] ?? 'Coach',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color: GelatoTheme.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'The next step is to fill the GPAQ assessment which helps us understand your daily physical activity levels across work, travel, and recreation.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: GelatoTheme.textDark,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Mute / Unmute Button
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (_isPlayingVoice) {
+                                _flutterTts.stop();
+                                setState(() {
+                                  _isPlayingVoice = false;
+                                });
+                              } else {
+                                _speakIntro();
+                              }
+                            },
+                            icon: Icon(_isPlayingVoice ? Icons.volume_off : Icons.volume_up, size: 18),
+                            label: Text(_isPlayingVoice ? 'Mute' : 'Speak'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              side: const BorderSide(color: Colors.black, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                          // Skip Button
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              _flutterTts.stop();
+                              setState(() {
+                                _showTourGuide = false;
+                                _isPlayingVoice = false;
+                              });
+                            },
+                            icon: const Icon(Icons.skip_next, size: 18),
+                            label: const Text('Skip'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: GelatoTheme.purple,
+                              foregroundColor: Colors.black,
+                              side: const BorderSide(color: Colors.black, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Cloud thought bubble trails pointing to bottom-left
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 60.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 2.0),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Coach Portrait at the bottom-left
+                Container(
+                  height: 250,
+                  width: 180,
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Image.asset(
+                    'assets/images/coaches/coach_${_getCoachAvatarIndex()}.png',
+                    fit: BoxFit.contain,
+                    alignment: Alignment.bottomLeft,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +346,12 @@ class _GPAQStep1ScreenState extends State<GPAQStep1Screen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
+            IgnorePointer(
+              ignoring: _showTourGuide,
+              child: Column(
+                children: [
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
@@ -333,7 +629,12 @@ class _GPAQStep1ScreenState extends State<GPAQStep1Screen> {
           ],
         ),
       ),
-    ));
+        if (_showTourGuide && _selectedCoach != null)
+          _buildTourGuideOverlay(),
+      ],
+    ),
+  ),
+));
   }
 
   Widget _buildCard({required Widget child}) {

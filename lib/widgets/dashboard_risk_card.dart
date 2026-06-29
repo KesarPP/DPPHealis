@@ -173,25 +173,6 @@ class _DashboardRiskCardState extends State<DashboardRiskCard> with TickerProvid
                     ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: const [
-                      Icon(Icons.arrow_downward_rounded, color: GelatoTheme.greenDark, size: 12),
-                      SizedBox(width: 2),
-                      Text(
-                        '6 points improved this week',
-                        style: TextStyle(
-                          color: GelatoTheme.greenDark,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

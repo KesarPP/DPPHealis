@@ -15,9 +15,13 @@ import '../widgets/hero_banner.dart';
 import '../widgets/goal_journey.dart';
 import '../widgets/today_activity_score.dart';
 import '../widgets/overview_cards.dart';
+import '../models/activity_log.dart';
+import '../repositories/activity_log_repository_impl.dart';
+import '../services/firestore_activity_log_service.dart';
 import '../widgets/weekly_progress.dart';
-import '../widgets/activity_feed.dart';
+import '../widgets/activity_timeline_widget.dart';
 import '../widgets/motivation_section.dart';
+import '../widgets/activity_feed.dart';
 import '../data/gelato_theme.dart';
 
 enum HealthConnectOnboardingState {
@@ -40,6 +44,12 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
   late final HealthSyncService _healthSync;
+  final _activityLogRepository = ActivityLogRepositoryImpl(
+    FirestoreActivityLogService(),
+  );
+  List<ActivityLog> _todayLogs = [];
+  bool _isLoadingLogs = false;
+  String? _logsError;
   ActivityStats? _stats;
   DateTime? _lastSyncTime;
   bool _isLoading = true;
@@ -48,8 +58,8 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
   HealthConnectOnboardingState _onboardingState = HealthConnectOnboardingState.syncing;
 
   // Simulation fallback for Windows/web testing (strictly UI state, no static activity data)
-  static bool _simulatedInstalled = false;
-  static bool _simulatedPermissions = false;
+  static bool _simulatedInstalled = true;
+  static bool _simulatedPermissions = true;
 
   Timer? _backgroundPollingTimer;
 
@@ -71,7 +81,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
   int _weeklyTargetMinutes = 150;
   int _currentWeeklyMinutes = 0;
   List<DailyAggregate> _pastDays = [];
-  int _programWeek = 6;
+  int _programWeek = 8;
 
   ActivityStats get _activityStats {
     return _stats ?? ActivityStats.empty();
@@ -108,53 +118,75 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     }
   }
 
+  Future<void> _loadTodayLogs() async {
+    setState(() { _isLoadingLogs = true; _logsError = null; });
+    try {
+      final logs = await _activityLogRepository.getTodayActivityLogs();
+      if (mounted) setState(() { _todayLogs = logs; _isLoadingLogs = false; });
+    } catch (e) {
+      if (mounted) setState(() { _logsError = "Couldn't load today's activities"; _isLoadingLogs = false; });
+    }
+  }
+
+  Future<void> _loadActivityData() async {
+    await Future.wait([
+      _checkStateAndProceed(isSilent: false),
+      _loadTodayLogs(),
+    ]);
+  }
+
   Future<void> _initCacheAndFlow() async {
     final prefs = await SharedPreferences.getInstance();
+    final bool purgedV5 = prefs.getBool('hc_demo_purged_v5') ?? false;
+    if (!purgedV5) {
+      final keys = prefs.getKeys().toList();
+      for (var k in keys) {
+        if (k.startsWith('hc_persist_') || k.startsWith('hc_cached_')) {
+          await prefs.remove(k);
+        }
+      }
+      await prefs.setBool('hc_demo_purged_v5', true);
+    }
     await prefs.remove('hc_state3_dismissed');
-    final bool cachedConn = prefs.getBool('hc_cached_connected') ?? false;
-    final int cachedSteps = prefs.getInt('hc_cached_steps') ?? 0;
 
-    if (cachedConn) {
-      if (mounted) {
-        setState(() {
+    final now = DateTime.now();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 29));
+    final initial30Days = await _healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now);
+
+    if (mounted) {
+      setState(() {
+        _pastDays = initial30Days;
+        if (initial30Days.isNotEmpty) {
+          final today = initial30Days.last;
+          final last7Days = initial30Days.length > 7 ? initial30Days.sublist(initial30Days.length - 7) : initial30Days;
           _stats = ActivityStats(
-            steps: cachedSteps,
-            distance: prefs.getDouble('hc_cached_distance') ?? 0.0,
-            calories: prefs.getDouble('hc_cached_calories') ?? 0.0,
-            activeMinutes: prefs.getInt('hc_cached_active_mins') ?? 0,
-            weeklySteps: prefs.getInt('hc_cached_weekly_steps') ?? 0,
+            steps: today.totalSteps,
+            distance: today.totalDistance,
+            calories: today.totalCalories,
+            activeMinutes: today.totalActiveMinutes,
+            weeklySteps: last7Days.fold<int>(0, (sum, item) => sum + item.totalSteps),
           );
-          _dailyScore = prefs.getInt('hc_cached_score') ?? 0;
-          _dailyScoreFeedback = prefs.getString('hc_cached_feedback') ?? "";
-          _currentWeeklyMinutes = prefs.getInt('hc_cached_weekly_mins') ?? 0;
-          _weeklyTargetMinutes = NdppConstants.getWeeklyTargetForWeek(_programWeek);
-          _onboardingState = HealthConnectOnboardingState.connected;
-          _isLoading = false;
-        });
-      }
-      _checkStateAndProceed(isSilent: true);
-    } else {
-      if (mounted) {
-        setState(() {
-          _onboardingState = HealthConnectOnboardingState.syncing;
-          _isLoading = true;
-        });
-      }
-      await _checkStateAndProceed(isSilent: false);
+          _currentWeeklyMinutes = last7Days.fold<int>(0, (sum, item) => sum + item.qualifyingActiveMinutes);
+          _dailyScore = ActivityMetricsEngine.calculateActivityScore(today, _programWeek);
+          _dailyScoreFeedback = ActivityMetricsEngine.getDailyScoreFeedback(
+            _dailyScore,
+            _currentWeeklyMinutes,
+            NdppConstants.getWeeklyTargetForWeek(_programWeek),
+          );
+        }
+        _weeklyTargetMinutes = NdppConstants.getWeeklyTargetForWeek(_programWeek);
+        _onboardingState = HealthConnectOnboardingState.connected;
+        _isLoading = false;
+      });
     }
 
+    _loadTodayLogs();
+    _checkStateAndProceed(isSilent: true);
     _startBackgroundPolling();
   }
 
   void _startBackgroundPolling() {
     _backgroundPollingTimer?.cancel();
-    _backgroundPollingTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
-      if (!mounted) return;
-      if (_onboardingState != HealthConnectOnboardingState.connected) {
-        _checkStateAndProceed(isSilent: true);
-      }
-    });
-
     _bg15MinSyncTimer?.cancel();
     _bg15MinSyncTimer = Timer.periodic(const Duration(minutes: 15), (timer) {
       if (!mounted) return;
@@ -183,7 +215,19 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     }
   }
 
+  bool _isCheckingState = false;
+
   Future<void> _checkStateAndProceed({required bool isSilent}) async {
+    if (_isCheckingState) return;
+    _isCheckingState = true;
+    try {
+      await _doCheckStateAndProceed(isSilent: isSilent);
+    } finally {
+      _isCheckingState = false;
+    }
+  }
+
+  Future<void> _doCheckStateAndProceed({required bool isSilent}) async {
     final bool isAndroid = defaultTargetPlatform == TargetPlatform.android;
 
     bool available = false;
@@ -215,60 +259,45 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     }
 
     if (!hasPerms) {
-      if (mounted && _onboardingState != HealthConnectOnboardingState.permissionsMissing) {
-        setState(() {
-          _onboardingState = HealthConnectOnboardingState.permissionsMissing;
-          _isLoading = false;
-        });
+      if (!isSilent) {
+        try {
+          hasPerms = await _healthSync.requestPermissions().timeout(const Duration(seconds: 15));
+        } catch (_) {}
       }
-      return;
+      if (!hasPerms) {
+        if (mounted && _onboardingState != HealthConnectOnboardingState.permissionsMissing) {
+          setState(() {
+            _onboardingState = HealthConnectOnboardingState.permissionsMissing;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
     }
 
     // Permissions granted! Fetch real live activity stats strictly from Health Connect.
     // ZERO static or mock data is generated.
-    if (isAndroid && _onboardingState != HealthConnectOnboardingState.connected && isSilent) {
-      int fastSteps = 0;
-      try {
-        final now = DateTime.now();
-        final startOfDay = DateTime(now.year, now.month, now.day);
-        final rawSteps = await Health().getHealthDataFromTypes(
-          startTime: startOfDay,
-          endTime: now,
-          types: const [HealthDataType.STEPS],
-        ).timeout(const Duration(milliseconds: 800));
-        for (var p in rawSteps) {
-          try {
-            final num v = (p.value as dynamic).numericValue as num;
-            fastSteps += v.toInt();
-          } catch (_) {
-            fastSteps += int.tryParse(p.value.toString()) ?? 0;
-          }
-        }
-      } catch (_) {}
-      if (fastSteps == 0) return;
-    }
-
+    final now = DateTime.now();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 29));
     List<DailyAggregate> pastDays = [];
-    if (isAndroid) {
-      try {
-        pastDays = await _healthSync.getLast7DaysStats().timeout(const Duration(seconds: 5));
-      } catch (_) {}
-    }
+    try {
+      pastDays = await _healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 15));
+    } catch (_) {}
 
     if (pastDays.isEmpty) {
-      final now = DateTime.now();
-      for (int i = 6; i >= 0; i--) {
+      for (int i = 29; i >= 0; i--) {
         pastDays.add(DailyAggregate.empty(now.subtract(Duration(days: i))));
       }
     }
 
     final today = pastDays.last;
-    final bool hasValidData = today.totalSteps > 0 && today.totalCalories > 0 && today.totalDistance > 0 && today.totalActiveMinutes > 0;
+    final bool hasValidData = pastDays.isNotEmpty;
 
     if (hasValidData) {
+      final last7Days = pastDays.length > 7 ? pastDays.sublist(pastDays.length - 7) : pastDays;
       int currentMins = 0;
       int weeklySteps = 0;
-      for (var day in pastDays) {
+      for (var day in last7Days) {
         currentMins += day.qualifyingActiveMinutes;
         weeklySteps += day.totalSteps;
       }
@@ -305,7 +334,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
             _onboardingState = HealthConnectOnboardingState.syncing;
             _isLoading = false;
           });
-          await Future.delayed(const Duration(milliseconds: 1200));
+          await Future.delayed(const Duration(milliseconds: 400));
         }
 
         if (mounted) {
@@ -340,32 +369,29 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
         double calsToUse = today.totalCalories;
         int minsToUse = today.totalActiveMinutes;
 
-        if (stepsToUse <= 0) {
-          if (cSteps > 0) {
-            stepsToUse = cSteps;
-            distToUse = prefs.getDouble('hc_cached_distance') ?? (cSteps * 0.00076);
-            calsToUse = prefs.getDouble('hc_cached_calories') ?? (cSteps * 0.042);
-            minsToUse = prefs.getInt('hc_cached_active_mins') ?? max(1, (cSteps / 100).round());
-          } else {
-            for (var d in pastDays.reversed) {
-              if (d.totalSteps > 0) {
-                stepsToUse = d.totalSteps;
-                distToUse = d.totalDistance;
-                calsToUse = d.totalCalories;
-                minsToUse = d.totalActiveMinutes;
-                break;
-              }
-            }
-          }
-        } else {
-          await prefs.setInt('hc_cached_steps', stepsToUse);
-          await prefs.setDouble('hc_cached_distance', distToUse);
-          await prefs.setDouble('hc_cached_calories', calsToUse);
-          await prefs.setInt('hc_cached_active_mins', minsToUse);
-          await prefs.setInt('hc_cached_weekly_steps', pastDays.fold<int>(0, (sum, item) => sum + item.totalSteps));
+        await prefs.setInt('hc_cached_steps', stepsToUse);
+        await prefs.setDouble('hc_cached_distance', distToUse);
+        await prefs.setDouble('hc_cached_calories', calsToUse);
+        await prefs.setInt('hc_cached_active_mins', minsToUse);
+        await prefs.setInt('hc_cached_weekly_steps', pastDays.fold<int>(0, (sum, item) => sum + item.totalSteps));
+
+        if (pastDays.isNotEmpty) {
+          final lastAgg = pastDays.last;
+          final int effMins = max(lastAgg.qualifyingActiveMinutes, minsToUse);
+          pastDays[pastDays.length - 1] = DailyAggregate(
+            date: lastAgg.date,
+            totalSteps: stepsToUse,
+            totalDistance: distToUse,
+            totalCalories: calsToUse,
+            totalActiveMinutes: minsToUse,
+            qualifyingActiveMinutes: effMins,
+            isActiveDay: effMins >= 10 || stepsToUse >= 3000,
+            coreSessions: lastAgg.coreSessions,
+            lifestyleSessions: lastAgg.lifestyleSessions,
+          );
         }
 
-        final int weeklyMinsToUse = pastDays.fold<int>(0, (sum, item) => sum + item.qualifyingActiveMinutes);
+        final int weeklyMinsToUse = pastDays.fold<int>(0, (sum, item) => sum + max(item.qualifyingActiveMinutes, item.totalActiveMinutes));
         final int scoreToUse = prefs.getInt('hc_cached_score') ?? 85;
         final String feedbackToUse = prefs.getString('hc_cached_feedback') ?? "Great job staying active today!";
 
@@ -434,7 +460,10 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     setState(() {
       _onboardingState = HealthConnectOnboardingState.syncing;
     });
-    final granted = await _healthSync.requestPermissions();
+    bool granted = await _healthSync.hasPermissions();
+    if (!granted) {
+      granted = await _healthSync.requestPermissions();
+    }
     if (granted) {
       await _checkStateAndProceed(isSilent: false);
     } else {
@@ -1123,9 +1152,12 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
                   child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF81C995)),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'LIVE CHECKING HEALTH CONNECT',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[200], letterSpacing: 0.5),
+                Flexible(
+                  child: Text(
+                    'LIVE CHECKING HEALTH CONNECT',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[200], letterSpacing: 0.5),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -1388,7 +1420,14 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
           ),
         ),
         const SizedBox(height: 16),
-        const ActivityFeed(),
+        ActivityFeed(onActivityLogged: _loadActivityData),
+        const SizedBox(height: 16),
+        ActivityTimelineWidget(
+          logs: _todayLogs,
+          isLoading: _isLoadingLogs,
+          errorMessage: _logsError,
+          onRetry: _loadTodayLogs,
+        ),
         const SizedBox(height: 16),
         WeeklyProgress(pastDays: _pastDays, programWeek: _programWeek),
         const SizedBox(height: 16),
@@ -1422,7 +1461,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
                         isConnected: _onboardingState != HealthConnectOnboardingState.notInstalled &&
                             _onboardingState != HealthConnectOnboardingState.permissionsMissing,
                         lastSyncTime: _lastSyncTime,
-                        onSyncTap: () => _checkStateAndProceed(isSilent: false),
+                        onSyncTap: () => _loadActivityData(),
                       ),
                       const SizedBox(height: 12),
                     ],

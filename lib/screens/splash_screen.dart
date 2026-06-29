@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
 import 'clinician_dashboard_screen.dart';
+import 'coach_profile_setup_screen.dart';
 import '../main.dart';
 import '../services/auth_service.dart';
 
@@ -20,6 +22,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   bool _isLoggedIn = false;
   String? _userRole;
+  bool _isProfileComplete = true;
 
   @override
   void initState() {
@@ -74,8 +77,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       final user = authService.currentUser;
       
       String? role;
+      bool isProfileComplete = true;
       if (user != null) {
         role = await authService.getUserRole();
+        if (role == 'coach') {
+          if (authService.isFirebaseInitialized) {
+            try {
+              final doc = await FirebaseFirestore.instance.collection('coaches').doc(user.uid).get();
+              isProfileComplete = doc.exists;
+            } catch (_) {
+              isProfileComplete = false;
+            }
+          } else {
+            isProfileComplete = prefs.getBool('coach_profile_complete_${user.uid}') ?? false;
+          }
+        }
       }
       role ??= prefs.getString('user_role');
 
@@ -83,6 +99,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         setState(() {
           _isLoggedIn = prefs.getBool('is_logged_in') ?? (user != null);
           _userRole = role;
+          _isProfileComplete = isProfileComplete;
         });
       }
     } catch (_) {}
@@ -94,7 +111,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     Widget nextScreen = const LoginScreen();
     if (_isLoggedIn) {
       if (_userRole == 'coach') {
-        nextScreen = const ClinicianDashboardScreen();
+        if (!_isProfileComplete) {
+          final user = AuthService().currentUser;
+          nextScreen = CoachProfileSetupScreen(
+            uid: user?.uid ?? 'mock_coach_uid',
+            name: user?.displayName ?? 'Dr. Sarah Mitchell',
+            email: user?.email ?? '',
+            phoneNumber: '',
+          );
+        } else {
+          nextScreen = const ClinicianDashboardScreen();
+        }
       } else {
         nextScreen = const MainShell();
       }

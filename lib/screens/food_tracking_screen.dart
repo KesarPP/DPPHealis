@@ -296,33 +296,71 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
           child: Row(
             children: [
               const _AchievementCard(
+                bgColor: Color(0xFFA8E4A0),
+                borderColor: Color(0xFFC69C6D),
+                imagePath: 'assets/images/Weekly_Consistency_Champion.png',
+                title: 'CONSISTENCY\nCHAMPION',
+                subtitle: 'WEEKLY',
+                description: 'Logged Food 7 days in a row!',
+                completedDays: 5,
+                totalDays: 7,
+                imageScale: 1.4, // Shrunk slightly to give text room
+              ),
+              const _AchievementCard(
                 bgColor: Color(0xFFFFB6C1),
                 borderColor: Color(0xFFC69C6D),
                 imagePath: 'assets/images/Monthly_Consistency_Champion.png', // The user will drop this PNG into assets
                 title: 'CONSISTENCY\nCHAMPION',
-                description: 'Log 7 days in a row',
-                completedDays: 5,
-                totalDays: 7,
-              ),
-              const _AchievementCard(
-                bgColor: Color(0xFFA8E4A0),
-                borderColor: Color(0xFFC69C6D),
+                subtitle: 'MONTHLY',
+                description: 'Logged Food the entire month!',
+                completedDays: 25,
+                totalDays: 30,
               ),
               const _AchievementCard(
                 bgColor: Color(0xFFFFD54F),
                 borderColor: Color(0xFFC69C6D),
+                imagePath: 'assets/images/Yearly_Consistency_Champion.png',
+                title: 'CONSISTENCY\nCHAMPION',
+                subtitle: 'YEARLY',
+                description: 'Logged for an entire Yearrr!!!',
+                completedDays: 120, // Sample progression
+                totalDays: 365,
+                imageScale: 1.5, // Shrunk slightly to give text room
+                imageOffsetX: 5.0, // Push the medal to the right to center it
               ),
               const _AchievementCard(
                 bgColor: Color(0xFFD8BFD8),
                 borderColor: Color(0xFFC69C6D),
+                imagePath: 'assets/images/Weekly_Nutrition_Ninja.png',
+                title: 'NUTRITION\nNINJA',
+                subtitle: 'WEEKLY',
+                description: 'Hit calorie goals 7 days in a row!',
+                completedDays: 5,
+                totalDays: 7,
+                imageScale: 1.15, // Made smaller
               ),
               const _AchievementCard(
                 bgColor: Color(0xFFA0E8E8),
                 borderColor: Color(0xFFC69C6D),
+                imagePath: 'assets/images/Monthly_Nutrition_Ninja.png',
+                title: 'NUTRITION\nNINJA',
+                subtitle: 'MONTHLY',
+                description: 'Hit calorie goals the entire month!',
+                completedDays: 25,
+                totalDays: 30,
+                imageScale: 1.25, // Made smaller again
               ),
               const _AchievementCard(
                 bgColor: Color(0xFFFFB347),
                 borderColor: Color(0xFFC69C6D),
+                imagePath: 'assets/images/Yearly_Nutrition_Ninja.png',
+                title: 'NUTRITION\nNINJA',
+                subtitle: 'YEARLY',
+                description: 'Hit calorie goals for an entire Yearrr!!!',
+                completedDays: 120,
+                totalDays: 365,
+                imageScale: 1.15, // Made smaller
+                imageOffsetY: -10.0, // Shift upwards!
               ),
             ],
           ),
@@ -337,18 +375,26 @@ class _AchievementCard extends StatelessWidget {
   final Color borderColor;
   final String? imagePath;
   final String? title;
+  final String? subtitle;
   final String? description;
   final int? completedDays;
   final int? totalDays;
+  final double imageScale;
+  final double imageOffsetX;
+  final double imageOffsetY;
 
   const _AchievementCard({
     required this.bgColor,
     required this.borderColor,
     this.imagePath,
     this.title,
+    this.subtitle,
     this.description,
     this.completedDays,
     this.totalDays,
+    this.imageScale = 1.15,
+    this.imageOffsetX = 0.0,
+    this.imageOffsetY = 0.0,
   });
 
   List<Widget> _buildCornerDecorations(Color color) {
@@ -430,25 +476,25 @@ class _AchievementCard extends StatelessWidget {
                 // Inner Content Layout
                 Positioned.fill(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 32.0, left: 4.0, right: 4.0, bottom: 16.0),
+                    padding: const EdgeInsets.only(top: 32.0, left: 12.0, right: 12.0, bottom: 16.0),
                     child: Column(
                       children: [
                         // Icon Area (65%)
                         Expanded(
                           flex: 85,
                           child: Transform.translate(
-                            offset: const Offset(0, -25),
+                            offset: Offset(imageOffsetX, -25 + imageOffsetY),
                             child: Center(
                               child: imagePath != null
                                   ? Transform.scale(
-                                      scale: 1.20,
+                                      scale: imageScale,
                                       child: Image.asset(
                                         imagePath!,
                                         fit: BoxFit.contain,
-                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.shield_outlined, size: 130, color: borderColor),
+                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.shield_outlined, size: 145, color: borderColor),
                                       ),
                                     )
-                                  : Icon(Icons.shield_outlined, size: 130, color: borderColor),
+                                  : Icon(Icons.shield_outlined, size: 145, color: borderColor),
                             ),
                           ),
                         ),
@@ -457,43 +503,45 @@ class _AchievementCard extends StatelessWidget {
                         Expanded(
                           flex: 35,
                           child: Transform.translate(
-                            offset: const Offset(0, -50), // Moved up by 15 pixels
-                            child: Center(
+                            offset: const Offset(0, -25), // Moved up by 15 pixels
+                            child: OverflowBox(
+                              maxHeight: double.infinity,
                               child: title != null
-                                ? FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Transform.translate(
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Transform.translate(
                                           offset: const Offset(0, 0), // Adjust title position
-                                          child: Text(
-                                            title!,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              color: const Color(0xFF001F54), // Deep Dark Blue
-                                              fontSize: 50,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: 1.2,
-                                              height: 1.1, // Bring the two lines a bit closer
-                                              shadows: [
-                                                Shadow(offset: const Offset(1, 2), color: Colors.black.withValues(alpha: 0.2), blurRadius: 2),
-                                              ],
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              title!,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: const Color(0xFF001F54), // Deep Dark Blue
+                                                fontSize: 20, // Slightly reduced
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: 0.8, // Slightly tighter for title
+                                                height: 1.15, // Better line spacing
+                                                shadows: [
+                                                  Shadow(offset: const Offset(1, 2), color: Colors.black.withValues(alpha: 0.15), blurRadius: 4), // Softer shadow
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),
                                         Transform.translate(
-                                          offset: const Offset(0, 20), // Adjust subtitle position
+                                          offset: const Offset(0, -1), // Adjust subtitle position
                                           child: Text(
-                                            'MONTHLY',
+                                            subtitle ?? 'MONTHLY',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                               color: const Color(0xFFC2185B), // Dark Pink
-                                              fontSize: 30,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: 1.2,
+                                              fontSize: 14, // Better hierarchy relative to title
+                                              fontWeight: FontWeight.w800, // A bit softer than 900
+                                              letterSpacing: 1.5, // Wider for caps gives a cute modern feel
                                               shadows: [
-                                                Shadow(offset: const Offset(1, 1), color: Colors.black.withValues(alpha: 0.2), blurRadius: 2),
+                                                Shadow(offset: const Offset(1, 1), color: Colors.black.withValues(alpha: 0.1), blurRadius: 2), // Very subtle shadow
                                               ],
                                             ),
                                           ),
@@ -501,13 +549,13 @@ class _AchievementCard extends StatelessWidget {
                                         if (completedDays != null && totalDays != null) ...[
                                           const SizedBox(height: 6),
                                           Transform.translate(
-                                            offset: const Offset(0, 0), // Adjust slider position
+                                            offset: const Offset(0, -10), // Adjust slider position
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 // Slider bar
                                                 SizedBox(
-                                                  width: 110,
+                                                  width: 55,
                                                   height: 24,
                                                   child: Stack(
                                                     alignment: Alignment.centerLeft,
@@ -538,7 +586,7 @@ class _AchievementCard extends StatelessWidget {
                                                       ),
                                                       // Thumb (Pink with white outline)
                                                       Positioned(
-                                                        left: (110 - 20) * (completedDays! / totalDays!),
+                                                        left: (55 - 20) * (completedDays! / totalDays!),
                                                         child: Container(
                                                           width: 20,
                                                           height: 20,
@@ -561,8 +609,8 @@ class _AchievementCard extends StatelessWidget {
                                                   '$completedDays/$totalDays',
                                                   style: const TextStyle(
                                                     color: Color(0xFF001F54), // Deep Dark Blue
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 14, // More readable
+                                                    fontWeight: FontWeight.w800,
                                                   ),
                                                 ),
                                               ],
@@ -572,22 +620,22 @@ class _AchievementCard extends StatelessWidget {
                                         if (description != null) ...[
                                           const SizedBox(height: 8),
                                           Transform.translate(
-                                            offset: const Offset(0, 0), // Adjust description position
+                                            offset: const Offset(0, -14), // Adjust description position
                                             child: Text(
                                               description!,
                                               textAlign: TextAlign.center,
                                               style: TextStyle(
-                                                color: const Color(0xFF001F54).withValues(alpha: 0.8), // Deep Dark Blue faded
-                                                fontSize: 9,
+                                                color: const Color(0xFF001F54).withValues(alpha: 0.75), // Deep Dark Blue faded
+                                                fontSize: 11, // Larger and readable
                                                 fontWeight: FontWeight.w700,
-                                                height: 1.1,
+                                                letterSpacing: 0.3,
+                                                height: 1.2,
                                               ),
                                             ),
                                           ),
                                         ],
                                       ],
-                                    ),
-                                  )
+                                    )
                                 : const SizedBox.shrink(),
                             ),
                           ),

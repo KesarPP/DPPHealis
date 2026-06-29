@@ -4,14 +4,23 @@ import '../services/auth_service.dart';
 import '../data/gelato_theme.dart';
 import '../models/ndpp_constants.dart';
 import '../services/activity_metrics_engine.dart';
+import '../services/health_sync_service.dart';
 
 class DashboardHeroCards extends StatefulWidget {
   final List<DailyAggregate> trailing30Days;
   final int programWeek;
+  final MissionGoalMode missionGoalMode;
+  final double stretchMultiplier;
+  final SyncStatus syncStatus;
+  final VoidCallback? onRetrySync;
   const DashboardHeroCards({
     super.key,
     required this.trailing30Days,
     required this.programWeek,
+    this.missionGoalMode = MissionGoalMode.ndppStrict,
+    this.stretchMultiplier = 1.0,
+    this.syncStatus = SyncStatus.success,
+    this.onRetrySync,
   });
 
   @override
@@ -46,6 +55,10 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
                   isWeekly: _selectedSegment == 0,
                   trailing30Days: widget.trailing30Days,
                   programWeek: widget.programWeek,
+                  missionGoalMode: widget.missionGoalMode,
+                  stretchMultiplier: widget.stretchMultiplier,
+                  syncStatus: widget.syncStatus,
+                  onRetrySync: widget.onRetrySync,
                   toggleWidget: _buildSegmentedToggle(const Color(0xFF064E3B),
                       const Color(0xFFA7F3D0), const Color(0xFF64748B)),
                 ),
@@ -466,9 +479,9 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: Container(
+                      child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
+                          horizontal: 10, vertical: 16),
                       decoration: BoxDecoration(
                         color: const Color(
                             0xFFDBEAFE), // Pastel blue for achievement rack and progress
@@ -483,7 +496,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 5,
+                            flex: 11,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -531,40 +544,47 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                             width: 1,
                             height: 60,
                             color: Colors.black.withValues(alpha: 0.1),
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                           // Weekly/Monthly Progress
                           Expanded(
-                            flex: 4,
+                            flex: 9,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  widget.isWeekly
-                                      ? 'Weekly Progress'
-                                      : 'Monthly Progress',
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.black87),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    widget.isWeekly
+                                        ? 'Weekly Progress'
+                                        : 'Monthly Progress',
+                                    style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black87),
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: const [
-                                    Text('🏆', style: TextStyle(fontSize: 18)),
-                                    Text('🏆', style: TextStyle(fontSize: 18)),
-                                    Text('🏆', style: TextStyle(fontSize: 18)),
-                                    Opacity(
-                                        opacity: 0.3,
-                                        child: Text('🏆',
-                                            style: TextStyle(fontSize: 18))),
-                                    Opacity(
-                                        opacity: 0.3,
-                                        child: Text('🏆',
-                                            style: TextStyle(fontSize: 18))),
-                                  ],
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: const [
+                                      Text('🏆', style: TextStyle(fontSize: 18)),
+                                      Text('🏆', style: TextStyle(fontSize: 18)),
+                                      Text('🏆', style: TextStyle(fontSize: 18)),
+                                      Opacity(
+                                          opacity: 0.3,
+                                          child: Text('🏆',
+                                              style: TextStyle(fontSize: 18))),
+                                      Opacity(
+                                          opacity: 0.3,
+                                          child: Text('🏆',
+                                              style: TextStyle(fontSize: 18))),
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 // Small progress bar
@@ -682,11 +702,19 @@ class _ActivityJourneyCard extends StatefulWidget {
   final Widget toggleWidget;
   final List<DailyAggregate> trailing30Days;
   final int programWeek;
+  final MissionGoalMode missionGoalMode;
+  final double stretchMultiplier;
+  final SyncStatus syncStatus;
+  final VoidCallback? onRetrySync;
   const _ActivityJourneyCard({
     required this.isWeekly,
     required this.toggleWidget,
     required this.trailing30Days,
     required this.programWeek,
+    required this.missionGoalMode,
+    required this.stretchMultiplier,
+    this.syncStatus = SyncStatus.success,
+    this.onRetrySync,
   });
 
   @override
@@ -729,14 +757,19 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
             trailing30Days: widget.trailing30Days,
             programWeek: widget.programWeek,
             kcalRate: kcalRate,
+            mode: widget.missionGoalMode,
+            stretchMultiplier: widget.stretchMultiplier,
           )
         : ActivityMissionEngine.getMonthlySummary(
             trailing30Days: widget.trailing30Days,
             programWeek: widget.programWeek,
             kcalRate: kcalRate,
+            mode: widget.missionGoalMode,
+            stretchMultiplier: widget.stretchMultiplier,
           );
 
-    final double ringValue = summary.progressPercentage / 100.0;
+    debugPrint("[SYNC_TELEMETRY] Stage 5: UI Binding read. Activity Journey Card rendered with ${widget.trailing30Days.length} aggregate days.");
+    final double ringValue = (summary.progressPercentage / 100.0).clamp(0.0, 1.0);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -909,9 +942,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                             ],
                                           ),
                                           Text(
-                                            widget.isWeekly
-                                                ? "of this week's\nmission completed"
-                                                : "of this month's\nmission completed",
+                                            widget.isWeekly ? "of weekly goal\ncompleted" : "of monthly goal\ncompleted",
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(
                                                 fontSize: 11,

@@ -73,7 +73,8 @@ class _WeeklyProgressState extends State<WeeklyProgress>
     final daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     // Ensure we have exactly 7 days, padded if necessary
-    List<DailyAggregate> processingDays = List.from(widget.pastDays);
+    final last7 = widget.pastDays.length > 7 ? widget.pastDays.sublist(widget.pastDays.length - 7) : widget.pastDays;
+    List<DailyAggregate> processingDays = List.from(last7);
     while (processingDays.length < 7) {
       processingDays.insert(0, DailyAggregate.empty(DateTime.now().subtract(Duration(days: 7 - processingDays.length))));
     }
@@ -92,18 +93,19 @@ class _WeeklyProgressState extends State<WeeklyProgress>
     for (var day in processingDays) {
       _days.add(daysOfWeek[day.date.weekday - 1]);
       
+      final int effectiveMins = math.max(day.qualifyingActiveMinutes, day.totalActiveMinutes);
       rawSteps.add(day.totalSteps.toDouble());
       rawCals.add(day.totalCalories);
       rawDist.add(day.totalDistance);
-      rawMins.add(day.qualifyingActiveMinutes.toDouble());
+      rawMins.add(effectiveMins.toDouble());
 
       _tooltipValues[0].add('${(day.totalSteps / 1000).toStringAsFixed(1)}K');
       _tooltipValues[1].add('${day.totalCalories.round()}');
       _tooltipValues[2].add('${day.totalDistance.toStringAsFixed(1)} km');
-      _tooltipValues[3].add('${day.qualifyingActiveMinutes} min');
+      _tooltipValues[3].add('$effectiveMins min');
 
-      _weeklyQualifyingMinutes += day.qualifyingActiveMinutes;
-      if (day.isActiveDay) _activeDaysThisWeek++;
+      _weeklyQualifyingMinutes += effectiveMins;
+      if (day.isActiveDay || effectiveMins >= 10 || day.totalSteps >= 3000) _activeDaysThisWeek++;
     }
 
     _weeklyTarget = NdppConstants.getWeeklyTargetForWeek(widget.programWeek);
@@ -400,7 +402,18 @@ class _WeeklyProgressState extends State<WeeklyProgress>
           const SizedBox(height: 24),
 
           // Chart Area with Tooltips and Gridlines
-          AnimatedBuilder(
+          if (currentData.every((val) => val == 0))
+            const SizedBox(
+              height: 160,
+              child: Center(
+                child: Text(
+                  "No activity logged yet this week",
+                  style: TextStyle(color: GelatoTheme.textLight, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            )
+          else
+            AnimatedBuilder(
             animation: _barAnim,
             builder: (context, _) {
               return LayoutBuilder(
@@ -456,7 +469,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                         });
                       },
                       child: SizedBox(
-                        height: 160,
+                        height: 185,
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
@@ -591,7 +604,9 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
-                                        AnimatedContainer(
+                                        val == 0
+                                            ? const SizedBox(height: 0)
+                                            : AnimatedContainer(
                                           duration: const Duration(milliseconds: 250),
                                           curve: Curves.easeOutBack,
                                           width: isSelected ? 22 : 18,
@@ -659,16 +674,19 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                             mainAxisAlignment: MainAxisAlignment.start,
                                             children: [
                                               const SizedBox(height: 8),
-                                              Text(
-                                                _days[i],
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: isToday
-                                                      ? GelatoTheme.purpleDark
-                                                      : GelatoTheme.textLight,
-                                                  fontWeight: isToday
-                                                      ? FontWeight.w900
-                                                      : FontWeight.w600,
+                                              FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  _days[i],
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: isToday
+                                                        ? GelatoTheme.purpleDark
+                                                        : GelatoTheme.textLight,
+                                                    fontWeight: isToday
+                                                        ? FontWeight.w900
+                                                        : FontWeight.w600,
+                                                  ),
                                                 ),
                                               ),
                                             ],

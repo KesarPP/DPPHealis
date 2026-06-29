@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
+import 'coach_profile_setup_screen.dart';
 import 'forgot_password_screen.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
@@ -151,13 +152,30 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+      final errStr = e.toString();
+      if (errStr.contains('PROFILE_INCOMPLETE')) {
+        if (mounted) {
+          final user = AuthService().currentUser;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => CoachProfileSetupScreen(
+                uid: user?.uid ?? 'mock_coach_uid',
+                name: user?.displayName ?? 'Dr. Sarah Mitchell',
+                email: user?.email ?? emailOrPhone,
+                phoneNumber: '',
+              ),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceFirst('Exception: ', '')),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {

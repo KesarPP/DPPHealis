@@ -1,9 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
+import '../models/ndpp_constants.dart';
+import '../services/activity_metrics_engine.dart';
 
 class DashboardMomentum extends StatefulWidget {
-  const DashboardMomentum({super.key});
+  final List<DailyAggregate> pastDays;
+  const DashboardMomentum({super.key, this.pastDays = const []});
 
   @override
   State<DashboardMomentum> createState() => _DashboardMomentumState();
@@ -29,15 +32,20 @@ class _DashboardMomentumState extends State<DashboardMomentum> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final int streak = widget.pastDays.isNotEmpty
+        ? ActivityMetricsEngine.getCurrentStreak(widget.pastDays)
+        : 2;
+    final double streakProgress = streak > 0 ? ((streak % 7 == 0) ? 1.0 : (streak % 7) / 7.0) : 0.1;
+
     final List<_MomentumCardData> items = [
       _MomentumCardData(
-        title: "2",
+        title: "$streak",
         subtitle: "Day Streak",
-        meta: "Keep it up!",
+        meta: streak > 0 ? "Keep it up!" : "Start today!",
         iconData: Icons.local_fire_department_rounded,
         color: GelatoTheme.orangeBright,
         bgColor: GelatoTheme.orange,
-        progress: 1.0,
+        progress: streakProgress,
       ),
       _MomentumCardData(
         title: "75%",

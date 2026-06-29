@@ -141,22 +141,40 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
                               ),
                             ],
                           ),
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: const Color(0xFFEBF3FC),
-                            foregroundImage: (_profile?.localImagePath != null &&
-                                    File(_profile!.localImagePath!).existsSync())
-                                ? FileImage(File(_profile!.localImagePath!))
-                                : null,
-                            child: Text(
-                              _getInitials(_profile?.name ?? 'Coach'),
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: _brandColor,
-                              ),
-                            ),
-                          ),
+                          child: (_profile?.localImagePath != null && _profile!.localImagePath!.startsWith('avatar_'))
+                              ? Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFEBF3FC),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: ClipOval(
+                                    child: Image.asset(
+                                      'assets/images/coaches/coach_${(int.tryParse(_profile!.localImagePath!.replaceFirst('avatar_', '')) ?? 0) + 1}.png',
+                                      width: 96,
+                                      height: 96,
+                                      fit: BoxFit.cover,
+                                      alignment: Alignment.topCenter,
+                                    ),
+                                  ),
+                                )
+                              : CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: const Color(0xFFEBF3FC),
+                                  foregroundImage: (_profile?.localImagePath != null &&
+                                          File(_profile!.localImagePath!).existsSync())
+                                      ? FileImage(File(_profile!.localImagePath!))
+                                      : null,
+                                  child: Text(
+                                    _getInitials(_profile?.name ?? 'Coach'),
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: _brandColor,
+                                    ),
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 16),

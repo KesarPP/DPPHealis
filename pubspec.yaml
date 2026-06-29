@@ -46,6 +46,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/coaches/
     - assets/images/ffq/beverages/
     - assets/images/ffq/cereals_breads_prep/
     - assets/images/ffq/condiments_sideitems/

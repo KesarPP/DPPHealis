@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
 import 'health_service.dart';
@@ -124,23 +123,19 @@ class HealthConnectService implements HealthService {
             totalCals += val;
           }
         }
-        final steps = await getTodaySteps();
-        final estCals = steps * 0.04;
-        if (activeCals > 0) return max(activeCals, estCals);
-        if (estCals > 0) return estCals;
+        if (activeCals > 0) return activeCals;
         if (totalCals > 0) return totalCals;
+        return 0.0;
       }
     } catch (e) {
       debugPrint('Native calories fetch error: $e');
     }
 
-    final steps = await getTodaySteps();
-    return steps * 0.04;
+    return 0.0;
   }
 
   @override
   Future<int> getTodayActiveMinutes() async {
-    final steps = await getTodaySteps();
-    return steps > 0 ? max(1, (steps / 100).round()) : 0;
+    return 0;
   }
 }

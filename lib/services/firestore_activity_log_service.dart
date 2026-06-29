@@ -2,16 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/activity_log.dart';
-import 'ActivityLogService';
+import 'activity_log_service.dart';
 
-class FirestoreActivityLogService
-    implements ActivityLogService {
-
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
-
-  final FirebaseAuth _auth =
-      FirebaseAuth.instance;
+class FirestoreActivityLogService implements ActivityLogService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Future<List<ActivityLog>> getTodayActivityLogs() async {
@@ -22,35 +17,16 @@ class FirestoreActivityLogService
     }
 
     final now = DateTime.now();
-
-    final startOfDay = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
-
-    final startOfTomorrow = startOfDay.add(
-      const Duration(days: 1),
-    );
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final startOfTomorrow = startOfDay.add(const Duration(days: 1));
 
     final snapshot = await _firestore
         .collection('logs')
         .doc(user.uid)
         .collection('activity_entries')
-        .where(
-      'createdAt',
-      isGreaterThanOrEqualTo:
-      Timestamp.fromDate(startOfDay),
-    )
-        .where(
-      'createdAt',
-      isLessThan:
-      Timestamp.fromDate(startOfTomorrow),
-    )
-        .orderBy(
-      'createdAt',
-      descending: true,
-    )
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('createdAt', isLessThan: Timestamp.fromDate(startOfTomorrow))
+        .orderBy('createdAt', descending: true)
         .get();
 
     return snapshot.docs.map((doc) {
@@ -59,5 +35,44 @@ class FirestoreActivityLogService
         data: doc.data(),
       );
     }).toList();
+  }
+
+  @override
+  Future<List<ActivityLog>> getLogsForInterval(DateTime startTime, DateTime endTime) async {
+    final user = _auth.currentUser;
+    if (user == null) return [];
+
+    final snapshot = await _firestore
+        .collection('logs')
+        .doc(user.uid)
+        .collection('activity_entries')
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startTime))
+        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endTime))
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return ActivityLog.fromFirestore(
+        id: doc.id,
+        data: doc.data(),
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> saveActivityLog(ActivityLog log) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _firestore
+        .collection('logs')
+        .doc(user.uid)
+        .collection('activity_entries')
+        .add({
+      'activityName': log.activityName,
+      'durationMinutes': log.durationMinutes,
+      'frequency': log.frequency,
+      'createdAt': Timestamp.fromDate(log.createdAt),
+    });
   }
 }

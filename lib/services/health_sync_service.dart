@@ -1,21 +1,27 @@
 import 'dart:math';
 import 'package:health/health.dart';
 import '../models/ndpp_constants.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'firestore_activity_log_service.dart';
+
+enum SyncStatus { syncing, success, permissionDenied, healthConnectUnavailable, error }
 
 class HealthSyncService {
   final Health _health = Health();
 
-  static const List<HealthDataType> _syncTypes = [
-    HealthDataType.STEPS,
-    HealthDataType.DISTANCE_DELTA,
-    HealthDataType.TOTAL_CALORIES_BURNED,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.WORKOUT,
-  ];
+  static List<HealthDataType> get _syncTypes => [
+        HealthDataType.STEPS,
+        HealthDataType.DISTANCE_DELTA,
+        HealthDataType.TOTAL_CALORIES_BURNED,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.WORKOUT,
+        if (defaultTargetPlatform == TargetPlatform.iOS) HealthDataType.EXERCISE_TIME,
+      ];
 
   Future<bool> requestPermissions() async {
     try {
-      return await _health.requestAuthorization(_syncTypes).timeout(const Duration(seconds: 5));
+      return await _health.requestAuthorization(_syncTypes).timeout(const Duration(seconds: 15));
     } catch (_) {
       return false;
     }
@@ -23,7 +29,7 @@ class HealthSyncService {
 
   Future<bool> hasPermissions() async {
     try {
-      return await _health.hasPermissions(_syncTypes).timeout(const Duration(seconds: 3)) ?? false;
+      return await _health.hasPermissions(_syncTypes).timeout(const Duration(seconds: 10)) ?? false;
     } catch (_) {
       return false;
     }
@@ -40,7 +46,9 @@ class HealthSyncService {
     final startDate = DateTime(startTime.year, startTime.month, startTime.day);
     final endDay = DateTime(endTime.year, endTime.month, endTime.day);
     final int daysCount = endDay.difference(startDate).inDays + 1;
+    final now = DateTime.now();
     final startOfDayEnd = DateTime(endDay.year, endDay.month, endDay.day, 23, 59, 59);
+    final fetchEndTime = startOfDayEnd.isAfter(now) ? now : startOfDayEnd;
 
     // Initialize empty aggregates
     Map<String, DailyAggregate> dailyMap = {};
@@ -56,17 +64,21 @@ class HealthSyncService {
         try {
           final pts = await _health.getHealthDataFromTypes(
             startTime: startDate,
-            endTime: startOfDayEnd,
+            endTime: fetchEndTime,
             types: [type],
-          ).timeout(const Duration(seconds: 3));
+          ).timeout(const Duration(seconds: 15));
           data.addAll(_health.removeDuplicates(pts));
-        } catch (_) {}
+        } catch (e) {
+          debugPrint("[SYNC_TELEMETRY] Error fetching $type: $e");
+        }
       }
+      debugPrint("[SYNC_TELEMETRY] Stage 1: Raw Fetch completed. Fetched ${data.length} health data points.");
 
       Map<String, int> dailySteps = {};
       Map<String, double> dailyDistance = {};
       Map<String, double> dailyTotalCalories = {};
       Map<String, double> dailyActiveCalories = {};
+      Map<String, int> dailyExerciseTime = {};
       Map<String, List<ActivitySession>> dailyCoreSessions = {};
       Map<String, List<ActivitySession>> dailyLifestyleSessions = {};
 
@@ -94,6 +106,9 @@ class HealthSyncService {
         } else if (point.type == HealthDataType.ACTIVE_ENERGY_BURNED) {
           final cals = extractValue(point.value);
           dailyActiveCalories[dKey] = (dailyActiveCalories[dKey] ?? 0.0) + cals;
+        } else if (point.type == HealthDataType.EXERCISE_TIME) {
+          final mins = extractValue(point.value).toInt();
+          dailyExerciseTime[dKey] = (dailyExerciseTime[dKey] ?? 0) + mins;
         } else if (point.type == HealthDataType.WORKOUT) {
           final session = _parseWorkout(point);
           if (session != null) {
@@ -109,20 +124,25 @@ class HealthSyncService {
         }
       }
 
-      for (int i = 0; i < daysCount; i++) {
-        final d = startDate.add(Duration(days: i));
-        final dKey = _dateKey(d);
-        final dayStart = DateTime(d.year, d.month, d.day, 0, 0, 0);
-        final dayEnd = DateTime(d.year, d.month, d.day, 23, 59, 59);
-
-        int? intervalSteps;
+      // Stage 1.5: Query native step aggregation per day to guarantee Google Fit step imports are captured
+      await Future.wait(dailyMap.keys.map((dKey) async {
+        final day = dailyMap[dKey]!.date;
+        final startOfDay = DateTime(day.year, day.month, day.day);
+        final endOfDay = DateTime(day.year, day.month, day.day, 23, 59, 59);
+        final queryEnd = endOfDay.isAfter(now) ? now : endOfDay;
         try {
-          intervalSteps = await _health.getTotalStepsInInterval(dayStart, dayEnd);
+          final s = await _health.getTotalStepsInInterval(startOfDay, queryEnd).timeout(const Duration(seconds: 4));
+          if (s != null && s > 0) {
+            final current = dailySteps[dKey] ?? 0;
+            if (s > current) {
+              dailySteps[dKey] = s;
+            }
+          }
         } catch (_) {}
-        if (intervalSteps != null && intervalSteps > 0) {
-          dailySteps[dKey] = max(dailySteps[dKey] ?? 0, intervalSteps);
-        }
-      }
+      }));
+
+      debugPrint("[SYNC_TELEMETRY] Stage 2: Parsed workout sessions to ActivitySession.");
+      debugPrint("[SYNC_TELEMETRY] Stage 3: Aggregating daily steps, calories, and qualifying NDPP minutes.");
 
       List<DailyAggregate> results = [];
       for (int i = 0; i < daysCount; i++) {
@@ -135,37 +155,28 @@ class HealthSyncService {
           distance = steps * 0.00076;
         }
         final activeCals = dailyActiveCalories[dKey] ?? 0.0;
+        final totalCals = dailyTotalCalories[dKey] ?? 0.0;
+        final exerciseMins = dailyExerciseTime[dKey] ?? 0;
         final coreSessions = dailyCoreSessions[dKey] ?? [];
         final lifestyleSessions = dailyLifestyleSessions[dKey] ?? [];
 
-        int totalActiveMins = 0;
-        int qualifyingMins = 0;
-
-        if (coreSessions.isEmpty && lifestyleSessions.isEmpty) {
-          totalActiveMins = steps > 0 ? max(1, (steps / 100).round()) : 0;
-          if (totalActiveMins >= NdppConstants.minQualifyingSessionMinutes) {
-            qualifyingMins = totalActiveMins;
-          }
-        } else {
-          for (var s in coreSessions) {
-            totalActiveMins += s.durationMinutes;
-            if (s.isQualifying) qualifyingMins += s.durationMinutes;
-          }
-          for (var s in lifestyleSessions) {
-            totalActiveMins += s.durationMinutes;
-            if (s.isQualifying) qualifyingMins += s.durationMinutes;
-          }
+        int sessionMins = 0;
+        int qualSessionMins = 0;
+        for (var s in coreSessions) {
+          sessionMins += s.durationMinutes;
+          if (s.isQualifying) qualSessionMins += s.durationMinutes;
+        }
+        for (var s in lifestyleSessions) {
+          sessionMins += s.durationMinutes;
+          if (s.isQualifying) qualSessionMins += s.durationMinutes;
         }
 
-        // Accurate active workout calories:
-        // Prioritize ACTIVE_ENERGY_BURNED if recorded.
-        // Otherwise accurately estimate from steps (~0.04 kcal/step) or active minutes (~5.5 kcal/min).
-        // Never fall back to raw totalCals because it includes ~1800 kcal resting BMR!
-        double activeEst = steps * 0.04;
-        if (totalActiveMins > 0) {
-          activeEst = max(activeEst, totalActiveMins * 5.5);
-        }
-        final calories = activeCals > 0 ? max(activeCals, activeEst) : activeEst;
+        final int stepEstimatedMins = steps > 0 ? max(1, (steps / 100).round()) : 0;
+        final int totalActiveMins = max(max(exerciseMins, sessionMins), stepEstimatedMins);
+        final int qualifyingMins = max(totalActiveMins >= NdppConstants.minQualifyingSessionMinutes ? totalActiveMins : 0, qualSessionMins);
+
+        final double stepEstimatedCals = steps > 0 ? steps * 0.04 : 0.0;
+        final double calories = totalCals > 0 ? totalCals : (activeCals > 0 ? activeCals : stepEstimatedCals);
 
         final agg = DailyAggregate(
           date: d,
@@ -173,23 +184,128 @@ class HealthSyncService {
           totalDistance: distance,
           totalCalories: calories,
           totalActiveMinutes: totalActiveMins,
-          qualifyingActiveMinutes: qualifyingMins,
-          isActiveDay: qualifyingMins >= NdppConstants.minQualifyingSessionMinutes,
+          qualifyingActiveMinutes: max(qualifyingMins, totalActiveMins),
+          isActiveDay: max(qualifyingMins, totalActiveMins) >= NdppConstants.minQualifyingSessionMinutes,
           coreSessions: coreSessions,
           lifestyleSessions: lifestyleSessions,
         );
         results.add(agg);
       }
 
+      await _persistAndRestore(results);
+      debugPrint("[SYNC_TELEMETRY] Stage 4: Persisted ${results.length} DailyAggregate rows to storage.");
       return results;
     } catch (e) {
-      print('HealthSyncService fetch error: $e');
-      return dailyMap.values.toList();
+      debugPrint('HealthSyncService fetch error: $e');
+      final fallback = dailyMap.values.toList();
+      await _persistAndRestore(fallback);
+      return fallback;
+    }
+  }
+
+  Future<void> _persistAndRestore(List<DailyAggregate> aggregates) async {
+    SharedPreferences? prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      return;
+    }
+
+    final bool purgedV5 = prefs.getBool('hc_demo_purged_v5') ?? false;
+    if (!purgedV5) {
+      final keys = prefs.getKeys().toList();
+      for (var k in keys) {
+        if (k.startsWith('hc_persist_') || k.startsWith('hc_cached_')) {
+          await prefs.remove(k);
+        }
+      }
+      await prefs.setBool('hc_demo_purged_v5', true);
+    }
+
+    final now = DateTime.now();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 31));
+    Map<String, int> manualMinsByDate = {};
+    try {
+      final manualLogs = await FirestoreActivityLogService()
+          .getLogsForInterval(thirtyDaysAgo, now.add(const Duration(days: 1)))
+          .timeout(const Duration(seconds: 3));
+      for (var log in manualLogs) {
+        final key = _dateKey(log.createdAt);
+        manualMinsByDate[key] = (manualMinsByDate[key] ?? 0) + log.durationMinutes;
+      }
+    } catch (_) {}
+
+    for (int i = 0; i < aggregates.length; i++) {
+      final agg = aggregates[i];
+      final key = _dateKey(agg.date);
+      final manMins = manualMinsByDate[key] ?? 0;
+
+      int steps = agg.totalSteps;
+      double dist = agg.totalDistance;
+      double cals = agg.totalCalories;
+      int act = agg.totalActiveMinutes;
+      int qual = agg.qualifyingActiveMinutes;
+
+      if (manMins > 0) {
+        act += manMins;
+        qual += manMins;
+        cals += manMins * 5.8;
+      }
+
+      if (steps > 0 || qual > 0 || act > 0) {
+        await prefs.setInt('hc_persist_steps_$key', steps);
+        await prefs.setDouble('hc_persist_dist_$key', dist);
+        await prefs.setDouble('hc_persist_cals_$key', cals);
+        await prefs.setInt('hc_persist_act_mins_$key', act);
+        await prefs.setInt('hc_persist_qual_mins_$key', qual);
+
+        if (steps != agg.totalSteps || qual != agg.qualifyingActiveMinutes || manMins > 0) {
+          aggregates[i] = DailyAggregate(
+            date: agg.date,
+            totalSteps: steps,
+            totalDistance: dist,
+            totalCalories: cals,
+            totalActiveMinutes: act,
+            qualifyingActiveMinutes: qual,
+            isActiveDay: qual >= NdppConstants.minQualifyingSessionMinutes || steps >= 3000,
+            coreSessions: agg.coreSessions,
+            lifestyleSessions: agg.lifestyleSessions,
+          );
+        }
+      } else {
+        final pSteps = prefs.getInt('hc_persist_steps_$key');
+        final pQual = prefs.getInt('hc_persist_qual_mins_$key');
+        if ((pSteps != null && pSteps > 0) || (pQual != null && pQual > 0) || manMins > 0) {
+          final rSteps = pSteps ?? 0;
+          final rDist = prefs.getDouble('hc_persist_dist_$key') ?? (rSteps * 0.00076);
+          final rCals = prefs.getDouble('hc_persist_cals_$key') ?? 0.0;
+          int rAct = prefs.getInt('hc_persist_act_mins_$key') ?? 0;
+          int rQual = max(pQual ?? 0, rAct);
+
+          if (manMins > 0) {
+            rAct += manMins;
+            rQual += manMins;
+          }
+
+          aggregates[i] = DailyAggregate(
+            date: agg.date,
+            totalSteps: rSteps,
+            totalDistance: rDist,
+            totalCalories: rCals + (manMins * 5.8),
+            totalActiveMinutes: rAct,
+            qualifyingActiveMinutes: rQual,
+            isActiveDay: rQual >= NdppConstants.minQualifyingSessionMinutes || rSteps >= 3000,
+            coreSessions: agg.coreSessions,
+            lifestyleSessions: agg.lifestyleSessions,
+          );
+        }
+      }
     }
   }
 
   String _dateKey(DateTime date) {
-    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    final local = date.toLocal();
+    return "${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}";
   }
 
   ActivitySession? _parseWorkout(HealthDataPoint point) {
@@ -214,7 +330,7 @@ class HealthSyncService {
       caloriesBurned: workout.totalEnergyBurned?.toDouble() ?? 0.0,
       distanceMeters: workout.totalDistance?.toDouble() ?? 0.0,
       isQualifying: isQualifying,
-      date: DateTime(point.dateFrom.year, point.dateFrom.month, point.dateFrom.day),
+      date: DateTime(point.dateFrom.toLocal().year, point.dateFrom.toLocal().month, point.dateFrom.toLocal().day),
     );
   }
 
