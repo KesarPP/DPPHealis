@@ -62,41 +62,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 32),
             
-            const _SectionTitle('Journey Progress'),
-            const SizedBox(height: 12),
-            const _JourneyProgressCard(),
-            const SizedBox(height: 32),
-
-            const _SectionTitle('Active Quests'),
-            const SizedBox(height: 12),
-            const IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: _GoalCard(
-                    title: 'Weight Goal', 
-                    target: 'Lose 10 kg', 
-                    current: 'Current: 65 kg', 
-                    progress: 0.4, 
-                    icon: Icons.monitor_weight_rounded,
-                    color: _pastelBlue,
-                    darkColor: _blueDark,
-                  )),
-                  SizedBox(width: 12),
-                  Expanded(child: _GoalCard(
-                    title: 'Activity Goal', 
-                    target: '150 min/wk', 
-                    current: 'Current: 90 min', 
-                    progress: 0.6, 
-                    icon: Icons.directions_run_rounded,
-                    color: _pastelGreen,
-                    darkColor: _greenDark,
-                  )),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
             const _SectionTitle('Achievements'),
             const SizedBox(height: 12),
             const Row(
@@ -108,11 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Expanded(child: _StatCard(title: 'Streak', value: '14 Days', icon: Icons.local_fire_department_rounded, color: _pastelPeach, darkColor: _peachDark)),
               ],
             ),
-            const SizedBox(height: 32),
-
-            const _SectionTitle('Journey Records'),
-            const SizedBox(height: 12),
-            const _HistorySection(),
             const SizedBox(height: 32),
 
             const _SectionTitle('Settings'),
