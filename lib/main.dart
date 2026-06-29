@@ -23,9 +23,10 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await FirebaseAppCheck.instance.activate(
-    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-  );
+  // Temporarily disabling App Check for testing
+  // await FirebaseAppCheck.instance.activate(
+  //   androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+  // );
   await NotificationService().init();
   runApp(const DPPApp());
 }
