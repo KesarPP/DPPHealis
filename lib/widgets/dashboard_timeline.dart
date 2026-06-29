@@ -7,6 +7,7 @@ import '../models/ndpp_constants.dart';
 class DashboardTimeline extends StatefulWidget {
   final DailyAggregate? todayAgg;
   final int mealLogCount;
+  final bool activityLogged;
   final bool waterLogged;
   final bool weightLogged;
   final bool lessonCompleted;
@@ -16,10 +17,11 @@ class DashboardTimeline extends StatefulWidget {
   const DashboardTimeline({
     super.key,
     this.todayAgg,
-    this.mealLogCount = 2,
-    this.waterLogged = true,
-    this.weightLogged = true,
-    this.lessonCompleted = true,
+    this.mealLogCount = 0,
+    this.activityLogged = false,
+    this.waterLogged = false,
+    this.weightLogged = false,
+    this.lessonCompleted = false,
     this.journalLogged = false,
     this.onToggleItem,
   });
@@ -38,10 +40,12 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
 
   void _buildItems() {
     final int qualifyingMins = widget.todayAgg?.qualifyingActiveMinutes ?? 0;
-    final bool activityDone = qualifyingMins >= 10;
+    final int steps = widget.todayAgg?.totalSteps ?? 0;
+    final bool activityDone = qualifyingMins >= 10 || steps > 0 || widget.activityLogged;
 
     items = [
       _TimelineItem(
+        id: 0,
         text: "Log a\nmeal",
         done: widget.mealLogCount >= 1,
         mainIcon: Icons.restaurant_rounded,
@@ -49,41 +53,38 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
         statusText: widget.mealLogCount >= 1 ? "${widget.mealLogCount} logged" : "Log breakfast",
       ),
       _TimelineItem(
-        text: "Qualifying\nactivity",
+        id: 1,
+        text: "Log in\nactivity",
         done: activityDone,
         mainIcon: Icons.directions_run_rounded,
         timeText: activityDone ? "Done" : "Pending",
-        statusText: activityDone ? "$qualifyingMins mins logged" : "≥10m session",
+        statusText: activityDone
+            ? (qualifyingMins > 0 ? "$qualifyingMins mins logged" : (steps > 0 ? "$steps steps logged" : "Logged"))
+            : "≥10m session",
       ),
       _TimelineItem(
-        text: "Hydration\ncheck-in",
-        done: widget.waterLogged,
-        mainIcon: Icons.water_drop_rounded,
-        timeText: widget.waterLogged ? "Done" : "Pending",
-        statusText: widget.waterLogged ? "Great!" : "Log water",
+        id: 2,
+        text: "Weekly\nsession",
+        done: widget.lessonCompleted,
+        mainIcon: Icons.groups_rounded,
+        timeText: widget.lessonCompleted ? "Done" : "Pending",
+        statusText: widget.lessonCompleted ? "Completed" : "Join session",
       ),
       _TimelineItem(
-        text: "Weight\ncheck-in",
+        id: 3,
+        text: "Weekly\nweigh in",
         done: widget.weightLogged,
         mainIcon: Icons.monitor_weight_rounded,
         timeText: widget.weightLogged ? "Done" : "Pending",
         statusText: widget.weightLogged ? "Logged" : "Check-in",
       ),
-      _TimelineItem(
-        text: "Today's\nlesson",
-        done: widget.lessonCompleted,
-        mainIcon: Icons.menu_book_rounded,
-        timeText: widget.lessonCompleted ? "Done" : "Pending",
-        statusText: widget.lessonCompleted ? "Completed" : "Read lesson",
-      ),
-      _TimelineItem(
-        text: "Reflection\nnote",
-        done: widget.journalLogged,
-        mainIcon: Icons.edit_note_rounded,
-        timeText: widget.journalLogged ? "Done" : "Pending",
-        statusText: widget.journalLogged ? "Saved" : "Add note",
-      ),
     ];
+
+    items.sort((a, b) {
+      if (a.done && !b.done) return -1;
+      if (!a.done && b.done) return 1;
+      return a.id.compareTo(b.id);
+    });
 
     doneCount = items.where((element) => element.done).length;
   }
@@ -217,9 +218,9 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                               text: "${currentProgress.toInt()} ",
                               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
                             ),
-                            const TextSpan(
-                              text: "of 6 completed",
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: GelatoTheme.textDark),
+                            TextSpan(
+                              text: "of ${items.length} completed",
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: GelatoTheme.textDark),
                             ),
                           ],
                         ),
@@ -282,7 +283,7 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: List.generate(items.length, (index) {
                                 final it = items[index];
-                                final isItemDone = currentProgress >= (index + 0.8);
+                                final isItemDone = it.done && (currentProgress >= (index + 0.8));
                                 
                                 // Intro scale for popping checkmarks
                                 double introScale = 1.0;
@@ -299,7 +300,7 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                                 final Color darkText = it.done ? GelatoTheme.greenDark : const Color(0xFFC2410C); // Dark orange text
 
                                 return GestureDetector(
-                                  onTap: () => widget.onToggleItem?.call(index),
+                                  onTap: () => widget.onToggleItem?.call(it.id),
                                   behavior: HitTestBehavior.opaque,
                                   child: SizedBox(
                                     width: itemWidth,
@@ -549,6 +550,7 @@ class _HorizontalDashedLinePainter extends CustomPainter {
 }
 
 class _TimelineItem {
+  final int id;
   final String text;
   final bool done;
   final IconData mainIcon;
@@ -558,6 +560,7 @@ class _TimelineItem {
   final IconData? statusIcon;
 
   _TimelineItem({
+    required this.id,
     required this.text,
     required this.done,
     required this.mainIcon,

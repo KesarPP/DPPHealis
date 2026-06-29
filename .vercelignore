@@ -1,0 +1,16 @@
+.git
+.idea
+.dart_tool
+build/
+android/
+ios/
+windows/
+macos/
+linux/
+lib/
+assets/
+test/
+*.txt
+*.lock
+*.py
+*.env

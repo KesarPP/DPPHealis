@@ -16,6 +16,8 @@ ios/Pods/
 FFQ/FFQ picture book.pdf
 .env
 
-# Firebase credentials
 lib/firebase_options.dart
+
+# Vercel project configurations
+.vercel/
 lib/secrets.dart
