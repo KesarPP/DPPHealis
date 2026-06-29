@@ -273,6 +273,7 @@ class FfqAnswer {
   String size;
   double quantityAtTime;
   String? selectedVariety;
+  List<String> selectedVarieties;
 
   FfqAnswer({
     this.frequency = 'Never',
@@ -280,7 +281,8 @@ class FfqAnswer {
     this.size = 'Medium',
     this.quantityAtTime = 1.0,
     this.selectedVariety,
-  });
+    List<String>? selectedVarieties,
+  }) : selectedVarieties = selectedVarieties ?? (selectedVariety != null ? [selectedVariety] : []);
 }
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -298,6 +300,19 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
 
   // Answers keyed by "CategoryTitle||ItemName"
   final Map<String, FfqAnswer> _answers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    final cached = FfqCalculatorService().getAllResponses();
+    for (final cat in kFfqCategories) {
+      for (final item in cat.items) {
+        if (cached.containsKey(item.name)) {
+          _answers[_answerKey(cat, item)] = cached[item.name]!;
+        }
+      }
+    }
+  }
 
   String _answerKey(FfqCategory cat, FfqItem item) => '${cat.title}||${item.name}';
 
@@ -328,6 +343,7 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
       size: existing?.size ?? (item.sizes.length > 1 ? item.sizes[1] : item.sizes[0]),
       quantityAtTime: existing?.quantityAtTime ?? 1.0,
       selectedVariety: existing?.selectedVariety,
+      selectedVarieties: existing?.selectedVarieties,
     );
 
     // Compute global question number (1-based flat index)
@@ -1096,6 +1112,8 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
   late String _size;
   late double _quantity;
   String? _selectedVariety;
+  List<String> _selectedVarieties = [];
+  bool _isDropdownOpen = false;
   List<FoodVariety> _availableVarieties = [];
 
   // Used only when unit == 'piece' — free-text number input
@@ -1124,6 +1142,7 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
     }
 
     _selectedVariety = widget.initialAnswer.selectedVariety;
+    _selectedVarieties = List.from(widget.initialAnswer.selectedVarieties);
 
     String getExpectedGroupName(String catTitle, String ffqItem) {
       final name = ffqItem.trim();
@@ -1254,8 +1273,15 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
     }
     _availableVarieties = uniqueVarieties.values.toList();
     if (_availableVarieties.isNotEmpty) {
-      if (_selectedVariety == null || !_availableVarieties.any((v) => v.name == _selectedVariety)) {
-        _selectedVariety = _availableVarieties.first.name;
+      if (_selectedVarieties.isEmpty) {
+        if (_selectedVariety != null && _availableVarieties.any((v) => v.name == _selectedVariety)) {
+          _selectedVarieties.add(_selectedVariety!);
+        } else {
+          _selectedVarieties.add(_availableVarieties.first.name);
+          _selectedVariety = _availableVarieties.first.name;
+        }
+      } else {
+        _selectedVariety = _selectedVarieties.first;
       }
     }
   }
@@ -1278,7 +1304,8 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
       timesPerDay: _timesPerDay,
       size: _isPieceUnit ? 'piece' : _size,
       quantityAtTime: qty,
-      selectedVariety: _selectedVariety,
+      selectedVariety: _selectedVarieties.isNotEmpty ? _selectedVarieties.first : _selectedVariety,
+      selectedVarieties: _selectedVarieties,
     ), goToNext);
   }
 
@@ -1419,56 +1446,116 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
                     // Q0 – Specific Variety Dropdown (if available)
                     if (_availableVarieties.isNotEmpty) ...[
                       _SectionLabel(
-                        text: 'Select specific variety of ${item.name}:',
+                        text: 'Select specific varieties of ${item.name}:',
                       ),
                       const SizedBox(height: 10),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.black, width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 0,
-                              offset: const Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedVariety ?? _availableVarieties.first.name,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: GelatoTheme.textDark),
-                            dropdownColor: Colors.white,
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isDropdownOpen = !_isDropdownOpen;
+                          });
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            style: const TextStyle(
-                              color: GelatoTheme.textDark,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() => _selectedVariety = val);
-                              }
-                            },
-                            items: _availableVarieties.map((v) {
-                              return DropdownMenuItem<String>(
-                                value: v.name,
+                            border: Border.all(color: Colors.black, width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 0,
+                                offset: const Offset(2, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
                                 child: Text(
-                                  v.name,
+                                  _selectedVarieties.isEmpty
+                                      ? 'Select varieties...'
+                                      : _selectedVarieties.join(', '),
                                   style: const TextStyle(
+                                    color: GelatoTheme.textDark,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 14,
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              );
-                            }).toList(),
+                              ),
+                              Icon(
+                                _isDropdownOpen ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                color: GelatoTheme.textDark,
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                      if (_isDropdownOpen) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.black12, width: 1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Column(
+                              children: _availableVarieties.map((v) {
+                                final isSelected = _selectedVarieties.contains(v.name);
+                                return CheckboxListTile(
+                                  value: isSelected,
+                                  title: Text(
+                                    v.name,
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                      fontSize: 14,
+                                      color: isSelected ? GelatoTheme.textDark : GelatoTheme.textLight,
+                                    ),
+                                  ),
+                                  activeColor: cat.color,
+                                  checkColor: cat.darkColor,
+                                  controlAffinity: ListTileControlAffinity.leading,
+                                  dense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                                  onChanged: (bool? checked) {
+                                    setState(() {
+                                      if (checked == true) {
+                                        if (!_selectedVarieties.contains(v.name)) {
+                                          _selectedVarieties.add(v.name);
+                                        }
+                                      } else {
+                                        if (_selectedVarieties.length > 1) {
+                                          _selectedVarieties.remove(v.name);
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Please select at least one variety.')),
+                                          );
+                                        }
+                                      }
+                                      if (_selectedVarieties.isNotEmpty) {
+                                        _selectedVariety = _selectedVarieties.first;
+                                      }
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 24),
                     ],
 

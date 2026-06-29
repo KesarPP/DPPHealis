@@ -56,12 +56,21 @@ class FfqCalculatorService {
       final double gramsPerDay = portionGrams * answer.quantityAtTime * eatenPerDay;
 
       // Step 5 – Calories from nutrition database
-      final double calPer100g = _getCaloriesFromDb(name, answer.selectedVariety);
+      double calPer100g = 0.0;
+      if (answer.selectedVarieties.isNotEmpty) {
+        double totalCal = 0.0;
+        for (final v in answer.selectedVarieties) {
+          totalCal += _getCaloriesFromDb(name, v);
+        }
+        calPer100g = totalCal / answer.selectedVarieties.length;
+      } else {
+        calPer100g = _getCaloriesFromDb(name, answer.selectedVariety);
+      }
       final double calPerDay = (calPer100g / 100.0) * gramsPerDay;
 
       totalCalories += calPerDay;
       breakdown.add(FoodCalorieEntry(
-        name: answer.selectedVariety != null && answer.selectedVariety!.isNotEmpty ? '$name (${answer.selectedVariety})' : name,
+        name: answer.selectedVarieties.isNotEmpty ? '$name (${answer.selectedVarieties.join(', ')})' : name,
         frequency: '${answer.frequency} × ${answer.timesPerDay}x',
         size: answer.size,
         quantity: answer.quantityAtTime,
