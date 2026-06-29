@@ -503,7 +503,21 @@ class _ProfileHeader extends StatelessWidget {
                     backgroundColor: _pastelBlue,
                     foregroundColor: Colors.black87,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 1.5)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  icon: const Icon(Icons.explore_rounded, size: 16),
+                  label: const Text('App Tour'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _pastelYellow,
+                    foregroundColor: Colors.black87,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.black87, width: 1.5)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   ),
                 ),
               ],

@@ -668,85 +668,97 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5),
-      endDrawer: const UserSideDrawer(),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _DotsPainter(color: GelatoTheme.purpleDark.withValues(alpha: 0.05)),
+    return NotificationListener<StartTourNotification>(
+      onNotification: (notification) {
+        if (mounted) {
+          setState(() {
+            _tourStep = 0;
+            _showTourGuide = true;
+          });
+          _speakIntro();
+        }
+        return true;
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5),
+        endDrawer: const UserSideDrawer(),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _DotsPainter(color: GelatoTheme.purpleDark.withValues(alpha: 0.05)),
+                ),
               ),
-            ),
-            IgnorePointer(
-              ignoring: _showTourGuide,
-              child: RefreshIndicator(
-                onRefresh: _loadData,
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // 1. Dashboard Header
-                    const SliverToBoxAdapter(
-                      child: DashboardHeader(),
+              IgnorePointer(
+                ignoring: _showTourGuide,
+                child: RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      // 1. Dashboard Header
+                      const SliverToBoxAdapter(
+                        child: DashboardHeader(),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+  
+                    // 2. Hero Progress Area (Weight & Activity)
+                    SliverToBoxAdapter(
+                      child: DashboardHeroCards(
+                              trailing30Days: _past30Days,
+                              programWeek: _programWeek,
+                              syncStatus: _syncStatus,
+                              onRetrySync: _loadData,
+                            ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                  // 2. Hero Progress Area (Weight & Activity)
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 3. Today's Mission (Timeline)
                   SliverToBoxAdapter(
-                    child: DashboardHeroCards(
-                            trailing30Days: _past30Days,
-                            programWeek: _programWeek,
-                            syncStatus: _syncStatus,
-                            onRetrySync: _loadData,
+                    child: DashboardTimeline(
+                            todayAgg: _past30Days.isNotEmpty ? _past30Days.last : null,
+                            mealLogCount: _mealLogCount,
+                            activityLogged: _activityLogged,
+                            waterLogged: _waterLogged,
+                            weightLogged: _weightLogged,
+                            lessonCompleted: _lessonCompleted,
+                            journalLogged: _journalLogged,
+                            onToggleItem: _toggleMissionItem,
                           ),
                   ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 3. Today's Mission (Timeline)
-                SliverToBoxAdapter(
-                  child: DashboardTimeline(
-                          todayAgg: _past30Days.isNotEmpty ? _past30Days.last : null,
-                          mealLogCount: _mealLogCount,
-                          activityLogged: _activityLogged,
-                          waterLogged: _waterLogged,
-                          weightLogged: _weightLogged,
-                          lessonCompleted: _lessonCompleted,
-                          journalLogged: _journalLogged,
-                          onToggleItem: _toggleMissionItem,
-                        ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 4. Prediabetes Risk Card (Compact)
+                  const SliverToBoxAdapter(
+                    child: DashboardRiskCard(),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 5. Your Momentum
+                  SliverToBoxAdapter(
+                    child: DashboardMomentum(pastDays: _past30Days),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 6. Achievement Showcase
+                  SliverToBoxAdapter(
+                    child: DashboardAchievements(achievements: _achievements),
+                  ),
+                  
+                  // Bottom Padding for BottomNavigationBar
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
+                  ],
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 4. Prediabetes Risk Card (Compact)
-                const SliverToBoxAdapter(
-                  child: DashboardRiskCard(),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 5. Your Momentum
-                SliverToBoxAdapter(
-                  child: DashboardMomentum(pastDays: _past30Days),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 6. Achievement Showcase
-                SliverToBoxAdapter(
-                  child: DashboardAchievements(achievements: _achievements),
-                ),
-                
-                // Bottom Padding for BottomNavigationBar
-                const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
-                ],
               ),
             ),
-          ),
-          if (_showTourGuide && _selectedCoach != null)
-            _buildTourGuideOverlay(),
-        ],
-      ),
+            if (_showTourGuide && _selectedCoach != null)
+              _buildTourGuideOverlay(),
+          ],
+        ),
+        ),
       ),
     );
   }
