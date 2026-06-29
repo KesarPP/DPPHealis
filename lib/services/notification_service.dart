@@ -106,10 +106,19 @@ class NotificationService {
           }
           
           // Otherwise, schedule it exactly
+          final List<Map<String, String>> messages = [
+            {'title': 'Have you had your $mealType? 🍽️', 'body': 'Log it now before you forget! Your streak will thank you. 😎'},
+            {'title': 'Time to refuel! ⛽', 'body': 'Did you eat $mealType yet? Log it to stay on track. You got this! 💪'},
+            {'title': 'Is it $mealType o\'clock? ⏰', 'body': 'Your stomach might be full, but your food diary is empty! Let\'s fix that. 🍎'},
+            {'title': 'Nom nom nom... 😋', 'body': 'We know you had $mealType. Give us the details! Keep the consistency going! 🔥'},
+            {'title': 'Fuel for the machine! 🤖', 'body': 'Log your $mealType and show us what you\'re made of today. Let\'s gooo! ✨'},
+          ];
+          final msg = messages[id % messages.length];
+
           await _plugin.zonedSchedule(
             id: id,
-            title: 'Time for $mealType!',
-            body: 'Don\'t forget to log your $mealType to keep your streak going.',
+            title: msg['title'],
+            body: msg['body'],
             scheduledDate: tz.TZDateTime.from(scheduleTime, tz.local),
             notificationDetails: const NotificationDetails(
               android: AndroidNotificationDetails(

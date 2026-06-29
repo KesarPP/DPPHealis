@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/gelato_theme.dart';
 import '../models/coach_profile.dart';
 import '../services/auth_service.dart';
@@ -16,6 +17,9 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
   final _authService = AuthService();
   CoachProfile? _profile;
   bool _isLoading = true;
+  bool _isAssignedCoach = false;
+  bool _hasPendingRequest = false;
+  bool _checkingRequestStatus = true;
 
   @override
   void initState() {
@@ -37,11 +41,177 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
           _profile = profile;
           _isLoading = false;
         });
+        _checkCoachAssignmentAndRequestStatus();
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _checkCoachAssignmentAndRequestStatus() async {
+    final user = AuthService().currentUser;
+    if (user == null || _profile == null) {
+      if (mounted) {
+        setState(() {
+          _checkingRequestStatus = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final assignedCoachId = userDoc.data()?['assignedCoachId'] as String?;
+      final isAssigned = assignedCoachId == _profile!.uid;
+
+      bool hasPending = false;
+      if (isAssigned) {
+        final requestDoc = await FirebaseFirestore.instance
+            .collection('coach_change_requests')
+            .doc('${user.uid}_${_profile!.uid}')
+            .get();
+
+        if (requestDoc.exists) {
+          final status = requestDoc.data()?['status'] as String?;
+          hasPending = status == 'pending';
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isAssignedCoach = isAssigned;
+          _hasPendingRequest = hasPending;
+          _checkingRequestStatus = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking coach change request status: $e');
+      if (mounted) {
+        setState(() {
+          _checkingRequestStatus = false;
+        });
+      }
+    }
+  }
+
+  void _showRequestChangeDialog() {
+    final reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(color: Colors.black, width: 2.0),
+          ),
+          title: const Text(
+            'Request Coach Change',
+            style: TextStyle(fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Please let us know why you would like to request a change of coach:',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Enter reason (optional)...',
+                  hintStyle: const TextStyle(fontWeight: FontWeight.w500, color: GelatoTheme.textMuted),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: GelatoTheme.purpleDark, width: 2.0),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold, color: GelatoTheme.textLight)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final reason = reasonController.text.trim();
+                Navigator.pop(context);
+                _submitChangeRequest(reason);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: GelatoTheme.purple,
+                foregroundColor: GelatoTheme.textDark,
+                side: const BorderSide(color: Colors.black, width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitChangeRequest(String reason) async {
+    final user = AuthService().currentUser;
+    if (user == null || _profile == null) return;
+
+    setState(() {
+      _checkingRequestStatus = true;
+    });
+
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final userName = userDoc.data()?['name'] as String? ?? user.displayName ?? 'Anonymous';
+      final userEmail = userDoc.data()?['email'] as String? ?? user.email ?? '';
+
+      await FirebaseFirestore.instance
+          .collection('coach_change_requests')
+          .doc('${user.uid}_${_profile!.uid}')
+          .set({
+        'userId': user.uid,
+        'userName': userName,
+        'userEmail': userEmail,
+        'currentCoachId': _profile!.uid,
+        'currentCoachName': _profile!.name,
+        'reason': reason,
+        'status': 'pending',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Coach change request submitted successfully.')),
+        );
+        setState(() {
+          _hasPendingRequest = true;
+          _checkingRequestStatus = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error submitting coach change request: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit request: $e')),
+        );
+        setState(() {
+          _checkingRequestStatus = false;
         });
       }
     }
@@ -329,42 +499,57 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Interactive Booking CTA
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                offset: const Offset(3.5, 3.5),
-                                blurRadius: 0,
+                        if (_isAssignedCoach && !_checkingRequestStatus) ...[
+                          if (_hasPendingRequest) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: GelatoTheme.yellow,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.black87, width: 2.0),
+                                boxShadow: GelatoTheme.cardShadow,
                               ),
-                            ],
-                          ),
-                          child: ElevatedButton.icon(
-                            onPressed: () => _showBookingBottomSheet(context),
-                            icon: const Icon(Icons.calendar_month_rounded, size: 20),
-                            label: const Text(
-                              'Book a 1-on-1 Consultation',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w900,
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.hourglass_empty_rounded, color: GelatoTheme.yellowDark),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Change request is pending admin approval.',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        color: GelatoTheme.yellowDark,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: GelatoTheme.pink,
-                              foregroundColor: GelatoTheme.pinkDark,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                side: const BorderSide(color: Colors.black, width: 2.0),
+                          ] else ...[
+                            ElevatedButton(
+                              onPressed: _showRequestChangeDialog,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: GelatoTheme.orange,
+                                foregroundColor: GelatoTheme.textDark,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                side: const BorderSide(color: Colors.black87, width: 2.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 0,
                               ),
-                              elevation: 0,
+                              child: const Text(
+                                'Request Coach Change',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
+                          ],
+                          const SizedBox(height: 12),
+                        ],
 
                         // Secondary back to chat CTA
                         OutlinedButton(
@@ -518,132 +703,7 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
     );
   }
 
-  void _showBookingBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: GelatoTheme.bg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        side: BorderSide(color: Colors.black87, width: 2.0),
-      ),
-      builder: (context) {
-        final slots = [
-          'Thu, Jun 18 at 10:00 AM',
-          'Thu, Jun 18 at 2:30 PM',
-          'Fri, Jun 19 at 11:00 AM',
-          'Fri, Jun 19 at 4:00 PM',
-        ];
 
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.calendar_month_rounded, color: GelatoTheme.purpleDark),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Available Consultation Slots',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: GelatoTheme.textDark,
-                      fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Select a session time to speak with ${_profile?.name ?? 'Dr. Sarah Mitchell'} directly via video call.',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: GelatoTheme.textLight,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...slots.map((slot) => Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black87, width: 1.5),
-                    ),
-                    child: ListTile(
-                      dense: true,
-                      title: Text(
-                        slot,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: GelatoTheme.textDark,
-                          fontSize: 13,
-                        ),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded, color: GelatoTheme.textDark),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showSuccessDialog(context, slot);
-                      },
-                    ),
-                  )),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showSuccessDialog(BuildContext context, String slot) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: GelatoTheme.cardRadius,
-          side: const BorderSide(color: Colors.black, width: 2.0),
-        ),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: GelatoTheme.greenBright, size: 28),
-            SizedBox(width: 8),
-            Text(
-              'Booking Confirmed!',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: GelatoTheme.textDark,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Your session with ${_profile?.name ?? 'Dr. Sarah Mitchell'} has been scheduled for $slot.\n\nA link to the video room will be sent in your chat before the meeting starts.',
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: GelatoTheme.textDark,
-            height: 1.4,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Awesome',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: GelatoTheme.purpleDark,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _DotsPainter extends CustomPainter {

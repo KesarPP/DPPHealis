@@ -18,6 +18,9 @@ class ChatService {
     required String text,
     required String senderId,
     required bool isFromPatient,
+    String? attachmentName,
+    String? attachmentType,
+    String? attachmentPath,
   }) async {
     final chatDocId = _getChatDocId(patientId, coachId);
     final chatRef = _firestore.collection(_chatsCollection).doc(chatDocId);
@@ -30,13 +33,16 @@ class ChatService {
       'senderId': senderId,
       'timestamp': now,
       'isFromPatient': isFromPatient,
+      if (attachmentName != null) 'attachmentName': attachmentName,
+      if (attachmentType != null) 'attachmentType': attachmentType,
+      if (attachmentPath != null) 'attachmentPath': attachmentPath,
     };
 
     // The chat metadata to update the parent document
     final chatMetadata = {
       'patientId': patientId,
       'coachId': coachId,
-      'lastMessageText': text,
+      'lastMessageText': attachmentName != null ? '📎 $attachmentName' : text,
       'lastMessageTime': now,
       'unreadByCoach': isFromPatient ? FieldValue.increment(1) : 0,
       'unreadByPatient': isFromPatient ? 0 : FieldValue.increment(1),

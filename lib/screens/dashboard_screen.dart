@@ -14,6 +14,8 @@ import '../widgets/user_side_drawer.dart';
 import '../services/health_sync_service.dart';
 import '../services/activity_metrics_engine.dart';
 import '../services/achievements_service.dart';
+import '../services/firestore_activity_log_service.dart';
+import '../repositories/activity_log_repository_impl.dart';
 import '../models/ndpp_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health/health.dart';
@@ -31,10 +33,11 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   List<DailyAggregate> _past30Days = [];
   bool _isLoading = false;
   SyncStatus _syncStatus = SyncStatus.success;
-  int _mealLogCount = 1;
-  bool _waterLogged = true;
-  bool _weightLogged = true;
-  bool _lessonCompleted = true;
+  int _mealLogCount = 0;
+  bool _activityLogged = false;
+  bool _waterLogged = false;
+  bool _weightLogged = false;
+  bool _lessonCompleted = false;
   bool _journalLogged = false;
   int _programWeek = 8;
 
@@ -43,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   final FirebaseAuth _auth = FirebaseAuth.instance;
   Map<String, dynamic>? _selectedCoach;
   bool _isLoadingCoach = true;
-  bool _showTourGuide = true;
+  bool _showTourGuide = false;
   bool _isPlayingVoice = false;
   late FlutterTts _flutterTts;
   int _tourStep = 0;
@@ -76,6 +79,19 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   Future<void> _initQuickRestore() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final hasCompleted = prefs.getBool('has_completed_tour') ?? false;
+      if (!hasCompleted) {
+        setState(() {
+          _showTourGuide = true;
+        });
+        // Delay speaking slightly to allow layout to settle
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && _showTourGuide) {
+            _speakIntro();
+          }
+        });
+      }
+
       final bool purgedV5 = prefs.getBool('hc_demo_purged_v5') ?? false;
       if (!purgedV5) {
         final keys = prefs.getKeys().toList();
@@ -119,6 +135,11 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _completeTour() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_completed_tour', true);
   }
 
   @override
@@ -178,6 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   }
 
   Future<void> _speakIntro() async {
+    if (!_showTourGuide) return;
     if (_selectedCoach == null) return;
     
     final isFemale = _isFemaleCoach();
@@ -397,6 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                                 onPressed: () {
                                   _flutterTts.stop();
                                   _scaffoldKey.currentState?.closeEndDrawer();
+                                  _completeTour();
                                   setState(() {
                                     _showTourGuide = false;
                                     _isPlayingVoice = false;
@@ -425,6 +448,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                                   } else {
                                     _flutterTts.stop();
                                     _scaffoldKey.currentState?.closeEndDrawer();
+                                    _completeTour();
                                     setState(() {
                                       _showTourGuide = false;
                                       _isPlayingVoice = false;
@@ -560,10 +584,78 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
 
       final prefs = await SharedPreferences.getInstance();
       final nowStr = "${now.year}-${now.month}-${now.day}";
-      final int mealCount = prefs.getInt('mission_meal_$nowStr') ?? 1;
-      final bool water = prefs.getBool('mission_water_$nowStr') ?? true;
-      final bool weight = prefs.getBool('mission_weight_$nowStr') ?? true;
-      final bool lesson = prefs.getBool('mission_lesson_$nowStr') ?? true;
+      final isoTodayStr = now.toIso8601String().split('T')[0];
+      final user = FirebaseAuth.instance.currentUser;
+
+      // 1. Check Meal Log from backend
+      int mealCount = 0;
+      if (user != null) {
+        try {
+          final foodDoc = await FirebaseFirestore.instance
+              .collection('logs')
+              .doc(user.uid)
+              .collection('food_entries')
+              .doc(isoTodayStr)
+              .get();
+          if (foodDoc.exists && foodDoc.data() != null) {
+            final entries = foodDoc.data()!['entries'] as List<dynamic>? ?? [];
+            mealCount = entries.length;
+          }
+        } catch (e) {
+          debugPrint('Error loading food log: $e');
+        }
+      }
+      if (mealCount == 0) {
+        mealCount = prefs.getInt('mission_meal_$nowStr') ?? 0;
+      }
+
+      // 2. Check Activity Log from backend
+      bool actLogged = false;
+      try {
+        final activityRepo = ActivityLogRepositoryImpl(FirestoreActivityLogService());
+        final todayLogs = await activityRepo.getTodayActivityLogs();
+        actLogged = todayLogs.isNotEmpty;
+      } catch (e) {
+        debugPrint('Error loading activity logs: $e');
+      }
+
+      // 3. Check Weekly Weigh In from backend
+      bool weightLoggedThisWeek = false;
+      if (user != null) {
+        try {
+          final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+          if (userDoc.exists && userDoc.data() != null) {
+            final lastWeighIn = userDoc.data()!['lastWeighInDate'] as Timestamp?;
+            if (lastWeighIn != null) {
+              final diff = now.difference(lastWeighIn.toDate());
+              if (diff.inDays <= 7 && !diff.isNegative) {
+                weightLoggedThisWeek = true;
+              }
+            }
+          }
+          if (!weightLoggedThisWeek) {
+            final weightSnap = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .collection('weight_history')
+                .orderBy('date', descending: true)
+                .limit(1)
+                .get();
+            if (weightSnap.docs.isNotEmpty) {
+              final ts = weightSnap.docs.first.data()['date'] as Timestamp?;
+              if (ts != null && now.difference(ts.toDate()).inDays <= 7) {
+                weightLoggedThisWeek = true;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('Error loading weight history: $e');
+        }
+      }
+
+      final bool water = prefs.getBool('mission_water_$nowStr') ?? false;
+      final bool weight = weightLoggedThisWeek || (prefs.getBool('mission_weight_$nowStr') ?? false);
+      final bool lesson = prefs.getBool('mission_lesson_$nowStr') ?? false;
       final bool journal = prefs.getBool('mission_journal_$nowStr') ?? false;
 
       if (mounted) {
@@ -571,6 +663,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
           _achievements = achievements;
           _past30Days = past30Days;
           _mealLogCount = mealCount;
+          _activityLogged = actLogged;
           _waterLogged = water;
           _weightLogged = weight;
           _lessonCompleted = lesson;
@@ -596,84 +689,97 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5),
-      endDrawer: const UserSideDrawer(),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _DotsPainter(color: GelatoTheme.purpleDark.withValues(alpha: 0.05)),
+    return NotificationListener<StartTourNotification>(
+      onNotification: (notification) {
+        if (mounted) {
+          setState(() {
+            _tourStep = 0;
+            _showTourGuide = true;
+          });
+          _speakIntro();
+        }
+        return true;
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5),
+        endDrawer: const UserSideDrawer(),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _DotsPainter(color: GelatoTheme.purpleDark.withValues(alpha: 0.05)),
+                ),
               ),
-            ),
-            IgnorePointer(
-              ignoring: _showTourGuide,
-              child: RefreshIndicator(
-                onRefresh: _loadData,
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // 1. Dashboard Header
-                    const SliverToBoxAdapter(
-                      child: DashboardHeader(),
+              IgnorePointer(
+                ignoring: _showTourGuide,
+                child: RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      // 1. Dashboard Header
+                      const SliverToBoxAdapter(
+                        child: DashboardHeader(),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+  
+                    // 2. Hero Progress Area (Weight & Activity)
+                    SliverToBoxAdapter(
+                      child: DashboardHeroCards(
+                              trailing30Days: _past30Days,
+                              programWeek: _programWeek,
+                              syncStatus: _syncStatus,
+                              onRetrySync: _loadData,
+                            ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                  // 2. Hero Progress Area (Weight & Activity)
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 3. Today's Mission (Timeline)
                   SliverToBoxAdapter(
-                    child: DashboardHeroCards(
-                            trailing30Days: _past30Days,
-                            programWeek: _programWeek,
-                            syncStatus: _syncStatus,
-                            onRetrySync: _loadData,
+                    child: DashboardTimeline(
+                            todayAgg: _past30Days.isNotEmpty ? _past30Days.last : null,
+                            mealLogCount: _mealLogCount,
+                            activityLogged: _activityLogged,
+                            waterLogged: _waterLogged,
+                            weightLogged: _weightLogged,
+                            lessonCompleted: _lessonCompleted,
+                            journalLogged: _journalLogged,
+                            onToggleItem: _toggleMissionItem,
                           ),
                   ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 3. Today's Mission (Timeline)
-                SliverToBoxAdapter(
-                  child: DashboardTimeline(
-                          todayAgg: _past30Days.isNotEmpty ? _past30Days.last : null,
-                          mealLogCount: _mealLogCount,
-                          waterLogged: _waterLogged,
-                          weightLogged: _weightLogged,
-                          lessonCompleted: _lessonCompleted,
-                          journalLogged: _journalLogged,
-                          onToggleItem: _toggleMissionItem,
-                        ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 4. Prediabetes Risk Card (Compact)
+                  const SliverToBoxAdapter(
+                    child: DashboardRiskCard(),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 5. Your Momentum
+                  SliverToBoxAdapter(
+                    child: DashboardMomentum(pastDays: _past30Days),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+  
+                  // 6. Achievement Showcase
+                  SliverToBoxAdapter(
+                    child: DashboardAchievements(achievements: _achievements),
+                  ),
+                  
+                  // Bottom Padding for BottomNavigationBar
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
+                  ],
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 4. Prediabetes Risk Card (Compact)
-                const SliverToBoxAdapter(
-                  child: DashboardRiskCard(),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 5. Your Momentum
-                SliverToBoxAdapter(
-                  child: DashboardMomentum(pastDays: _past30Days),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // 6. Achievement Showcase
-                SliverToBoxAdapter(
-                  child: DashboardAchievements(achievements: _achievements),
-                ),
-                
-                // Bottom Padding for BottomNavigationBar
-                const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
-                ],
               ),
             ),
-          ),
-          if (_showTourGuide && _selectedCoach != null)
-            _buildTourGuideOverlay(),
-        ],
-      ),
+            if (_showTourGuide && _selectedCoach != null)
+              _buildTourGuideOverlay(),
+          ],
+        ),
+        ),
       ),
     );
   }
@@ -686,18 +792,14 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       if (index == 0) {
         _mealLogCount = (_mealLogCount >= 2) ? 0 : _mealLogCount + 1;
         prefs.setInt('mission_meal_$nowStr', _mealLogCount);
+      } else if (index == 1) {
+        _activityLogged = !_activityLogged;
       } else if (index == 2) {
-        _waterLogged = !_waterLogged;
-        prefs.setBool('mission_water_$nowStr', _waterLogged);
+        _lessonCompleted = !_lessonCompleted;
+        prefs.setBool('mission_lesson_$nowStr', _lessonCompleted);
       } else if (index == 3) {
         _weightLogged = !_weightLogged;
         prefs.setBool('mission_weight_$nowStr', _weightLogged);
-      } else if (index == 4) {
-        _lessonCompleted = !_lessonCompleted;
-        prefs.setBool('mission_lesson_$nowStr', _lessonCompleted);
-      } else if (index == 5) {
-        _journalLogged = !_journalLogged;
-        prefs.setBool('mission_journal_$nowStr', _journalLogged);
       }
     });
   }

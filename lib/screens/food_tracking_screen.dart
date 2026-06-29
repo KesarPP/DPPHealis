@@ -165,9 +165,16 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
       child: Consumer<FoodDiaryNotifier>(
         builder: (context, notifier, child) {
           final totalCalories = notifier.dailyLog?.totalCalories ?? 0.0;
-          final goal = 2000.0;
+          final goal = notifier.calorieGoal;
           final left = goal - totalCalories;
           final progress = totalCalories / goal;
+          
+          String motivationText = 'Keep it up! You are doing great.';
+          if (progress > 1.0) {
+            motivationText = "You've exceeded your goal!";
+          } else if (progress > 0.8) {
+            motivationText = "Almost there!";
+          }
           
           return Container(
             padding: const EdgeInsets.all(20),
@@ -189,7 +196,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                       const SizedBox(height: 8),
                       Text('${totalCalories.toStringAsFixed(0)} / ${goal.toStringAsFixed(0)} kcal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: GelatoTheme.textDark.withValues(alpha: 0.7))),
                       const SizedBox(height: 12),
-                      const Text('Keep it up! You are doing great.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: GelatoTheme.textDark)),
+                      Text(motivationText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: GelatoTheme.textDark)),
                     ],
                   ),
                 ),
@@ -282,6 +289,34 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
   }
 
   Widget _buildAchievementBox(BuildContext context) {
+    final notifier = context.watch<FoodDiaryNotifier>();
+    final completedDaysMap = notifier.completedDays;
+    final ninjaDaysMap = notifier.nutritionNinjaDays;
+    
+    int consistencyStreak = 0;
+    int ninjaStreak = 0;
+    DateTime d = DateTime.now();
+    for (int i = 0; i < 365; i++) {
+      String dateStr = d.subtract(Duration(days: i)).toIso8601String().split('T')[0];
+      if (completedDaysMap[dateStr] == true) {
+        consistencyStreak++;
+      } else {
+        break;
+      }
+    }
+    
+    for (int i = 0; i < 365; i++) {
+      String dateStr = d.subtract(Duration(days: i)).toIso8601String().split('T')[0];
+      if (ninjaDaysMap[dateStr] == true) {
+        ninjaStreak++;
+      } else {
+        break;
+      }
+    }
+    
+    DateTime now = DateTime.now();
+    int daysInCurrentMonth = DateTime(now.year, now.month + 1, 0).day;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -295,72 +330,73 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: [
-              const _AchievementCard(
-                bgColor: Color(0xFFA8E4A0),
-                borderColor: Color(0xFFC69C6D),
+              _AchievementCard(
+                bgColor: const Color(0xFFA8E4A0),
+                borderColor: const Color(0xFFC69C6D),
                 imagePath: 'assets/images/Weekly_Consistency_Champion.png',
                 title: 'CONSISTENCY\nCHAMPION',
                 subtitle: 'WEEKLY',
-                description: 'Logged Food 7 days in a row!',
-                completedDays: 5,
+                description: '7 days of pure focus. No excuses, just logging!',
+                completedDays: consistencyStreak.clamp(0, 7),
                 totalDays: 7,
-                imageScale: 1.4, // Shrunk slightly to give text room
+                imageScale: 1.0, // Reduced scale so it doesn't overlap text/crown
               ),
-              const _AchievementCard(
-                bgColor: Color(0xFFFFB6C1),
-                borderColor: Color(0xFFC69C6D),
-                imagePath: 'assets/images/Monthly_Consistency_Champion.png', // The user will drop this PNG into assets
+              _AchievementCard(
+                bgColor: const Color(0xFFFFB6C1),
+                borderColor: const Color(0xFFC69C6D),
+                imagePath: 'assets/images/Monthly_Consistency_Champion.png',
                 title: 'CONSISTENCY\nCHAMPION',
                 subtitle: 'MONTHLY',
-                description: 'Logged Food the entire month!',
-                completedDays: 25,
-                totalDays: 30,
+                description: 'An entire month of perfection. You are a logging machine!',
+                completedDays: consistencyStreak.clamp(0, daysInCurrentMonth),
+                totalDays: daysInCurrentMonth,
+                imageScale: 1.0, // Reduced scale
               ),
-              const _AchievementCard(
-                bgColor: Color(0xFFFFD54F),
-                borderColor: Color(0xFFC69C6D),
+              _AchievementCard(
+                bgColor: const Color(0xFFFFD54F),
+                borderColor: const Color(0xFFC69C6D),
                 imagePath: 'assets/images/Yearly_Consistency_Champion.png',
                 title: 'CONSISTENCY\nCHAMPION',
                 subtitle: 'YEARLY',
-                description: 'Logged for an entire Yearrr!!!',
-                completedDays: 120, // Sample progression
-                totalDays: 365,
-                imageScale: 1.5, // Shrunk slightly to give text room
-                imageOffsetX: 5.0, // Push the medal to the right to center it
+                description: '12 months of flawless tracking. We should build a statue of you!',
+                completedDays: (consistencyStreak ~/ 30).clamp(0, 12), 
+                totalDays: 12,
+                imageScale: 1.1, // Reduced scale
+                imageOffsetX: 5.0,
               ),
-              const _AchievementCard(
-                bgColor: Color(0xFFD8BFD8),
-                borderColor: Color(0xFFC69C6D),
+              _AchievementCard(
+                bgColor: const Color(0xFFD8BFD8),
+                borderColor: const Color(0xFFC69C6D),
                 imagePath: 'assets/images/Weekly_Nutrition_Ninja.png',
                 title: 'NUTRITION\nNINJA',
                 subtitle: 'WEEKLY',
-                description: 'Hit calorie goals 7 days in a row!',
-                completedDays: 5,
+                description: 'A full week hitting your calorie goals. Your metabolism is terrified!',
+                completedDays: ninjaStreak.clamp(0, 7),
                 totalDays: 7,
-                imageScale: 1.15, // Made smaller
+                imageScale: 0.85, 
               ),
-              const _AchievementCard(
-                bgColor: Color(0xFFA0E8E8),
-                borderColor: Color(0xFFC69C6D),
+              _AchievementCard(
+                bgColor: const Color(0xFFA0E8E8),
+                borderColor: const Color(0xFFC69C6D),
                 imagePath: 'assets/images/Monthly_Nutrition_Ninja.png',
                 title: 'NUTRITION\nNINJA',
                 subtitle: 'MONTHLY',
-                description: 'Hit calorie goals the entire month!',
-                completedDays: 25,
-                totalDays: 30,
-                imageScale: 1.25, // Made smaller again
+                description: 'A whole month in the green. You bend calories to your will!',
+                completedDays: ninjaStreak.clamp(0, daysInCurrentMonth),
+                totalDays: daysInCurrentMonth,
+                imageScale: 0.85,
               ),
-              const _AchievementCard(
-                bgColor: Color(0xFFFFB347),
-                borderColor: Color(0xFFC69C6D),
+              _AchievementCard(
+                bgColor: const Color(0xFFFFB347),
+                borderColor: const Color(0xFFC69C6D),
                 imagePath: 'assets/images/Yearly_Nutrition_Ninja.png',
                 title: 'NUTRITION\nNINJA',
                 subtitle: 'YEARLY',
-                description: 'Hit calorie goals for an entire Yearrr!!!',
-                completedDays: 120,
-                totalDays: 365,
-                imageScale: 1.15, // Made smaller
-                imageOffsetY: -10.0, // Shift upwards!
+                description: '12 straight months of ninja precision. You are a nutritional legend!',
+                completedDays: (ninjaStreak ~/ 30).clamp(0, 12),
+                totalDays: 12,
+                imageScale: 0.85,
+                imageOffsetY: -10.0,
               ),
             ],
           ),
@@ -481,13 +517,14 @@ class _AchievementCard extends StatelessWidget {
                       children: [
                         // Icon Area (65%)
                         Expanded(
-                          flex: 85,
+                          flex: 60,
                           child: Transform.translate(
-                            offset: Offset(imageOffsetX, -25 + imageOffsetY),
+                            offset: Offset(imageOffsetX, -45 + imageOffsetY),
                             child: Center(
                               child: imagePath != null
-                                  ? Transform.scale(
-                                      scale: imageScale,
+                                  ? FractionallySizedBox(
+                                      widthFactor: imageScale,
+                                      heightFactor: imageScale,
                                       child: Image.asset(
                                         imagePath!,
                                         fit: BoxFit.contain,
@@ -501,9 +538,9 @@ class _AchievementCard extends StatelessWidget {
                         const SizedBox(height: 12),
                         // Text Area (35%)
                         Expanded(
-                          flex: 35,
+                          flex: 50,
                           child: Transform.translate(
-                            offset: const Offset(0, -25), // Moved up by 15 pixels
+                            offset: const Offset(0, -35), // Pull text area UP to leave bottom space
                             child: OverflowBox(
                               maxHeight: double.infinity,
                               child: title != null
@@ -549,78 +586,81 @@ class _AchievementCard extends StatelessWidget {
                                         if (completedDays != null && totalDays != null) ...[
                                           const SizedBox(height: 6),
                                           Transform.translate(
-                                            offset: const Offset(0, -10), // Adjust slider position
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                // Slider bar
-                                                SizedBox(
-                                                  width: 55,
-                                                  height: 24,
-                                                  child: Stack(
-                                                    alignment: Alignment.centerLeft,
-                                                    children: [
-                                                      // Background Track
-                                                      Container(
-                                                        height: 12,
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.white.withValues(alpha: 0.6),
-                                                          borderRadius: BorderRadius.circular(6),
-                                                          border: Border.all(color: const Color(0xFFC2185B), width: 1.5), // Pink Outline
-                                                        ),
-                                                      ),
-                                                      // Filled Track (Golden)
-                                                      FractionallySizedBox(
-                                                        widthFactor: completedDays! / totalDays!,
-                                                        child: Container(
+                                            offset: const Offset(0, -5), // Adjust slider position
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  // Slider bar
+                                                  SizedBox(
+                                                    width: 55,
+                                                    height: 24,
+                                                    child: Stack(
+                                                      alignment: Alignment.centerLeft,
+                                                      children: [
+                                                        // Background Track
+                                                        Container(
                                                           height: 12,
                                                           decoration: BoxDecoration(
-                                                            color: const Color(0xFFFFD700), // Gold
+                                                            color: Colors.white.withValues(alpha: 0.6),
                                                             borderRadius: BorderRadius.circular(6),
                                                             border: Border.all(color: const Color(0xFFC2185B), width: 1.5), // Pink Outline
-                                                            boxShadow: [
-                                                              BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.4), blurRadius: 4),
-                                                            ],
                                                           ),
                                                         ),
-                                                      ),
-                                                      // Thumb (Pink with white outline)
-                                                      Positioned(
-                                                        left: (55 - 20) * (completedDays! / totalDays!),
-                                                        child: Container(
-                                                          width: 20,
-                                                          height: 20,
-                                                          decoration: BoxDecoration(
-                                                            color: const Color(0xFFC2185B), // Dark Pink
-                                                            shape: BoxShape.circle,
-                                                            border: Border.all(color: Colors.white, width: 2.5),
-                                                            boxShadow: [
-                                                              BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 2, offset: const Offset(1, 1)),
-                                                            ],
+                                                        // Filled Track (Golden)
+                                                        FractionallySizedBox(
+                                                          widthFactor: completedDays! / totalDays!,
+                                                          child: Container(
+                                                            height: 12,
+                                                            decoration: BoxDecoration(
+                                                              color: const Color(0xFFFFD700), // Gold
+                                                              borderRadius: BorderRadius.circular(6),
+                                                              border: Border.all(color: const Color(0xFFC2185B), width: 1.5), // Pink Outline
+                                                              boxShadow: [
+                                                                BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.4), blurRadius: 4),
+                                                              ],
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
+                                                        // Thumb (Pink with white outline)
+                                                        Positioned(
+                                                          left: (55 - 20) * (completedDays! / totalDays!),
+                                                          child: Container(
+                                                            width: 20,
+                                                            height: 20,
+                                                            decoration: BoxDecoration(
+                                                              color: const Color(0xFFC2185B), // Dark Pink
+                                                              shape: BoxShape.circle,
+                                                              border: Border.all(color: Colors.white, width: 2.5),
+                                                              boxShadow: [
+                                                                BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 2, offset: const Offset(1, 1)),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                // Text X/7
-                                                Text(
-                                                  '$completedDays/$totalDays',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF001F54), // Deep Dark Blue
-                                                    fontSize: 14, // More readable
-                                                    fontWeight: FontWeight.w800,
+                                                  const SizedBox(width: 8),
+                                                  // Text X/7
+                                                  Text(
+                                                    '$completedDays/$totalDays',
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF001F54), // Deep Dark Blue
+                                                      fontSize: 14, // More readable
+                                                      fontWeight: FontWeight.w800,
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ],
                                         if (description != null) ...[
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 6),
                                           Transform.translate(
-                                            offset: const Offset(0, -14), // Adjust description position
+                                            offset: const Offset(0, -2), // Adjust description position
                                             child: Text(
                                               description!,
                                               textAlign: TextAlign.center,

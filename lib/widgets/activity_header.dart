@@ -176,7 +176,7 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: GelatoTheme.orangeDark,
+                color: GelatoTheme.pink,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.black, width: 1.5),
                 boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
@@ -184,9 +184,9 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Update your progress & activity data', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                  Text('Update your progress', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w900)),
                   SizedBox(width: 6),
-                  Icon(Icons.arrow_downward_rounded, color: Colors.white, size: 18),
+                  Icon(Icons.arrow_downward_rounded, color: Colors.black, size: 18),
                 ],
               ),
             ),

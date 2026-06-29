@@ -6,6 +6,7 @@ import '../models/food_item.dart';
 import '../models/food_log.dart';
 import '../repositories/food_repository.dart';
 import '../services/notification_service.dart';
+import '../data/app_state.dart';
 
 class FoodSearchNotifier extends ChangeNotifier {
   final FoodRepository _repository = FoodRepository();
@@ -47,11 +48,25 @@ class FoodDiaryNotifier extends ChangeNotifier {
   StreamSubscription? _subscription;
   StreamSubscription? _allLogsSubscription;
   Map<String, bool> _completedDays = {};
+  Map<String, bool> _nutritionNinjaDays = {};
+  List<DailyFoodLog> _allLogsList = [];
   String _selectedDate = DateTime.now().toIso8601String().split('T')[0];
 
   DailyFoodLog? get dailyLog => _dailyLog;
   Map<String, bool> get completedDays => _completedDays;
+  Map<String, bool> get nutritionNinjaDays => _nutritionNinjaDays;
+  List<DailyFoodLog> get allLogsList => _allLogsList;
   String get selectedDate => _selectedDate;
+
+  double get calorieGoal {
+    if (AppState.idrsScore >= 60) {
+      return 1500.0; // High risk - weight loss focus
+    } else if (AppState.idrsScore >= 30) {
+      return 1800.0; // Moderate risk
+    } else {
+      return 2000.0; // Low risk
+    }
+  }
 
   void setSelectedDate(String date) {
     _selectedDate = date;
@@ -83,7 +98,11 @@ class FoodDiaryNotifier extends ChangeNotifier {
     if (user == null) return;
 
     _allLogsSubscription = _repository.getAllLogs(user.uid).listen((logs) {
+      _allLogsList = logs;
       final newCompletedDays = <String, bool>{};
+      final newNutritionNinjaDays = <String, bool>{};
+      final goal = calorieGoal;
+      
       for (final log in logs) {
         final types = log.entries.map((e) => e.mealType).toSet();
         if (types.length >= 5) {
@@ -91,8 +110,16 @@ class FoodDiaryNotifier extends ChangeNotifier {
         } else if (types.isNotEmpty) {
           newCompletedDays[log.date] = false;
         }
+        
+        // Count as Nutrition Ninja day if calories are > 0 and within 15% of goal
+        if (log.totalCalories > 0 && log.totalCalories <= goal * 1.15 && log.totalCalories >= goal * 0.7) {
+          newNutritionNinjaDays[log.date] = true;
+        } else {
+          newNutritionNinjaDays[log.date] = false;
+        }
       }
       _completedDays = newCompletedDays;
+      _nutritionNinjaDays = newNutritionNinjaDays;
       notifyListeners();
     });
   }
