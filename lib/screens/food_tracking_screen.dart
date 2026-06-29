@@ -517,9 +517,9 @@ class _AchievementCard extends StatelessWidget {
                       children: [
                         // Icon Area (65%)
                         Expanded(
-                          flex: 85,
+                          flex: 70,
                           child: Transform.translate(
-                            offset: Offset(imageOffsetX, -25 + imageOffsetY),
+                            offset: Offset(imageOffsetX, -40 + imageOffsetY),
                             child: Center(
                               child: imagePath != null
                                   ? FractionallySizedBox(
@@ -538,9 +538,9 @@ class _AchievementCard extends StatelessWidget {
                         const SizedBox(height: 12),
                         // Text Area (35%)
                         Expanded(
-                          flex: 35,
+                          flex: 50,
                           child: Transform.translate(
-                            offset: const Offset(0, -25), // Moved up by 15 pixels
+                            offset: const Offset(0, -10), // Moved up less to leave bottom space
                             child: OverflowBox(
                               maxHeight: double.infinity,
                               child: title != null
@@ -586,7 +586,7 @@ class _AchievementCard extends StatelessWidget {
                                         if (completedDays != null && totalDays != null) ...[
                                           const SizedBox(height: 6),
                                           Transform.translate(
-                                            offset: const Offset(0, -10), // Adjust slider position
+                                            offset: const Offset(0, -5), // Adjust slider position
                                             child: FittedBox(
                                               fit: BoxFit.scaleDown,
                                               child: Row(
@@ -658,9 +658,9 @@ class _AchievementCard extends StatelessWidget {
                                           ),
                                         ],
                                         if (description != null) ...[
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 4),
                                           Transform.translate(
-                                            offset: const Offset(0, -14), // Adjust description position
+                                            offset: const Offset(0, -2), // Adjust description position
                                             child: Text(
                                               description!,
                                               textAlign: TextAlign.center,
