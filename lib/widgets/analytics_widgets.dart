@@ -19,18 +19,36 @@ class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
   @override
   Widget build(BuildContext context) {
     final foodNotifier = context.watch<FoodDiaryNotifier>();
-    final todayCalories = foodNotifier.dailyLog?.totalCalories ?? 0.0;
-    
-    final int todayIndex = DateTime.now().weekday - 1;
-    final int yesterdayIndex = todayIndex - 1;
     
     final List<double> _grossCalories = List.filled(7, 0.0);
-    _grossCalories[todayIndex] = todayCalories > 0 ? todayCalories : 50.0;
-    if (yesterdayIndex >= 0) {
-      _grossCalories[yesterdayIndex] = 2100.0;
+    double totalLast7Days = 0.0;
+    int countDays = 0;
+    
+    DateTime now = DateTime.now();
+    for (int i = 0; i < 7; i++) {
+      DateTime d = now.subtract(Duration(days: 6 - i));
+      String dateStr = d.toIso8601String().split('T')[0];
+      
+      final log = foodNotifier.allLogsList.where((l) => l.date == dateStr).firstOrNull;
+      if (log != null) {
+        _grossCalories[i] = log.totalCalories;
+      }
+      
+      // Override today if it's the currently selected date in the notifier
+      if (i == 6 && foodNotifier.selectedDate == dateStr && foodNotifier.dailyLog != null) {
+        _grossCalories[6] = foodNotifier.dailyLog!.totalCalories;
+      }
+      
+      if (_grossCalories[i] > 0) {
+        totalLast7Days += _grossCalories[i];
+        countDays++;
+      }
     }
-
-    final List<double> _netCalories = List.generate(7, (i) => _grossCalories[i] > 0 ? _grossCalories[i] - 300 : 0.0);
+    
+    double avg = countDays > 0 ? totalLast7Days / countDays : 0.0;
+    final List<double> _netCalories = List.generate(7, (i) => _grossCalories[i] > 0 ? (_grossCalories[i] - 300).clamp(0.0, double.infinity) : 0.0);
+    double avgNet = countDays > 0 ? (totalLast7Days - (300 * countDays)) / countDays : 0.0;
+    if (avgNet < 0) avgNet = 0.0;
 
     final data = _showNetCalories ? _netCalories : _grossCalories;
     // Light background so the bright analytics pop
@@ -56,7 +74,7 @@ class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _showNetCalories ? 'Avg Net: 1,820 kcal' : 'Avg: 2,150 kcal',
+                _showNetCalories ? 'Avg Net: ${avgNet.toStringAsFixed(0)} kcal' : 'Avg: ${avg.toStringAsFixed(0)} kcal',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
@@ -273,11 +291,15 @@ class _MacrosBreakdownCardState extends State<MacrosBreakdownCard> {
     final totalProtein = log?.totalProtein ?? 0.0;
     final totalCarbs = log?.totalCarbs ?? 0.0;
     final totalFat = log?.totalFat ?? 0.0;
+    
+    final targetProtein = (foodNotifier.calorieGoal * 0.3) / 4.0;
+    final targetCarbs = (foodNotifier.calorieGoal * 0.5) / 4.0;
+    final targetFat = (foodNotifier.calorieGoal * 0.2) / 9.0;
 
     final List<Map<String, dynamic>> _macroData = [
-      {'name': 'Protein', 'value': totalProtein, 'target': 150.0, 'color': GelatoTheme.purple},
-      {'name': 'Carbs', 'value': totalCarbs, 'target': 250.0, 'color': GelatoTheme.yellow},
-      {'name': 'Fats', 'value': totalFat, 'target': 70.0, 'color': GelatoTheme.pink},
+      {'name': 'Protein', 'value': totalProtein, 'target': targetProtein, 'color': GelatoTheme.purple},
+      {'name': 'Carbs', 'value': totalCarbs, 'target': targetCarbs, 'color': GelatoTheme.yellow},
+      {'name': 'Fats', 'value': totalFat, 'target': targetFat, 'color': GelatoTheme.pink},
     ];
 
     double total = _macroData.fold(0, (sum, item) => sum + item['value']);
@@ -540,9 +562,64 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
   @override
   Widget build(BuildContext context) {
     final foodNotifier = context.watch<FoodDiaryNotifier>();
-    final totalCalories = foodNotifier.dailyLog?.totalCalories ?? 0.0;
+    final goal = foodNotifier.calorieGoal;
     
-    double scoreValue = totalCalories > 0 ? 0.92 : 0.85;
+    // Compute score for past 7 days
+    List<Map<String, dynamic>> dynamicScatterSpots = [];
+    DateTime now = DateTime.now();
+    double currentScoreValue = 0.0;
+    
+    for (int i = 0; i < 7; i++) {
+      DateTime d = now.subtract(Duration(days: 6 - i));
+      String dateStr = d.toIso8601String().split('T')[0];
+      
+      final log = foodNotifier.allLogsList.where((l) => l.date == dateStr).firstOrNull;
+      
+      double calories = 0.0;
+      if (log != null) {
+        calories = log.totalCalories;
+      }
+      
+      // Override today if selected
+      if (i == 6 && foodNotifier.selectedDate == dateStr && foodNotifier.dailyLog != null) {
+        calories = foodNotifier.dailyLog!.totalCalories;
+      }
+      
+      double score = 0.0;
+      if (calories > 0) {
+        final ratio = calories / goal;
+        if (ratio > 1.2) {
+           score = 70.0;
+        } else if (ratio > 1.0) {
+           score = (90.0 - ((ratio - 1.0) * 100)).clamp(0.0, 100.0); 
+        } else if (ratio >= 0.8) {
+           score = 95.0;
+        } else {
+           score = (ratio * 100).clamp(0.0, 100.0); 
+        }
+      }
+      
+      if (i == 6) {
+        currentScoreValue = score / 100.0;
+      }
+      
+      Color color = GelatoTheme.blueBright;
+      if (score >= 90) color = GelatoTheme.greenBright;
+      else if (score >= 70) color = GelatoTheme.purpleBright;
+      else if (score > 0) color = GelatoTheme.pinkBright;
+      else color = Colors.grey;
+      
+      double radius = (score > 0) ? (score / 10.0).clamp(6.0, 16.0) : 6.0;
+      
+      dynamicScatterSpots.add({
+        'x': (i).toDouble(),
+        'y': score,
+        'color': color,
+        'radius': radius,
+      });
+    }
+
+    double scoreValue = currentScoreValue;
 
     return GestureDetector(
       onTap: () {
@@ -667,15 +744,7 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
                       height: 140,
                       child: ScatterChart(
                         ScatterChartData(
-                          scatterSpots: [
-                            {'x': 0.0, 'y': 75.0, 'color': GelatoTheme.blueBright, 'radius': 8.0},
-                            {'x': 1.0, 'y': 45.0, 'color': GelatoTheme.greenBright, 'radius': 12.0},
-                            {'x': 2.0, 'y': 85.0, 'color': GelatoTheme.pinkBright, 'radius': 6.0},
-                            {'x': 3.0, 'y': 60.0, 'color': GelatoTheme.purpleBright, 'radius': 14.0},
-                            {'x': 4.0, 'y': 95.0, 'color': GelatoTheme.pinkBright, 'radius': 16.0},
-                            {'x': 5.0, 'y': 50.0, 'color': GelatoTheme.blueBright, 'radius': 7.0},
-                            {'x': 6.0, 'y': 80.0, 'color': GelatoTheme.greenBright, 'radius': 13.0},
-                          ].asMap().entries.map((entry) {
+                          scatterSpots: dynamicScatterSpots.asMap().entries.map((entry) {
                             final isTouched = entry.key == _touchedSpotIndex;
                             final data = entry.value;
                             final baseRadius = data['radius'] as double;

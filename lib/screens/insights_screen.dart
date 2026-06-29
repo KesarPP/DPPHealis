@@ -85,29 +85,91 @@ class HorizontalInsightsCarousel extends StatefulWidget {
 }
 
 class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel> {
-  final List<Map<String, dynamic>> _insights = [
-    {
-      'title': 'Evening Calorie Spikes',
-      'desc': 'Your calorie intake tends to spike after 8 PM. Consider lighter dinners to improve your rest.',
-      'icon': Icons.nightlight_round,
-      'color': GelatoTheme.purple,
-      'iconColor': GelatoTheme.purple,
-    },
-    {
-      'title': 'Protein is Inconsistent',
-      'desc': 'You hit your protein goal 4 out of 7 days this week. Try adding a shake on weekends.',
-      'icon': Icons.fitness_center_rounded,
-      'color': GelatoTheme.blue,
-      'iconColor': GelatoTheme.blue,
-    },
-    {
-      'title': 'Great Hydration!',
-      'desc': 'You\'ve consistently hit your water goal all week. Keep up the excellent work!',
-      'icon': Icons.water_drop_rounded,
-      'color': GelatoTheme.green,
-      'iconColor': GelatoTheme.green,
-    },
-  ];
+  List<Map<String, dynamic>> _generateInsights(BuildContext context) {
+    final notifier = Provider.of<FoodDiaryNotifier>(context);
+    final logs = notifier.allLogsList;
+    List<Map<String, dynamic>> insights = [];
+
+    // 1. Dinner Analysis
+    double dinnerCal = 0;
+    int dinnerCount = 0;
+    for (var log in logs) {
+       for (var entry in log.entries) {
+          if (entry.mealType == 'Dinner') {
+            dinnerCal += entry.food.calories * entry.quantity;
+            dinnerCount++;
+          }
+       }
+    }
+    if (dinnerCount > 0 && (dinnerCal / dinnerCount) > notifier.calorieGoal * 0.4) {
+      insights.add({
+        'title': 'Heavy Dinners',
+        'desc': 'Your dinner calories are quite high. Consider lighter dinners to improve digestion and rest.',
+        'icon': Icons.nightlight_round,
+        'color': GelatoTheme.purple,
+        'iconColor': GelatoTheme.purple,
+      });
+    } else {
+      insights.add({
+        'title': 'Balanced Dinners',
+        'desc': 'You are doing great at keeping your evening meals balanced! This is great for your sleep.',
+        'icon': Icons.nightlight_round,
+        'color': GelatoTheme.purple,
+        'iconColor': GelatoTheme.purple,
+      });
+    }
+
+    // 2. Protein Consistency
+    int proteinHitCount = 0;
+    double targetProtein = (notifier.calorieGoal * 0.3) / 4.0;
+    for (var log in logs) {
+      if (log.totalProtein >= targetProtein * 0.8) proteinHitCount++;
+    }
+    
+    int daysLogged = logs.length;
+    if (proteinHitCount < 4 && daysLogged > 0) {
+      insights.add({
+        'title': 'Protein is Inconsistent',
+        'desc': 'You hit your protein goal $proteinHitCount out of ${daysLogged > 7 ? 7 : daysLogged} days recently. Try adding more lean meats.',
+        'icon': Icons.fitness_center_rounded,
+        'color': GelatoTheme.blue,
+        'iconColor': GelatoTheme.blue,
+      });
+    } else {
+       insights.add({
+        'title': 'Protein Powerhouse',
+        'desc': 'Great job! You consistently hit your protein goals. Keep feeding those muscles!',
+        'icon': Icons.fitness_center_rounded,
+        'color': GelatoTheme.blue,
+        'iconColor': GelatoTheme.blue,
+      });
+    }
+
+    // 3. Fiber Analysis
+    int fiberHitCount = 0;
+    for (var log in logs) {
+       if (log.totalFiber >= 20.0) fiberHitCount++;
+    }
+    if (fiberHitCount < (daysLogged / 2) && daysLogged > 0) {
+       insights.add({
+        'title': 'More Fiber Needed',
+        'desc': 'Fiber helps with digestion and keeping you full. Try adding more leafy greens and whole grains!',
+        'icon': Icons.eco_rounded,
+        'color': GelatoTheme.green,
+        'iconColor': GelatoTheme.green,
+      });
+    } else {
+      insights.add({
+        'title': 'Fantastic Fiber!',
+        'desc': 'You are getting plenty of fiber in your diet, which is amazing for your gut health!',
+        'icon': Icons.eco_rounded,
+        'color': GelatoTheme.green,
+        'iconColor': GelatoTheme.green,
+      });
+    }
+
+    return insights;
+  }
 
   late final PageController _pageController;
 
@@ -126,14 +188,16 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
 
   @override
   Widget build(BuildContext context) {
+    final insightsList = _generateInsights(context);
+    
     return SizedBox(
       height: 220, // Increased height so text doesn't cut off
       child: PageView.builder(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(), // Disables drag, rely entirely on taps
         itemBuilder: (context, index) {
-          int dataIndex = index % _insights.length;
-          final insight = _insights[dataIndex];
+          int dataIndex = index % insightsList.length;
+          final insight = insightsList[dataIndex];
 
           return AnimatedBuilder(
             animation: _pageController,
