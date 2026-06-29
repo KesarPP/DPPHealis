@@ -81,8 +81,8 @@ export default async function handler(req, res) {
   // ─── 2. FALLBACK AI: GOOGLE GEMINI API ─────────────────────────────────────
   if (geminiApiKey && !geminiApiKey.includes('PASTE_YOUR')) {
     try {
-      console.log('Attempting Fallback Model: Google Gemini (gemini-1.5-flash-latest)...');
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
+      console.log('Attempting Fallback Model: Google Gemini (gemini-2.0-flash)...');
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
       const geminiReq = await fetch(geminiUrl, {
         method: 'POST',
         headers: {
@@ -111,7 +111,7 @@ export default async function handler(req, res) {
         const reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (reply) {
           console.log('Successfully generated response via Gemini fallback.');
-          return res.status(200).json({ response: reply, model: 'gemini-1.5-flash' });
+          return res.status(200).json({ response: reply, model: 'gemini-2.0-flash' });
         }
       } else {
         const errText = await geminiReq.text();
