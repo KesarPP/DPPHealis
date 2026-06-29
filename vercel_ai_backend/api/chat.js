@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing "message" in request body.' });
   }
 
-  const systemInstruction = 
+  const systemInstruction =
     'You are an expert AI Health Coach for the Digital Diabetes Prevention Program (DPP). Your sole purpose is to assist users with diabetes management, prediabetes, healthy nutrition, physical activity, sleep, weight management, and overall wellness.\n\n' +
     'STRICT GUARDRAILS & RULES:\n' +
     '1. DO NOT answer questions or perform tasks unrelated to health, nutrition, wellness, or diabetes.\n' +
@@ -29,8 +29,8 @@ export default async function handler(req, res) {
 
   // ─── API KEY CONFIGURATION ────────────────────────────────────────────────
   // You can either set these in Vercel Environment Variables OR paste them directly below:
-  const groqApiKey = process.env.GROQ_API_KEY || "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";
-  const geminiApiKey = process.env.GEMINI_API_KEY || "AQ.Ab8RN6K8cFWM0RWkAuQU0Rd6oKskt15cCKNEW4seYdE8HTeKow";
+  const groqApiKey = process.env.GROQ_API_KEY;
+  const geminiApiKey = process.env.GEMINI_API_KEY;
 
   // ─── 1. PRIMARY AI: GROQ API ───────────────────────────────────────────────
   let groqErrorMsg = "";

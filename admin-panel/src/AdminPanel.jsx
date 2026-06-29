@@ -21,6 +21,7 @@ const IconSearch  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="
 const IconEdit    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const IconDelete  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
 const IconClose   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+const IconRequests = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 1v22M7 23V1M17 4l3 3-3 3M7 20l-3-3 3-3"/></svg>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function initials(name = '') {
@@ -511,11 +512,130 @@ function AssignTab({ users, coaches, showToast }) {
   );
 }
 
+// ─── Requests Tab ────────────────────────────────────────────────────────────
+function RequestsTab({ requests, showToast }) {
+  const [search, setSearch] = useState('');
+  const [processing, setProcessing] = useState(null);
+
+  const handleApprove = async (req) => {
+    setProcessing(req.id);
+    try {
+      await updateDoc(doc(db, 'users', req.userId), { assignedCoachId: null });
+      await updateDoc(doc(db, 'coach_change_requests', req.id), { status: 'approved' });
+      showToast('✅ Coach change request approved. Patient unassigned.');
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Failed to approve request.');
+    }
+    setProcessing(null);
+  };
+
+  const handleReject = async (req) => {
+    setProcessing(req.id);
+    try {
+      await updateDoc(doc(db, 'coach_change_requests', req.id), { status: 'rejected' });
+      showToast('❌ Coach change request rejected.');
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Failed to reject request.');
+    }
+    setProcessing(null);
+  };
+
+  const filtered = requests.filter(r =>
+    (r.userName || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.userEmail || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.currentCoachName || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="tab-content">
+      <div className="tab-header">
+        <div>
+          <h2>Coach Change Requests <span className="count-badge">{requests.filter(r => r.status === 'pending').length} pending</span></h2>
+          <p>Review and approve or reject patient requests to change their assigned coach</p>
+        </div>
+        <div className="search-box">
+          <IconSearch />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search requests…" />
+        </div>
+      </div>
+
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Current Coach</th>
+              <th>Reason for Change</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={5} className="empty-row">No coach change requests found</td></tr>
+            ) : filtered.map(r => (
+              <tr key={r.id}>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Avatar name={r.userName || '??'} size={36} />
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{r.userName || <em style={{ color: '#94A3B8' }}>Unnamed</em>}</div>
+                      <div style={{ fontSize: 11, color: '#64748B' }}>{r.userEmail}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <Badge color="#1D4ED8" bg="#DBEAFE">{r.currentCoachName || r.currentCoachId}</Badge>
+                </td>
+                <td style={{ maxWidth: 300, whiteSpace: 'normal', wordBreak: 'break-word' }} className="muted">
+                  {r.reason || <em style={{ color: '#94A3B8' }}>No reason provided</em>}
+                </td>
+                <td>
+                  {r.status === 'pending' && <Badge color="#D97706" bg="#FEF3C7">Pending</Badge>}
+                  {r.status === 'approved' && <Badge color="#059669" bg="#D1FAE5">Approved</Badge>}
+                  {r.status === 'rejected' && <Badge color="#DC2626" bg="#FEE2E2">Rejected</Badge>}
+                </td>
+                <td>
+                  {r.status === 'pending' ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        className="btn-primary"
+                        style={{ padding: '6px 12px', fontSize: 12 }}
+                        onClick={() => handleApprove(r)}
+                        disabled={processing === r.id}
+                      >
+                        {processing === r.id ? 'Saving…' : 'Approve'}
+                      </button>
+                      <button
+                        className="btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid #000' }}
+                        onClick={() => handleReject(r)}
+                        disabled={processing === r.id}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Resolved</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main AdminPanel ──────────────────────────────────────────────────────────
 export default function AdminPanel({ onLogout }) {
   const [tab, setTab] = useState('patients');
   const [users, setUsers] = useState([]);
   const [coaches, setCoaches] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
@@ -537,6 +657,15 @@ export default function AdminPanel({ onLogout }) {
     return unsub;
   }, []);
 
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(db, 'coach_change_requests'),
+      snap => setRequests(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      err  => console.error(err)
+    );
+    return unsub;
+  }, []);
+
   const showToast = msg => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -549,9 +678,15 @@ export default function AdminPanel({ onLogout }) {
     { id: 'patients', label: 'Patients',  icon: <IconUsers /> },
     { id: 'coaches',  label: 'Coaches',   icon: <IconCoaches /> },
     { id: 'assign',   label: 'Assign',    icon: <IconAssign /> },
+    { id: 'requests', label: 'Requests',  icon: <IconRequests /> },
   ];
 
-  const tabTitles = { patients: 'Patient Management', coaches: 'Coach Management', assign: 'Assign Patients' };
+  const tabTitles = {
+    patients: 'Patient Management',
+    coaches: 'Coach Management',
+    assign: 'Assign Patients',
+    requests: 'Coach Change Requests'
+  };
 
   return (
     <div className="panel-root">
@@ -605,6 +740,7 @@ export default function AdminPanel({ onLogout }) {
             {tab === 'patients' && <PatientsTab users={users}   coaches={coaches} showToast={showToast} />}
             {tab === 'coaches'  && <CoachesTab  coaches={coaches} users={users}   showToast={showToast} />}
             {tab === 'assign'   && <AssignTab   users={users}   coaches={coaches} showToast={showToast} />}
+            {tab === 'requests' && <RequestsTab requests={requests} showToast={showToast} />}
           </>
         )}
       </main>
