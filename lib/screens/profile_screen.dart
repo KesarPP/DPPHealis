@@ -5,6 +5,9 @@ import 'login_screen.dart';
 import '../services/auth_service.dart';
 import '../data/gelato_theme.dart';
 import 'crop_image_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../services/notification_service.dart';
 
 // Pastel Color Palette "GELATO DAYS" mapped to GelatoTheme
 const Color _pastelPink = GelatoTheme.pink;
@@ -62,41 +65,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 32),
             
-            const _SectionTitle('Journey Progress'),
-            const SizedBox(height: 12),
-            const _JourneyProgressCard(),
-            const SizedBox(height: 32),
-
-            const _SectionTitle('Active Quests'),
-            const SizedBox(height: 12),
-            const IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: _GoalCard(
-                    title: 'Weight Goal', 
-                    target: 'Lose 10 kg', 
-                    current: 'Current: 65 kg', 
-                    progress: 0.4, 
-                    icon: Icons.monitor_weight_rounded,
-                    color: _pastelBlue,
-                    darkColor: _blueDark,
-                  )),
-                  SizedBox(width: 12),
-                  Expanded(child: _GoalCard(
-                    title: 'Activity Goal', 
-                    target: '150 min/wk', 
-                    current: 'Current: 90 min', 
-                    progress: 0.6, 
-                    icon: Icons.directions_run_rounded,
-                    color: _pastelGreen,
-                    darkColor: _greenDark,
-                  )),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
             const _SectionTitle('Achievements'),
             const SizedBox(height: 12),
             const Row(
@@ -108,11 +76,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Expanded(child: _StatCard(title: 'Streak', value: '14 Days', icon: Icons.local_fire_department_rounded, color: _pastelPeach, darkColor: _peachDark)),
               ],
             ),
-            const SizedBox(height: 32),
-
-            const _SectionTitle('Journey Records'),
-            const SizedBox(height: 12),
-            const _HistorySection(),
             const SizedBox(height: 32),
 
             const _SectionTitle('Settings'),
@@ -831,8 +794,49 @@ class _HistorySection extends StatelessWidget {
   }
 }
 
-class _SettingsSection extends StatelessWidget {
+class _SettingsSection extends StatefulWidget {
   const _SettingsSection();
+
+  @override
+  State<_SettingsSection> createState() => _SettingsSectionState();
+}
+
+class _SettingsSectionState extends State<_SettingsSection> {
+  bool _notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationPreference();
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+      });
+    }
+  }
+
+  Future<void> _toggleNotifications(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', enabled);
+    if (mounted) {
+      setState(() {
+        _notificationsEnabled = enabled;
+      });
+    }
+
+    if (enabled) {
+      await NotificationService().requestPermissions();
+      NotificationService().startChatListener();
+    } else {
+      // Cancel all active local notifications when disabled
+      final FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
+      await plugin.cancelAll();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -847,7 +851,11 @@ class _SettingsSection extends StatelessWidget {
               child: const Icon(Icons.notifications_active_rounded, color: Colors.black54, size: 20),
             ),
             title: const Text('Notifications', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black87)),
-            trailing: Switch(value: true, onChanged: (v) {}, activeThumbColor: _pastelBlue),
+            trailing: Switch(
+              value: _notificationsEnabled, 
+              onChanged: _toggleNotifications, 
+              activeThumbColor: _pastelBlue
+            ),
           ),
           const Divider(height: 1, color: Colors.black12, indent: 60),
           const _ActionTile(icon: Icons.privacy_tip_rounded, title: 'Privacy', color: Colors.black54),
