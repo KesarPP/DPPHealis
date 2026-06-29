@@ -521,8 +521,9 @@ class _AchievementCard extends StatelessWidget {
                             offset: Offset(imageOffsetX, -25 + imageOffsetY),
                             child: Center(
                               child: imagePath != null
-                                  ? Transform.scale(
-                                      scale: imageScale,
+                                  ? FractionallySizedBox(
+                                      widthFactor: imageScale,
+                                      heightFactor: imageScale,
                                       child: Image.asset(
                                         imagePath!,
                                         fit: BoxFit.contain,
