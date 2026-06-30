@@ -6994,34 +6994,25 @@ class _FlatSurfaceSizeSelector extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(
-            height: 140,
+            height: 220,
             child: Center(
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 120,
+                width: 220,
                 child: CustomPaint(
-                  size: const Size(120, 120),
+                  size: const Size(220, 220),
                   painter: _SingleFlatSurfacePainter(
                     surfaceWidth: width,
                     animationValue: 1.0,
                     activeColor: activeColor,
                     activeDarkColor: activeDarkColor,
+                    label: label,
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            '$label cm',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: activeDarkColor,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           SliderTheme(
             data: SliderThemeData(
               activeTrackColor: activeDarkColor,
@@ -7051,12 +7042,14 @@ class _SingleFlatSurfacePainter extends CustomPainter {
   final double animationValue;
   final Color activeColor;
   final Color activeDarkColor;
+  final String label;
 
   _SingleFlatSurfacePainter({
     required this.surfaceWidth,
     required this.animationValue,
     required this.activeColor,
     required this.activeDarkColor,
+    required this.label,
   });
 
   @override
@@ -7066,33 +7059,33 @@ class _SingleFlatSurfacePainter extends CustomPainter {
     final cx = w / 2;
     final cy = h / 2;
 
-    // Draw reference plate representing standard plate (e.g. 24-25 cm)
+    // Draw reference plate representing standard plate (e.g. 25 cm)
     final platePaint = Paint()
       ..color = Colors.grey.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
     
     // Outer plate background
-    canvas.drawCircle(Offset(cx, cy), 55, platePaint);
+    canvas.drawCircle(Offset(cx, cy), 100, platePaint);
 
     final plateBorderPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 1.5;
     
     // Draw plate outer border
-    canvas.drawCircle(Offset(cx, cy), 55, plateBorderPaint);
+    canvas.drawCircle(Offset(cx, cy), 100, plateBorderPaint);
     
     // Draw plate inner rim border
-    canvas.drawCircle(Offset(cx, cy), 45, Paint()
+    canvas.drawCircle(Offset(cx, cy), 82, Paint()
       ..color = Colors.black.withValues(alpha: 0.06)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8);
+      ..strokeWidth = 1.0);
 
     // Flat bread (roti/chapati) radius
     // surfaceWidth goes from 13.0 to 75.0.
-    // To ensure the smallest size (4 cm, like a puri) is clearly visible and easy to visualize,
-    // we interpolate its radius between 18.0 (diameter 36) and 50.0 (diameter 100).
-    final r = 18.0 + (surfaceWidth - 13.0) * (32.0 / 62.0);
+    // Smallest size (4 cm): surfaceWidth 13.0 maps to radius 35.
+    // Largest size (22.5 cm): surfaceWidth 75.0 maps to radius 95.
+    final r = 35.0 + (surfaceWidth - 13.0) * (60.0 / 62.0);
 
     // Fill paint for the flat bread
     final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
@@ -7109,7 +7102,7 @@ class _SingleFlatSurfacePainter extends CustomPainter {
     final outlinePaint = Paint()
       ..color = outlineColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8;
+      ..strokeWidth = 2.0;
 
     // Draw the flat bread circle
     canvas.drawCircle(Offset(cx, cy), r, fillPaint);
@@ -7124,7 +7117,7 @@ class _SingleFlatSurfacePainter extends CustomPainter {
       ..color = activeDarkColor.withValues(alpha: 0.32)
       ..style = PaintingStyle.fill;
 
-    if (r > 12) {
+    if (r > 20) {
       // Warm toasted spots at various coordinates
       canvas.drawCircle(Offset(cx - r * 0.35, cy - r * 0.25), r * 0.14, spotPaint);
       canvas.drawCircle(Offset(cx + r * 0.42, cy + r * 0.18), r * 0.16, spotPaint);
@@ -7137,6 +7130,69 @@ class _SingleFlatSurfacePainter extends CustomPainter {
       canvas.drawCircle(Offset(cx + r * 0.40, cy + r * 0.15), r * 0.06, darkSpotPaint);
       canvas.drawCircle(Offset(cx + r * 0.20, cy - r * 0.50), r * 0.04, darkSpotPaint);
     }
+
+    // 7. Draw Radius line (horizontal from center to right edge of roti)
+    final radiusPaint = Paint()
+      ..color = activeDarkColor.withValues(alpha: 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+    
+    canvas.drawLine(Offset(cx, cy), Offset(cx + r, cy), radiusPaint);
+    
+    // Draw tick marks/dots at center and radius edge
+    canvas.drawCircle(Offset(cx, cy), 3.5, Paint()..color = activeDarkColor);
+    canvas.drawCircle(Offset(cx + r, cy), 3.5, Paint()..color = activeDarkColor);
+
+    // 8. Draw measurement label inside the circle along the radius line
+    final textSpan = TextSpan(
+      text: '$label cm',
+      style: TextStyle(
+        color: activeDarkColor,
+        fontSize: 13,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+
+    final textX = cx + (r - textPainter.width) / 2;
+    final textY = cy - textPainter.height - 4;
+
+    if (r > textPainter.width + 10) {
+      final bgRect = Rect.fromLTRB(
+        textX - 4,
+        textY - 2,
+        textX + textPainter.width + 4,
+        textY + textPainter.height + 2,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(bgRect, const Radius.circular(4)),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.8)
+          ..style = PaintingStyle.fill,
+      );
+      textPainter.paint(canvas, Offset(textX, textY));
+    } else {
+      // Fallback for small sizes: draw label above the circle center to keep it readable
+      final fallbackX = cx - textPainter.width / 2;
+      final fallbackY = cy - r - textPainter.height - 8;
+      final bgRect = Rect.fromLTRB(
+        fallbackX - 4,
+        fallbackY - 2,
+        fallbackX + textPainter.width + 4,
+        fallbackY + textPainter.height + 2,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(bgRect, const Radius.circular(4)),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.8)
+          ..style = PaintingStyle.fill,
+      );
+      textPainter.paint(canvas, Offset(fallbackX, fallbackY));
+    }
   }
 
   @override
@@ -7144,7 +7200,8 @@ class _SingleFlatSurfacePainter extends CustomPainter {
     return oldDelegate.animationValue != animationValue || 
            oldDelegate.activeColor != activeColor ||
            oldDelegate.activeDarkColor != activeDarkColor ||
-           oldDelegate.surfaceWidth != surfaceWidth;
+           oldDelegate.surfaceWidth != surfaceWidth ||
+           oldDelegate.label != label;
   }
 }
 

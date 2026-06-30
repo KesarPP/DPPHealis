@@ -36,37 +36,53 @@ class FfqCalculatorService {
 
       if (answer.frequency == 'Never') continue;
 
-      // Step 1 – Frequency factor
-      double freqFactor = 0.0;
-      if (answer.frequency == 'Daily') {
-        freqFactor = 1.0;
-      } else if (answer.frequency == 'Per Week') {
-        freqFactor = 1.0 / 7.0;
-      } else if (answer.frequency == 'Per Month') {
-        freqFactor = 1.0 / 30.0;
-      }
-
-      // Step 2 – Times eaten per day
-      final double eatenPerDay = answer.timesPerDay * freqFactor;
-
-      // Step 3 – Portion size in grams
-      final double portionGrams = _extractGrams(answer.size);
-
-      // Step 4 – Total grams per day
-      final double gramsPerDay = portionGrams * answer.quantityAtTime * eatenPerDay;
-
-      // Step 5 – Calories from nutrition database
-      double calPer100g = 0.0;
+      // 1. Calories per 100g from database (calories per 100 g)
+      double caloriesPer100g = 0.0;
       if (answer.selectedVarieties.isNotEmpty) {
         double totalCal = 0.0;
         for (final v in answer.selectedVarieties) {
           totalCal += _getCaloriesFromDb(name, v);
         }
-        calPer100g = totalCal / answer.selectedVarieties.length;
+        caloriesPer100g = totalCal / answer.selectedVarieties.length;
       } else {
-        calPer100g = _getCaloriesFromDb(name, answer.selectedVariety);
+        caloriesPer100g = _getCaloriesFromDb(name, answer.selectedVariety);
       }
-      final double calPerDay = (calPer100g / 100.0) * gramsPerDay;
+
+      // 2. Portion grams
+      final double portionGrams = _extractGrams(name, answer.size);
+
+      // 3. Quantity
+      final double quantity = answer.quantityAtTime;
+
+      // 4. Times
+      final double times = answer.timesPerDay.toDouble();
+
+      // 5. Frequency factor
+      double frequencyFactor = 0.0;
+      if (answer.frequency == 'Daily') {
+        frequencyFactor = 1.0;
+      } else if (answer.frequency == 'Per Week') {
+        frequencyFactor = 1.0 / 7.0;
+      } else if (answer.frequency == 'Per Month') {
+        frequencyFactor = 1.0 / 30.0;
+      }
+
+      // 6. Calculate calories using the formula:
+      // calories = (calories per 100 g ÷ 100) * portion grams * quantity * times * frequency factor
+      final double calPerDay = (caloriesPer100g / 100.0) * portionGrams * quantity * times * frequencyFactor;
+
+      final double gramsPerDay = portionGrams * quantity * times * frequencyFactor;
+
+      // Debugging log per user request
+      print('Food: $name');
+      print('Calories/100g: $caloriesPer100g');
+      print('Size: ${answer.size}');
+      print('Portion grams: $portionGrams');
+      print('Quantity: $quantity');
+      print('Times/day: $times');
+      print('Frequency factor: $frequencyFactor');
+      print('Grams/day: $gramsPerDay');
+      print('Calories/day: $calPerDay');
 
       totalCalories += calPerDay;
       breakdown.add(FoodCalorieEntry(
@@ -87,8 +103,11 @@ class FfqCalculatorService {
 
   // ── Portion-to-grams converter ──────────────────────────────────────────
 
-  double _extractGrams(String size) {
-    // F1–F9: Chapati/Roti sizes (exact weight table from FFQ toolkit)
+  double _extractGrams(String foodName, String size) {
+    final cleanFood = foodName.toLowerCase().trim();
+    final lowerSize = size.toLowerCase().trim();
+
+    // 1. F1–F9: Chapati/Roti/Flatbread sizes (exact weight table from FFQ toolkit)
     if (RegExp(r'^F\d$').hasMatch(size.trim())) {
       final int index = int.tryParse(size.trim().substring(1)) ?? 4;
       const List<double> rotiWeights = [
@@ -106,18 +125,97 @@ class FfqCalculatorService {
       return 60.0; // fallback to F4
     }
 
-    // Cup/Bowl/Glass/Spoon with explicit ml or g in parentheses
+    // 2. Cup/Bowl/Glass/Spoon/Nuts with explicit ml or g in parentheses
     // e.g. "C2 (100 ml)" → 100g,  "S1 (5 ml)" → 5g,  "N2 (50 g)" → 50g
     final metricMatch = RegExp(r'\(([\d.]+)\s*(g|ml)\)').firstMatch(size);
     if (metricMatch != null) {
       return double.tryParse(metricMatch.group(1)!) ?? 100.0;
     }
 
+    // 3. Biscuits (1 piece = 10 g)
+    if (cleanFood.contains('biscuit')) {
+      if (lowerSize.contains('small') || lowerSize.contains('1 piece')) return 10.0;
+      if (lowerSize.contains('medium') || lowerSize.contains('2 pieces')) return 20.0;
+      if (lowerSize.contains('large') || lowerSize.contains('4 pieces')) return 40.0;
+      return 10.0;
+    }
+
+    // 4. Bread / Pav (1 slice / piece = 30 g)
+    if (cleanFood.contains('bread') || cleanFood == 'pav') {
+      if (lowerSize.contains('small') || lowerSize.contains('s ')) return 30.0;
+      if (lowerSize.contains('medium') || lowerSize.contains('m ')) return 60.0;
+      if (lowerSize.contains('large') || lowerSize.contains('l ')) return 90.0;
+      return 30.0;
+    }
+
+    // 5. Sandwich (1 full sandwich = 120 g, half = 60 g, 2 full = 240 g)
+    if (cleanFood == 'sandwich') {
+      if (lowerSize.contains('half') || lowerSize.contains('small')) return 60.0;
+      if (lowerSize.contains('1 full') || lowerSize.contains('medium')) return 120.0;
+      if (lowerSize.contains('2 full') || lowerSize.contains('large')) return 240.0;
+      return 120.0;
+    }
+
+    // 6. Nan (1 nan = 100 g)
+    if (cleanFood == 'nan') {
+      if (lowerSize.contains('1 nan') || lowerSize.contains('small')) return 100.0;
+      if (lowerSize.contains('1.5 nan') || lowerSize.contains('medium')) return 150.0;
+      if (lowerSize.contains('2 nan') || lowerSize.contains('large')) return 200.0;
+      return 100.0;
+    }
+
+    // 7. Green chillies / Garlic (Small (1) = 2 g)
+    if (cleanFood.contains('chilli') || cleanFood.contains('garlic')) {
+      return 2.0;
+    }
+
+    // 8. Deep fried snacks (Vada/Samosa: 1 piece = 60 g)
+    if (cleanFood.contains('fried snack') || cleanFood.contains('vada') || cleanFood.contains('samosa')) {
+      if (lowerSize.contains('small') || lowerSize.contains('1')) return 60.0;
+      if (lowerSize.contains('medium') || lowerSize.contains('2')) return 120.0;
+      if (lowerSize.contains('large') || lowerSize.contains('3')) return 180.0;
+      return 60.0;
+    }
+
+    // 9. Sweets (Solid sweets like Ladoo/Barfi: 1 piece = 40 g)
+    if (cleanFood.contains('sweets (solid)')) {
+      if (lowerSize.contains('small') || lowerSize.contains('1')) return 40.0;
+      if (lowerSize.contains('medium') || lowerSize.contains('2')) return 80.0;
+      if (lowerSize.contains('large') || lowerSize.contains('3')) return 120.0;
+      return 40.0;
+    }
+
+    // 10. Fruits (Apple, Banana, Mango, etc.) using ball_set (1 medium fruit = 120 g, edible portion)
+    const fruitNames = {
+      'orange', 'mango', 'guava', 'sweet lime', 'amla', 'banana', 'apple', 'fig', 'berries', 'apricot', 'cashew fruit', 'grapes', 'papaya', 'watermelon', 'muskmelon', 'pomegranate', 'jackfruit', 'pineapple', 'custard apple', 'pear', 'plum', 'peach', 'strawberry'
+    };
+    if (fruitNames.contains(cleanFood)) {
+      if (lowerSize.contains('small') || lowerSize.contains('s ')) return 80.0;
+      if (lowerSize.contains('medium') || lowerSize.contains('m ')) return 120.0;
+      if (lowerSize.contains('large') || lowerSize.contains('l ')) return 180.0;
+      return 120.0;
+    }
+
+    // 11. Fresh Fish / Prawns (dry) (sponge set: S = 50g, M = 100g, L = 150g)
+    if (cleanFood.contains('fish') || cleanFood.contains('prawn')) {
+      if (lowerSize.contains('small') || lowerSize.contains('s(')) return 50.0;
+      if (lowerSize.contains('medium') || lowerSize.contains('m(')) return 100.0;
+      if (lowerSize.contains('large') || lowerSize.contains('l(')) return 150.0;
+      return 100.0;
+    }
+
+    // 12. Chaat (Pani puri / Bhel puri) (S = 50g, M = 100g, L = 150g)
+    if (cleanFood.contains('chaat')) {
+      if (lowerSize.contains('small')) return 50.0;
+      if (lowerSize.contains('medium')) return 100.0;
+      if (lowerSize.contains('large')) return 150.0;
+      return 100.0;
+    }
+
     // Fallback for descriptive sizes like "Small", "Medium", "Large"
-    final lower = size.toLowerCase();
-    if (lower.contains('small')) return 50.0;
-    if (lower.contains('medium')) return 100.0;
-    if (lower.contains('large')) return 150.0;
+    if (lowerSize.contains('small') || lowerSize.contains('s ')) return 50.0;
+    if (lowerSize.contains('medium') || lowerSize.contains('m ')) return 100.0;
+    if (lowerSize.contains('large') || lowerSize.contains('l ')) return 150.0;
 
     return 100.0; // ultimate fallback
   }
