@@ -2061,16 +2061,16 @@ class _CupSizeSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Cups data: {label: height, width, ml}
+    // Cups data (ceramic cups on saucers): {label: height, width, ml, id}
     final cups = [
-      {'label': '50 ml',  'height': 60.0, 'width': 45.0, 'ml': 50},
-      {'label': '100 ml', 'height': 90.0, 'width': 60.0, 'ml': 100},
-      {'label': '200 ml', 'height': 120.0, 'width': 75.0, 'ml': 200},
+      {'label': '50 ml',  'height': 55.0, 'width': 65.0, 'ml': 50,  'id': 'C1 (50 ml)'},
+      {'label': '100 ml', 'height': 75.0, 'width': 85.0, 'ml': 100, 'id': 'C2 (100 ml)'},
+      {'label': '200 ml', 'height': 90.0, 'width': 110.0, 'ml': 200, 'id': 'C3 (200 ml)'},
     ];
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -2091,79 +2091,33 @@ class _CupSizeSlider extends StatelessWidget {
           final height = cup['height'] as double;
           final width = cup['width'] as double;
           final ml = cup['ml'] as int;
-          
-          final sizeString = label;
-          final isSel = selected == sizeString || selected.contains(ml.toString());
+          final id = cup['id'] as String;
+
+          final isSel = selected == id || selected.contains('$ml ml');
 
           return GestureDetector(
-            onTap: () => onChanged(sizeString),
+            onTap: () => onChanged(id),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  AnimatedContainer(
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: isSel ? 1.0 : 0.0),
                     duration: const Duration(milliseconds: 200),
-                    height: height,
-                    width: width,
-                    decoration: BoxDecoration(
-                      color: isSel ? activeColor : const Color(0xFFF2E6D8), // Kraft paper color
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
-                      border: Border.all(
-                        color: isSel ? activeDarkColor : Colors.black45,
-                        width: isSel ? 2.5 : 1.0,
-                      ),
-                      boxShadow: isSel ? [
-                        BoxShadow(color: activeDarkColor.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))
-                      ] : [],
-                    ),
-                    child: Stack(
-                      children: [
-                        // Corrugated vertical lines
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(
-                            (width / 4).floor(),
-                            (index) => Container(
-                              width: 1,
-                              color: Colors.black12,
-                            ),
-                          ),
+                    builder: (context, value, child) {
+                      return CustomPaint(
+                        size: Size(width, height),
+                        painter: _SingleCupPainter(
+                          animationValue: value,
+                          activeColor: activeColor,
+                          activeDarkColor: activeDarkColor,
+                          ml: ml.toDouble(),
                         ),
-                        // Top Rim
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: isSel ? activeDarkColor.withValues(alpha: 0.2) : Colors.white,
-                              border: const Border(bottom: BorderSide(color: Colors.black26)),
-                            ),
-                          ),
-                        ),
-                        // Green bottom stripe (like the image)
-                        Positioned(
-                          bottom: 8,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 12,
-                            color: isSel ? activeDarkColor.withValues(alpha: 0.8) : const Color(0xFF2C5E48), // Dark green stripe
-                            child: Center(
-                              child: Container(
-                                height: 2,
-                                width: width * 0.6,
-                                color: Colors.white.withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     label,
                     style: TextStyle(
@@ -2179,6 +2133,159 @@ class _CupSizeSlider extends StatelessWidget {
         }).toList(),
       ),
     );
+  }
+}
+
+class _SingleCupPainter extends CustomPainter {
+  final double animationValue;
+  final Color activeColor;
+  final Color activeDarkColor;
+  final double ml;
+
+  _SingleCupPainter({
+    required this.animationValue,
+    required this.activeColor,
+    required this.activeDarkColor,
+    required this.ml,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+
+    final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
+    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.15), animationValue)!;
+    final strokeWidth = 1.5 + (0.5 * animationValue);
+
+    final outlinePaint = Paint()
+      ..color = outlineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+
+    // Define cup proportions matching the image
+    double cupW;
+    double cupH;
+    if (ml == 50.0) {
+      cupW = w * 0.55;
+      cupH = h * 0.55;
+    } else if (ml == 100.0) {
+      cupW = w * 0.60;
+      cupH = h * 0.62;
+    } else {
+      // 200 ml (wider, shallower cappuccino/latte style)
+      cupW = w * 0.70;
+      cupH = h * 0.53;
+    }
+
+    final cupCx = cx - w * 0.06; // Shift cup left slightly to balance the right-side handle
+    final cyBottom = h - 12.0;
+    final cyTop = cyBottom - cupH;
+
+    // 1. Draw Saucer
+    final saucerW = w * 0.95;
+    final saucerH = h * 0.14;
+    final cySaucer = cyBottom + 2;
+    final saucerRect = Rect.fromCenter(center: Offset(cupCx, cySaucer), width: saucerW, height: saucerH);
+    
+    // Draw saucer base fill and outline
+    canvas.drawOval(saucerRect, fillPaint);
+    canvas.drawOval(saucerRect, outlinePaint);
+    
+    // Draw saucer inner ring
+    final innerSaucerRect = Rect.fromCenter(center: Offset(cupCx, cySaucer), width: saucerW * 0.65, height: saucerH * 0.6);
+    canvas.drawOval(innerSaucerRect, outlinePaint..strokeWidth = strokeWidth * 0.7);
+    outlinePaint.strokeWidth = strokeWidth; // Restore stroke width
+
+    // 2. Draw Handle (curved ceramic handle on the right)
+    final handleTopY = cyTop + cupH * 0.25;
+    final handleBottomY = cyBottom - cupH * 0.15;
+    
+    final startPt = Offset(cupCx + cupW * 0.42, handleTopY);
+    final endPt = Offset(cupCx + cupW * 0.32, handleBottomY);
+
+    final handlePath = Path();
+    handlePath.moveTo(startPt.dx, startPt.dy);
+    
+    // Outer edge curve of the handle
+    handlePath.cubicTo(
+      cupCx + cupW * 0.72, handleTopY - cupH * 0.05,
+      cupCx + cupW * 0.72, handleBottomY + cupH * 0.05,
+      endPt.dx, endPt.dy,
+    );
+
+    final handleThickness = cupW * 0.08;
+
+    // Inner edge curve of the handle (backwards to create thickness)
+    handlePath.cubicTo(
+      cupCx + cupW * 0.72 - handleThickness, handleBottomY + cupH * 0.05 - handleThickness * 0.3,
+      cupCx + cupW * 0.72 - handleThickness, handleTopY - cupH * 0.05 + handleThickness * 0.3,
+      startPt.dx, startPt.dy,
+    );
+
+    handlePath.close();
+
+    canvas.drawPath(handlePath, fillPaint);
+    canvas.drawPath(handlePath, outlinePaint);
+
+    // 3. Draw Cup Body (rounded/tapered bottom)
+    final bodyPath = Path();
+    final topRimW = cupW;
+    final topRimH = cupH * 0.18;
+    final bottomRimW = cupW * 0.55;
+
+    bodyPath.moveTo(cupCx - topRimW / 2, cyTop);
+    bodyPath.lineTo(cupCx - bottomRimW / 2, cyBottom);
+    bodyPath.quadraticBezierTo(cupCx, cyBottom + bottomRimW * 0.15, cupCx + bottomRimW / 2, cyBottom);
+    bodyPath.lineTo(cupCx + topRimW / 2, cyTop);
+    bodyPath.quadraticBezierTo(cupCx, cyTop + topRimH, cupCx - topRimW / 2, cyTop);
+
+    canvas.drawPath(bodyPath, fillPaint);
+    canvas.drawPath(bodyPath, outlinePaint);
+
+    // 4. Draw Top Rim ellipse
+    final rimRect = Rect.fromCenter(center: Offset(cupCx, cyTop), width: topRimW, height: topRimH);
+    canvas.drawOval(rimRect, fillPaint);
+    canvas.drawOval(rimRect, outlinePaint);
+
+    // 5. Draw Liquid inside the rim (Coffee)
+    final coffeeBaseColor = const Color(0xFF5D4037); // Espresso brown
+    final liquidColor = Color.lerp(coffeeBaseColor.withValues(alpha: 0.5), coffeeBaseColor, animationValue)!;
+
+    final liquidRect = Rect.fromCenter(center: Offset(cupCx, cyTop), width: topRimW * 0.94, height: topRimH * 0.94);
+    final liquidPaint = Paint()
+      ..color = liquidColor
+      ..style = PaintingStyle.fill;
+    canvas.drawOval(liquidRect, liquidPaint);
+
+    // 6. Draw latte art foam swirl when selected
+    if (animationValue > 0.1) {
+      final foamPaint = Paint()
+        ..color = Color.lerp(Colors.white.withValues(alpha: 0.1), const Color(0xFFD7CCC8).withValues(alpha: 0.85), animationValue)!
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      
+      final swirlPath = Path();
+      swirlPath.addArc(
+        Rect.fromCenter(center: Offset(cupCx, cyTop), width: topRimW * 0.6, height: topRimH * 0.6),
+        0.5,
+        4.5,
+      );
+      canvas.drawPath(swirlPath, foamPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SingleCupPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue ||
+           oldDelegate.activeColor != activeColor ||
+           oldDelegate.activeDarkColor != activeDarkColor ||
+           oldDelegate.ml != ml;
   }
 }
 
@@ -6887,13 +6994,13 @@ class _FlatSurfaceSizeSelector extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(
-            height: 60,
+            height: 140,
             child: Center(
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 80,
+                width: 120,
                 child: CustomPaint(
-                  size: const Size(80, 24),
+                  size: const Size(120, 120),
                   painter: _SingleFlatSurfacePainter(
                     surfaceWidth: width,
                     animationValue: 1.0,
@@ -6906,7 +7013,7 @@ class _FlatSurfaceSizeSelector extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            label,
+            '$label cm',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -6957,68 +7064,79 @@ class _SingleFlatSurfacePainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
     final cx = w / 2;
+    final cy = h / 2;
+
+    // Draw reference plate representing standard plate (e.g. 24-25 cm)
+    final platePaint = Paint()
+      ..color = Colors.grey.withValues(alpha: 0.1)
+      ..style = PaintingStyle.fill;
     
-    final drawW = surfaceWidth;
-    final drawH = 6.0 + (surfaceWidth / 75.0) * 8.0; 
+    // Outer plate background
+    canvas.drawCircle(Offset(cx, cy), 55, platePaint);
+
+    final plateBorderPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
     
-    final cy = h - drawH/2 - 4; 
+    // Draw plate outer border
+    canvas.drawCircle(Offset(cx, cy), 55, plateBorderPaint);
+    
+    // Draw plate inner rim border
+    canvas.drawCircle(Offset(cx, cy), 45, Paint()
+      ..color = Colors.black.withValues(alpha: 0.06)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8);
+
+    // Flat bread (roti/chapati) radius
+    // surfaceWidth goes from 13.0 to 75.0.
+    // To ensure the smallest size (4 cm, like a puri) is clearly visible and easy to visualize,
+    // we interpolate its radius between 18.0 (diameter 36) and 50.0 (diameter 100).
+    final r = 18.0 + (surfaceWidth - 13.0) * (32.0 / 62.0);
+
+    // Fill paint for the flat bread
+    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
+    final fillPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          activeColor.withValues(alpha: 0.45),
+          activeColor.withValues(alpha: 0.18),
+        ],
+      ).createShader(rect)
+      ..style = PaintingStyle.fill;
 
     final outlineColor = Color.lerp(const Color(0xFF0F2537), activeDarkColor, animationValue)!;
-    final fillColor = Color.lerp(Colors.white, activeColor.withValues(alpha: 0.2), animationValue)!;
-    final shadowAlpha = 0.4 * animationValue;
-    final strokeWidth = 1.0 + (0.5 * animationValue);
-
     final outlinePaint = Paint()
       ..color = outlineColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
+      ..strokeWidth = 1.8;
 
-    final fillPaint = Paint()
-      ..color = fillColor
+    // Draw the flat bread circle
+    canvas.drawCircle(Offset(cx, cy), r, fillPaint);
+    canvas.drawCircle(Offset(cx, cy), r, outlinePaint);
+
+    // Draw toasted spots/texture for premium look
+    final spotPaint = Paint()
+      ..color = activeDarkColor.withValues(alpha: 0.18)
       ..style = PaintingStyle.fill;
-      
-    final sketchPaint = Paint()
-      ..color = outlineColor.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.6;
 
-    final topY = cy - drawH/2;
-    final bottomY = cy + drawH/2;
-    final rx = drawW/2;
-    final ry = drawH * 0.6; 
+    final darkSpotPaint = Paint()
+      ..color = activeDarkColor.withValues(alpha: 0.32)
+      ..style = PaintingStyle.fill;
 
-    final bodyPath = Path();
-    bodyPath.moveTo(cx - rx, topY);
-    bodyPath.lineTo(cx - rx, bottomY);
-    bodyPath.quadraticBezierTo(cx, bottomY + ry, cx + rx, bottomY);
-    bodyPath.lineTo(cx + rx, topY);
-    bodyPath.quadraticBezierTo(cx, topY - ry, cx - rx, topY);
-    
-    canvas.drawPath(bodyPath, fillPaint);
-    canvas.drawPath(bodyPath, outlinePaint);
-    
-    final topRect = Rect.fromCenter(center: Offset(cx, topY), width: drawW, height: ry * 2);
-    canvas.drawOval(topRect, fillPaint);
-    canvas.drawOval(topRect, outlinePaint);
-    
-    for (int i = 1; i <= 6; i++) {
-      double xOffset = rx * 0.75 * (i/6);
-      
-      double ellipseY = ry * 0.8 * (1 - (xOffset/rx)*(xOffset/rx));
-      
-      canvas.drawLine(
-        Offset(cx + xOffset, topY + ellipseY), 
-        Offset(cx + xOffset, bottomY + ellipseY), 
-        sketchPaint
-      );
-      canvas.drawLine(
-        Offset(cx - xOffset, topY + ellipseY), 
-        Offset(cx - xOffset, bottomY + ellipseY), 
-        sketchPaint
-      );
+    if (r > 12) {
+      // Warm toasted spots at various coordinates
+      canvas.drawCircle(Offset(cx - r * 0.35, cy - r * 0.25), r * 0.14, spotPaint);
+      canvas.drawCircle(Offset(cx + r * 0.42, cy + r * 0.18), r * 0.16, spotPaint);
+      canvas.drawCircle(Offset(cx - r * 0.12, cy + r * 0.48), r * 0.11, spotPaint);
+      canvas.drawCircle(Offset(cx + r * 0.22, cy - r * 0.52), r * 0.13, spotPaint);
+      canvas.drawCircle(Offset(cx + r * 0.05, cy + r * 0.05), r * 0.09, spotPaint);
+
+      // Darker core spots inside the toasted spots
+      canvas.drawCircle(Offset(cx - r * 0.33, cy - r * 0.27), r * 0.05, darkSpotPaint);
+      canvas.drawCircle(Offset(cx + r * 0.40, cy + r * 0.15), r * 0.06, darkSpotPaint);
+      canvas.drawCircle(Offset(cx + r * 0.20, cy - r * 0.50), r * 0.04, darkSpotPaint);
     }
-    
-    canvas.drawLine(Offset(cx - drawW/2 - 15, h - 2), Offset(cx + drawW/2 + 15, h - 2), sketchPaint);
   }
 
   @override
