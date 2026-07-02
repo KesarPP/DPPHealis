@@ -4,8 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/chat_message.dart';
+import '../models/ndpp_constants.dart';
 import '../repositories/chat_repository.dart';
+import '../services/health_sync_service.dart';
+import '../services/activity_metrics_engine.dart';
 import 'chat_history_screen.dart';
 
 const _brandColor = Color(0xFF4A1E63); // Matches the AI button color
@@ -187,11 +193,64 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   // Paste your deployed Vercel URL here (e.g., https://my-dpp-backend.vercel.app/api/chat)
   final String _vercelEndpoint = "https://dpp-ai-backend-kesars-projects-d3331681.vercel.app/api/chat";
 
+  Future<String> _fetchUserContext() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      
+      // 1. Fetch Streak and Activities
+      final healthSync = HealthSyncService();
+      bool hasPermissions = false;
+      try {
+        hasPermissions = await healthSync.hasPermissions();
+      } catch (_) {}
+
+      int currentStreak = 0;
+      int recentActiveMinutes = 0;
+      if (hasPermissions) {
+        final thirtyDaysAgo = now.subtract(const Duration(days: 29));
+        final past30Days = await healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 5), onTimeout: () => []);
+        currentStreak = ActivityMetricsEngine.getCurrentStreak(past30Days);
+        
+        final last7Days = past30Days.length > 7 ? past30Days.sublist(past30Days.length - 7) : past30Days;
+        for (var day in last7Days) {
+          recentActiveMinutes += day.qualifyingActiveMinutes;
+        }
+      }
+
+      // 2. Fetch Food Logged In (Meal Count)
+      int mealLogCount = 0;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        mealLogCount = prefs.getInt('ndpp_cached_meal_log_count_${user.uid}') ?? 0;
+        try {
+          final countQuery = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('food_logs')
+              .count()
+              .get();
+          if ((countQuery.count ?? 0) > mealLogCount) {
+             mealLogCount = countQuery.count!;
+          }
+        } catch (_) {}
+      }
+
+      return "User has a $currentStreak day activity streak. They have tracked $recentActiveMinutes active minutes in the last 7 days. They have logged $mealLogCount meals in total.";
+    } catch (e) {
+      debugPrint("Error fetching user context: $e");
+      return "";
+    }
+  }
+
   Future<String> _getVercelResponse(String query) async {
     // If the Vercel endpoint hasn't been configured yet, fallback to mock response
     if (_vercelEndpoint.contains('your-vercel-app')) {
       return _getMockResponse(query);
     }
+
+    final String userContext = await _fetchUserContext();
+    debugPrint("Sending user context to AI: $userContext");
 
     // Prepare conversation history (exclude the latest user message which is sent as 'message')
     final history = _currentSessionMessages
@@ -212,6 +271,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
           'message': query,
           'history': history,
           'user_id': 'dpp_user', // Optional user identifier for context
+          'user_context': userContext,
         }),
       ).timeout(const Duration(seconds: 20));
 
