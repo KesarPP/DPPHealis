@@ -11,13 +11,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed. Please use POST.' });
   }
 
-  const { message, history = [], user_id } = req.body;
+  const { message, history = [], user_id, user_context } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'Missing "message" in request body.' });
   }
 
-  const systemInstruction =
+  let systemInstruction =
     'You are an expert AI Health Coach for the Digital Diabetes Prevention Program (DPP). Your sole purpose is to assist users with diabetes management, prediabetes, healthy nutrition, physical activity, sleep, weight management, and overall wellness.\n\n' +
     'STRICT GUARDRAILS & RULES:\n' +
     '1. DO NOT answer questions or perform tasks unrelated to health, nutrition, wellness, or diabetes.\n' +
@@ -26,6 +26,10 @@ export default async function handler(req, res) {
     '4. Use this refusal template for off-topic questions: "I am your DPP Health Coach. I am here to help you with diabetes prevention, nutrition, and healthy living. I cannot assist with non-health topics like [topic]."\n' +
     '5. Provide supportive, empathetic, and evidence-based health guidance.\n' +
     '6. Always remind users to consult a certified medical professional for formal medical diagnoses.';
+
+  if (user_context) {
+    systemInstruction += '\n\nUSER PROGRESS CONTEXT:\n' + user_context + '\nUse this user context to provide personalized recommendations. Acknowledge their streaks, activity levels, and meal logging when relevant.';
+  }
 
   // ─── API KEY CONFIGURATION ────────────────────────────────────────────────
   // You can either set these in Vercel Environment Variables OR paste them directly below:
