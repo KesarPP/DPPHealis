@@ -52,11 +52,28 @@ class FoodDiaryNotifier extends ChangeNotifier {
   List<DailyFoodLog> _allLogsList = [];
   String _selectedDate = DateTime.now().toIso8601String().split('T')[0];
 
+  FoodDiaryNotifier() {
+    loadLogForDate(_selectedDate);
+    loadAllLogs();
+  }
+
   DailyFoodLog? get dailyLog => _dailyLog;
   Map<String, bool> get completedDays => _completedDays;
   Map<String, bool> get nutritionNinjaDays => _nutritionNinjaDays;
   List<DailyFoodLog> get allLogsList => _allLogsList;
   String get selectedDate => _selectedDate;
+
+  double get todayCalories {
+    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+    if (_selectedDate == todayStr && _dailyLog != null) {
+      return _dailyLog!.totalCalories;
+    }
+    final todayLog = _allLogsList.where((l) => l.date == todayStr).firstOrNull;
+    if (todayLog != null) {
+      return todayLog.totalCalories;
+    }
+    return 0.0;
+  }
 
   double get calorieGoal {
     if (AppState.idrsScore >= 60) {

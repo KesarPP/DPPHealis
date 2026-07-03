@@ -3,7 +3,6 @@ import 'package:health/health.dart';
 import '../models/ndpp_constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'firestore_activity_log_service.dart';
 
 enum SyncStatus { syncing, success, permissionDenied, healthConnectUnavailable, error }
 
@@ -222,44 +221,24 @@ class HealthSyncService {
       await prefs.setBool('hc_demo_purged_v5', true);
     }
 
-    final now = DateTime.now();
-    final thirtyDaysAgo = now.subtract(const Duration(days: 31));
-    Map<String, int> manualMinsByDate = {};
-    try {
-      final manualLogs = await FirestoreActivityLogService()
-          .getLogsForInterval(thirtyDaysAgo, now.add(const Duration(days: 1)))
-          .timeout(const Duration(seconds: 3));
-      for (var log in manualLogs) {
-        final key = _dateKey(log.createdAt);
-        manualMinsByDate[key] = (manualMinsByDate[key] ?? 0) + log.durationMinutes;
-      }
-    } catch (_) {}
-
     for (int i = 0; i < aggregates.length; i++) {
       final agg = aggregates[i];
       final key = _dateKey(agg.date);
-      final manMins = manualMinsByDate[key] ?? 0;
 
       int steps = agg.totalSteps;
       double dist = agg.totalDistance;
-      double cals = agg.totalCalories;
+      double cals = agg.allSessions.isNotEmpty ? agg.sessionsTotalCalories : agg.totalCalories;
       int act = agg.totalActiveMinutes;
       int qual = agg.qualifyingActiveMinutes;
 
-      if (manMins > 0) {
-        act += manMins;
-        qual += manMins;
-        cals += manMins * 5.8;
-      }
-
-      if (steps > 0 || qual > 0 || act > 0) {
+      if (steps > 0 || qual > 0 || act > 0 || agg.allSessions.isNotEmpty) {
         await prefs.setInt('hc_persist_steps_$key', steps);
         await prefs.setDouble('hc_persist_dist_$key', dist);
         await prefs.setDouble('hc_persist_cals_$key', cals);
         await prefs.setInt('hc_persist_act_mins_$key', act);
         await prefs.setInt('hc_persist_qual_mins_$key', qual);
 
-        if (steps != agg.totalSteps || qual != agg.qualifyingActiveMinutes || manMins > 0) {
+        if (steps != agg.totalSteps || qual != agg.qualifyingActiveMinutes || cals != agg.totalCalories) {
           aggregates[i] = DailyAggregate(
             date: agg.date,
             totalSteps: steps,
@@ -275,23 +254,18 @@ class HealthSyncService {
       } else {
         final pSteps = prefs.getInt('hc_persist_steps_$key');
         final pQual = prefs.getInt('hc_persist_qual_mins_$key');
-        if ((pSteps != null && pSteps > 0) || (pQual != null && pQual > 0) || manMins > 0) {
+        if ((pSteps != null && pSteps > 0) || (pQual != null && pQual > 0)) {
           final rSteps = pSteps ?? 0;
           final rDist = prefs.getDouble('hc_persist_dist_$key') ?? (rSteps * 0.00076);
           final rCals = prefs.getDouble('hc_persist_cals_$key') ?? 0.0;
           int rAct = prefs.getInt('hc_persist_act_mins_$key') ?? 0;
           int rQual = max(pQual ?? 0, rAct);
 
-          if (manMins > 0) {
-            rAct += manMins;
-            rQual += manMins;
-          }
-
           aggregates[i] = DailyAggregate(
             date: agg.date,
             totalSteps: rSteps,
             totalDistance: rDist,
-            totalCalories: rCals + (manMins * 5.8),
+            totalCalories: rCals,
             totalActiveMinutes: rAct,
             qualifyingActiveMinutes: rQual,
             isActiveDay: rQual >= NdppConstants.minQualifyingSessionMinutes || rSteps >= 3000,
@@ -318,6 +292,10 @@ class HealthSyncService {
     final activityType = _mapWorkoutType(workout.workoutActivityType);
     final category = _getCategory(activityType);
 
+    final cals = workout.totalEnergyBurned?.toDouble();
+    final hasCal = cals != null && cals > 0;
+    final readable = _getReadableWorkoutName(workout.workoutActivityType);
+
     return ActivitySession(
       id: point.uuid,
       userId: 'local',
@@ -327,11 +305,34 @@ class HealthSyncService {
       startTime: point.dateFrom,
       endTime: point.dateTo,
       durationMinutes: duration,
-      caloriesBurned: workout.totalEnergyBurned?.toDouble() ?? 0.0,
+      caloriesBurned: cals ?? 0.0,
+      hasCalorieData: hasCal,
+      readableName: readable,
       distanceMeters: workout.totalDistance?.toDouble() ?? 0.0,
       isQualifying: isQualifying,
       date: DateTime(point.dateFrom.toLocal().year, point.dateFrom.toLocal().month, point.dateFrom.toLocal().day),
     );
+  }
+
+  String _getReadableWorkoutName(HealthWorkoutActivityType type) {
+    switch (type) {
+      case HealthWorkoutActivityType.WALKING: return 'Walk';
+      case HealthWorkoutActivityType.RUNNING: return 'Run';
+      case HealthWorkoutActivityType.SWIMMING: return 'Swim';
+      case HealthWorkoutActivityType.BIKING: return 'Cycle';
+      case HealthWorkoutActivityType.YOGA: return 'Yoga';
+      case HealthWorkoutActivityType.PILATES: return 'Pilates';
+      case HealthWorkoutActivityType.STAIR_CLIMBING: return 'Stair Climb';
+      case HealthWorkoutActivityType.DANCING: return 'Dance';
+      case HealthWorkoutActivityType.STRENGTH_TRAINING: return 'Strength Training';
+      case HealthWorkoutActivityType.HIGH_INTENSITY_INTERVAL_TRAINING: return 'HIIT';
+      case HealthWorkoutActivityType.FLEXIBILITY: return 'Stretch';
+      case HealthWorkoutActivityType.GYMNASTICS: return 'Gymnastics';
+      default:
+        final raw = type.name.replaceAll('_', ' ').toLowerCase();
+        if (raw.isEmpty) return 'Workout';
+        return raw[0].toUpperCase() + raw.substring(1);
+    }
   }
 
   ActivityType _mapWorkoutType(HealthWorkoutActivityType type) {

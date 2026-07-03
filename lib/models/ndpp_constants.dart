@@ -64,6 +64,8 @@ class ActivitySession {
   final int steps;
   final double distanceMeters;
   final double caloriesBurned;
+  final bool hasCalorieData;
+  final String readableName;
   final bool isQualifying;
   final DateTime date; // normalized to midnight
 
@@ -79,6 +81,8 @@ class ActivitySession {
     this.steps = 0,
     this.distanceMeters = 0.0,
     this.caloriesBurned = 0.0,
+    this.hasCalorieData = true,
+    this.readableName = 'Workout',
     required this.isQualifying,
     required this.date,
   });
@@ -106,6 +110,23 @@ class DailyAggregate {
     this.coreSessions = const [],
     this.lifestyleSessions = const [],
   });
+
+  List<ActivitySession> get allSessions {
+    final combined = [...coreSessions, ...lifestyleSessions];
+    final seen = <String>{};
+    return combined.where((s) => seen.add(s.id)).toList()
+      ..sort((a, b) => b.startTime.compareTo(a.startTime));
+  }
+
+  double get sessionsTotalCalories {
+    double sum = 0.0;
+    for (var s in allSessions) {
+      if (s.hasCalorieData && s.caloriesBurned > 0) {
+        sum += s.caloriesBurned;
+      }
+    }
+    return sum;
+  }
 
   factory DailyAggregate.empty(DateTime date) {
     return DailyAggregate(

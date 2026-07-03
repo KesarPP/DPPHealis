@@ -22,6 +22,7 @@ import '../widgets/weekly_progress.dart';
 import '../widgets/activity_timeline_widget.dart';
 import '../widgets/motivation_section.dart';
 import '../widgets/activity_feed.dart';
+import '../widgets/activities_logged_widget.dart';
 import '../data/gelato_theme.dart';
 
 enum HealthConnectOnboardingState {
@@ -1450,6 +1451,8 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
       children: [
         const HeroBanner(),
         const SizedBox(height: 16),
+        MotivationSection(pastDays: _sanitizedPastDays),
+        const SizedBox(height: 16),
         GoalJourney(
           currentMinutes: _effectiveWeeklyMinutes,
           goalMinutes: _weeklyTargetMinutes,
@@ -1486,23 +1489,21 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
                 ],
               ),
               const SizedBox(height: 16),
-              OverviewCards(stats: _activityStats),
+              OverviewCards(
+                stats: _activityStats,
+                isConnected: _onboardingState == HealthConnectOnboardingState.connected,
+              ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        ActivityFeed(onActivityLogged: _loadActivityData),
-        const SizedBox(height: 16),
-        ActivityTimelineWidget(
-          logs: _todayLogs,
-          isLoading: _isLoadingLogs,
-          errorMessage: _logsError,
-          onRetry: _loadTodayLogs,
+        ActivitiesLoggedWidget(
+          pastDays: _sanitizedPastDays,
+          isConnected: _onboardingState == HealthConnectOnboardingState.connected,
+          onConnectGoogleFit: () => _checkStateAndProceed(isSilent: false),
         ),
         const SizedBox(height: 16),
         WeeklyProgress(pastDays: _sanitizedPastDays, programWeek: _programWeek),
-        const SizedBox(height: 16),
-        MotivationSection(pastDays: _sanitizedPastDays),
         const SizedBox(height: 16),
       ],
     );

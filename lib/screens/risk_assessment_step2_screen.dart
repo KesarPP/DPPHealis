@@ -355,6 +355,8 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                                 'hasIdrsResult': true,
                                 'currentWeight': widget.weight,
                                 'height': widget.height,
+                                'age': widget.age,
+                                'gender': widget.isMan ? 'male' : 'female',
                                 'lastWeighInDate': FieldValue.serverTimestamp(),
                               }, SetOptions(merge: true));
 
