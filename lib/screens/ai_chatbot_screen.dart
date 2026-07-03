@@ -229,7 +229,8 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
               .doc(user.uid)
               .collection('food_logs')
               .count()
-              .get();
+              .get()
+              .timeout(const Duration(seconds: 3));
           if ((countQuery.count ?? 0) > mealLogCount) {
              mealLogCount = countQuery.count!;
           }
@@ -326,7 +327,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     
     _scrollToBottom();
 
-    await _chatRepository.saveMessage(userMessage);
+    _chatRepository.saveMessage(userMessage);
 
     // Fetch dynamic response from Vercel backend (Groq Primary -> Gemini Fallback)
     final aiResponseText = await _getVercelResponse(text);
@@ -346,7 +347,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       
       _scrollToBottom();
       
-      await _chatRepository.saveMessage(aiMessage);
+      _chatRepository.saveMessage(aiMessage);
 
       if (wasSpoken) {
         debugPrint('Triggering TTS speak for AI response...');
