@@ -105,20 +105,22 @@ class NotificationService {
             continue;
           }
           
-          // Otherwise, schedule it exactly
+          final int daySeed = targetDate.difference(DateTime(2024, 1, 1)).inDays;
+          final int mealIndex = _mealTimes.keys.toList().indexOf(mealType);
+          final int msgIndex = (daySeed * 3 + mealIndex * 2 + i) % 10;
+
           final List<Map<String, String>> messages = [
-            {'title': '🍳 Rise & Dine!', 'body':'Your body is ready for its next dose of energy.Grab a healthy bite.'},
-            {'title': 'Your future self sent a request 📨', 'body': 'Please log that meal before we forget what it was'},
-            {'title': '$mealType? Is Calling 📞', 'body':' Don\'t leave it on read. Your body deserves a proper meal.'},
+            {'title': '$mealType Is Calling 📞', 'body': 'Don\'t leave it on read. Your body deserves a proper meal.'},
+            {'title': 'Your future self sent a request 📨', 'body': 'Please log that meal before we forget what it was.'},
             {'title': 'Time to refuel! ⛽', 'body': 'Did you eat $mealType yet? Log it to stay on track. You got this! 💪'},
-           {'title': '⭐ Achievement unlocked: Responsible Human', 'body': 'Now log in your meal $mealType to maintain the title.'},
+            {'title': '⭐ Achievement unlocked: Responsible Human', 'body': 'Now log your $mealType to maintain the title.'},
             {'title': 'Is it $mealType o\'clock? ⏰', 'body': 'Your stomach might be full, but your food diary is empty! Let\'s fix that. 🍎'},
-           {'title': '🍳 BREAKING: Your stomach filed a complaint', 'body': 'Apparently it hasn\'t been fed yet. Care to settle this dispute?'},
+            {'title': '🍳 BREAKING: Your stomach filed a complaint', 'body': 'Apparently it hasn\'t been fed yet. Care to settle this dispute?'},
             {'title': 'Nom nom nom... 😋', 'body': 'We know you had $mealType. Give us the details! Keep the consistency going! 🔥'},
-           {'title': '🚨 Evidence needed', 'body': 'Did food happen today? Our records are suspiciously empty.'},
+            {'title': '🚨 Evidence needed', 'body': 'Did food happen today? Our records are suspiciously empty.'},
             {'title': 'Fuel for the machine! 🤖', 'body': 'Log your $mealType and show us what you\'re made of today. Let\'s gooo! ✨'},
           ];
-          final msg = messages[id % messages.length];
+          final msg = messages[msgIndex];
 
           await _plugin.zonedSchedule(
             id: id,

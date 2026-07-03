@@ -143,7 +143,7 @@ class _MotivationSectionState extends State<MotivationSection>
           GestureDetector(
             onTapDown: (details) => _spawnParticles(details.localPosition),
             child: Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 borderRadius: GelatoTheme.cardRadius,
                 border: GelatoTheme.cardBorder,
@@ -165,7 +165,7 @@ class _MotivationSectionState extends State<MotivationSection>
                                 child: const Icon(
                                   Icons.local_fire_department_rounded,
                                   color: streakColor,
-                                  size: 26,
+                                  size: 20,
                                 ),
                               ),
                             ),
@@ -174,10 +174,10 @@ class _MotivationSectionState extends State<MotivationSection>
                               child: Text(
                                 'Consistency Streak',
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w900,
                                   color: GelatoTheme.textDark,
-                                  letterSpacing: 0.5,
+                                  letterSpacing: 0.3,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -186,7 +186,7 @@ class _MotivationSectionState extends State<MotivationSection>
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: GelatoTheme.green,
                           borderRadius: BorderRadius.circular(12),
@@ -207,7 +207,7 @@ class _MotivationSectionState extends State<MotivationSection>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Stack(
@@ -215,7 +215,7 @@ class _MotivationSectionState extends State<MotivationSection>
                           Text(
                             '$_streak',
                             style: TextStyle(
-                              fontSize: 40,
+                              fontSize: 28,
                               fontWeight: FontWeight.w900,
                               height: 1,
                               foreground: Paint()
@@ -233,7 +233,7 @@ class _MotivationSectionState extends State<MotivationSection>
                             child: Text(
                               '$_streak',
                               style: const TextStyle(
-                                fontSize: 40,
+                                fontSize: 28,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 height: 1,
@@ -250,7 +250,7 @@ class _MotivationSectionState extends State<MotivationSection>
                             Text(
                               'Days Active',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w900,
                                 color: GelatoTheme.textDark,
                               ),
@@ -258,7 +258,7 @@ class _MotivationSectionState extends State<MotivationSection>
                             Text(
                               "You're on fire! Keep logging your progress.",
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10.5,
                                 color: GelatoTheme.textLight,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -268,7 +268,7 @@ class _MotivationSectionState extends State<MotivationSection>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   // Day indicators
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -278,8 +278,8 @@ class _MotivationSectionState extends State<MotivationSection>
                         children: [
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            width: 32,
-                            height: 32,
+                            width: 26,
+                            height: 26,
                             decoration: active
                                 ? BoxDecoration(
                                     shape: BoxShape.circle,
@@ -291,7 +291,7 @@ class _MotivationSectionState extends State<MotivationSection>
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(0xFFEA580C).withValues(alpha: 0.4),
-                                        blurRadius: 8,
+                                        blurRadius: 6,
                                         spreadRadius: 1,
                                       )
                                     ],
@@ -309,16 +309,16 @@ class _MotivationSectionState extends State<MotivationSection>
                                 active
                                     ? Icons.local_fire_department_rounded
                                     : Icons.radio_button_unchecked_rounded,
-                                size: active ? 16 : 12,
+                                size: active ? 14 : 11,
                                 color: active ? Colors.white : GelatoTheme.textMuted,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
                             entry.value,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9.5,
                               color: active ? GelatoTheme.orangeBright : GelatoTheme.textLight,
                               fontWeight: active ? FontWeight.w900 : FontWeight.w600,
                             ),
@@ -327,7 +327,7 @@ class _MotivationSectionState extends State<MotivationSection>
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 6),
                   // Bottom Reward Info
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),

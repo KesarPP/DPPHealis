@@ -59,8 +59,6 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
                   const SizedBox(height: 24),
                   _buildMealCards(context),
                   const SizedBox(height: 32),
-                  _buildAchievementBox(context),
-                  const SizedBox(height: 32),
                 ],
               ),
             ),

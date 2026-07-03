@@ -148,9 +148,9 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF7F4FB), // Gelato Days soft pastel purple
         borderRadius: GelatoTheme.cardRadius,
         border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
@@ -169,14 +169,14 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: const BoxDecoration(
                       color: GelatoTheme.pink,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.track_changes_rounded, color: GelatoTheme.pinkDark, size: 22),
+                    child: const Icon(Icons.track_changes_rounded, color: GelatoTheme.pinkDark, size: 18),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +199,7 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                           child: Text(
                             "Small steps, big transformation",
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: GelatoTheme.textLight,
                             ),
@@ -227,11 +227,11 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                       ),
                       const SizedBox(width: 8),
                       SizedBox(
-                        width: 22,
-                        height: 22,
+                        width: 20,
+                        height: 20,
                         child: CircularProgressIndicator(
                           value: currentRatio,
-                          strokeWidth: 3.5,
+                          strokeWidth: 3.2,
                           backgroundColor: GelatoTheme.green.withValues(alpha: 0.3),
                           color: GelatoTheme.greenBright,
                         ),
@@ -240,11 +240,11 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 6),
 
               // Horizontal Timeline
               SizedBox(
-                height: 145, // Reduced height for compact layout
+                height: 110, // Increased height to prevent bottom overflow
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final screenWidth = constraints.maxWidth;
@@ -267,7 +267,7 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                           children: [
                             // Dashed line background
                             Positioned(
-                              top: 32, // Centered on the 64x64 stack circle
+                              top: 23, // Centered on the 46x46 stack circle
                               left: itemWidth / 2,
                               right: itemWidth / 2,
                               child: CustomPaint(
@@ -308,16 +308,16 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                                       children: [
                                         // Node Stack
                                         SizedBox(
-                                          width: 64, // Reduced size
-                                          height: 64,
+                                          width: 46, // Reduced size
+                                          height: 46,
                                           child: Stack(
                                             alignment: Alignment.center,
                                             children: [
                                               // Smooth circular glow background
                                               if (isItemDone)
                                                 Container(
-                                                  width: 64,
-                                                  height: 64,
+                                                  width: 46,
+                                                  height: 46,
                                                   decoration: BoxDecoration(
                                                     shape: BoxShape.circle,
                                                     gradient: RadialGradient(
@@ -330,8 +330,8 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                                                 ),
                                               if (!it.done)
                                                 Container(
-                                                  width: 52 + (12 * pulseValue),
-                                                  height: 52 + (12 * pulseValue),
+                                                  width: 38 + (8 * pulseValue),
+                                                  height: 38 + (8 * pulseValue),
                                                   decoration: BoxDecoration(
                                                     shape: BoxShape.circle,
                                                     gradient: RadialGradient(
@@ -346,17 +346,17 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                                               Transform.scale(
                                                 scale: isItemDone ? introScale : 1.0,
                                                 child: Container(
-                                                  width: 46,
-                                                  height: 46,
+                                                  width: 34,
+                                                  height: 34,
                                                   decoration: BoxDecoration(
                                                     color: Colors.white,
                                                     shape: BoxShape.circle,
                                                     border: Border.all(
                                                       color: mainColor,
-                                                      width: 2.5,
+                                                      width: 2.2,
                                                     ),
                                                   ),
-                                                  child: Icon(it.mainIcon, color: mainColor, size: 22),
+                                                  child: Icon(it.mainIcon, color: mainColor, size: 17),
                                                 ),
                                               ),
                                               // Top right checkmark badge
@@ -380,7 +380,7 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 6),
+                                        const SizedBox(height: 4),
                                         // Text
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
@@ -388,57 +388,57 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                                             it.text,
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(
-                                              fontSize: 10,
-                                              height: 1.2,
+                                              fontSize: 9.5,
+                                              height: 1.15,
                                               fontWeight: FontWeight.w800,
                                               color: GelatoTheme.textDark,
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 3),
                                         // Time Pill
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                                             decoration: BoxDecoration(
                                               color: lightBg,
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius: BorderRadius.circular(10),
                                             ),
                                             child: Text(
                                               it.timeText,
                                               style: TextStyle(
-                                                fontSize: 9,
+                                                fontSize: 8.5,
                                                 fontWeight: FontWeight.w700,
                                                 color: darkText,
                                               ),
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 3),
+                                        const SizedBox(height: 2),
                                         // Status Pill
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                                             decoration: BoxDecoration(
                                               color: lightBg,
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius: BorderRadius.circular(10),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 if (it.statusEmoji != null) ...[
-                                                  Text(it.statusEmoji!, style: const TextStyle(fontSize: 10)),
-                                                  const SizedBox(width: 4),
+                                                  Text(it.statusEmoji!, style: const TextStyle(fontSize: 9.5)),
+                                                  const SizedBox(width: 3),
                                                 ] else if (it.statusIcon != null) ...[
-                                                  Icon(it.statusIcon, size: 10, color: darkText),
-                                                  const SizedBox(width: 4),
+                                                  Icon(it.statusIcon, size: 9.5, color: darkText),
+                                                  const SizedBox(width: 3),
                                                 ],
                                                 Text(
                                                   it.statusText,
                                                   style: TextStyle(
-                                                    fontSize: 9,
+                                                    fontSize: 8.5,
                                                     fontWeight: FontWeight.w800,
                                                     color: darkText,
                                                   ),
@@ -461,11 +461,11 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
               // Banner
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 decoration: BoxDecoration(
                   color: GelatoTheme.pink,
                   borderRadius: BorderRadius.circular(16),

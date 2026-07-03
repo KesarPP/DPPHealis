@@ -156,14 +156,14 @@ class _GoalJourneyState extends State<GoalJourney>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: const Color(0xFFFDF8EE), 
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFD6C6B5), width: 8),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFD6C6B5), width: 3),
         boxShadow: GelatoTheme.cardShadow,
       ),
       child: CustomPaint(
         painter: _DashedBorderPainter(),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -174,22 +174,22 @@ class _GoalJourneyState extends State<GoalJourney>
                     child: Row(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: const Color(0xFFDBEAFE),
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
+                            border: Border.all(color: const Color(0xFFBFDBFE), width: 1.5),
                           ),
                           child: const Center(
                             child: Icon(
                               Icons.directions_run_rounded,
                               color: Color(0xFF2563EB),
-                              size: 28,
+                              size: 20,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,19 +197,19 @@ class _GoalJourneyState extends State<GoalJourney>
                               Text(
                                 'Journey to Your Goal',
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF1E293B),
-                                  letterSpacing: -0.5,
+                                  letterSpacing: -0.3,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: 2),
+                              SizedBox(height: 1),
                               Text(
                                 "Weekly Active Minutes Path",
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 11.5,
                                   color: Color(0xFFD97706), 
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -224,7 +224,7 @@ class _GoalJourneyState extends State<GoalJourney>
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
 
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -238,7 +238,7 @@ class _GoalJourneyState extends State<GoalJourney>
                         animation: Listenable.merge([_progressAnim, _glowAnim, _rotationController]),
                         builder: (context, _) {
                           return SizedBox(
-                            height: 185,
+                            height: 145,
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [

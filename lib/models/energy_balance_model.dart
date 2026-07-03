@@ -4,6 +4,7 @@ class EnergyBalanceModel {
   final double? calorieNeed; // null if profile incomplete
   final double calorieGained;
   final double caloriesToBurn;
+  final double caloriesBurned;
   final int activityMinutes;
   final bool isProfileComplete;
 
@@ -11,6 +12,7 @@ class EnergyBalanceModel {
     required this.calorieNeed,
     required this.calorieGained,
     required this.caloriesToBurn,
+    this.caloriesBurned = 0.0,
     required this.activityMinutes,
     required this.isProfileComplete,
   });
@@ -21,6 +23,7 @@ class EnergyBalanceModel {
     required int? age,
     required String? gender,
     required double calorieGained,
+    double caloriesBurned = 0.0,
     double kcalBurnRatePerMinute = defaultKcalBurnRatePerMin,
   }) {
     // Default age if missing from older assessment versions
@@ -32,6 +35,7 @@ class EnergyBalanceModel {
         calorieNeed: null,
         calorieGained: calorieGained,
         caloriesToBurn: 0.0,
+        caloriesBurned: caloriesBurned,
         activityMinutes: 0,
         isProfileComplete: false,
       );
@@ -64,6 +68,7 @@ class EnergyBalanceModel {
       calorieNeed: computedCalorieNeed,
       calorieGained: calorieGained,
       caloriesToBurn: caloriesToBurn,
+      caloriesBurned: caloriesBurned,
       activityMinutes: activityMinutes,
       isProfileComplete: true,
     );

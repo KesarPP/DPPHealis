@@ -1405,7 +1405,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
       return Column(
         key: const ValueKey('init_loading'),
         children: [
-          const HeroBanner(),
+          // const HeroBanner(), // Stashed for now
           const SizedBox(height: 16),
           _buildState5Card(),
         ],
@@ -1437,7 +1437,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
       return Column(
         key: ValueKey(_onboardingState.name),
         children: [
-          const HeroBanner(),
+          // const HeroBanner(), // Stashed for now
           const SizedBox(height: 16),
           card,
           const SizedBox(height: 16),
@@ -1445,27 +1445,28 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
       );
     }
 
-    // STATE 6: CONNECTED - REVEAL UNTOUCHED APPROVED DASHBOARD
+    // STATE 6: CONNECTED - REVEAL DASHBOARD IN REQUESTED ORDER
     return Column(
       key: const ValueKey('connected_dashboard'),
       children: [
-        const HeroBanner(),
-        const SizedBox(height: 16),
-        MotivationSection(pastDays: _sanitizedPastDays),
-        const SizedBox(height: 16),
-        GoalJourney(
-          currentMinutes: _effectiveWeeklyMinutes,
-          goalMinutes: _weeklyTargetMinutes,
-        ),
-        const SizedBox(height: 16),
+        // const HeroBanner(), // Stashed for now
+        const SizedBox(height: 14),
+        // 1. Today's Activity Score
         TodayActivityScore(
           score: _effectiveDailyScore,
           feedbackText: _dailyScoreFeedback,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+        // 2. Journey to Your Goal
+        GoalJourney(
+          currentMinutes: _effectiveWeeklyMinutes,
+          goalMinutes: _weeklyTargetMinutes,
+        ),
+        const SizedBox(height: 14),
+        // 3. Today's Overview
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: GelatoTheme.cardRadius,
@@ -1488,7 +1489,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               OverviewCards(
                 stats: _activityStats,
                 isConnected: _onboardingState == HealthConnectOnboardingState.connected,
@@ -1496,15 +1497,20 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+        // 4. Streak
+        MotivationSection(pastDays: _sanitizedPastDays),
+        const SizedBox(height: 14),
+        // 5. Activities Logged In
         ActivitiesLoggedWidget(
           pastDays: _sanitizedPastDays,
           isConnected: _onboardingState == HealthConnectOnboardingState.connected,
           onConnectGoogleFit: () => _checkStateAndProceed(isSilent: false),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+        // 6. Weekly Progress
         WeeklyProgress(pastDays: _sanitizedPastDays, programWeek: _programWeek),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
       ],
     );
   }

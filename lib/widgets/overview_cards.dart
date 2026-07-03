@@ -231,10 +231,10 @@ class _MetricCardState extends State<_MetricCard>
         scale: _pressed ? 0.96 : 1.0,
         duration: const Duration(milliseconds: 100),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: widget.color,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: GelatoTheme.cardBorder,
             boxShadow: GelatoTheme.cardShadow,
           ),
@@ -254,7 +254,7 @@ class _MetricCardState extends State<_MetricCard>
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.55),
                         shape: BoxShape.circle,
@@ -263,7 +263,7 @@ class _MetricCardState extends State<_MetricCard>
                       child: Icon(
                         widget.icon,
                         color: widget.darkColor,
-                        size: 20,
+                        size: 16,
                       ),
                     ),
                   ),
@@ -274,7 +274,7 @@ class _MetricCardState extends State<_MetricCard>
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               // Value & Unit
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -282,7 +282,7 @@ class _MetricCardState extends State<_MetricCard>
                   Text(
                     widget.value,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.w900,
                       color: GelatoTheme.textDark,
                       height: 1,
@@ -295,7 +295,7 @@ class _MetricCardState extends State<_MetricCard>
                       child: Text(
                         widget.unit,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w700,
                           color: widget.darkColor,
                         ),
@@ -304,17 +304,17 @@ class _MetricCardState extends State<_MetricCard>
                   ],
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               // Label
               Text(
                 widget.label,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: GelatoTheme.textLight,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               // Progress indicator & subtitle
               AnimatedBuilder(
                 animation: widget.progressAnim,
@@ -326,20 +326,22 @@ class _MetricCardState extends State<_MetricCard>
                         borderRadius: BorderRadius.circular(3),
                         child: LinearProgressIndicator(
                           value: widget.progress * widget.progressAnim.value,
-                          minHeight: 5,
+                          minHeight: 4.5,
                           backgroundColor: Colors.white.withValues(alpha: 0.45),
                           valueColor: AlwaysStoppedAnimation(widget.darkColor),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        widget.subtext,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: widget.darkColor,
-                          fontWeight: FontWeight.w700,
+                      if (widget.subtext.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.subtext,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            color: widget.darkColor,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   );
                 },

@@ -223,7 +223,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: GelatoTheme.cardRadius,
@@ -240,13 +240,13 @@ class _WeeklyProgressState extends State<WeeklyProgress>
         children: [
           const Row(
             children: [
-              Icon(Icons.bar_chart_rounded, color: GelatoTheme.purpleDark, size: 20),
+              Icon(Icons.bar_chart_rounded, color: GelatoTheme.purpleDark, size: 18),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Weekly Progress',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: GelatoTheme.textDark,
                   ),
@@ -256,7 +256,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           
           // Tab bar
           SingleChildScrollView(
@@ -278,14 +278,14 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                   onTap: () => _switchTab(e.key),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
                       color: selected ? activeBg : const Color(0xFFFAF8FA),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: selected ? Colors.black : const Color(0xFFEFEAEA),
-                        width: selected ? 2.0 : 1.2,
+                        width: selected ? 1.5 : 1.0,
                       ),
                       boxShadow: selected ? [
                         BoxShadow(
@@ -298,7 +298,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                     child: Text(
                       e.value,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         color: selected ? activeText : GelatoTheme.textLight,
                       ),
@@ -308,7 +308,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               }).toList(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
           // NDPP Weekly Goal Block
           Container(
@@ -417,7 +417,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
           // Chart Area with Tooltips and Gridlines
           if (currentData.every((val) => val == 0))

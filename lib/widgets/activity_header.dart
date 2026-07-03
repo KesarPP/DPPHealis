@@ -55,73 +55,78 @@ class _ActivityHeaderState extends State<ActivityHeader> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Activity & Fitness',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: GelatoTheme.textDark,
-                        letterSpacing: -0.5,
-                        height: 1.1,
+          // Left Half (50% space): Title & Subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Activity &\nFitness',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: GelatoTheme.textDark,
+                    letterSpacing: -0.5,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Every step brings you closer to your goal!',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: GelatoTheme.textLight,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11.5,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Every step brings you closer to a healthier you!',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: GelatoTheme.textLight,
-                          ),
-                    ),
-                  ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: widget.isConnected ? GelatoTheme.green : GelatoTheme.orange,
-                        shape: BoxShape.circle,
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: widget.isConnected ? GelatoTheme.green : GelatoTheme.orange,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _getSyncText(),
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: GelatoTheme.textMuted),
-                    ),
-                  ],
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          _getSyncText(),
+                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: GelatoTheme.textMuted),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 18),
-          // Repositioned Top Middle Prominent Sync Button with Pointing Animation
-          Center(
-            child: _PointingSyncButton(
-              onSyncTap: _onSyncTap,
-              syncController: _syncController,
+          const SizedBox(width: 12),
+          // Right Half (50% space): Sync Now Button & Pointer below it aligned with subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _PointingSyncButton(
+                  onSyncTap: _onSyncTap,
+                  syncController: _syncController,
+                ),
+              ],
             ),
           ),
         ],
@@ -142,7 +147,7 @@ class _PointingSyncButton extends StatefulWidget {
 
 class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTickerProviderStateMixin {
   late AnimationController _pointerAnim;
-  bool _showPointer = true;
+  final bool _showPointer = true;
 
   @override
   void initState() {
@@ -151,8 +156,6 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
       vsync: this,
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
-
-    // Pointer tab kept visible to guide users on updating activity data
   }
 
   @override
@@ -164,47 +167,19 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (_showPointer) ...[
-          AnimatedBuilder(
-            animation: _pointerAnim,
-            builder: (ctx, child) => Transform.translate(
-              offset: Offset(0, 6 * _pointerAnim.value),
-              child: child,
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: GelatoTheme.pink,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black, width: 1.5),
-                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Update your progress', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w900)),
-                  SizedBox(width: 6),
-                  Icon(Icons.arrow_downward_rounded, color: Colors.black, size: 18),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
         Container(
-          height: 54,
+          height: 44,
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(27),
-            border: Border.all(color: Colors.black, width: 2.5),
+            borderRadius: BorderRadius.circular(12), // Square shaped
+            border: Border.all(color: Colors.black, width: 1.8),
             boxShadow: [
-              BoxShadow(color: const Color(0xFF0F172A).withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6)),
+              BoxShadow(color: GelatoTheme.orangeDark.withValues(alpha: 0.25), blurRadius: 6, offset: const Offset(0, 3)),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(10.2),
             child: Stack(
               children: [
                 Positioned.fill(
@@ -214,11 +189,10 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF3B82F6), // Royal blue shine highlight
-                          Color(0xFF1E3A8A), // Deep navy blue
-                          Color(0xFF0F172A), // Dark navy slate
+                          Color(0xFFFFE0B2), // Soft light orange highlight
+                          Color(0xFFFFDAB4), // Gelato Days light orange
+                          Color(0xFFFFB74D), // Warm golden orange
                         ],
-                        stops: [0.0, 0.45, 1.0],
                       ),
                     ),
                   ),
@@ -227,11 +201,11 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: 24,
+                  height: 18,
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.white.withValues(alpha: 0.22), Colors.transparent],
+                        colors: [Colors.white.withValues(alpha: 0.35), Colors.transparent],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -243,20 +217,23 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(horizontal: 26),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.2)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       RotationTransition(
                         turns: widget.syncController,
-                        child: const Icon(Icons.sync_rounded, color: Colors.white, size: 24),
+                        child: const Icon(Icons.sync_rounded, color: Color(0xFF7C2D12), size: 18),
                       ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Sync Activity Now',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.3),
+                      const SizedBox(width: 6),
+                      const Flexible(
+                        child: Text(
+                          'Sync Now',
+                          style: TextStyle(color: Color(0xFF7C2D12), fontSize: 13.5, fontWeight: FontWeight.w900, letterSpacing: 0.2),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -265,6 +242,40 @@ class _PointingSyncButtonState extends State<_PointingSyncButton> with SingleTic
             ),
           ),
         ),
+        if (_showPointer) ...[
+          const SizedBox(height: 8),
+          AnimatedBuilder(
+            animation: _pointerAnim,
+            builder: (ctx, child) => Transform.translate(
+              offset: Offset(0, -4 * _pointerAnim.value),
+              child: child,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: GelatoTheme.pink,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black, width: 1.5),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.arrow_upward_rounded, color: Colors.black, size: 14),
+                  SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'Update progress',
+                      style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w900),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

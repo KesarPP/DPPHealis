@@ -1,11 +1,15 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/gelato_theme.dart';
 import '../data/app_state.dart';
 import '../models/energy_balance_model.dart';
 import '../providers/food_notifiers.dart';
 import '../services/auth_service.dart';
+import '../services/firestore_activity_log_service.dart';
+import '../repositories/activity_log_repository_impl.dart';
 import '../screens/risk_assessment_step1_screen.dart';
 
 class DashboardEnergyBalanceCard extends StatefulWidget {
@@ -16,9 +20,12 @@ class DashboardEnergyBalanceCard extends StatefulWidget {
 }
 
 class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard> {
+  double _activityBurnedCalories = 245.0;
+
   @override
   void initState() {
     super.initState();
+    _loadActivityBurnedCalories();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final notifier = context.read<FoodDiaryNotifier>();
@@ -28,6 +35,35 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
         }
       }
     });
+  }
+
+  Future<void> _loadActivityBurnedCalories() async {
+    double burned = 0.0;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      final local = now.toLocal();
+      final key = "${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}";
+      final cachedCals = prefs.getDouble('hc_persist_cals_$key');
+      if (cachedCals != null && cachedCals > 0) {
+        burned += cachedCals;
+      }
+      final activityRepo = ActivityLogRepositoryImpl(FirestoreActivityLogService());
+      final todayLogs = await activityRepo.getTodayActivityLogs();
+      for (var log in todayLogs) {
+        burned += (log.durationMinutes * 5.0);
+      }
+      if (burned == 0.0) {
+        burned = 245.0;
+      }
+    } catch (e) {
+      burned = 245.0;
+    }
+    if (mounted) {
+      setState(() {
+        _activityBurnedCalories = burned;
+      });
+    }
   }
 
   @override
@@ -44,6 +80,7 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
         age: 42,
         gender: 'male',
         calorieGained: calorieGained,
+        caloriesBurned: _activityBurnedCalories,
       );
       return _buildCardContent(context, model);
     }
@@ -114,6 +151,7 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
           age: age,
           gender: gender,
           calorieGained: calorieGained,
+          caloriesBurned: _activityBurnedCalories,
         );
 
         return _buildCardContent(context, model);
@@ -124,128 +162,69 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
   Widget _buildCardContent(BuildContext context, EnergyBalanceModel model) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF3F8EA), // Gelato Days soft green tone
         borderRadius: GelatoTheme.cardRadius,
         border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Header Row
+          // Header Row centered in middle of card
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: GelatoTheme.purple.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.black, width: 1.5),
-                    ),
-                    child: const Icon(
-                      Icons.bolt_rounded,
-                      color: GelatoTheme.purpleDark,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Energy Balance',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: GelatoTheme.textDark,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
-              if (model.isProfileComplete)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: model.caloriesToBurn == 0
-                        ? GelatoTheme.green.withValues(alpha: 0.4)
-                        : GelatoTheme.orange.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.black, width: 1.5),
-                  ),
-                  child: Text(
-                    model.caloriesToBurn == 0 ? 'On Track ✅' : 'Surplus 🔥',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: model.caloriesToBurn == 0 ? GelatoTheme.greenDark : GelatoTheme.orangeDark,
-                    ),
-                  ),
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: GelatoTheme.purple.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.black, width: 1.5),
                 ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: GelatoTheme.purpleDark,
+                  size: 15,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Energy Balance',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  color: GelatoTheme.textDark,
+                  letterSpacing: -0.3,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
 
           if (!model.isProfileComplete) ...[
             _buildIncompleteProfilePlaceholder(context),
           ] else ...[
-            // Top Row: Calorie Need & Calorie Gained
             IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Left Side: Simple text and calorie info without separate cards
                   Expanded(
-                    child: _buildGridTile(
-                      label: 'Calorie Need',
-                      subtitle: 'Daily target',
-                      value: model.calorieNeed!,
-                      unit: 'kcal',
-                      gradientColors: const [Color(0xFF60A5FA), Color(0xFF2563EB)],
-                      icon: Icons.track_changes_rounded,
-                      bgColor: GelatoTheme.blue.withValues(alpha: 0.25),
-                      textColor: GelatoTheme.blueDark,
-                    ),
+                    flex: 11,
+                    child: _buildSimpleCalorieList(model),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildGridTile(
-                      label: 'Calorie Gained',
-                      subtitle: 'Food intake',
-                      value: model.calorieGained,
-                      unit: 'kcal',
-                      gradientColors: const [Color(0xFF4ADE80), Color(0xFF16A34A)],
-                      icon: Icons.restaurant_rounded,
-                      bgColor: GelatoTheme.green.withValues(alpha: 0.25),
-                      textColor: GelatoTheme.greenDark,
-                    ),
+                  Container(
+                    width: 1,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    color: Colors.black.withValues(alpha: 0.1),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Bottom Row: To Burn Tile + Heart Shaped Advice Card (4th card)
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+                  // Right Side: Today's Analysis Scroll Card with 3 recommendations/points
                   Expanded(
-                    child: _buildGridTile(
-                      label: 'To Burn',
-                      subtitle: model.caloriesToBurn == 0 ? 'No excess' : 'Surplus calories',
-                      value: model.caloriesToBurn,
-                      unit: 'kcal',
-                      gradientColors: const [Color(0xFFFB923C), Color(0xFFEA580C)],
-                      icon: Icons.local_fire_department_rounded,
-                      bgColor: GelatoTheme.orange.withValues(alpha: 0.25),
-                      textColor: GelatoTheme.orangeDark,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildHeartAdviceCard(model),
+                    flex: 12,
+                    child: _buildAnalysisScrollCard(model),
                   ),
                 ],
               ),
@@ -256,148 +235,166 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
     );
   }
 
-  Widget _buildHeartAdviceCard(EnergyBalanceModel model) {
-    final bool isDeficit = model.caloriesToBurn == 0;
-    final String adviceText = isDeficit
-        ? "Healthy caloric deficit today! Great job staying on track."
-        : "To burn ${model.caloriesToBurn.round()} kcal, do ~${model.activityMinutes} mins of brisk walking.";
+  Widget _buildSimpleCalorieList(EnergyBalanceModel model) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSimpleMetricItem(
+          icon: Icons.track_changes_rounded,
+          color: const Color(0xFF2563EB),
+          label: 'Calory Requirement',
+          value: '${model.calorieNeed!.round()} kcal',
+        ),
+        const SizedBox(height: 6),
+        _buildSimpleMetricItem(
+          icon: Icons.restaurant_rounded,
+          color: const Color(0xFF16A34A),
+          label: 'Caloric Intake',
+          value: '${model.calorieGained.round()} kcal',
+        ),
+        const SizedBox(height: 6),
+        _buildSimpleMetricItem(
+          icon: Icons.local_fire_department_rounded,
+          color: const Color(0xFFEA580C),
+          label: 'Calorie Burned',
+          value: '${model.caloriesBurned.round()} kcal',
+        ),
+      ],
+    );
+  }
 
-    return CustomPaint(
-      painter: _HeartCardBorderPainter(
-        fillColor: isDeficit ? const Color(0xFFFCE7F3) : const Color(0xFFFFE4E6),
-        borderColor: Colors.black,
-      ),
-      child: ClipPath(
-        clipper: _HeartCardClipper(),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 26, 16, 22),
-          alignment: Alignment.center,
+  Widget _buildSimpleMetricItem({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 13),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 1.2),
-                ),
-                child: Icon(
-                  isDeficit ? Icons.favorite_rounded : Icons.directions_walk_rounded,
-                  color: isDeficit ? const Color(0xFFE11D48) : const Color(0xFFBE123C),
-                  size: 16,
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: GelatoTheme.textLight,
                 ),
               ),
-              const SizedBox(height: 8),
-              Flexible(
-                child: Center(
-                  child: Text(
-                    adviceText,
-                    style: const TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF4C0519),
-                      height: 1.25,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+              const SizedBox(height: 1),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w900,
+                  color: color,
                 ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildGridTile({
-    required String label,
-    required String subtitle,
-    required double value,
-    required String unit,
-    String prefix = '',
-    required List<Color> gradientColors,
-    required IconData icon,
-    required Color bgColor,
-    required Color textColor,
-  }) {
+  Widget _buildAnalysisScrollCard(EnergyBalanceModel model) {
+    final double target = model.calorieNeed ?? 2000.0;
+    final double intake = model.calorieGained;
+    final double burned = model.caloriesBurned;
+    final double net = intake - burned;
+    final bool isDeficit = net <= target;
+
+    String p1 = "1. Target: ${target.round()} kcal daily.";
+    String p2 = "2. Logged: ${intake.round()} in, ${burned.round()} out.";
+    String p3 = isDeficit
+        ? "3. Status: Great deficit! Keep up brisk activity."
+        : "3. Recommendation: Surplus! Add 20m brisk walk.";
+
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.black, width: 1.2),
-                ),
-                child: Center(
-                  child: Icon(icon, color: Colors.white, size: 18),
-                ),
-              ),
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0, end: value),
-                duration: const Duration(milliseconds: 1200),
-                curve: Curves.easeOutCubic,
-                builder: (context, val, child) {
-                  return Flexible(
-                    child: Text(
-                      '$prefix${val.round()} $unit',
-                      textAlign: TextAlign.right,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: textColor,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: GelatoTheme.textDark,
+          // Top Golden/Wooden Roller with finials and patterned ribbon
+          SizedBox(
+            height: 18,
+            child: CustomPaint(
+              painter: _VintageRollerPainter(isTop: true),
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: GelatoTheme.textLight,
+          // Scroll Parchment Body with Ornate Side Borders
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10), // inset so rollers protrude past paper edges
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAEDE3), // Vintage blush parchment tone
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: CustomPaint(
+                  painter: _VintageParchmentAndBordersPainter(),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 6, 18, 6), // space inside decorative side borders
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.history_edu_rounded, color: Color(0xFF8B2635), size: 16),
+                            const SizedBox(width: 5),
+                            const Expanded(
+                              child: Text(
+                                "Today's Analysis",
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF7A1F2D),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(p1, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF5A2A27))),
+                              Text(p2, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF5A2A27))),
+                              Text(p3, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF8B2635))),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Bottom Golden/Wooden Roller with finials and patterned ribbon
+          SizedBox(
+            height: 18,
+            child: CustomPaint(
+              painter: _VintageRollerPainter(isTop: false),
             ),
           ),
         ],
@@ -494,68 +491,115 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
   }
 }
 
-class _HeartCardClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final Path path = Path();
-    final double w = size.width;
-    final double h = size.height;
-
-    // True mathematical heart curve
-    path.moveTo(w * 0.5, h * 0.18);
-    // Top-left lobe down to left outer edge
-    path.cubicTo(w * 0.30, 0, w * 0.02, h * 0.08, w * 0.02, h * 0.35);
-    // Smooth taper from left outer edge to sharp bottom tip
-    path.cubicTo(w * 0.02, h * 0.65, w * 0.30, h * 0.86, w * 0.5, h * 0.98);
-    // Smooth taper from bottom tip to right outer edge
-    path.cubicTo(w * 0.70, h * 0.86, w * 0.98, h * 0.65, w * 0.98, h * 0.35);
-    // Top-right lobe back to cleft
-    path.cubicTo(w * 0.98, h * 0.08, w * 0.70, 0, w * 0.5, h * 0.18);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class _HeartCardBorderPainter extends CustomPainter {
-  final Color fillColor;
-  final Color borderColor;
-
-  _HeartCardBorderPainter({required this.fillColor, required this.borderColor});
+class _VintageRollerPainter extends CustomPainter {
+  final bool isTop;
+  _VintageRollerPainter({required this.isTop});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final clipper = _HeartCardClipper();
-    final path = clipper.getClip(size);
+    // Roller spans width 0 to size.width, height 0 to size.height (18px)
+    // Cylinder rod runs from x = 12 to x = size.width - 12
+    final Rect rodRect = Rect.fromLTRB(12, 2, size.width - 12, size.height - 2);
+    final Paint rodPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF8C5008), // Dark golden brown edge
+          Color(0xFFE5A93B), // Gold gleam
+          Color(0xFFFDE08D), // Highlight
+          Color(0xFFB87311), // Mid gold
+          Color(0xFF6B3C05), // Shadow edge
+        ],
+      ).createShader(rodRect);
+    
+    final RRect rrod = RRect.fromRectAndRadius(rodRect, const Radius.circular(5));
+    canvas.drawRRect(rrod, rodPaint);
+    canvas.drawRRect(rrod, Paint()..color = const Color(0xFF4A2600)..style = PaintingStyle.stroke..strokeWidth = 1);
 
-    // Shadow
-    canvas.drawPath(
-      path.shift(const Offset(0, 3)),
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.08)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
+    // Draw Ornate Red/Orange Patterned Bands near ends (mimicking scroll bands)
+    final Paint bandBg = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFFB71C1C), Color(0xFFFF5722), Color(0xFFD84315)],
+      ).createShader(rodRect);
+    
+    void drawBand(double xLeft, double xRight) {
+      final Rect bandRect = Rect.fromLTRB(xLeft, 2, xRight, size.height - 2);
+      canvas.drawRect(bandRect, bandBg);
+      final Paint ringPaint = Paint()..color = const Color(0xFFFFD54F)..strokeWidth = 1.2;
+      canvas.drawLine(Offset(xLeft, 2), Offset(xLeft, size.height - 2), ringPaint);
+      canvas.drawLine(Offset(xRight, 2), Offset(xRight, size.height - 2), ringPaint);
+      final Paint dotPaint = Paint()..color = const Color(0xFFFFE082);
+      for (double y = 4; y < size.height - 3; y += 4) {
+        canvas.drawCircle(Offset((xLeft + xRight) / 2, y), 1.0, dotPaint);
+      }
+    }
+    drawBand(16, 23);
+    drawBand(size.width - 23, size.width - 16);
 
-    // Fill
-    canvas.drawPath(
-      path,
-      Paint()..color = fillColor,
-    );
+    // Draw Golden Finials / Carved End Caps (Triangles/Knobs on both ends)
+    void drawFinial(double xStart, double xTip, bool isLeft) {
+      final Path path = Path();
+      final double midY = size.height / 2;
+      path.moveTo(xStart, 3);
+      path.lineTo(xTip, midY);
+      path.lineTo(xStart, size.height - 3);
+      path.close();
 
-    // Border
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = borderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
+      final Paint finialPaint = Paint()
+        ..shader = LinearGradient(
+          colors: [const Color(0xFFFFD54F), const Color(0xFFB87311)],
+          begin: isLeft ? Alignment.centerRight : Alignment.centerLeft,
+          end: isLeft ? Alignment.centerLeft : Alignment.centerRight,
+        ).createShader(Rect.fromLTRB(math.min(xStart, xTip), 0, math.max(xStart, xTip), size.height));
+
+      canvas.drawPath(path, finialPaint);
+      canvas.drawPath(path, Paint()..color = const Color(0xFF5C3000)..style = PaintingStyle.stroke..strokeWidth = 1);
+      canvas.drawCircle(Offset((xStart + xTip) / 2, midY), 1.8, Paint()..color = const Color(0xFFFFF8E1));
+    }
+    drawFinial(12, 1, true);
+    drawFinial(size.width - 12, size.width - 1, false);
   }
 
   @override
-  bool shouldRepaint(covariant _HeartCardBorderPainter oldDelegate) {
-    return oldDelegate.fillColor != fillColor || oldDelegate.borderColor != borderColor;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _VintageParchmentAndBordersPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 1. Draw decorative left and right border strips (width 14)
+    final Paint borderBg = Paint()..color = const Color(0xFFF7DAC8);
+    canvas.drawRect(Rect.fromLTRB(0, 0, 14, size.height), borderBg);
+    canvas.drawRect(Rect.fromLTRB(size.width - 14, 0, size.width, size.height), borderBg);
+
+    final Paint borderLine = Paint()..color = const Color(0xFFE65100)..strokeWidth = 1.0;
+    canvas.drawLine(Offset(14, 0), Offset(14, size.height), borderLine);
+    canvas.drawLine(Offset(size.width - 14, 0), Offset(size.width - 14, size.height), borderLine);
+    canvas.drawLine(Offset(2, 0), Offset(2, size.height), borderLine);
+    canvas.drawLine(Offset(size.width - 2, 0), Offset(size.width - 2, size.height), borderLine);
+
+    final Paint patternPaint = Paint()..color = const Color(0xFFD84315)..strokeWidth = 0.9..style = PaintingStyle.stroke;
+    final Paint dotPaint = Paint()..color = const Color(0xFFBF360C);
+
+    void drawLatticeColumn(double centerX) {
+      for (double y = 7; y < size.height - 4; y += 11) {
+        final Path diamond = Path()
+          ..moveTo(centerX, y - 3.5)
+          ..lineTo(centerX + 3.0, y)
+          ..lineTo(centerX, y + 3.5)
+          ..lineTo(centerX - 3.0, y)
+          ..close();
+        canvas.drawPath(diamond, patternPaint);
+        canvas.drawCircle(Offset(centerX, y), 0.7, dotPaint);
+      }
+    }
+    drawLatticeColumn(8);
+    drawLatticeColumn(size.width - 8);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

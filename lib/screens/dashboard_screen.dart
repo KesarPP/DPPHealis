@@ -7,10 +7,7 @@ import '../data/gelato_theme.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_hero_cards.dart';
 import '../widgets/dashboard_timeline.dart';
-import '../widgets/dashboard_risk_card.dart';
 import '../widgets/dashboard_energy_balance_card.dart';
-import '../widgets/dashboard_momentum.dart';
-import '../widgets/dashboard_achievements.dart';
 import '../widgets/user_side_drawer.dart';
 import '../services/health_sync_service.dart';
 import '../services/activity_metrics_engine.dart';
@@ -30,7 +27,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
-  List<Achievement> _achievements = [];
   List<DailyAggregate> _past30Days = [];
   bool _isLoading = false;
   SyncStatus _syncStatus = SyncStatus.success;
@@ -661,7 +657,6 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
 
       if (mounted) {
         setState(() {
-          _achievements = achievements;
           _past30Days = past30Days;
           _mealLogCount = mealCount;
           _activityLogged = actLogged;
@@ -725,7 +720,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                       const SliverToBoxAdapter(
                         child: DashboardHeader(),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 14)),
   
                     // 2. Hero Progress Area (Weight & Activity)
                     SliverToBoxAdapter(
@@ -736,13 +731,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                               onRetrySync: _loadData,
                             ),
                     ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
                   // 2.5 Energy Balance Card
                   const SliverToBoxAdapter(
                     child: DashboardEnergyBalanceCard(),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
                   // 3. Today's Mission (Timeline)
                   SliverToBoxAdapter(
@@ -757,25 +752,6 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                             onToggleItem: _toggleMissionItem,
                           ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                  // 4. Achievement Showcase
-                  SliverToBoxAdapter(
-                    child: DashboardAchievements(achievements: _achievements),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                  // 5. Your Momentum
-                  SliverToBoxAdapter(
-                    child: DashboardMomentum(pastDays: _past30Days),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                  // 6. Prediabetes Risk Card (Compact)
-                  const SliverToBoxAdapter(
-                    child: DashboardRiskCard(),
-                  ),
-                  
                   // Bottom Padding for BottomNavigationBar
                   const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
                   ],

@@ -6,6 +6,7 @@ import '../screens/weigh_in_screen.dart';
 import '../screens/food_analysis_screen.dart';
 import '../screens/handouts_screen.dart';
 import '../data/handouts_data.dart';
+import '../screens/trophy_collection_screen.dart';
 
 class UserSideDrawer extends StatelessWidget {
   const UserSideDrawer({super.key});
@@ -13,21 +14,22 @@ class UserSideDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      width: 320,
       backgroundColor: GelatoTheme.bg,
       child: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(20.0),
               child: Row(
                 children: [
-                  const Icon(Icons.person, color: GelatoTheme.purpleDark, size: 32),
-                  const SizedBox(width: 16),
+                  const Icon(Icons.person, color: GelatoTheme.purpleDark, size: 28),
+                  const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
                       'User Menu',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 19,
                         fontWeight: FontWeight.bold,
                         color: GelatoTheme.textDark,
                       ),
@@ -121,6 +123,21 @@ class UserSideDrawer extends StatelessWidget {
                       );
                     },
                   ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.emoji_events_rounded,
+                    title: 'Trophy Collection',
+                    bgColor: GelatoTheme.orange,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TrophyCollectionScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -132,7 +149,7 @@ class UserSideDrawer extends StatelessWidget {
 
   Widget _buildDrawerItem(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap, Color bgColor = Colors.white}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, left: 16.0, right: 16.0),
+      padding: const EdgeInsets.only(bottom: 10.0, left: 16.0, right: 16.0),
       child: InkWell(
         onTap: onTap,
         borderRadius: GelatoTheme.cardRadius,
@@ -144,24 +161,25 @@ class UserSideDrawer extends StatelessWidget {
             boxShadow: GelatoTheme.cardShadow,
           ),
           child: ListTile(
+            dense: true,
             leading: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.black, width: 1.5),
               ),
-              child: Icon(icon, color: Colors.black, size: 20),
+              child: Icon(icon, color: Colors.black, size: 18),
             ),
             title: Text(
               title,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w900,
                 color: GelatoTheme.textDark,
               ),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black),
           ),
         ),
       ),

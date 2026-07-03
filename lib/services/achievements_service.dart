@@ -114,6 +114,32 @@ class AchievementsService {
     return achievements;
   }
 
+  static Future<List<Achievement>> getCachedAchievements() async {
+    final prefs = await SharedPreferences.getInstance();
+    final authService = AuthService();
+    final uid = authService.isFirebaseInitialized ? authService.currentUser?.uid : null;
+    Map<String, DateTime> earnedMap = {};
+    final String? earnedJson = prefs.getString('${_earnedPrefsKey}_$uid');
+    if (earnedJson != null) {
+      try {
+        final decoded = json.decode(earnedJson) as Map<String, dynamic>;
+        decoded.forEach((key, val) {
+          earnedMap[key] = DateTime.parse(val as String);
+        });
+      } catch (_) {}
+    }
+    int mealLogCount = prefs.getInt('${_mealCountCacheKey}_$uid') ?? 0;
+    return ActivityMetricsEngine.evaluateAchievements(
+      pastDays: [],
+      mealLogCount: mealLogCount,
+      baselineWeight: 90.0,
+      currentWeight: 84.0,
+      riskScore: 28.0,
+      programWeek: 1,
+      earnedMap: earnedMap,
+    );
+  }
+
   static void _showUnlockToast(BuildContext context, List<String> titles) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

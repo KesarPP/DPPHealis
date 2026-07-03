@@ -13,9 +13,9 @@ class TodayActivityScore extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 150),
+      constraints: const BoxConstraints(minHeight: 90),
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.all(10),
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -41,20 +41,20 @@ class TodayActivityScore extends StatelessWidget {
               Icon(
                 Icons.emoji_events_rounded,
                 color: GelatoTheme.purpleDark,
-                size: 20,
+                size: 18,
               ),
               SizedBox(width: 8),
               Text(
                 "Today's Activity Score",
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
                   color: GelatoTheme.textDark,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -62,7 +62,7 @@ class TodayActivityScore extends StatelessWidget {
               Text(
                 '$score',
                 style: const TextStyle(
-                  fontSize: 42,
+                  fontSize: 32,
                   fontWeight: FontWeight.w900,
                   color: GelatoTheme.purpleDark,
                   height: 1.0,
@@ -71,28 +71,28 @@ class TodayActivityScore extends StatelessWidget {
               const Text(
                 '/100',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: GelatoTheme.textLight,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: score / 100.0,
-              minHeight: 10,
+              minHeight: 6,
               backgroundColor: const Color(0xFFEFEAEA),
               valueColor: const AlwaysStoppedAnimation(GelatoTheme.purpleDark),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           Text(
             feedbackText,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11.5,
               fontWeight: FontWeight.w700,
               color: GelatoTheme.textDark,
             ),

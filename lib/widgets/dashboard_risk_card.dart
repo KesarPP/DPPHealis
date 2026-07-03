@@ -5,7 +5,8 @@ import '../data/gelato_theme.dart';
 import '../data/app_state.dart';
 
 class DashboardRiskCard extends StatefulWidget {
-  const DashboardRiskCard({super.key});
+  final bool showDescription;
+  const DashboardRiskCard({super.key, this.showDescription = false});
 
   @override
   State<DashboardRiskCard> createState() => _DashboardRiskCardState();
@@ -63,202 +64,234 @@ class _DashboardRiskCardState extends State<DashboardRiskCard> with TickerProvid
     );
   }
 
+  String _getRiskDescription(int score) {
+    if (score < 30) {
+      return 'Your score is low! Keep maintaining physical activity and a healthy diet to stay in this bracket.';
+    }
+    if (score < 60) {
+      return 'Moderate risk detected. Incorporating more daily exercise and monitoring sugar intake is recommended.';
+    }
+    return 'High risk detected. It is highly recommended that you consult a healthcare clinician and check fasting blood glucose levels.';
+  }
+
   Widget _buildCard(int score) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      margin: widget.showDescription ? const EdgeInsets.symmetric(horizontal: 4) : const EdgeInsets.symmetric(horizontal: 16),
+      padding: widget.showDescription ? const EdgeInsets.all(20) : const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDE8F0), // Very light pink
+        color: GelatoTheme.pink, // Gelato Days pink (#FFCBE1)
         borderRadius: GelatoTheme.cardRadius,
         border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Glossy Heart Badge
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFFDA4AF), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFDA4AF).withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. Glossy Heart Badge
+              Container(
+                width: widget.showDescription ? 76 : 64,
+                height: widget.showDescription ? 76 : 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFFDA4AF), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFDA4AF).withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Center(
-              child: AnimatedBuilder(
-                animation: _heartScale,
-                builder: (context, _) {
-                  return Transform.scale(
-                    scale: _heartScale.value,
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: CustomPaint(
-                        painter: _StaticGlossyHeartPainter(),
+                child: Center(
+                  child: AnimatedBuilder(
+                    animation: _heartScale,
+                    builder: (context, _) {
+                      return Transform.scale(
+                        scale: _heartScale.value,
+                        child: SizedBox(
+                          width: widget.showDescription ? 52 : 44,
+                          height: widget.showDescription ? 52 : 44,
+                          child: CustomPaint(
+                            painter: _StaticGlossyHeartPainter(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              
+              // 2. Score info
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Risk Score',
+                      style: TextStyle(
+                        color: Color(0xFF1E293B),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          
-          // 2. Score info
-          Expanded(
-            flex: 5,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Risk Score',
-                  style: TextStyle(
-                    color: Color(0xFF1E293B),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        '$score',
-                        style: const TextStyle(
-                          color: Color(0xFFE11D48), // Deep Red
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
-                      ),
-                      const Text(
-                        ' /100',
-                        style: TextStyle(
-                          color: Color(0xFF9F1239),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Moderate Risk Pill
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED), // Light orange
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFDBA74), width: 1),
-                        ),
-                        child: const Text(
-                          'Moderate Risk',
-                          style: TextStyle(
-                            color: Color(0xFFEA580C),
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(width: 12),
-          
-          // 3. Slider
-          Expanded(
-            flex: 4,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  height: 20,
-                  child: Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      // Gradient track
-                      Container(
-                        height: 6,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(3),
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF22C55E), // Green
-                              Color(0xFFEAB308), // Yellow
-                              Color(0xFFEF4444), // Red
-                            ],
-                            stops: [0.1, 0.5, 0.9],
-                          ),
-                        ),
-                      ),
-                      // Thumb
-                      FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: score / 100, // e.g. 0.42
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                    const SizedBox(height: 4),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '$score',
+                            style: const TextStyle(
+                              color: Color(0xFFE11D48), // Deep Red
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
                             ),
-                            child: Center(
+                          ),
+                          const Text(
+                            ' /100',
+                            style: TextStyle(
+                              color: Color(0xFF9F1239),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Moderate Risk Pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED), // Light orange
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFDBA74), width: 1),
+                            ),
+                            child: Text(
+                              score < 30 ? 'Low Risk' : (score < 60 ? 'Moderate Risk' : 'High Risk'),
+                              style: TextStyle(
+                                color: score < 30 ? const Color(0xFF16A34A) : (score < 60 ? const Color(0xFFEA580C) : const Color(0xFFDC2626)),
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(width: 12),
+              
+              // 3. Slider
+              Expanded(
+                flex: 4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 20,
+                      child: Stack(
+                        alignment: Alignment.centerLeft,
+                        children: [
+                          // Gradient track
+                          Container(
+                            height: 6,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(3),
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF22C55E), // Green
+                                  Color(0xFFEAB308), // Yellow
+                                  Color(0xFFEF4444), // Red
+                                ],
+                                stops: [0.1, 0.5, 0.9],
+                              ),
+                            ),
+                          ),
+                          // Thumb
+                          FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: score / 100, // e.g. 0.42
+                            child: Align(
+                              alignment: Alignment.centerRight,
                               child: Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFE11D48),
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
                                   shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFE11D48),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    // Labels
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          _RiskLabel(title: 'Low', range: '0-30'),
+                          SizedBox(width: 8),
+                          _RiskLabel(title: 'Moderate', range: '31-60'),
+                          SizedBox(width: 8),
+                          _RiskLabel(title: 'High', range: '61-100'),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                // Labels
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      _RiskLabel(title: 'Low', range: '0-30'),
-                      SizedBox(width: 8),
-                      _RiskLabel(title: 'Moderate', range: '31-60'),
-                      SizedBox(width: 8),
-                      _RiskLabel(title: 'High', range: '61-100'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (widget.showDescription) ...[
+            const SizedBox(height: 20),
+            const Divider(color: Colors.black26, thickness: 1.5),
+            const SizedBox(height: 16),
+            Text(
+              _getRiskDescription(score),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w800,
+                color: GelatoTheme.textDark,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
         ],
       ),
     );

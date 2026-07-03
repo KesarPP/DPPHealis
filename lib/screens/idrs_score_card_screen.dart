@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/app_state.dart';
 import '../data/gelato_theme.dart';
 import 'risk_assessment_step1_screen.dart';
+import '../widgets/dashboard_risk_card.dart';
 
 class IdrsScoreCardScreen extends StatelessWidget {
   const IdrsScoreCardScreen({super.key});
@@ -38,101 +39,6 @@ class IdrsScoreCardScreen extends StatelessWidget {
     return 'High risk detected. It is highly recommended that you consult a healthcare clinician and check fasting blood glucose levels.';
   }
 
-  Widget _buildCard({required Widget child, Color color = Colors.white}) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: GelatoTheme.cardRadius,
-        border: GelatoTheme.cardBorder,
-        boxShadow: GelatoTheme.cardShadow,
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildScoreCard() {
-    final score = AppState.idrsScore;
-    final pillColor = riskColor;
-    final pillTextDark = riskDarkColor;
-
-    return _buildCard(
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: pillColor.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 2.5),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$score',
-                  style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w900,
-                    color: GelatoTheme.textDark,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'TOTAL RISK SCORE',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: GelatoTheme.textLight,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: pillColor,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.black, width: 1.5),
-                      ),
-                      child: Text(
-                        riskCategory,
-                        style: TextStyle(
-                          color: pillTextDark,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.black12, thickness: 1.5),
-          const SizedBox(height: 8),
-          Text(
-            riskDescription,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: GelatoTheme.textDark,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +69,7 @@ class IdrsScoreCardScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -246,7 +152,8 @@ class IdrsScoreCardScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildScoreCard(),
+                const DashboardRiskCard(showDescription: true),
+                const SizedBox(height: 24),
               ],
             ],
           ),

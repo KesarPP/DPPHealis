@@ -26,9 +26,9 @@ class _ActivitiesLoggedWidgetState extends State<ActivitiesLoggedWidget> {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(14), // Reduced card size
+      padding: const EdgeInsets.all(10), // Compact card padding
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFEF9EB), // Gelato Days soft pastel yellow
         borderRadius: GelatoTheme.cardRadius,
         border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
@@ -43,7 +43,7 @@ class _ActivitiesLoggedWidgetState extends State<ActivitiesLoggedWidget> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: GelatoTheme.blue.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
@@ -51,23 +51,23 @@ class _ActivitiesLoggedWidgetState extends State<ActivitiesLoggedWidget> {
                     child: const Icon(
                       Icons.favorite_rounded,
                       color: GelatoTheme.blueDark,
-                      size: 18,
+                      size: 16,
                     ),
                   ),
                   const SizedBox(width: 8),
                   const Text(
                     'Activities Logged',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w900,
                       color: GelatoTheme.textDark,
-                      letterSpacing: -0.5,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: widget.isConnected
                       ? GelatoTheme.green.withValues(alpha: 0.3)
@@ -78,7 +78,7 @@ class _ActivitiesLoggedWidgetState extends State<ActivitiesLoggedWidget> {
                 child: Text(
                   widget.isConnected ? 'Synced' : 'Not Connected',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.w800,
                     color: widget.isConnected ? GelatoTheme.greenDark : GelatoTheme.orangeDark,
                   ),
@@ -86,7 +86,7 @@ class _ActivitiesLoggedWidgetState extends State<ActivitiesLoggedWidget> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Content based on connection status
           if (!widget.isConnected)

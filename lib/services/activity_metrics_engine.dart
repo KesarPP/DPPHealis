@@ -514,8 +514,8 @@ class ActivityMissionEngine {
       completedMinutes: completedMins,
       completedKcal: completedCals.round(),
       progressPercentage: progressPct,
-      goalText: '$baseMins Active Mins / ~${_formatNumber(kcalGoal)} cal',
-      completedText: '$completedMins Active Mins / ${_formatNumber(completedCals.round())} cal',
+      goalText: '~${_formatNumber(kcalGoal)} cal',
+      completedText: '${_formatNumber(completedCals.round())} cal',
     );
   }
 
@@ -581,8 +581,8 @@ class ActivityMissionEngine {
       completedMinutes: completedMins,
       completedKcal: completedCals.round(),
       progressPercentage: progressPct,
-      goalText: '$baseMins Active Mins / ~${_formatNumber(kcalGoal)} cal',
-      completedText: '$completedMins Active Mins / ${_formatNumber(completedCals.round())} cal',
+      goalText: '~${_formatNumber(kcalGoal)} cal',
+      completedText: '${_formatNumber(completedCals.round())} cal',
     );
   }
 
