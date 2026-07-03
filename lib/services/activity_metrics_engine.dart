@@ -16,6 +16,8 @@ class Achievement {
   final DateTime? earnedDate;
   final double progressCurrent;
   final double progressTarget;
+  final int minProgramWeek;
+  final bool isFlagship;
 
   bool get unlocked => status == AchievementStatus.earned;
 
@@ -30,6 +32,8 @@ class Achievement {
     this.earnedDate,
     required this.progressCurrent,
     required this.progressTarget,
+    this.minProgramWeek = 1,
+    this.isFlagship = false,
   });
 }
 
@@ -213,6 +217,9 @@ class ActivityMetricsEngine {
     int lifestyleCount = 0;
     bool has10kDay = false;
     bool hasBriskPace = false;
+    double totalDistanceKm = 0.0;
+    bool hasQualifyingSession = false;
+    bool hasFullDayTracked = false;
 
     // Evaluate rolling 7 days vs older days if pastDays has >7 items
     final List<DailyAggregate> rolling7Days = pastDays.length > 7
@@ -228,7 +235,14 @@ class ActivityMetricsEngine {
     }
 
     for (var day in pastDays) {
+      totalDistanceKm += day.totalDistance;
       if (day.totalSteps >= 10000) has10kDay = true;
+      if (day.qualifyingActiveMinutes >= 10 || day.totalActiveMinutes >= 10) {
+        hasQualifyingSession = true;
+      }
+      if ((day.isActiveDay || day.qualifyingActiveMinutes >= 10) && mealLogCount >= 1) {
+        hasFullDayTracked = true;
+      }
       for (var s in day.coreSessions) {
         distinctTypes.add(s.activityType);
         if (s.activityType == ActivityType.walking && s.durationMinutes >= 10 && s.isQualifying) {
@@ -241,56 +255,141 @@ class ActivityMetricsEngine {
     }
 
     final double weightLostKg = max(0.0, baselineWeight - currentWeight);
-
-    // TODO: confirm against dedicated risk module if one exists
     final double activityComponent = min(1.0, weeklyQualifyingMinutes / 150.0) * 50.0;
     final double weightComponent = min(1.0, weightLostKg / 5.0) * 50.0;
     final double riskReductionScore = (activityComponent + weightComponent).roundToDouble();
 
     // Raw condition evaluation map
     final rawConditions = {
+      // Streaks
+      'streak_6': currentStreak >= 6,
       'streak_7': currentStreak >= 7,
-      'logged_50_meals': mealLogCount >= 50,
-      'first_10k': has10kDay,
-      'lose_5kg': weightLostKg >= 5.0,
-      'low_risk_zone': riskReductionScore >= 80.0,
+      'streak_14': currentStreak >= 14,
       'streak_30': currentStreak >= 30,
+      'streak_60': currentStreak >= 60,
+      'streak_90': currentStreak >= 90,
+      'streak_135': currentStreak >= 135,
+      'streak_180': currentStreak >= 180,
+
+      // Meal Logs
+      'first_meal': mealLogCount >= 1,
+      'meal_streak_7': mealLogCount >= 7,
+      'logged_25_meals': mealLogCount >= 25,
+      'logged_50_meals': mealLogCount >= 50,
+      'logged_75_meals': mealLogCount >= 75,
+      'logged_150_meals': mealLogCount >= 150,
+      'full_day_tracked': hasFullDayTracked,
+
+      // Activity
+      'first_qualifying_session': hasQualifyingSession,
+      'week_60': weeklyQualifyingMinutes >= 60,
+      'week_150': weeklyQualifyingMinutes >= 150,
       'activity_explorer': distinctTypes.length >= 4,
       'stretch_champion': stretchCount >= 5,
       'lifestyle_mover': lifestyleCount >= 3,
-      'week_150': programWeek >= 8 && weeklyQualifyingMinutes >= 150,
+
+      // Steps / Distance / Weight / Risk
+      'first_10k': has10kDay,
+      'brisk_walker': hasBriskPace,
+      'dist_10km': totalDistanceKm >= 10.0,
       'brisk_pace': hasBriskPace,
-      'streak_14': currentStreak >= 14,
+      'lose_5kg': weightLostKg >= 5.0,
+      'low_risk_zone': riskReductionScore >= 80.0,
+
+      // Curriculum Sessions
+      'session_1': programWeek >= 1,
+      'session_4': programWeek >= 4,
+      'session_8': programWeek >= 8,
+      'session_12': programWeek >= 12,
+      'session_16': programWeek >= 16,
     };
 
     final rawProgress = {
+      // Streaks
+      'streak_6': {'curr': min(6.0, currentStreak.toDouble()), 'targ': 6.0},
       'streak_7': {'curr': min(7.0, currentStreak.toDouble()), 'targ': 7.0},
-      'logged_50_meals': {'curr': min(50.0, mealLogCount.toDouble()), 'targ': 50.0},
-      'first_10k': {'curr': has10kDay ? 1.0 : 0.0, 'targ': 1.0},
-      'lose_5kg': {'curr': min(5.0, ((weightLostKg * 10).round() / 10)), 'targ': 5.0},
-      'low_risk_zone': {'curr': min(100.0, riskReductionScore), 'targ': 100.0},
+      'streak_14': {'curr': min(14.0, currentStreak.toDouble()), 'targ': 14.0},
       'streak_30': {'curr': min(30.0, currentStreak.toDouble()), 'targ': 30.0},
+      'streak_60': {'curr': min(60.0, currentStreak.toDouble()), 'targ': 60.0},
+      'streak_90': {'curr': min(90.0, currentStreak.toDouble()), 'targ': 90.0},
+      'streak_135': {'curr': min(135.0, currentStreak.toDouble()), 'targ': 135.0},
+      'streak_180': {'curr': min(180.0, currentStreak.toDouble()), 'targ': 180.0},
+
+      // Meal Logs
+      'first_meal': {'curr': min(1.0, mealLogCount.toDouble()), 'targ': 1.0},
+      'meal_streak_7': {'curr': min(7.0, mealLogCount.toDouble()), 'targ': 7.0},
+      'logged_25_meals': {'curr': min(25.0, mealLogCount.toDouble()), 'targ': 25.0},
+      'logged_50_meals': {'curr': min(50.0, mealLogCount.toDouble()), 'targ': 50.0},
+      'logged_75_meals': {'curr': min(75.0, mealLogCount.toDouble()), 'targ': 75.0},
+      'logged_150_meals': {'curr': min(150.0, mealLogCount.toDouble()), 'targ': 150.0},
+      'full_day_tracked': {'curr': hasFullDayTracked ? 1.0 : 0.0, 'targ': 1.0},
+
+      // Activity
+      'first_qualifying_session': {'curr': hasQualifyingSession ? 1.0 : 0.0, 'targ': 1.0},
+      'week_60': {'curr': min(60.0, weeklyQualifyingMinutes.toDouble()), 'targ': 60.0},
+      'week_150': {'curr': min(150.0, weeklyQualifyingMinutes.toDouble()), 'targ': 150.0},
       'activity_explorer': {'curr': min(4.0, distinctTypes.length.toDouble()), 'targ': 4.0},
       'stretch_champion': {'curr': min(5.0, stretchCount.toDouble()), 'targ': 5.0},
       'lifestyle_mover': {'curr': min(3.0, lifestyleCount.toDouble()), 'targ': 3.0},
-      'week_150': {'curr': min(150.0, weeklyQualifyingMinutes.toDouble()), 'targ': 150.0},
+
+      // Steps / Distance / Weight / Risk
+      'first_10k': {'curr': has10kDay ? 1.0 : 0.0, 'targ': 1.0},
+      'brisk_walker': {'curr': hasBriskPace ? 1.0 : 0.0, 'targ': 1.0},
+      'dist_10km': {'curr': min(10.0, ((totalDistanceKm * 10).round() / 10)), 'targ': 10.0},
       'brisk_pace': {'curr': hasBriskPace ? 1.0 : 0.0, 'targ': 1.0},
-      'streak_14': {'curr': min(14.0, currentStreak.toDouble()), 'targ': 14.0},
+      'lose_5kg': {'curr': min(5.0, ((weightLostKg * 10).round() / 10)), 'targ': 5.0},
+      'low_risk_zone': {'curr': min(100.0, riskReductionScore), 'targ': 100.0},
+
+      // Curriculum Sessions
+      'session_1': {'curr': min(1.0, programWeek.toDouble()), 'targ': 1.0},
+      'session_4': {'curr': min(4.0, programWeek.toDouble()), 'targ': 4.0},
+      'session_8': {'curr': min(8.0, programWeek.toDouble()), 'targ': 8.0},
+      'session_12': {'curr': min(12.0, programWeek.toDouble()), 'targ': 12.0},
+      'session_16': {'curr': min(16.0, programWeek.toDouble()), 'targ': 16.0},
     };
 
     final meta = {
-      'streak_7': {'title': '7 Day Streak', 'sub': 'Kept the streak alive!', 'icon': 'calendar_month_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime},
-      'logged_50_meals': {'title': 'Logged 50 Meals', 'sub': 'Fueling your body right!', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.cumulative},
-      'first_10k': {'title': 'First 10K Step Day', 'sub': 'Big steps, big progress', 'icon': 'directions_walk_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime},
-      'lose_5kg': {'title': 'Lose 5 kg', 'sub': "You're on your way!", 'icon': 'monitor_weight_rounded', 'cat': AchievementCategory.weight, 'type': AchievementType.threshold},
-      'low_risk_zone': {'title': 'Reach Low Risk Zone', 'sub': 'Unlock a healthier you!', 'icon': 'health_and_safety_rounded', 'cat': AchievementCategory.risk, 'type': AchievementType.threshold},
-      'streak_30': {'title': '30 Day Streak', 'sub': 'Consistency', 'icon': 'emoji_events_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime},
-      'activity_explorer': {'title': 'Activity Explorer', 'sub': 'Tried 4 different activities!', 'icon': 'explore_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.cumulative},
-      'stretch_champion': {'title': 'Stretch Champion', 'sub': 'Stretched 5 times this week!', 'icon': 'accessibility_new_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold},
-      'lifestyle_mover': {'title': 'Lifestyle Mover', 'sub': 'Active choices every day!', 'icon': 'cleaning_services_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold},
-      'week_150': {'title': '150 Minute Week', 'sub': 'Hit the NDPP goal!', 'icon': 'timer_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold},
-      'brisk_pace': {'title': 'Brisk Pace Logged', 'sub': 'Walked with a brisk pace!', 'icon': 'directions_walk_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime},
-      'streak_14': {'title': '14 Day Streak', 'sub': 'Two weeks consistent!', 'icon': 'calendar_month_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime},
+      // Streaks
+      'streak_6': {'title': '6-Day Start Streak', 'sub': 'Walk 10m/day for 6 days', 'icon': 'calendar_month_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'streak_7': {'title': '7 Day Streak', 'sub': 'Kept the streak alive!', 'icon': 'calendar_month_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'streak_14': {'title': '14 Day Streak', 'sub': 'Two weeks consistent!', 'icon': 'calendar_month_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 2},
+      'streak_30': {'title': '30 Day Streak', 'sub': 'Consistency', 'icon': 'emoji_events_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 4},
+      'streak_60': {'title': '60 Day Streak', 'sub': 'Two solid months active', 'icon': 'emoji_events_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 8},
+      'streak_90': {'title': '90 Day Streak', 'sub': 'Three months of habit', 'icon': 'emoji_events_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 12},
+      'streak_135': {'title': '135 Day Streak', 'sub': '4.5 months dedicated', 'icon': 'emoji_events_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 18},
+      'streak_180': {'title': '180 Day Streak', 'sub': 'Lifestyle change mastered!', 'icon': 'emoji_events_rounded', 'cat': AchievementCategory.streak, 'type': AchievementType.oneTime, 'minWeek': 24, 'flagship': true},
+
+      // Meal Logs
+      'first_meal': {'title': 'First Meal Logged', 'sub': 'Day 1 unlock!', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'meal_streak_7': {'title': '7-Day Logging Streak', 'sub': 'A week of mindful eating', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.cumulative, 'minWeek': 1},
+      'logged_25_meals': {'title': 'Logged 25 Meals', 'sub': 'Building strong awareness', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.cumulative, 'minWeek': 2},
+      'logged_50_meals': {'title': 'Logged 50 Meals', 'sub': 'Fueling your body right!', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.cumulative, 'minWeek': 3},
+      'logged_75_meals': {'title': 'Logged 75 Meals', 'sub': 'Consistent food tracking', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.cumulative, 'minWeek': 4},
+      'logged_150_meals': {'title': 'Logged 150 Meals', 'sub': '6 weeks of excellence', 'icon': 'restaurant_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.cumulative, 'minWeek': 6},
+      'full_day_tracked': {'title': 'Full Day Tracked', 'sub': 'Food & activity work together', 'icon': 'fact_check_rounded', 'cat': AchievementCategory.food, 'type': AchievementType.oneTime, 'minWeek': 1},
+
+      // Activity
+      'first_qualifying_session': {'title': 'First Qualifying Session', 'sub': 'Completed ≥10 min session', 'icon': 'directions_run_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'week_60': {'title': '60-Minute Week', 'sub': 'Completed Week 5 ramp goal', 'icon': 'timer_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold, 'minWeek': 1},
+      'week_150': {'title': '150-Minute Week', 'sub': 'Full steady-state goal hit!', 'icon': 'timer_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold, 'minWeek': 5, 'flagship': true},
+      'activity_explorer': {'title': 'Activity Explorer', 'sub': 'Tried 4 different activities!', 'icon': 'explore_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.cumulative, 'minWeek': 2},
+      'stretch_champion': {'title': 'Stretch Champion', 'sub': 'Stretched 5 times this week!', 'icon': 'accessibility_new_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold, 'minWeek': 2},
+      'lifestyle_mover': {'title': 'Lifestyle Mover', 'sub': '3+ lifestyle sessions in a week', 'icon': 'cleaning_services_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold, 'minWeek': 2},
+
+      // Steps / Distance / Weight / Risk
+      'first_10k': {'title': 'First 10K Step Day', 'sub': 'Big steps, big progress', 'icon': 'directions_walk_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'brisk_walker': {'title': 'Brisk Walker', 'sub': 'First session at brisk pace', 'icon': 'speed_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'dist_10km': {'title': '10 km Milestone', 'sub': 'Covered 10 kilometers', 'icon': 'route_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.threshold, 'minWeek': 2},
+      'brisk_pace': {'title': 'Brisk Pace Logged', 'sub': 'Walked with a brisk pace!', 'icon': 'directions_walk_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'lose_5kg': {'title': 'Lose 5 kg', 'sub': "You're on your way!", 'icon': 'monitor_weight_rounded', 'cat': AchievementCategory.weight, 'type': AchievementType.threshold, 'minWeek': 4},
+      'low_risk_zone': {'title': 'Reach Low Risk Zone', 'sub': 'Unlock a healthier you!', 'icon': 'health_and_safety_rounded', 'cat': AchievementCategory.risk, 'type': AchievementType.threshold, 'minWeek': 4},
+
+      // Curriculum Sessions
+      'session_1': {'title': 'First Session Completed', 'sub': 'Started your NDPP journey', 'icon': 'school_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.oneTime, 'minWeek': 1},
+      'session_4': {'title': '4 Sessions Completed', 'sub': 'Month 1 core cluster done', 'icon': 'school_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.cumulative, 'minWeek': 4},
+      'session_8': {'title': '8 Sessions Completed', 'sub': 'Halfway point reached!', 'icon': 'school_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.cumulative, 'minWeek': 8},
+      'session_12': {'title': '12 Sessions Completed', 'sub': 'Months 4-5 curriculum complete', 'icon': 'school_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.cumulative, 'minWeek': 12},
+      'session_16': {'title': 'Program Graduate', 'sub': '16 Sessions! Full NDPP complete', 'icon': 'military_tech_rounded', 'cat': AchievementCategory.activity, 'type': AchievementType.cumulative, 'minWeek': 16, 'flagship': true},
     };
 
     List<Achievement> achievements = [];
@@ -319,6 +418,8 @@ class ActivityMetricsEngine {
         earnedDate: eDate,
         progressCurrent: curr,
         progressTarget: p['targ']!,
+        minProgramWeek: (m['minWeek'] as int?) ?? 1,
+        isFlagship: (m['flagship'] as bool?) ?? false,
       ));
     }
 

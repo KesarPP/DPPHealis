@@ -8,6 +8,7 @@ import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_hero_cards.dart';
 import '../widgets/dashboard_timeline.dart';
 import '../widgets/dashboard_risk_card.dart';
+import '../widgets/dashboard_energy_balance_card.dart';
 import '../widgets/dashboard_momentum.dart';
 import '../widgets/dashboard_achievements.dart';
 import '../widgets/user_side_drawer.dart';
@@ -736,7 +737,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                             ),
                     ),
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
-  
+
+                  // 2.5 Energy Balance Card
+                  const SliverToBoxAdapter(
+                    child: DashboardEnergyBalanceCard(),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
                   // 3. Today's Mission (Timeline)
                   SliverToBoxAdapter(
                     child: DashboardTimeline(
@@ -751,22 +758,22 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                           ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
-  
-                  // 4. Prediabetes Risk Card (Compact)
-                  const SliverToBoxAdapter(
-                    child: DashboardRiskCard(),
+
+                  // 4. Achievement Showcase
+                  SliverToBoxAdapter(
+                    child: DashboardAchievements(achievements: _achievements),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
-  
+
                   // 5. Your Momentum
                   SliverToBoxAdapter(
                     child: DashboardMomentum(pastDays: _past30Days),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 16)),
-  
-                  // 6. Achievement Showcase
-                  SliverToBoxAdapter(
-                    child: DashboardAchievements(achievements: _achievements),
+
+                  // 6. Prediabetes Risk Card (Compact)
+                  const SliverToBoxAdapter(
+                    child: DashboardRiskCard(),
                   ),
                   
                   // Bottom Padding for BottomNavigationBar

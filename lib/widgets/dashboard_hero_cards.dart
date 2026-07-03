@@ -36,7 +36,7 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
       children: [
         // 1. Swipable Journey Cards
         SizedBox(
-          height: 480, // Reduced height
+          height: 325, // Reduced height
           child: PageView(
             controller: PageController(viewportFraction: 0.9),
             physics: const BouncingScrollPhysics(),
@@ -73,11 +73,11 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
   Widget _buildSegmentedToggle(
       Color pillColor, Color selectedTextColor, Color unselectedTextColor) {
     return Container(
-      width: 130, // Reduced from 240
-      height: 32, // Reduced from 44
+      width: 114, // Reduced from 130
+      height: 26, // Reduced from 32
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
@@ -94,12 +94,12 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
             curve: Curves.easeOutCubic,
             top: 2,
             bottom: 2,
-            left: _selectedSegment == 0 ? 2 : 64, // 130 width -> ~62 width pill
-            width: 62,
+            left: _selectedSegment == 0 ? 2 : 56, // 114 width -> 54 width pill
+            width: 54,
             child: Container(
               decoration: BoxDecoration(
                 color: pillColor,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
           ),
@@ -135,7 +135,7 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 11, // Reduced font size
+              fontSize: 10, // Reduced font size
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
               color: isSelected ? selectedTextColor : unselectedTextColor,
             ),
@@ -312,7 +312,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                     top: 0,
                     left: 0,
                     right: 0,
-                    height: 240,
+                    height: 160,
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -329,7 +329,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                   ),
                   // 3. Content
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -337,33 +337,33 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                         Row(
                           children: [
                             Container(
-                              width: 44,
-                              height: 44,
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
                                     Color(0xFF60A5FA),
                                     Color(0xFF3B82F6)
-                                  ], // Reverted to blue
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(0xFF3B82F6)
                                         .withValues(alpha: 0.4),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
                               child: const Center(
                                 child: Icon(Icons.monitor_weight_rounded,
-                                    color: Colors.white, size: 24),
+                                    color: Colors.white, size: 20),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,7 +371,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                                   Text(
                                     'Weight Journey',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF1E293B),
                                     ),
@@ -379,7 +379,7 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                                   Text(
                                     'Climb towards your goal',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10.5,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF64748B),
                                     ),
@@ -390,11 +390,13 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                             widget.toggleWidget,
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        // Stats Row with Pastel Cards
+                        const SizedBox(height: 10),
+                        // Stats Row with Pastel Cards centered
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
+                            SizedBox(
+                              width: 130,
                               child: _buildStatCard(
                                 'Current',
                                 currentWeight,
@@ -404,8 +406,9 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                                 Colors.black,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              width: 130,
                               child: _buildStatCard(
                                 'GOAL',
                                 goalWeight,
@@ -421,187 +424,94 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
                     ),
                   ),
 
-                  // 4. Custom overlaid badges (Simulating the mountain path markers)
-                  Positioned(
-                    left: 20,
-                    bottom: 140,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8), // Reduced size
-                      decoration: BoxDecoration(
-                          color: Colors.white.withValues(
-                              alpha: 0.8), // Transparent like the others
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: Colors.white,
-                              width: 2), // Keep border so it looks highlighted
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 15,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 5),
-                            )
-                          ]),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Stack(
-                            alignment: Alignment.centerLeft,
-                            children: [
-                              Text('${toGo.toStringAsFixed(1)} kg',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                      foreground: Paint()
-                                        ..style = PaintingStyle.stroke
-                                        ..strokeWidth = 3
-                                        ..color = Colors.white)),
-                              Text('${toGo.toStringAsFixed(1)} kg',
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.black)),
-                            ],
-                          ),
-                          const Text('to go!',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF151414))),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // 5. Bottom Solid White Panel
+                  // 4. Bottom Panel: To Go Badge beside repositioned Weekly/Monthly Progress
                   Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
-                      child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(
-                            0xFFDBEAFE), // Pastel blue for achievement rack and progress
+                        color: const Color(0xFFDBEAFE),
                         borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(24),
                           bottomRight: Radius.circular(24),
                         ),
-                        border: Border(
-                            top: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.05))),
+                        border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
                       ),
                       child: Row(
                         children: [
-                          Expanded(
-                            flex: 11,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.black, width: 1.5),
+                            ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text('Achievement Rack',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.black87)),
+                                Text(
+                                  '${toGo.toStringAsFixed(1)} kg',
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: Colors.black),
                                 ),
-                                const SizedBox(height: 12),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      _buildMedal(
-                                          Icons.military_tech,
-                                          const Color(0xFFEAB308),
-                                          'First Month\nConsistent'),
-                                      const SizedBox(width: 4),
-                                      _buildMedal(
-                                          Icons.military_tech,
-                                          const Color(0xFFEAB308),
-                                          '5kg\nMilestone'),
-                                      const SizedBox(width: 4),
-                                      _buildMedal(
-                                          Icons.military_tech,
-                                          const Color(0xFFEAB308),
-                                          'Consistent\nTrack'),
-                                      const SizedBox(width: 4),
-                                      _buildMedal(
-                                          Icons.military_tech,
-                                          const Color(0xFFEAB308),
-                                          'Workout\nof the Week'),
-                                    ],
-                                  ),
+                                const Text(
+                                  'to go!',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
                                 ),
                               ],
                             ),
                           ),
-                          Container(
-                            width: 1,
-                            height: 60,
-                            color: Colors.black.withValues(alpha: 0.1),
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                          ),
-                          // Weekly/Monthly Progress
+                          const SizedBox(width: 14),
                           Expanded(
-                            flex: 9,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    widget.isWeekly
-                                        ? 'Weekly Progress'
-                                        : 'Monthly Progress',
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.black87),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: const [
-                                      Text('🏆', style: TextStyle(fontSize: 18)),
-                                      Text('🏆', style: TextStyle(fontSize: 18)),
-                                      Text('🏆', style: TextStyle(fontSize: 18)),
-                                      Opacity(
-                                          opacity: 0.3,
-                                          child: Text('🏆',
-                                              style: TextStyle(fontSize: 18))),
-                                      Opacity(
-                                          opacity: 0.3,
-                                          child: Text('🏆',
-                                              style: TextStyle(fontSize: 18))),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                // Small progress bar
-                                Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: FractionallySizedBox(
-                                    widthFactor: 0.6, // 60%
-                                    alignment: Alignment.centerLeft,
-                                    child: Container(
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.isWeekly ? 'Weekly\nProgress' : 'Monthly\nProgress',
+                                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Colors.black87, height: 1.1),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      width: 54,
+                                      height: 5,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981),
-                                        borderRadius: BorderRadius.circular(4),
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(3),
                                       ),
+                                      child: FractionallySizedBox(
+                                        widthFactor: 0.6,
+                                        alignment: Alignment.centerLeft,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF10B981),
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      children: const [
+                                        Text('🏆', style: TextStyle(fontSize: 22)),
+                                        SizedBox(width: 4),
+                                        Text('🏆', style: TextStyle(fontSize: 22)),
+                                        SizedBox(width: 4),
+                                        Text('🏆', style: TextStyle(fontSize: 22)),
+                                        SizedBox(width: 4),
+                                        Opacity(opacity: 0.3, child: Text('🏆', style: TextStyle(fontSize: 22))),
+                                        SizedBox(width: 4),
+                                        Opacity(opacity: 0.3, child: Text('🏆', style: TextStyle(fontSize: 22))),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -633,10 +543,10 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
             ? value.toInt().toString()
             : value.toStringAsFixed(1);
         return Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
               BoxShadow(
@@ -651,16 +561,16 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
             children: [
               Text(title,
                   style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
                       color: Color(0xFF475569))),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               _OutlinedRichText(
                   value: displayValue,
                   unit: unit,
                   textColor: textColor,
-                  valueSize: 24,
-                  unitSize: 12),
+                  valueSize: 18,
+                  unitSize: 10),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -676,23 +586,6 @@ class _WeightJourneyCardState extends State<_WeightJourneyCard>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildMedal(IconData icon, Color iconColor, String title) {
-    return Column(
-      children: [
-        Icon(icon, color: iconColor, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF475569)),
-        ),
-      ],
     );
   }
 }
@@ -811,7 +704,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                     top: 0,
                     left: 0,
                     right: 0,
-                    height: 280,
+                    height: 190,
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -827,36 +720,36 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Row(
                           children: [
                             Container(
-                              width: 44,
-                              height: 44,
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [Color(0xFFFB923C), Color(0xFFEA580C)],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(0xFFEA580C).withValues(alpha: 0.4),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
                               child: const Center(
                                 child: Icon(Icons.directions_run_rounded,
-                                    color: Colors.white, size: 24),
+                                    color: Colors.white, size: 20),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -864,7 +757,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                   Text(
                                     'Activity Journey',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF1E293B),
                                     ),
@@ -872,7 +765,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                   Text(
                                     'Stay active, stay strong',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10.5,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF64748B),
                                     ),
@@ -883,10 +776,10 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                             widget.toggleWidget,
                           ],
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 10),
                         SizedBox(
-                          width: 160,
-                          height: 160,
+                          width: 115,
+                          height: 115,
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
@@ -896,8 +789,8 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
-                                      blurRadius: 24,
-                                      spreadRadius: 8,
+                                      blurRadius: 18,
+                                      spreadRadius: 6,
                                     ),
                                   ],
                                 ),
@@ -913,7 +806,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                     children: [
                                       CircularProgressIndicator(
                                         value: value,
-                                        strokeWidth: 14,
+                                        strokeWidth: 10,
                                         backgroundColor: Colors.white.withValues(alpha: 0.8),
                                         color: const Color(0xFFF59E0B),
                                         strokeCap: StrokeCap.round,
@@ -926,26 +819,27 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                                             children: [
                                               Text('$percentage%',
                                                   style: TextStyle(
-                                                      fontSize: 42,
+                                                      fontSize: 26,
                                                       fontWeight: FontWeight.w900,
                                                       height: 1.0,
                                                       foreground: Paint()
                                                         ..style = PaintingStyle.stroke
-                                                        ..strokeWidth = 4
+                                                        ..strokeWidth = 3
                                                         ..color = Colors.white)),
                                               Text('$percentage%',
                                                   style: const TextStyle(
-                                                      fontSize: 42,
+                                                      fontSize: 26,
                                                       fontWeight: FontWeight.w900,
                                                       color: Color(0xFF1E293B),
                                                       height: 1.0)),
                                             ],
                                           ),
+                                          const SizedBox(height: 2),
                                           Text(
                                             widget.isWeekly ? "of weekly goal\ncompleted" : "of monthly goal\ncompleted",
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(
-                                                fontSize: 11,
+                                                fontSize: 9.5,
                                                 fontWeight: FontWeight.w700,
                                                 color: Color(0xFF475569)),
                                           ),
@@ -966,7 +860,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                     right: 0,
                     bottom: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: const Color(0xFFDCFCE7).withValues(alpha: 0.95),
                         borderRadius: const BorderRadius.only(
@@ -977,9 +871,9 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, -5),
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, -3),
                           )
                         ],
                       ),
@@ -988,16 +882,14 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
                           Text(
                             widget.isWeekly ? 'Weekly Summary' : 'Monthly Summary',
                             style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.black87),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 6),
                           _buildDataRow('Mission Goal', summary.goalText),
                           _buildDivider(),
-                          _buildDataRow('Completed', summary.completedText),
-                          _buildDivider(),
-                          _buildDataRow('Progress', '${summary.progressPercentage}%', isLast: true),
+                          _buildDataRow('Completed', summary.completedText, isLast: true),
                         ],
                       ),
                     ),
@@ -1013,18 +905,18 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
 
   Widget _buildDataRow(String label, String value, {bool isLast = false}) {
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
               style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF475569))),
           Text(value,
               style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF1E293B))),
         ],
@@ -1034,7 +926,7 @@ class _ActivityJourneyCardState extends State<_ActivityJourneyCard>
 
   Widget _buildDivider() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Container(height: 1, color: Colors.black.withValues(alpha: 0.05)),
     );
   }

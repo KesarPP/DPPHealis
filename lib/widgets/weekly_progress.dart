@@ -44,6 +44,9 @@ class _WeeklyProgressState extends State<WeeklyProgress>
   late int _activeDaysThisWeek;
   late int _remainingMinutes;
 
+  late List<double> _dailyGoals;
+  late List<double> _normalizedGoals;
+
   @override
   void initState() {
     super.initState();
@@ -111,13 +114,33 @@ class _WeeklyProgressState extends State<WeeklyProgress>
     _weeklyTarget = NdppConstants.getWeeklyTargetForWeek(widget.programWeek);
     _remainingMinutes = math.max(0, _weeklyTarget - _weeklyQualifyingMinutes);
 
-    // Normalize
-    _data = [
-      _normalize(rawSteps),
-      _normalize(rawCals),
-      _normalize(rawDist),
-      _normalize(rawMins),
-    ];
+    // Derived daily goals based on curriculum ratio (700 kcal / 150 min ≈ 4.67 kcal/min)
+    final double ratio = _weeklyTarget / 150.0;
+    final double dailyStepsGoal = 5000.0 * ratio;
+    final double dailyCalsGoal = (_weeklyTarget * 4.67) / 7.0;
+    final double dailyDistGoal = 3.0 * ratio;
+    final double dailyMinsGoal = _weeklyTarget / 7.0;
+
+    _dailyGoals = [dailyStepsGoal, dailyCalsGoal, dailyDistGoal, dailyMinsGoal];
+
+    // Normalize with headroom for both data and goal line
+    _data = [];
+    _normalizedGoals = [];
+    final rawLists = [rawSteps, rawCals, rawDist, rawMins];
+    for (int t = 0; t < 4; t++) {
+      final values = rawLists[t];
+      final goal = _dailyGoals[t];
+      double maxVal = values.isEmpty ? 0.0 : values.reduce(math.max);
+      maxVal = math.max(maxVal, goal);
+      if (maxVal == 0) {
+        _data.add(List.filled(values.length, 0.0));
+        _normalizedGoals.add(0.0);
+      } else {
+        maxVal = maxVal * 1.15;
+        _data.add(values.map((v) => (v / maxVal).clamp(0.0, 1.0)).toList());
+        _normalizedGoals.add((goal / maxVal).clamp(0.0, 1.0));
+      }
+    }
 
     // Compute Context Box Stats
     _avgPerDay = [];
@@ -127,7 +150,11 @@ class _WeeklyProgressState extends State<WeeklyProgress>
     for (int t = 0; t < 4; t++) {
       double avg = ActivityMetricsEngine.getAverage(processingDays, t);
       DailyAggregate? best = ActivityMetricsEngine.getBestDay(processingDays, t);
-      int achieved = ActivityMetricsEngine.getGoalAchievedCount(processingDays, t, stepGoal: 5000, calGoal: 200, distGoal: 3.0);
+      
+      int achieved = 0;
+      for (var day in processingDays) {
+        if (_getRaw(day, t) >= _dailyGoals[t]) achieved++;
+      }
 
       _avgPerDay.add(_formatStat(avg, t));
       
@@ -153,15 +180,6 @@ class _WeeklyProgressState extends State<WeeklyProgress>
     if (tabIndex == 1) return '${val.round()} cals';
     if (tabIndex == 2) return '${val.toStringAsFixed(1)} km';
     return '${val.round()} min';
-  }
-
-  List<double> _normalize(List<double> values) {
-    if (values.isEmpty) return [];
-    double maxVal = values.reduce(math.max);
-    if (maxVal == 0) return List.filled(values.length, 0.0);
-    // Add 10% headroom
-    maxVal = maxVal * 1.1;
-    return values.map((v) => (v / maxVal).clamp(0.0, 1.0)).toList();
   }
 
   Color _getBarColor(int i) {
@@ -419,11 +437,11 @@ class _WeeklyProgressState extends State<WeeklyProgress>
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final double chartWidth = constraints.maxWidth;
-                  final double availableWidth = chartWidth - 28; 
+                  final double availableWidth = chartWidth - 8; 
                   final double spacing = (availableWidth - 210) / 8;
-                  final double startX = 28 + spacing;
+                  final double startX = 4 + spacing;
 
-                  int _getIndexFromX(double dx) {
+                  int getIndexFromX(double dx) {
                     final double adjustedX = dx - startX + (spacing / 2);
                     return (adjustedX / (30 + spacing)).floor().clamp(0, 6);
                   }
@@ -431,7 +449,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                   return MouseRegion(
                     onHover: (details) {
                       final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
-                      final int index = _getIndexFromX(relativeX);
+                      final int index = getIndexFromX(relativeX);
                       if (index != _selectedBarIndex) {
                         HapticFeedback.selectionClick();
                         setState(() {
@@ -449,7 +467,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                       behavior: HitTestBehavior.opaque,
                       onHorizontalDragUpdate: (details) {
                         final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
-                        final int index = _getIndexFromX(relativeX);
+                        final int index = getIndexFromX(relativeX);
                         if (index != _selectedBarIndex) {
                           HapticFeedback.selectionClick();
                           setState(() {
@@ -460,7 +478,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                       },
                       onTapDown: (details) {
                         final double relativeX = details.localPosition.dx.clamp(0.0, chartWidth);
-                        final int index = _getIndexFromX(relativeX);
+                        final int index = getIndexFromX(relativeX);
                         setState(() {
                           _selectedBarIndex = _selectedBarIndex == index ? null : index;
                           if (_selectedBarIndex != null) {
@@ -473,38 +491,9 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            // Y-axis labels dynamically based on max value
-                            Builder(
-                              builder: (context) {
-                                List<String> yLabels;
-                                if (_selectedTab == 0) yLabels = ['Max', 'Med', 'Low', '0'];
-                                else if (_selectedTab == 1) yLabels = ['Max', 'Med', 'Low', '0'];
-                                else if (_selectedTab == 2) yLabels = ['Max', 'Med', 'Low', '0'];
-                                else yLabels = ['Max', 'Med', 'Low', '0'];
-
-                                return Positioned(
-                                  left: 0,
-                                  top: -4,
-                                  bottom: 36,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: yLabels.map((lbl) => Text(
-                                      lbl,
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        color: GelatoTheme.textLight,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    )).toList(),
-                                  ),
-                                );
-                              }
-                            ),
-
                             // Gridlines and Axes
                             Positioned(
-                              left: 28,
+                              left: 4,
                               right: 0,
                               top: 0,
                               bottom: 40,
@@ -527,6 +516,78 @@ class _WeeklyProgressState extends State<WeeklyProgress>
                                   ),
                                 ],
                               ),
+                            ),
+
+                            // Goal Line
+                            Builder(
+                              builder: (context) {
+                                final double normGoal = _normalizedGoals[_selectedTab];
+                                final double goalVal = _dailyGoals[_selectedTab];
+                                String goalText;
+                                if (_selectedTab == 0) {
+                                  goalText = goalVal >= 1000
+                                      ? 'Goal: ${(goalVal / 1000).toStringAsFixed(goalVal % 1000 == 0 ? 0 : 1)}k steps'
+                                      : 'Goal: ${goalVal.round()} steps';
+                                } else if (_selectedTab == 1) {
+                                  goalText = 'Goal: ${goalVal.round()} kcal';
+                                } else if (_selectedTab == 2) {
+                                  goalText = 'Goal: ${goalVal.toStringAsFixed(1)} km';
+                                } else {
+                                  goalText = 'Goal: ${goalVal.round()} min';
+                                }
+
+                                final double goalBottom = 40 + (120.0 * normGoal * _barAnim.value);
+
+                                return Positioned(
+                                  left: 4,
+                                  right: 0,
+                                  bottom: goalBottom.clamp(40.0, 160.0) - 6,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            const double dashWidth = 5.0;
+                                            const double dashSpace = 3.0;
+                                            final int count = math.max(0, (constraints.maxWidth / (dashWidth + dashSpace)).floor());
+                                            return Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: List.generate(count, (_) => Container(
+                                                width: dashWidth,
+                                                height: 1.8,
+                                                color: const Color(0xFFFF6D00),
+                                              )),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFF6D00),
+                                          borderRadius: BorderRadius.circular(10),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.15),
+                                              blurRadius: 2,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          goalText,
+                                          style: const TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
 
                             // Smooth Sliding Tooltip
@@ -570,7 +631,7 @@ class _WeeklyProgressState extends State<WeeklyProgress>
 
                             // Bars
                             Positioned(
-                              left: 28,
+                              left: 4,
                               right: 0,
                               top: 0,
                               bottom: 0,
@@ -735,7 +796,7 @@ class _ChartLinePainter extends CustomPainter {
 
     final path = Path();
     final int n = data.length;
-    final double itemWidth = 30.0;
+    const double itemWidth = 30.0;
     final double space = (size.width - (n * itemWidth)) / (n + 1);
 
     for (int i = 0; i < n; i++) {

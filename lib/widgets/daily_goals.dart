@@ -267,6 +267,7 @@ class _DailyGoalsState extends State<DailyGoals>
                       animation: _anim,
                       builder: (context, _) {
                         return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: goalsList.map((g) {
                             return GestureDetector(
                               behavior: HitTestBehavior.opaque,

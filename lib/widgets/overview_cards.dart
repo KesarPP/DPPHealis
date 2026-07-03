@@ -4,10 +4,12 @@ import '../models/activity_stats.dart';
 
 class OverviewCards extends StatefulWidget {
   final ActivityStats stats;
+  final bool isConnected;
 
   const OverviewCards({
     super.key,
     required this.stats,
+    this.isConnected = true,
   });
 
   @override
@@ -86,10 +88,10 @@ class _OverviewCardsState extends State<OverviewCards>
                   index: 2,
                   icon: Icons.local_fire_department_rounded,
                   label: 'Calories',
-                  value: widget.stats.calories.toStringAsFixed(0),
-                  unit: 'cal',
-                  subtext: '',
-                  progress: widget.stats.calories / 3000.0, // Arbitrary max 3000kcal
+                  value: !widget.isConnected ? '—' : widget.stats.calories.toStringAsFixed(0),
+                  unit: !widget.isConnected ? '' : 'cal',
+                  subtext: !widget.isConnected ? 'Connect Fit' : '',
+                  progress: !widget.isConnected ? 0.0 : widget.stats.calories / 3000.0, // Arbitrary max 3000kcal
                   color: GelatoTheme.orange,
                   bgColor: const Color(0xFFFFF6ED),
                   darkColor: GelatoTheme.orangeDark,

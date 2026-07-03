@@ -50,28 +50,33 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
   }
 
   Color _getColor(String id) {
-    switch (id) {
-      case 'streak_7': return GelatoTheme.orangeDark;
-      case 'logged_50_meals': return GelatoTheme.greenDark;
-      case 'first_10k': return GelatoTheme.blueDark;
-      case 'lose_5kg': return GelatoTheme.pinkDark;
-      case 'low_risk_zone': return GelatoTheme.pinkDark;
-      case 'week_150': return GelatoTheme.purpleDark;
-      case 'streak_30': return GelatoTheme.purpleDark;
-      default: return GelatoTheme.blueDark;
+    if (id.contains('180') || id == 'session_16' || id == 'week_150') {
+      return const Color(0xFF6B21A8); // Capstone/Flagship deep purple/gold
     }
-  }
-
-  Color _getBgColor(String id) {
     switch (id) {
-      case 'streak_7': return GelatoTheme.orange;
-      case 'logged_50_meals': return GelatoTheme.green;
-      case 'first_10k': return GelatoTheme.blue;
-      case 'lose_5kg': return GelatoTheme.pink;
-      case 'low_risk_zone': return GelatoTheme.pink;
-      case 'week_150': return GelatoTheme.purple;
-      case 'streak_30': return GelatoTheme.purple;
-      default: return GelatoTheme.blue;
+      case 'streak_6':
+      case 'streak_7':
+      case 'streak_14':
+      case 'streak_30':
+      case 'streak_60':
+      case 'streak_90':
+      case 'streak_135':
+        return GelatoTheme.orangeDark;
+      case 'first_meal':
+      case 'meal_streak_7':
+      case 'logged_25_meals':
+      case 'logged_50_meals':
+      case 'logged_75_meals':
+      case 'logged_150_meals':
+      case 'full_day_tracked':
+        return GelatoTheme.greenDark;
+      case 'session_1':
+      case 'session_4':
+      case 'session_8':
+      case 'session_12':
+        return GelatoTheme.purpleDark;
+      default:
+        return GelatoTheme.blueDark;
     }
   }
 
@@ -88,7 +93,8 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
     lockedItems.sort((a, b) {
       final ratioA = a.progressTarget > 0 ? a.progressCurrent / a.progressTarget : 0.0;
       final ratioB = b.progressTarget > 0 ? b.progressCurrent / b.progressTarget : 0.0;
-      return ratioB.compareTo(ratioA);
+      if (ratioB != ratioA) return ratioB.compareTo(ratioA);
+      return a.minProgramWeek.compareTo(b.minProgramWeek);
     });
     final nextUpList = lockedItems.take(3).toList();
 
@@ -239,8 +245,12 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
                   CustomPaint(
                     size: const Size(80, 80),
                     painter: _DoubleStarPainter(
-                      outerColor: locked ? const Color(0xFFFEF3C7) : const Color(0xFFFDE047),
-                      innerColor: locked ? const Color(0xFFFFFBEB) : Colors.white, 
+                      outerColor: locked
+                          ? const Color(0xFFFEF3C7)
+                          : (item.isFlagship ? const Color(0xFFEAB308) : const Color(0xFFFDE047)),
+                      innerColor: locked
+                          ? const Color(0xFFFFFBEB)
+                          : (item.isFlagship ? const Color(0xFFFEF08A) : Colors.white),
                     ),
                   ),
                   if (locked)
@@ -253,6 +263,18 @@ class _DashboardAchievementsState extends State<DashboardAchievements> with Sing
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.lock_rounded, size: 12, color: GelatoTheme.purpleBright),
+                      ),
+                    ),
+                  if (item.isFlagship && !locked)
+                    Align(
+                      alignment: const Alignment(0.6, -0.7),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF6B21A8),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.star_rounded, size: 10, color: Color(0xFFFDE047)),
                       ),
                     ),
                   Center(
