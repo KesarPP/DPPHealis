@@ -12,6 +12,7 @@ import '../models/ndpp_constants.dart';
 import '../repositories/chat_repository.dart';
 import '../services/health_sync_service.dart';
 import '../services/activity_metrics_engine.dart';
+import '../data/app_state.dart';
 import 'chat_history_screen.dart';
 
 const _brandColor = Color(0xFF4A1E63); // Matches the AI button color
@@ -237,7 +238,16 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
         } catch (_) {}
       }
 
-      return "User has a $currentStreak day activity streak. They have tracked $recentActiveMinutes active minutes in the last 7 days. They have logged $mealLogCount meals in total.";
+      String contextStr = "User has a $currentStreak day activity streak. They have tracked $recentActiveMinutes active minutes in the last 7 days. They have logged $mealLogCount meals in total.";
+      
+      if (AppState.hasIdrsResult) {
+        contextStr += " Their IDRS score is ${AppState.idrsScore}.";
+      }
+      if (AppState.hasGpaqResult) {
+        contextStr += " Their GPAQ activity level is ${AppState.gpaqLevel} with ${AppState.gpaqMetMinutes} MET-minutes.";
+      }
+      
+      return contextStr;
     } catch (e) {
       debugPrint("Error fetching user context: $e");
       return "";
