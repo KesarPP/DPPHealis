@@ -52,7 +52,7 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Compared to other people you know, how would you rank your desire for?',
+                'Select your preference for each taste category.',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -61,7 +61,7 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                '1 = Lowest, 5 = Most',
+                '1 = Least prefered, 5 = Most prefered',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -104,22 +104,62 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
   Widget _buildTasteRow(String taste) {
     int currentRank = _rankings[taste] ?? 3;
     
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+    String emoji = '🍽️';
+    if (taste.contains('Spicy')) emoji = '🌶️';
+    else if (taste.contains('Western')) emoji = '🍔';
+    else if (taste.contains('Ginger')) emoji = '🫚';
+    else if (taste.contains('Sweet')) emoji = '🍫';
+    else if (taste.contains('Sour')) emoji = '🍋';
+    else if (taste.contains('Garlic')) emoji = '🧄';
+    else if (taste.contains('Ghee')) emoji = '🧈';
+    else if (taste.contains('Turmeric')) emoji = '🏵️';
+    else if (taste.contains('Bitter')) emoji = '🌿';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black12, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            taste,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: GelatoTheme.textDark,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: GelatoTheme.bg,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(emoji, style: const TextStyle(fontSize: 20)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  taste,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: GelatoTheme.textDark,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(5, (index) {
               int rank = index + 1;
               bool isSelected = currentRank == rank;
@@ -129,27 +169,47 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
                     _rankings[taste] = rank;
                   });
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isSelected ? GelatoTheme.blue : Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? GelatoTheme.blueDark : Colors.black26,
-                      width: 1.5,
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: isSelected ? 48 : 42,
+                      height: isSelected ? 48 : 42,
+                      decoration: BoxDecoration(
+                        color: isSelected ? GelatoTheme.blue : Colors.grey.shade50,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? GelatoTheme.blueDark : Colors.grey.shade300,
+                          width: isSelected ? 2.0 : 1.0,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: GelatoTheme.blueDark.withValues(alpha: 0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ]
+                            : [],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        rank.toString(),
+                        style: TextStyle(
+                          fontSize: isSelected ? 18 : 16,
+                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                          color: isSelected ? GelatoTheme.blueDark : Colors.grey.shade600,
+                        ),
+                      ),
                     ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    rank.toString(),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: isSelected ? GelatoTheme.blueDark : GelatoTheme.textLight,
-                    ),
-                  ),
+                    const SizedBox(height: 6),
+                    if (rank == 1)
+                      const Text('Lowest', style: TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w700))
+                    else if (rank == 5)
+                      const Text('Highest', style: TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w700))
+                    else
+                      const SizedBox(height: 14),
+                  ],
                 ),
               );
             }),

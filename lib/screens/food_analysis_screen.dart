@@ -365,6 +365,22 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
           initialAnswer: answer,
           questionNumber: questionNo,
           totalQuestions: _totalItems,
+          onPrevious: questionNo > 1 ? () {
+            Navigator.pop(dialogContext);
+            final allItems = <MapEntry<FfqCategory, FfqItem>>[];
+            for (var c in kFfqCategories) {
+              for (var i in c.items) {
+                allItems.add(MapEntry(c, i));
+              }
+            }
+            int currentIndex = allItems.indexWhere((e) => e.value.name == item.name);
+            if (currentIndex > 0) {
+              final prevEntry = allItems[currentIndex - 1];
+              Future.microtask(() {
+                _openItemQuestionnaire(prevEntry.key, prevEntry.value);
+              });
+            }
+          } : null,
           onSave: (saved, goToNext) {
             setState(() {
               _answers[key] = saved;
@@ -1092,6 +1108,7 @@ class _ItemQuestionnaireScreen extends StatefulWidget {
   final int questionNumber;
   final int totalQuestions;
   final void Function(FfqAnswer, bool) onSave;
+  final VoidCallback? onPrevious;
 
   const _ItemQuestionnaireScreen({
     required this.category,
@@ -1100,6 +1117,7 @@ class _ItemQuestionnaireScreen extends StatefulWidget {
     required this.questionNumber,
     required this.totalQuestions,
     required this.onSave,
+    this.onPrevious,
   });
 
   @override
@@ -1848,35 +1866,70 @@ class _ItemQuestionnaireScreenState extends State<_ItemQuestionnaireScreen> {
               ),
             ),
 
-            // ── Save / Next button ──
+            // ── Previous / Save & Next buttons ──
             Container(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
               decoration: const BoxDecoration(
                 color: GelatoTheme.bg,
                 border: Border(top: BorderSide(color: Colors.black12)),
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: GelatoTheme.cardShadow,
-                ),
-                child: ElevatedButton(
-                  onPressed: () => _save(true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cat.color,
-                    foregroundColor: cat.darkColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: cat.darkColor, width: 2.0),
+              child: Row(
+                children: [
+                  if (widget.onPrevious != null) ...[
+                    Expanded(
+                      flex: 2,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: GelatoTheme.cardShadow,
+                        ),
+                        child: OutlinedButton(
+                          onPressed: widget.onPrevious,
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: cat.darkColor,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            side: BorderSide(color: cat.darkColor, width: 2.0),
+                          ),
+                          child: const Text(
+                            'PREVIOUS',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          ),
+                        ),
+                      ),
                     ),
-                    elevation: 0,
+                    const SizedBox(width: 12),
+                  ],
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: GelatoTheme.cardShadow,
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () => _save(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: cat.color,
+                          foregroundColor: cat.darkColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(color: cat.darkColor, width: 2.0),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          widget.questionNumber < widget.totalQuestions ? 'SAVE & NEXT' : 'SAVE & FINISH',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                        ),
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    widget.questionNumber < widget.totalQuestions ? 'SAVE & NEXT' : 'SAVE & FINISH',
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.0),
-                  ),
-                ),
+                ],
               ),
             ),
           ],
