@@ -31,6 +31,8 @@ class PatientProfileScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildIdrsCard(),
                     const SizedBox(height: 12),
+                    _buildGpaqScorecard(),
+                    const SizedBox(height: 12),
                     _buildWeightLossCard(),
                     const SizedBox(height: 12),
                     _buildActivityTrackerCard(),
@@ -234,6 +236,60 @@ class PatientProfileScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: score / 100.0,
+              backgroundColor: const Color(0xFFE5E7EB),
+              color: riskColor,
+              minHeight: 6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGpaqScorecard() {
+    final int metMins = patient.gpaqMetMinutes ?? 450;
+    final bool isHigh = metMins >= 600;
+    final bool isMod = metMins >= 300 && metMins < 600;
+    
+    final String riskText = isHigh ? 'ACTIVE' : (isMod ? 'MODERATE' : 'LOW');
+    final Color riskColor = isHigh ? const Color(0xFF0F766E) : (isMod ? const Color(0xFF0F766E) : const Color(0xFFB91C1C));
+    final Color riskBg = isHigh ? const Color(0xFFCCFBF1) : (isMod ? const Color(0xFFCCFBF1) : const Color(0xFFFEF2F2));
+
+    return _ProfileCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('GPAQ Activity Scorecard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: riskBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: riskColor.withValues(alpha: 0.2)),
+                ),
+                child: Text(riskText, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: riskColor)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('$metMins', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.black)),
+              const Text(' MET-min', style: TextStyle(fontSize: 16, color: Colors.black54)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text('Self-reported weekly physical activity.', style: TextStyle(fontSize: 11, color: Colors.black54)),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: (metMins / 1000).clamp(0.0, 1.0),
               backgroundColor: const Color(0xFFE5E7EB),
               color: riskColor,
               minHeight: 6,
