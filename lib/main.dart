@@ -12,6 +12,7 @@ import 'screens/activity_fitness_screen.dart';
 import 'screens/sessions_screen.dart';
 import 'screens/coach_chat_screen.dart';
 import 'screens/ai_chatbot_screen.dart';
+import 'screens/puzzles_journey_screen.dart';
 import 'data/gelato_theme.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -133,6 +134,7 @@ class MainShellState extends State<MainShell> {
   }
 
   final List<Widget> _screens = const [
+    PuzzlesJourneyScreen(),
     DashboardScreen(),
     FoodTrackingScreen(),
     ActivityFitnessScreen(),
@@ -141,6 +143,11 @@ class MainShellState extends State<MainShell> {
   ];
 
   final List<NavigationDestination> _destinations = const [
+    NavigationDestination(
+      icon: Icon(Icons.extension_outlined),
+      selectedIcon: Icon(Icons.extension),
+      label: 'Puzzles',
+    ),
     NavigationDestination(
       icon: Icon(Icons.dashboard_outlined),
       selectedIcon: Icon(Icons.dashboard),
@@ -174,22 +181,26 @@ class MainShellState extends State<MainShell> {
     Color activeTextColor;
     switch (_selectedIndex) {
       case 0:
+        indicatorColor = GelatoTheme.yellow;
+        activeTextColor = GelatoTheme.yellowDark;
+        break;
+      case 1:
         indicatorColor = GelatoTheme.pink;
         activeTextColor = GelatoTheme.pinkDark;
         break;
-      case 1:
+      case 2:
         indicatorColor = GelatoTheme.green;
         activeTextColor = GelatoTheme.greenDark;
         break;
-      case 2:
+      case 3:
         indicatorColor = GelatoTheme.orange;
         activeTextColor = GelatoTheme.orangeDark;
         break;
-      case 3:
+      case 4:
         indicatorColor = GelatoTheme.blue;
         activeTextColor = GelatoTheme.blueDark;
         break;
-      case 4:
+      case 5:
         indicatorColor = GelatoTheme.purple;
         activeTextColor = GelatoTheme.purpleDark;
         break;
@@ -203,7 +214,7 @@ class MainShellState extends State<MainShell> {
         index: _selectedIndex,
         children: _screens,
       ),
-      floatingActionButton: _selectedIndex < 4
+      floatingActionButton: _selectedIndex < 5
           ? Container(
               margin: const EdgeInsets.only(bottom: 16, right: 8),
               child: AIChatbotButton(

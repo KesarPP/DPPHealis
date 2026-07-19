@@ -7,6 +7,7 @@ import 'clinician_dashboard_screen.dart';
 import 'coach_profile_setup_screen.dart';
 import '../main.dart';
 import '../services/auth_service.dart';
+import 'puzzles_journey_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

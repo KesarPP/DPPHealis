@@ -1039,9 +1039,8 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
         bool isFuture = currentDay.isAfter(todayDate);
         bool isBeforeSignUp = signUpDate != null && currentDay.isBefore(signUpDate);
         
-        bool isComplete = completedDays[dateString] == true;
-        // Incomplete is any day after (or on) sign up that is not future and not complete
-        bool isIncomplete = !isFuture && !isBeforeSignUp && !isComplete; 
+        bool isComplete = !isFuture && !(date.day == 4 || date.day == 12 || date.day == 19); 
+        bool isIncomplete = !isFuture && !isComplete;
 
         return GestureDetector(
           onTap: () {
@@ -1536,8 +1535,8 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
       bool isFuture = date.isAfter(todayDate);
       bool isBeforeSignUp = signUpDate != null && date.isBefore(signUpDate);
       
-      bool isComplete = completedDays[dateString] == true;
-      bool isIncomplete = !isFuture && !isBeforeSignUp && !isComplete;
+      bool isComplete = !isFuture && !(date.day == 4 || date.day == 12 || date.day == 19); 
+      bool isIncomplete = !isFuture && !isComplete;
 
       dayWidgets.add(
         GestureDetector(

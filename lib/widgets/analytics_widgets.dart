@@ -47,6 +47,19 @@ class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
       }
     }
     
+    // FAKE DATA FOR UI RECORDING
+    double goal = foodNotifier.calorieGoal > 0 ? foodNotifier.calorieGoal : 2000.0;
+    grossCalories[0] = goal * 0.95;
+    grossCalories[1] = goal * 1.05;
+    grossCalories[2] = goal * 0.92;
+    grossCalories[3] = goal * 1.02;
+    grossCalories[4] = goal * 0.98;
+    grossCalories[5] = goal * 1.08;
+    grossCalories[6] = goal * 0.99;
+    
+    totalLast7Days = grossCalories.reduce((a, b) => a + b);
+    countDays = 7;
+    
     double avg = countDays > 0 ? totalLast7Days / countDays : 0.0;
     final data = grossCalories;
     // Light background so the bright analytics pop
@@ -71,14 +84,18 @@ class _WeeklyTrendChartCardState extends State<WeeklyTrendChartCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Daily Intake Trend (Avg: ${avg.toStringAsFixed(0)} kcal)',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: GelatoTheme.textDark,
+              Expanded(
+                child: Text(
+                  'Daily Intake Trend (Avg: ${avg.toStringAsFixed(0)} kcal)',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: GelatoTheme.textDark,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -622,8 +639,12 @@ class _NutritionScoreCardState extends State<NutritionScoreCard> {
         double proteinScore = (log != null && log.totalProtein > 20) ? 25.0 : 15.0;
         double fiberScore = (log != null && log.totalFiber > 10) ? 25.0 : 15.0;
         
-        score = (calScore + proteinScore + fiberScore).clamp(0.0, 100.0);
+      score = (calScore + proteinScore + fiberScore).clamp(0.0, 100.0);
       }
+      
+      // FAKE DATA FOR UI RECORDING
+      final fakeScores = [92.0, 96.0, 89.0, 98.0, 94.0, 97.0, 95.0];
+      score = fakeScores[i];
       
       if (foodNotifier.selectedDate == dateStr || (i == 6 && currentScoreValue == 0)) {
         currentScoreValue = score / 100.0;
