@@ -244,7 +244,7 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
 
               // Horizontal Timeline
               SizedBox(
-                height: 110, // Increased height to prevent bottom overflow
+                height: 125, // Increased height to prevent bottom overflow
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final screenWidth = constraints.maxWidth;

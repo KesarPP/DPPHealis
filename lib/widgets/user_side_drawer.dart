@@ -7,6 +7,9 @@ import '../screens/food_analysis_screen.dart';
 import '../screens/handouts_screen.dart';
 import '../data/handouts_data.dart';
 import '../screens/trophy_collection_screen.dart';
+import '../screens/faq_contact_screen.dart';
+import '../services/auth_service.dart';
+import '../screens/login_screen.dart';
 
 class UserSideDrawer extends StatelessWidget {
   const UserSideDrawer({super.key});
@@ -45,8 +48,9 @@ class UserSideDrawer extends StatelessWidget {
             const Divider(height: 1),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
+                  _buildSectionHeader('1. Baseline'),
                   _buildDrawerItem(
                     context,
                     icon: Icons.assignment,
@@ -62,6 +66,21 @@ class UserSideDrawer extends StatelessWidget {
                       );
                     },
                   ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.restaurant_menu,
+                    title: 'Food Frequency (FFQ)',
+                    bgColor: GelatoTheme.blue,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FoodAnalysisScreen()),
+                      );
+                    },
+                  ),
+                  
+                  _buildSectionHeader('2. Weekly'),
                   _buildDrawerItem(
                     context,
                     icon: Icons.directions_run,
@@ -92,56 +111,75 @@ class UserSideDrawer extends StatelessWidget {
                       );
                     },
                   ),
+
+                  _buildSectionHeader('3. Endline'),
                   _buildDrawerItem(
                     context,
-                    icon: Icons.restaurant_menu,
-                    title: 'Food Frequency (FFQ)',
-                    bgColor: GelatoTheme.blue,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const FoodAnalysisScreen()),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.library_books,
-                    title: 'Handouts Library',
+                    icon: Icons.flag,
+                    title: 'Endline Assessment',
                     bgColor: GelatoTheme.purple,
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => HandoutsScreen(
-                            title: 'Handouts Library',
-                            handouts: ndppHandouts,
-                          ),
-                        ),
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Endline assessment coming soon!')),
                       );
                     },
                   ),
+
+                  _buildSectionHeader('4. Support'),
                   _buildDrawerItem(
                     context,
-                    icon: Icons.emoji_events_rounded,
-                    title: 'Trophy Collection',
+                    icon: Icons.help_outline,
+                    title: 'FAQs & Contact Us',
                     bgColor: GelatoTheme.orange,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const TrophyCollectionScreen(),
+                          builder: (_) => const FaqContactScreen(),
                         ),
                       );
+                    },
+                  ),
+
+                  _buildSectionHeader('5. Account'),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.logout,
+                    title: 'Logout',
+                    bgColor: const Color(0xFFE2E8F0),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await AuthService().signOut();
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          (route) => false,
+                        );
+                      }
                     },
                   ),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20.0, top: 12.0, bottom: 8.0),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: GelatoTheme.textLight,
+          letterSpacing: 1.2,
         ),
       ),
     );
