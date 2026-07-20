@@ -2,11 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'clinician_dashboard_screen.dart';
-import 'coach_selection_screen.dart';
 import 'coach_profile_setup_screen.dart';
+import '../data/app_state.dart';
 import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../main.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -39,9 +40,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final confirmPassword = _confirmPasswordController.text;
 
     final authService = AuthService();
-    final isTesting = !authService.isFirebaseInitialized;
-
-    if (!isTesting && (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty || confirmPassword.isEmpty)) {
+    if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all fields.'),
@@ -51,7 +50,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    if (!isTesting && (password != confirmPassword)) {
+    if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Passwords do not match.'),
@@ -74,18 +73,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       if (mounted) {
-        if (!isTesting) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration Successful!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration Successful!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const CoachSelectionScreen(isFromSignup: true),
+            builder: (_) => const MainShell(),
           ),
         );
       }
