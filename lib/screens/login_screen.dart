@@ -32,9 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     final authService = AuthService();
-    final isTesting = !authService.isFirebaseInitialized;
-
-    if (!isTesting && (emailOrPhone.isEmpty || password.isEmpty)) {
+    if (emailOrPhone.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter your email or phone number and password.'),

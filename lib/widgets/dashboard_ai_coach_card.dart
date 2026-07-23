@@ -35,29 +35,47 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0EA5E9), // Sky blue
-            Color(0xFF2563EB), // Blue
-            Color(0xFF0F172A), // Slate 900
-          ],
-          stops: [0.0, 0.45, 1.0],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0EA5E9).withValues(alpha: 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _buttonScale = 0.97);
+      },
+      onTapUp: (_) {
+        setState(() => _buttonScale = 1.0);
+        HapticFeedback.mediumImpact();
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AiChatbotScreen()),
+        );
+      },
+      onTapCancel: () {
+        setState(() => _buttonScale = 1.0);
+      },
+      child: AnimatedScale(
+        scale: _buttonScale,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF0EA5E9), // Sky blue
+                Color(0xFF2563EB), // Blue
+                Color(0xFF0F172A), // Slate 900
+              ],
+              stops: [0.0, 0.45, 1.0],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0EA5E9).withValues(alpha: 0.25),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -141,62 +159,43 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
           ),
           const SizedBox(height: 18),
 
-          // Interactive action button
-          GestureDetector(
-            onTapDown: (_) {
-              setState(() => _buttonScale = 0.97);
-            },
-            onTapUp: (_) {
-              setState(() => _buttonScale = 1.0);
-              HapticFeedback.mediumImpact();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AiChatbotScreen()),
-              );
-            },
-            onTapCancel: () {
-              setState(() => _buttonScale = 1.0);
-            },
-            child: AnimatedScale(
-              scale: _buttonScale,
-              duration: const Duration(milliseconds: 100),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          // Action button styling
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Take a 15-min walk after lunch',
-                      style: TextStyle(
-                        color: Color(0xFF0284C7), // sky-600
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Color(0xFF0284C7),
-                      size: 16,
-                    ),
-                  ],
+              ],
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Take a 15-min walk after lunch',
+                  style: TextStyle(
+                    color: Color(0xFF0284C7), // sky-600
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
+                SizedBox(width: 6),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Color(0xFF0284C7),
+                  size: 16,
+                ),
+              ],
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

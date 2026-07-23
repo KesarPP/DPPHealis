@@ -37,32 +37,46 @@ class _AiCoachCardState extends State<AiCoachCard>
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: AnimatedBuilder(
-        animation: _glowAnim,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF0284C7), // Sky blue
-                  Color(0xFF0F172A), // Dark slate
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0284C7).withValues(alpha: 0.3 * _glowAnim.value),
-                  blurRadius: 15,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: child,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _buttonPressed = true),
+        onTapUp: (_) {
+          setState(() => _buttonPressed = false);
+          HapticFeedback.mediumImpact();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CoachChatScreen(forceCoachId: 'AI_COACH')),
           );
         },
+        onTapCancel: () => setState(() => _buttonPressed = false),
+        child: AnimatedScale(
+          scale: _buttonPressed ? 0.97 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: AnimatedBuilder(
+            animation: _glowAnim,
+            builder: (context, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF0284C7), // Sky blue
+                      Color(0xFF0F172A), // Dark slate
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.3 * _glowAnim.value),
+                      blurRadius: 15,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: child,
+              );
+            },
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -135,52 +149,38 @@ class _AiCoachCardState extends State<AiCoachCard>
                 ),
               ),
               const SizedBox(height: 20),
-              GestureDetector(
-                onTapDown: (_) => setState(() => _buttonPressed = true),
-                onTapUp: (_) {
-                  setState(() => _buttonPressed = false);
-                  HapticFeedback.mediumImpact();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AiChatbotScreen()),
-                  );
-                },
-                onTapCancel: () => setState(() => _buttonPressed = false),
-                child: AnimatedScale(
-                  scale: _buttonPressed ? 0.97 : 1.0,
-                  duration: const Duration(milliseconds: 100),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
+              // Action button style
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Take a 15-min walk after lunch',
+                      style: TextStyle(
+                        color: Color(0xFF0284C7),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Take a 15-min walk after lunch',
-                          style: TextStyle(
-                            color: Color(0xFF0284C7),
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Color(0xFF0284C7),
-                          size: 16,
-                        ),
-                      ],
+                    SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Color(0xFF0284C7),
+                      size: 16,
                     ),
-                  ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

@@ -248,36 +248,31 @@ class AuthService {
       }
     }
 
-    if (auth != null) {
-      final credential = await auth.signInWithEmailAndPassword(
-        email: resolvedEmail,
-        password: password,
-      );
-      final user = credential.user;
-      if (user != null) {
-        await prefs.setString('last_user_name', user.displayName ?? '');
-        await prefs.setString('last_user_email', user.email ?? '');
+    if (auth == null) {
+      throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
+    }
 
-        // Verify this account is registered as a patient, not a coach.
-        final doc = await _firestore!.collection('users').doc(user.uid).get();
-        if (!doc.exists) {
-          await auth.signOut();
-          throw Exception(
-            'This account is not registered as a patient. Please use the Doctor/Coach login.',
-          );
-        }
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setString('user_role', 'user');
+    final credential = await auth.signInWithEmailAndPassword(
+      email: resolvedEmail,
+      password: password,
+    );
+    final user = credential.user;
+    if (user != null) {
+      await prefs.setString('last_user_name', user.displayName ?? '');
+      await prefs.setString('last_user_email', user.email ?? '');
+
+      // Verify this account is registered as a patient, not a coach.
+      final doc = await _firestore!.collection('users').doc(user.uid).get();
+      if (!doc.exists) {
+        await auth.signOut();
+        throw Exception(
+          'This account is not registered as a patient. Please use the Doctor/Coach login.',
+        );
       }
-      return user;
-    } else {
-      // Mock mode for testing/local-only runs.
-      await Future.delayed(const Duration(milliseconds: 200));
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'user');
-      await prefs.setString('last_user_email', resolvedEmail);
-      return null;
     }
+    return user;
   }
 
   /// Register a patient with email, password, and name.
@@ -294,40 +289,35 @@ class AuthService {
     if (phoneNumber.isNotEmpty) {
       await prefs.setString('phone_email_map_$phoneNumber', email);
     }
-    if (auth != null) {
-      final credential = await auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final user = credential.user;
-      if (user != null) {
-        await user.updateDisplayName(name);
-        await user.reload();
-        
-        await prefs.setString('last_user_name', name);
-        await prefs.setString('last_user_email', email);
+    if (auth == null) {
+      throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
+    }
 
-        // Tag this account as a 'user/patient' in Firestore.
-        await _firestore!.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'name': name,
-          'email': email,
-          'phoneNumber': phoneNumber,
-          'role': 'user',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setString('user_role', 'user');
-      }
-      return _auth!.currentUser;
-    } else {
-      // Mock mode for testing/local-only runs.
-      await Future.delayed(const Duration(milliseconds: 200));
+    final credential = await auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = credential.user;
+    if (user != null) {
+      await user.updateDisplayName(name);
+      await user.reload();
+      
+      await prefs.setString('last_user_name', name);
+      await prefs.setString('last_user_email', email);
+
+      // Tag this account as a 'user/patient' in Firestore.
+      await _firestore!.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'name': name,
+        'email': email,
+        'phoneNumber': phoneNumber,
+        'role': 'user',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'user');
-      await prefs.setString('last_user_email', email);
-      return null;
     }
+    return auth.currentUser;
   }
 
   // ─── Coach-specific methods ──────────────────────────────────────────────
@@ -369,38 +359,28 @@ class AuthService {
     }
 
     _assertCoachEmail(resolvedEmail);
-    if (auth != null) {
-      final credential = await auth.signInWithEmailAndPassword(
-        email: resolvedEmail,
-        password: password,
-      );
-      final user = credential.user;
-      if (user != null) {
-        await prefs.setString('last_user_name', user.displayName ?? '');
-        await prefs.setString('last_user_email', user.email ?? '');
+    if (auth == null) {
+      throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
+    }
 
-        // Verify this account is registered as a coach, not a patient.
-        final doc = await _firestore!.collection('coaches').doc(user.uid).get();
-        if (!doc.exists) {
-          throw Exception('PROFILE_INCOMPLETE');
-        }
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setString('user_role', 'coach');
-      }
-      return user;
-    } else {
-      // Mock mode for testing/local-only runs.
-      await Future.delayed(const Duration(milliseconds: 200));
-      final isComplete = prefs.getBool('coach_profile_complete_mock_uid') ?? false;
-      if (!isComplete) {
+    final credential = await auth.signInWithEmailAndPassword(
+      email: resolvedEmail,
+      password: password,
+    );
+    final user = credential.user;
+    if (user != null) {
+      await prefs.setString('last_user_name', user.displayName ?? '');
+      await prefs.setString('last_user_email', user.email ?? '');
+
+      // Verify this account is registered as a coach, not a patient.
+      final doc = await _firestore!.collection('coaches').doc(user.uid).get();
+      if (!doc.exists) {
         throw Exception('PROFILE_INCOMPLETE');
       }
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'coach');
-      await prefs.setString('last_user_name', 'Dr. Sarah Mitchell');
-      await prefs.setString('last_user_email', resolvedEmail);
-      return null;
     }
+    return user;
   }
 
   /// Register a coach with email, password, and name.
@@ -418,27 +398,23 @@ class AuthService {
     if (phoneNumber.isNotEmpty) {
       await prefs.setString('phone_email_map_$phoneNumber', email);
     }
-    if (auth != null) {
-      final credential = await auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final user = credential.user;
-      if (user != null) {
-        await user.updateDisplayName(name);
-        await user.reload();
-        
-        await prefs.setString('last_user_name', name);
-        await prefs.setString('last_user_email', email);
-      }
-      return _auth!.currentUser;
-    } else {
-      // Mock mode for testing/local-only runs.
-      await Future.delayed(const Duration(milliseconds: 200));
+    if (auth == null) {
+      throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
+    }
+
+    final credential = await auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = credential.user;
+    if (user != null) {
+      await user.updateDisplayName(name);
+      await user.reload();
+      
       await prefs.setString('last_user_name', name);
       await prefs.setString('last_user_email', email);
-      return null;
     }
+    return auth.currentUser;
   }
 
 

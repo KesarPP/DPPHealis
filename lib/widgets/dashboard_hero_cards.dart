@@ -249,11 +249,13 @@ class _WeightSection extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '${toGo.toStringAsFixed(1)} kg to go!',
-                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${toGo.toStringAsFixed(1)} kg to go!',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                      ),
                     ),
                   ),
                   Text(
@@ -406,9 +408,11 @@ class _ActivitySection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Goal:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF9A3412))),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(summary.goalText, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFC2410C))),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(summary.goalText, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFC2410C))),
+                    ),
                   ),
                 ],
               ),
@@ -417,9 +421,11 @@ class _ActivitySection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Done:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF9A3412))),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(summary.completedText, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF9A3412))),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(summary.completedText, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF9A3412))),
+                    ),
                   ),
                 ],
               ),
