@@ -91,16 +91,22 @@ class AchievementsService {
       }
     }
 
-    // 6. Permanently persist updated earned status
-    if (mapChanged) {
+    // 6. Permanently persist updated earned status and activity streak
+    final int currentStreak = ActivityMetricsEngine.getCurrentStreak(trailing30Days);
+    final int cachedStreak = prefs.getInt('ndpp_cached_streak_$uid') ?? -1;
+    final bool streakChanged = currentStreak != cachedStreak;
+
+    if (mapChanged || streakChanged) {
       final toStore = {};
       earnedMap.forEach((k, v) => toStore[k] = v.toIso8601String());
       await prefs.setString('${_earnedPrefsKey}_$uid', json.encode(toStore));
+      await prefs.setInt('ndpp_cached_streak_$uid', currentStreak);
 
       if (uid != null) {
         try {
           await FirebaseFirestore.instance.collection('users').doc(uid).set({
             'earned_achievements': toStore,
+            'activityStreak': currentStreak,
           }, SetOptions(merge: true));
         } catch (_) {}
       }

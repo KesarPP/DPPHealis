@@ -654,12 +654,17 @@ class PatientProfileScreen extends StatelessWidget {
   Widget _buildConsistencyCard() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('logs').doc(patient.id).collection('food_entries').snapshots(),
-      builder: (context, snapshot) {
-        final docs = snapshot.data?.docs ?? [];
-        final int streak = docs.isNotEmpty ? docs.length : 12;
+      builder: (context, foodSnapshot) {
+        final docs = foodSnapshot.data?.docs ?? [];
         final double loggingRate = docs.isNotEmpty ? (docs.length / 14.0 * 100).clamp(0, 100) : 86;
 
-        return _ProfileCard(
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').doc(patient.id).snapshots(),
+          builder: (context, userSnapshot) {
+            final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
+            final int streak = userData?['activityStreak'] as int? ?? 0;
+
+            return _ProfileCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -731,6 +736,8 @@ class PatientProfileScreen extends StatelessWidget {
               )
             ],
           ),
+        );
+          },
         );
       },
     );
