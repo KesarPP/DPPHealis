@@ -23,7 +23,7 @@ class LeaderboardScreen extends StatelessWidget {
       backgroundColor: GelatoTheme.bg,
       appBar: AppBar(
         title: const Text(
-          'Weekly Contest',
+          'Weekly Challenge',
           style: TextStyle(
             color: GelatoTheme.textDark,
             fontWeight: FontWeight.w900,
@@ -72,7 +72,7 @@ class LeaderboardScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Weekly Champions',
+                          'Weekly Challenge',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
@@ -81,12 +81,21 @@ class LeaderboardScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Compete with fellow members by completing missions and logging daily progress!',
+                          'Earn points by logging meals, completing weekly assessments, and recording your weight!',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF78350F),
                             height: 1.3,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          '⏱ Resets every Sunday',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFD97706),
                           ),
                         ),
                       ],
@@ -95,7 +104,8 @@ class LeaderboardScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
             // Podium Section
             Row(
@@ -287,32 +297,68 @@ class _PodiumItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         // Avatar
-        Container(
-          width: isFirst ? 60 : 50,
-          height: isFirst ? 60 : 50,
-          decoration: BoxDecoration(
-            color: isUser ? const Color(0xFFEFF6FF) : Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.black, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15), 
-                offset: const Offset(2, 2)
+        Stack(
+          alignment: Alignment.topCenter,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: isFirst ? 60 : 50,
+              height: isFirst ? 60 : 50,
+              decoration: BoxDecoration(
+                color: isUser ? const Color(0xFFEFF6FF) : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isUser ? const Color(0xFF1D4ED8) : Colors.black, 
+                  width: isUser ? 3 : 2
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isUser ? const Color(0xFF1D4ED8).withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.15), 
+                    offset: isUser ? const Offset(0, 4) : const Offset(2, 2),
+                    blurRadius: isUser ? 8 : 0,
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              (user['name'] as String).substring(0, 1),
-              style: TextStyle(
-                fontSize: isFirst ? 24 : 20,
-                fontWeight: FontWeight.w900,
-                color: isUser ? const Color(0xFF1D4ED8) : GelatoTheme.textDark,
+              child: Center(
+                child: Text(
+                  (user['name'] as String).substring(0, 1),
+                  style: TextStyle(
+                    fontSize: isFirst ? 24 : 20,
+                    fontWeight: FontWeight.w900,
+                    color: isUser ? const Color(0xFF1D4ED8) : GelatoTheme.textDark,
+                  ),
+                ),
               ),
             ),
-          ),
+            if (isUser)
+              Positioned(
+                top: -12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDE68A),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFD97706), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        offset: const Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    'YOU',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // Podium Box
         Container(
           width: double.infinity,
@@ -320,11 +366,15 @@ class _PodiumItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            border: Border.all(color: Colors.black, width: 2),
-            boxShadow: const [
+            border: Border.all(
+              color: isUser ? const Color(0xFF1D4ED8) : Colors.black, 
+              width: isUser ? 3 : 2
+            ),
+            boxShadow: [
               BoxShadow(
-                color: Colors.black, 
-                offset: Offset(0, 4) // Only bottom shadow so it doesn't look weird on sides
+                color: isUser ? const Color(0xFF1D4ED8).withValues(alpha: 0.5) : Colors.black, 
+                offset: const Offset(0, 4), // Only bottom shadow so it doesn't look weird on sides
+                blurRadius: isUser ? 10 : 0,
               ),
             ],
           ),
@@ -333,10 +383,10 @@ class _PodiumItem extends StatelessWidget {
             children: [
               Text(
                 '${rank == 1 ? '1st' : rank == 2 ? '2nd' : '3rd'}',
-                style: const TextStyle(
-                  fontSize: 20,
+                style: TextStyle(
+                  fontSize: isUser ? 24 : 20,
                   fontWeight: FontWeight.w900,
-                  color: Colors.black,
+                  color: isUser ? const Color(0xFF1E40AF) : Colors.black,
                 ),
               ),
               const SizedBox(height: 4),
@@ -344,10 +394,10 @@ class _PodiumItem extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: Text(
                   user['name'],
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: isUser ? 16 : 14,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black87,
+                    color: isUser ? const Color(0xFF1E40AF) : Colors.black87,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -357,10 +407,10 @@ class _PodiumItem extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 user['points'].toString().split(' ')[0], // '1,450'
-                style: const TextStyle(
-                  fontSize: 12,
+                style: TextStyle(
+                  fontSize: isUser ? 14 : 12,
                   fontWeight: FontWeight.w900,
-                  color: Colors.black54,
+                  color: isUser ? const Color(0xFF1D4ED8) : Colors.black54,
                 ),
               ),
             ],

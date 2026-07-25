@@ -38,6 +38,13 @@ class FaqContactScreen extends StatelessWidget {
               subtitle: '+1 (800) 123-4567',
               color: GelatoTheme.green,
             ),
+            const SizedBox(height: 12),
+            _buildContactCard(
+              icon: Icons.access_time_rounded,
+              title: 'Support Hours',
+              subtitle: 'Monday–Friday, 9:00 AM–5:00 PM',
+              color: GelatoTheme.yellow,
+            ),
             
             const SizedBox(height: 32),
             
@@ -52,16 +59,32 @@ class FaqContactScreen extends StatelessWidget {
               answer: 'You can log your meals from the dashboard by tapping the "+" icon or going to the Food Frequency (FFQ) section.',
             ),
             _buildFaqItem(
-              question: 'How is my IDRS score calculated?',
-              answer: 'Your IDRS score is calculated based on your age, waist circumference, physical activity, and family history of diabetes.',
+              question: 'What does my Diabetes Risk Score mean?',
+              answer: 'Your Diabetes Risk Score indicates your risk based on your age, waist circumference, physical activity, and family history of diabetes.',
             ),
             _buildFaqItem(
               question: 'Can I sync with my smartwatch?',
               answer: 'Yes! We support syncing with Health Connect and Apple Health. You can enable this in your profile settings.',
             ),
             _buildFaqItem(
-              question: 'When is the endline assessment?',
-              answer: 'The endline assessment will unlock at the final week of your program.',
+              question: 'When do I complete the final assessment?',
+              answer: 'The final assessment will unlock at the final week of your program.',
+            ),
+            _buildFaqItem(
+              question: 'How do I reset my password?',
+              answer: 'You can reset your password from the login screen by tapping "Forgot Password" and following the instructions sent to your email.',
+            ),
+            _buildFaqItem(
+              question: 'Can I edit an incorrect entry?',
+              answer: 'Yes, you can edit your recent entries from the dashboard by tapping on the entry and selecting the edit option.',
+            ),
+            _buildFaqItem(
+              question: 'What happens if I miss a weekly assessment?',
+              answer: 'Don\'t worry! You can complete missed assessments at any time from the assessment tab. We recommend catching up as soon as possible to stay on track.',
+            ),
+            _buildFaqItem(
+              question: 'How do I report a technical problem?',
+              answer: 'If you experience any technical issues, please contact our support team using the email or phone number listed above.',
             ),
           ],
         ),
