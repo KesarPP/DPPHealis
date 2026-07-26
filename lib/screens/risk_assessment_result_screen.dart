@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../main.dart';
+import '../data/app_state.dart';
+
 class RiskAssessmentResultScreen extends StatelessWidget {
   final int age;
   final bool isMan;
@@ -155,6 +157,7 @@ class RiskAssessmentResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final calculatedScore = idrsScore;
+    AppState.bmi = bmi;
 
     return Scaffold(
       backgroundColor: GelatoTheme.bg,

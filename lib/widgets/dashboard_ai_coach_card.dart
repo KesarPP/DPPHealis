@@ -196,6 +196,7 @@ class _DashboardAICoachCardState extends State<DashboardAICoachCard>
         ],
       ),
     ),
-  );
-}
+      ),
+    );
+  }
 }

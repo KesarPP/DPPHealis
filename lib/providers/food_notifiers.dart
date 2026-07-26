@@ -76,13 +76,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
   }
 
   double get calorieGoal {
-    if (AppState.idrsScore >= 60) {
-      return 1500.0; // High risk - weight loss focus
-    } else if (AppState.idrsScore >= 30) {
-      return 1800.0; // Moderate risk
-    } else {
-      return 2000.0; // Low risk
-    }
+    return AppState.calculateDailyCalorieGoal();
   }
 
   void setSelectedDate(String date) {
