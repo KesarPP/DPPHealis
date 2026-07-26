@@ -8,6 +8,8 @@ class HealthConnectService implements HealthService {
     HealthDataType.STEPS,
     HealthDataType.DISTANCE_DELTA,
     HealthDataType.TOTAL_CALORIES_BURNED,
+    HealthDataType.ACTIVE_ENERGY_BURNED,
+    HealthDataType.EXERCISE_TIME,
   ];
 
   @override
@@ -136,6 +138,26 @@ class HealthConnectService implements HealthService {
 
   @override
   Future<int> getTodayActiveMinutes() async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: startOfDay,
+        endTime: now,
+        types: [HealthDataType.EXERCISE_TIME],
+      ).timeout(const Duration(seconds: 3));
+      
+      if (data.isNotEmpty) {
+        double totalMinutes = 0;
+        for (var point in data) {
+          totalMinutes += double.tryParse(point.value.toString()) ?? 0.0;
+        }
+        return totalMinutes.toInt();
+      }
+    } catch (e) {
+      debugPrint('Native active minutes fetch error: $e');
+    }
+
     return 0;
   }
 }

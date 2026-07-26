@@ -1,0 +1,34 @@
+name: dpp_session_timeline
+description: "Phase 1 - Gamified Session Timeline for the NDPP Flutter app."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Uncomment once real assets are dropped in:
+  # assets:
+  #   - assets/images/backgrounds/manuscript_bg.png
+  #   - assets/images/weeks/
+
+  # Uncomment once Cinzel/Cormorant font files are added:
+  # fonts:
+  #   - family: Cinzel
+  #     fonts:
+  #       - asset: assets/fonts/Cinzel-Regular.ttf
+  #   - family: Cormorant
+  #     fonts:
+  #       - asset: assets/fonts/Cormorant-Regular.ttf

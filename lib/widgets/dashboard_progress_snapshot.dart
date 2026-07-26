@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/gelato_theme.dart';
 import '../data/app_state.dart';
+import 'package:dpp_app/screens/food_tracking_screen.dart';
+import 'package:dpp_app/screens/activity_fitness_screen.dart';
 import '../screens/weigh_in_screen.dart';
 import '../main.dart';
 
@@ -243,9 +245,9 @@ class _DashboardProgressSnapshotState extends State<DashboardProgressSnapshot> {
               MaterialPageRoute(builder: (_) => const WeighInScreen()),
             );
           } else if (key == 'meals') {
-            MainShell.of(context)?.selectedIndex = 1;
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTrackingScreen()));
           } else if (key == 'activity') {
-            MainShell.of(context)?.selectedIndex = 2;
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityFitnessScreen()));
           } else {
             setState(() {
               _expandedKey = isExpanded ? null : key;

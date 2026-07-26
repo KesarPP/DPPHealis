@@ -48,21 +48,21 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private fun launchOrInstall(packageId: String) {
-        if (checkAppInstalled(packageId)) {
-            val launchIntent = packageManager.getLaunchIntentForPackage(packageId)
-            if (launchIntent != null) {
-                startActivity(launchIntent)
+        try {
+            val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageId"))
+            marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(marketIntent)
+        } catch (e: Exception) {
+            if (checkAppInstalled(packageId)) {
+                val launchIntent = packageManager.getLaunchIntentForPackage(packageId)
+                if (launchIntent != null) {
+                    startActivity(launchIntent)
+                    return
+                }
             }
-        } else {
-            try {
-                val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageId"))
-                marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(marketIntent)
-            } catch (e: Exception) {
-                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageId"))
-                webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(webIntent)
-            }
+            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageId"))
+            webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(webIntent)
         }
     }
 }
