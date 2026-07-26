@@ -827,11 +827,19 @@ class _PlayerPawnState extends State<_PlayerPawn> with SingleTickerProviderState
           child: child,
         );
       },
-      child: Image.asset(
-        'assets/images/heart_mascot_red.png',
-        width: 70, // Slightly taller as requested
+      child: Container(
+        width: 70,
         height: 70,
-        fit: BoxFit.contain,
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+        child: const Icon(
+          Icons.favorite,
+          color: Colors.white,
+          size: 40,
+        ),
       ),
     );
   }
