@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/coach_profile.dart';
+import '../main.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();

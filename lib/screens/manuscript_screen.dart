@@ -94,7 +94,7 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
         children: [
           // 1. Scholar's Desk Background (The background table around/behind the book)
           Image.asset(
-            'assets/images/session_timeline/manuscript_bg.png',
+            'assets/images/session_timeline/manuscript_bg_green1.png',
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => const DecoratedBox(
               decoration: BoxDecoration(
@@ -115,8 +115,20 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
           ),
 
           // 2. The Book Container (Open Manuscript State) sitting cleanly on the scholar's desk
-          SafeArea(
-            child: AnimatedBuilder(
+          Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.0015)
+              ..rotateX(-0.15),
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).size.height * 0.15,
+                  bottom: MediaQuery.of(context).size.height * 0.12,
+                  left: MediaQuery.of(context).size.width * 0.12,
+                  right: MediaQuery.of(context).size.width * 0.12,
+                ),
+                child: AnimatedBuilder(
               animation: _coverController,
               builder: (context, child) {
                 final opacity = (_isBookOpen && !_isOpening)
@@ -155,6 +167,8 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                 ),
               ),
             ),
+            ), // padding
+            ), // transform
           ),
 
           // 3. 3D Swinging Book Cover Overlay and bottom unlock button sitting right on the desk bg image
@@ -163,7 +177,19 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
               child: Column(
                 children: [
                   Expanded(
-                    child: AnimatedBuilder(
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.0015)
+                        ..rotateX(-0.15),
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).size.height * 0.15,
+                          bottom: 20,
+                          left: MediaQuery.of(context).size.width * 0.12,
+                          right: MediaQuery.of(context).size.width * 0.12,
+                        ),
+                        child: AnimatedBuilder(
                       animation: _coverController,
                       builder: (context, child) {
                         final progress = _coverController.value;
@@ -207,24 +233,30 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                           );
                         },
                       ),
+                      ),
+                      ),
                     ),
                     // Tap to unlock button adapted to the vintage gold/leather scroll theme
                     if (!_isBookOpen && !_isOpening)
                       Padding(
-                        padding: const EdgeInsets.only(top: 16),
+                        padding: EdgeInsets.only(
+                          top: 8,
+                          bottom: MediaQuery.of(context).size.height * 0.02, // moved down exactly
+                        ),
                         child: GestureDetector(
                           onTap: _openBook,
                           behavior: HitTestBehavior.opaque,
                           child: Container(
                             alignment: Alignment.center,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            width: 260, // decreased width
+                            height: 48, // decreased height
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
-                                colors: [Color(0xFFFDE4F2), Color(0xFFF8BBD0)], // Pastel pink gradient
+                                colors: [Color(0xFFFBB8D0), Color(0xFFF07BA8)], // Soft pink gradient
                               ),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(30),
                               border: Border.all(color: Colors.white, width: 2.0),
                               boxShadow: [
                                 BoxShadow(
@@ -239,18 +271,18 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.favorite_rounded,
-                                  color: Color(0xFFD81B60), // Darker pink icon
+                                  Icons.favorite,
+                                  color: Colors.white,
                                   size: 18,
                                 ),
                                 SizedBox(width: 8),
                                 Flexible(
                                   child: Text(
-                                    'TAP TO OPEN',
+                                    'OPEN MY JOURNAL',
                                     style: TextStyle(
-                                      color: Color(0xFFC2185B), // Dark pastel pink text
+                                      color: Colors.white,
                                       fontSize: 13,
-                                      fontWeight: FontWeight.w900,
+                                      fontWeight: FontWeight.w700,
                                       letterSpacing: 1.2,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -351,20 +383,15 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                         gradient: const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Color(0xFF3B2514), Color(0xFF1E1108)],
+                          colors: [Color(0xFFFBB8D0), Color(0xFFF07BA8)], // Soft pink gradient
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: ManuscriptColors.gold, width: 1.8),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white, width: 2.0),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.85),
+                            color: Colors.black.withValues(alpha: 0.15),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
-                          ),
-                          BoxShadow(
-                            color: ManuscriptColors.gold.withValues(alpha: 0.25),
-                            blurRadius: 2,
-                            spreadRadius: -1,
                           ),
                         ],
                       ),
@@ -375,9 +402,9 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                             child: Text(
                               'TURN PAGE',
                               style: TextStyle(
-                                color: ManuscriptColors.goldLight,
+                                color: Colors.white,
                                 fontSize: 11,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: 1.2,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -386,8 +413,8 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                           SizedBox(width: 6),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
-                            color: ManuscriptColors.gold,
-                            size: 13,
+                            color: Colors.white,
+                            size: 14,
                           ),
                         ],
                       ),
@@ -426,20 +453,15 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                               gradient: const LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
-                                colors: [Color(0xFF3B2514), Color(0xFF1E1108)],
+                                colors: [Color(0xFFFBB8D0), Color(0xFFF07BA8)], // Soft pink gradient
                               ),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: ManuscriptColors.gold, width: 1.8),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: Colors.white, width: 2.0),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.85),
+                                  color: Colors.black.withValues(alpha: 0.15),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
-                                ),
-                                BoxShadow(
-                                  color: ManuscriptColors.gold.withValues(alpha: 0.25),
-                                  blurRadius: 2,
-                                  spreadRadius: -1,
                                 ),
                               ],
                             ),
@@ -448,17 +470,17 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                               children: [
                                 Icon(
                                   Icons.arrow_back_ios_new_rounded,
-                                  color: ManuscriptColors.gold,
-                                  size: 13,
+                                  color: Colors.white,
+                                  size: 14,
                                 ),
                                 SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
                                     'PREVIOUS',
                                     style: TextStyle(
-                                      color: ManuscriptColors.goldLight,
+                                      color: Colors.white,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w900,
+                                      fontWeight: FontWeight.w700,
                                       letterSpacing: 1.1,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -481,20 +503,15 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                               gradient: const LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
-                                colors: [Color(0xFF7A1C1C), Color(0xFF4A1010)],
+                                colors: [Color(0xFFFBB8D0), Color(0xFFF07BA8)], // Soft pink gradient
                               ),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: ManuscriptColors.gold, width: 1.8),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: Colors.white, width: 2.0),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.85),
+                                  color: Colors.black.withValues(alpha: 0.15),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
-                                ),
-                                BoxShadow(
-                                  color: ManuscriptColors.gold.withValues(alpha: 0.3),
-                                  blurRadius: 3,
-                                  spreadRadius: -1,
                                 ),
                               ],
                             ),
@@ -503,17 +520,17 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                               children: [
                                 Icon(
                                   Icons.close_rounded,
-                                  color: ManuscriptColors.goldLight,
-                                  size: 15,
+                                  color: Colors.white,
+                                  size: 16,
                                 ),
                                 SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
                                     'CLOSE BOOK',
                                     style: TextStyle(
-                                      color: ManuscriptColors.goldLight,
+                                      color: Colors.white,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w900,
+                                      fontWeight: FontWeight.w700,
                                       letterSpacing: 1.1,
                                     ),
                                     overflow: TextOverflow.ellipsis,

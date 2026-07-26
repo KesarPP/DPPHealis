@@ -46,24 +46,14 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
     items = [
       _TimelineItem(
         id: 0,
-        text: "Log a\nmeal",
-        done: widget.mealLogCount >= 1,
-        mainIcon: Icons.restaurant_rounded,
-        timeText: widget.mealLogCount >= 1 ? "Logged" : "Pending",
-        statusText: widget.mealLogCount >= 1 ? "${widget.mealLogCount} logged" : "Log breakfast",
+        text: "Weekly\nweigh in",
+        done: widget.weightLogged,
+        mainIcon: Icons.monitor_weight_rounded,
+        timeText: widget.weightLogged ? "Done" : "Pending",
+        statusText: widget.weightLogged ? "Logged" : "Check-in",
       ),
       _TimelineItem(
         id: 1,
-        text: "Log in\nactivity",
-        done: activityDone,
-        mainIcon: Icons.directions_run_rounded,
-        timeText: activityDone ? "Done" : "Pending",
-        statusText: activityDone
-            ? (qualifyingMins > 0 ? "$qualifyingMins mins logged" : (steps > 0 ? "$steps steps logged" : "Logged"))
-            : "≥10m session",
-      ),
-      _TimelineItem(
-        id: 2,
         text: "Weekly\nsession",
         done: widget.lessonCompleted,
         mainIcon: Icons.groups_rounded,
@@ -71,12 +61,22 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
         statusText: widget.lessonCompleted ? "Completed" : "Join session",
       ),
       _TimelineItem(
+        id: 2,
+        text: "Log a\nmeal",
+        done: widget.mealLogCount >= 1,
+        mainIcon: Icons.restaurant_rounded,
+        timeText: widget.mealLogCount >= 1 ? "Logged" : "Pending",
+        statusText: widget.mealLogCount >= 1 ? "${widget.mealLogCount} logged" : "Log breakfast",
+      ),
+      _TimelineItem(
         id: 3,
-        text: "Weekly\nweigh in",
-        done: widget.weightLogged,
-        mainIcon: Icons.monitor_weight_rounded,
-        timeText: widget.weightLogged ? "Done" : "Pending",
-        statusText: widget.weightLogged ? "Logged" : "Check-in",
+        text: "Log in\nactivity",
+        done: activityDone,
+        mainIcon: Icons.directions_run_rounded,
+        timeText: activityDone ? "Done" : "Pending",
+        statusText: activityDone
+            ? (qualifyingMins > 0 ? "$qualifyingMins mins logged" : (steps > 0 ? "$steps steps logged" : "Logged"))
+            : "≥10m session",
       ),
     ];
 
@@ -154,6 +154,11 @@ class _DashboardTimelineState extends State<DashboardTimeline> with TickerProvid
         borderRadius: GelatoTheme.cardRadius,
         border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
+        image: const DecorationImage(
+          image: AssetImage('assets/images/gelato_journey_bg.png'),
+          fit: BoxFit.cover,
+          opacity: 0.6,
+        ),
       ),
       child: AnimatedBuilder(
         animation: Listenable.merge([_introController, _pulseController]),

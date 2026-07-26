@@ -37,7 +37,7 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: GelatoTheme.blue,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.black, width: 1.5),
           boxShadow: GelatoTheme.cardShadow,
@@ -54,7 +54,7 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
                     Icon(Icons.dashboard_rounded, color: GelatoTheme.purpleDark, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      "Today's Overview",
+                      "Weight Summary",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -68,30 +68,7 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
               ],
             ),
             const SizedBox(height: 8),
-            // Merged Weight & Activity Sections
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _WeightSection(isWeekly: _selectedSegment == 0),
-                ),
-                Container(
-                  width: 1,
-                  height: 110,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  color: Colors.black.withValues(alpha: 0.08),
-                ),
-                Expanded(
-                  child: _ActivitySection(
-                    isWeekly: _selectedSegment == 0,
-                    trailing30Days: widget.trailing30Days,
-                    programWeek: widget.programWeek,
-                    missionGoalMode: widget.missionGoalMode,
-                    stretchMultiplier: widget.stretchMultiplier,
-                  ),
-                ),
-              ],
-            ),
+            const _WeightSection(),
           ],
         ),
       ),
@@ -163,9 +140,138 @@ class _DashboardHeroCardsState extends State<DashboardHeroCards> {
   }
 }
 
+class DashboardActivityCard extends StatefulWidget {
+  final List<DailyAggregate> trailing30Days;
+  final int programWeek;
+  final MissionGoalMode missionGoalMode;
+  final double stretchMultiplier;
+  const DashboardActivityCard({
+    super.key,
+    required this.trailing30Days,
+    required this.programWeek,
+    this.missionGoalMode = MissionGoalMode.ndppStrict,
+    this.stretchMultiplier = 1.0,
+  });
+
+  @override
+  State<DashboardActivityCard> createState() => _DashboardActivityCardState();
+}
+
+class _DashboardActivityCardState extends State<DashboardActivityCard> {
+  int _selectedSegment = 0; // 0 = Weekly, 1 = Monthly
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: GelatoTheme.yellow,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black, width: 1.5),
+          boxShadow: GelatoTheme.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.directions_run_rounded, color: GelatoTheme.orangeDark, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Activity Summary",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: GelatoTheme.textDark,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                  ],
+                ),
+                _buildSegmentedToggle(const Color(0xFF1E293B), Colors.white, const Color(0xFF64748B)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _ActivitySection(
+              isWeekly: _selectedSegment == 0,
+              trailing30Days: widget.trailing30Days,
+              programWeek: widget.programWeek,
+              missionGoalMode: widget.missionGoalMode,
+              stretchMultiplier: widget.stretchMultiplier,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedToggle(Color pillColor, Color selectedTextColor, Color unselectedTextColor) {
+    return Container(
+      width: 114,
+      height: 26,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
+      ),
+      child: Stack(
+        children: [
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            top: 2,
+            bottom: 2,
+            left: _selectedSegment == 0 ? 2 : 56,
+            width: 54,
+            child: Container(
+              decoration: BoxDecoration(
+                color: pillColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(child: _buildSegmentButton('Weekly', 0, selectedTextColor, unselectedTextColor)),
+              Expanded(child: _buildSegmentButton('Monthly', 1, selectedTextColor, unselectedTextColor)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSegmentButton(String title, int index, Color selectedTextColor, Color unselectedTextColor) {
+    final isSelected = _selectedSegment == index;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        setState(() {
+          _selectedSegment = index;
+        });
+      },
+      child: Center(
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected ? selectedTextColor : unselectedTextColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
 class _WeightSection extends StatelessWidget {
-  final bool isWeekly;
-  const _WeightSection({required this.isWeekly});
+  const _WeightSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -199,82 +305,61 @@ class _WeightSection extends StatelessWidget {
         ? ((82.5 - currentWeight) / (82.5 - goalWeight)).clamp(0.08, 1.0)
         : 1.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Section Title
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.monitor_weight_rounded, size: 14, color: Color(0xFF2563EB)),
-            ),
-            const SizedBox(width: 6),
-            const Text(
-              'Weight',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        // Current & Goal boxes
-        Row(
-          children: [
-            Expanded(
-              child: _buildMiniStat('Current', '${currentWeight.toStringAsFixed(0)} kg', const Color(0xFFEFF6FF), const Color(0xFF1D4ED8)),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _buildMiniStat('Goal', '${goalWeight.toStringAsFixed(0)} kg', const Color(0xFFECFDF5), const Color(0xFF047857)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        // To Go Card below Current & Goal
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Expanded(
+          flex: 2,
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: FittedBox(
+              Expanded(
+                child: _buildMiniStat('Current', '${currentWeight.toStringAsFixed(0)} kg', const Color(0xFFEFF6FF), const Color(0xFF1D4ED8)),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildMiniStat('Goal', '${goalWeight.toStringAsFixed(0)} kg', const Color(0xFFECFDF5), const Color(0xFF047857)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 3,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         '${toGo.toStringAsFixed(1)} kg to go!',
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                       ),
                     ),
-                  ),
-                  Text(
-                    isWeekly ? 'Weekly' : 'Monthly',
-                    style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 5,
-                  backgroundColor: const Color(0xFFE2E8F0),
-                  color: const Color(0xFF10B981),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFE2E8F0),
+                    color: const Color(0xFF10B981),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -344,95 +429,90 @@ class _ActivitySection extends StatelessWidget {
 
     final double ringValue = (summary.progressPercentage / 100.0).clamp(0.0, 1.0);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Section Title
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
-                borderRadius: BorderRadius.circular(6),
+        Expanded(
+          flex: 2,
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildMiniStat('Goal', summary.goalText, const Color(0xFFFFF7ED), const Color(0xFFC2410C)),
               ),
-              child: const Icon(Icons.directions_run_rounded, size: 14, color: Color(0xFFEA580C)),
-            ),
-            const SizedBox(width: 6),
-            const Text(
-              'Activity',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildMiniStat('Done', summary.completedText, const Color(0xFFFEF3C7), const Color(0xFFB45309)),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 5),
-        // Progress Ring
-        Center(
-          child: SizedBox(
-            width: 44,
-            height: 44,
-            child: Stack(
-              fit: StackFit.expand,
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 3,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFFEDD5)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(
-                  value: ringValue,
-                  strokeWidth: 5,
-                  backgroundColor: const Color(0xFFFEF3C7),
-                  color: const Color(0xFFF59E0B),
-                  strokeCap: StrokeCap.round,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${summary.progressPercentage}% completed!',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF9A3412)),
+                      ),
+                    ),
+                  ],
                 ),
-                Center(
-                  child: Text(
-                    '${summary.progressPercentage}%',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF9A3412)),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: ringValue,
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFFFEDD5),
+                    color: const Color(0xFFF59E0B),
                   ),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 5),
-        // Calorie Summary Card (Only Calories, No Active Mins)
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF7ED),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFFFEDD5)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Goal:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF9A3412))),
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(summary.goalText, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFC2410C))),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 3),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Done:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF9A3412))),
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(summary.completedText, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF9A3412))),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF9A3412)),
+          ),
+          const SizedBox(height: 1),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: textColor),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

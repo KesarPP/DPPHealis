@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       if (mounted) {
         setState(() {
           _isLoggedIn = prefs.getBool('is_logged_in') ?? (user != null);
-          _userRole = role;
+          _userRole = role ?? 'user';
           _isProfileComplete = isProfileComplete;
         });
       }
