@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:dpp_app/screens/food_tracking_screen.dart';
+import 'package:dpp_app/screens/activity_fitness_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -9,6 +11,9 @@ import '../widgets/dashboard_hero_cards.dart';
 import '../widgets/dashboard_timeline.dart';
 import '../widgets/dashboard_energy_balance_card.dart';
 import '../widgets/user_side_drawer.dart';
+import '../main.dart';
+import '../providers/food_notifiers.dart';
+import 'package:provider/provider.dart';
 import '../services/health_sync_service.dart';
 import '../services/activity_metrics_engine.dart';
 import '../services/achievements_service.dart';
@@ -128,10 +133,29 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       }
       if (mounted && _past30Days.every((item) => item.totalSteps == 0)) {
         setState(() {
-          _past30Days = quick;
+          _past30Days = quick.every((item) => item.totalSteps == 0) ? _generateSyncedDefaultAggregates(now) : quick;
         });
       }
     } catch (_) {}
+  }
+
+  List<DailyAggregate> _generateSyncedDefaultAggregates(DateTime now) {
+    List<DailyAggregate> list = [];
+    for (int i = 29; i >= 0; i--) {
+      final d = now.subtract(Duration(days: i));
+      list.add(DailyAggregate(
+        date: d,
+        totalSteps: 0,
+        totalDistance: 0.0,
+        totalCalories: 0.0,
+        totalActiveMinutes: 0,
+        qualifyingActiveMinutes: 0,
+        isActiveDay: false,
+        coreSessions: const [],
+        lifestyleSessions: const [],
+      ));
+    }
+    return list;
   }
 
   Future<void> _completeTour() async {
@@ -560,15 +584,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       final thirtyDaysAgo = now.subtract(const Duration(days: 29));
       List<DailyAggregate> past30Days = [];
       try {
-        past30Days = await healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 25));
+        past30Days = await healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 4));
       } catch (e) {
         debugPrint('Dashboard getStatsForInterval error: $e');
       }
       
-      if (past30Days.isEmpty) {
-        for (int i = 29; i >= 0; i--) {
-          past30Days.add(DailyAggregate.empty(now.subtract(Duration(days: i))));
-        }
+      if (past30Days.isEmpty || past30Days.every((d) => d.totalSteps == 0 && d.totalActiveMinutes == 0)) {
+        past30Days = _generateSyncedDefaultAggregates(now);
       }
       
       final int programWeek = _programWeek;
@@ -698,7 +720,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       },
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: const Color(0xFFF3E8FF).withValues(alpha: 0.5),
+        backgroundColor: GelatoTheme.bg,
         endDrawer: const UserSideDrawer(),
         body: SafeArea(
           child: Stack(
@@ -709,7 +731,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                 ),
               ),
               IgnorePointer(
-                ignoring: _showTourGuide,
+                ignoring: _showTourGuide && _selectedCoach != null,
                 child: RefreshIndicator(
                   onRefresh: _loadData,
                   child: CustomScrollView(
@@ -722,13 +744,22 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 14)),
   
-                    // 2. Hero Progress Area (Weight & Activity)
+                    // 2. Hero Progress Area (Weight)
                     SliverToBoxAdapter(
                       child: DashboardHeroCards(
                               trailing30Days: _past30Days,
                               programWeek: _programWeek,
                               syncStatus: _syncStatus,
                               onRetrySync: _loadData,
+                            ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 14)),
+
+                    // 2.5 Hero Progress Area (Activity)
+                    SliverToBoxAdapter(
+                      child: DashboardActivityCard(
+                              trailing30Days: _past30Days,
+                              programWeek: _programWeek,
                             ),
                     ),
                   const SliverToBoxAdapter(child: SizedBox(height: 14)),
@@ -771,21 +802,129 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
     final nowStr = "${now.year}-${now.month}-${now.day}";
-    setState(() {
-      if (index == 0) {
-        _mealLogCount = (_mealLogCount >= 2) ? 0 : _mealLogCount + 1;
-        prefs.setInt('mission_meal_$nowStr', _mealLogCount);
-      } else if (index == 1) {
-        _activityLogged = !_activityLogged;
-      } else if (index == 2) {
-        _lessonCompleted = !_lessonCompleted;
-        prefs.setBool('mission_lesson_$nowStr', _lessonCompleted);
-      } else if (index == 3) {
+    if (index == 0) {
+      setState(() {
         _weightLogged = !_weightLogged;
-        prefs.setBool('mission_weight_$nowStr', _weightLogged);
+      });
+      prefs.setBool('mission_weight_$nowStr', _weightLogged);
+    } else if (index == 1) {
+      setState(() {
+        _lessonCompleted = !_lessonCompleted;
+      });
+      prefs.setBool('mission_lesson_$nowStr', _lessonCompleted);
+    } else if (index == 2) {
+      _showMealLogBottomSheet();
+    } else if (index == 3) {
+      if (!_activityLogged) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityFitnessScreen()));
       }
-    });
+    }
   }
+
+  void _showMealLogBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: GelatoTheme.bg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        final foodNotifier = ctx.watch<FoodDiaryNotifier>();
+        final dailyLog = foodNotifier.dailyLog;
+        
+        final meals = [
+          {'name': 'Breakfast', 'type': 'Breakfast', 'icon': Icons.breakfast_dining_rounded, 'color': GelatoTheme.pink},
+          {'name': 'Snack 1', 'type': 'Snack 1', 'icon': Icons.bakery_dining_rounded, 'color': GelatoTheme.blue},
+          {'name': 'Lunch', 'type': 'Lunch', 'icon': Icons.lunch_dining_rounded, 'color': GelatoTheme.green},
+          {'name': 'Snack 2', 'type': 'Snack 2', 'icon': Icons.apple_rounded, 'color': GelatoTheme.purple},
+          {'name': 'Dinner', 'type': 'Dinner', 'icon': Icons.dinner_dining_rounded, 'color': GelatoTheme.orange},
+        ];
+
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+              const Text(
+                'Today\'s Meals',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
+              ),
+              const SizedBox(height: 20),
+              ...meals.map((meal) {
+                final type = meal['type'] as String;
+                final bool hasItems = dailyLog != null && dailyLog.entries.any((e) => e.mealType == type);
+                final mealColor = meal['color'] as Color;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: mealColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.black, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 0, offset: const Offset(2, 2)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.4),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          meal['icon'] as IconData,
+                          size: 20,
+                          color: GelatoTheme.textDark,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          meal['name'] as String,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: GelatoTheme.textDark,
+                          ),
+                        ),
+                      ),
+                      if (hasItems)
+                        const Icon(Icons.check_circle_rounded, color: GelatoTheme.greenDark, size: 24)
+                      else
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(color: Colors.black, width: 1.5),
+                            ),
+                            minimumSize: Size.zero,
+                          ),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTrackingScreen()));
+                          },
+                          child: const Text('Tap to log in', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: GelatoTheme.textDark)),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  },
+);
+}
+
 }
 
 class _DotsPainter extends CustomPainter {

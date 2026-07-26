@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -162,19 +163,24 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
   Widget _buildCardContent(BuildContext context, EnergyBalanceModel model) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F8EA), // Gelato Days soft green tone
+        color: GelatoTheme.green,
         borderRadius: GelatoTheme.cardRadius,
         border: GelatoTheme.cardBorder,
         boxShadow: GelatoTheme.cardShadow,
+        image: const DecorationImage(
+          image: AssetImage('assets/images/gelato_wellness_bg.png'),
+          fit: BoxFit.cover,
+          opacity: 0.2,
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header Row centered in middle of card
+          // Header Row aligned to start
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Container(
                 width: 26,
@@ -246,14 +252,14 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
           label: 'Calory Requirement',
           value: '${model.calorieNeed!.round()} kcal',
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 2),
         _buildSimpleMetricItem(
           icon: Icons.restaurant_rounded,
           color: const Color(0xFF16A34A),
           label: 'Caloric Intake',
           value: '${model.calorieGained.round()} kcal',
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 2),
         _buildSimpleMetricItem(
           icon: Icons.local_fire_department_rounded,
           color: const Color(0xFFEA580C),
@@ -315,90 +321,75 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
     final double target = model.calorieNeed ?? 2000.0;
     final double intake = model.calorieGained;
     final double burned = model.caloriesBurned;
-    final double net = intake - burned;
-    final bool isDeficit = net <= target;
 
-    String p1 = "1. Target: ${target.round()} kcal daily.";
-    String p2 = "2. Logged: ${intake.round()} in, ${burned.round()} out.";
-    String p3 = isDeficit
-        ? "3. Status: Great deficit! Keep up brisk activity."
-        : "3. Recommendation: Surplus! Add 20m brisk walk.";
+    String classification;
+    if (burned > (intake - target) + 50) {
+      classification = 'active';
+    } else if ((intake - target).abs() <= 50 || ((intake - target) - burned).abs() <= 50) {
+      classification = 'perfect';
+    } else {
+      classification = 'inconsistent';
+    }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Top Golden/Wooden Roller with finials and patterned ribbon
-          SizedBox(
-            height: 18,
-            child: CustomPaint(
-              painter: _VintageRollerPainter(isTop: true),
+    int dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
+
+    final List<String> activeMsgs = [
+      "Today's calorie\nburn was\noutstanding.\nYour\nconsistency\nis showing."
+    ];
+    final List<String> perfectMsgs = [
+      "Your energy balance is right on target today.\nKeep this rhythm going!",
+      "Calories in and out are well balanced.\nConsistency like this leads to progress.",
+    ];
+    final List<String> inconsistentMsgs = [
+      "Today's calorie balance was a little off.\nTomorrow is a fresh opportunity.",
+      "Your intake and activity weren't quite aligned.\nSmall adjustments make a big difference.",
+    ];
+
+    String msg;
+    if (classification == 'active') {
+      msg = activeMsgs[dayOfYear % activeMsgs.length];
+    } else if (classification == 'perfect') {
+      msg = perfectMsgs[dayOfYear % perfectMsgs.length];
+    } else {
+      msg = inconsistentMsgs[dayOfYear % inconsistentMsgs.length];
+    }
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Transform.translate(
+          offset: const Offset(0, -10), // Move image slightly upwards
+          child: Transform.scale(
+            scale: 1.30,
+            child: Image.asset(
+              'assets/images/todays_analysis.png',
+              fit: BoxFit.contain,
             ),
           ),
-          // Scroll Parchment Body with Ornate Side Borders
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10), // inset so rollers protrude past paper edges
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAEDE3), // Vintage blush parchment tone
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 4, offset: const Offset(0, 2)),
-                  ],
-                ),
-                child: CustomPaint(
-                  painter: _VintageParchmentAndBordersPainter(),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 6, 18, 6), // space inside decorative side borders
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.history_edu_rounded, color: Color(0xFF8B2635), size: 16),
-                            const SizedBox(width: 5),
-                            const Expanded(
-                              child: Text(
-                                "Today's Analysis",
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF7A1F2D),
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(p1, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF5A2A27))),
-                              Text(p2, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF5A2A27))),
-                              Text(p3, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF8B2635))),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+        ),
+        Align(
+          alignment: const Alignment(0, -0.2), // Moved up further into the drawn circle
+          child: SizedBox(
+            width: 95, // Hard constraint to guarantee it fits entirely inside the parchment
+            child: Text(
+              msg, // Display exact newlines as requested
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 9.5, // Slightly smaller to ensure it fits the tight width
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF4A5D23), // Dark olive green
+                height: 1.2,
+                shadows: [
+                  Shadow(
+                    color: Colors.white,
+                    blurRadius: 4,
                   ),
-                ),
+                ],
               ),
             ),
           ),
-          // Bottom Golden/Wooden Roller with finials and patterned ribbon
-          SizedBox(
-            height: 18,
-            child: CustomPaint(
-              painter: _VintageRollerPainter(isTop: false),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -491,115 +482,450 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
   }
 }
 
-class _VintageRollerPainter extends CustomPainter {
-  final bool isTop;
-  _VintageRollerPainter({required this.isTop});
+class _PremiumAnalysisCard extends StatefulWidget {
+  final EnergyBalanceModel model;
+  final int programWeek;
+
+  const _PremiumAnalysisCard({required this.model, this.programWeek = 8});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    // Roller spans width 0 to size.width, height 0 to size.height (18px)
-    // Cylinder rod runs from x = 12 to x = size.width - 12
-    final Rect rodRect = Rect.fromLTRB(12, 2, size.width - 12, size.height - 2);
-    final Paint rodPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF8C5008), // Dark golden brown edge
-          Color(0xFFE5A93B), // Gold gleam
-          Color(0xFFFDE08D), // Highlight
-          Color(0xFFB87311), // Mid gold
-          Color(0xFF6B3C05), // Shadow edge
+  State<_PremiumAnalysisCard> createState() => _PremiumAnalysisCardState();
+}
+
+class _PremiumAnalysisCardState extends State<_PremiumAnalysisCard> with TickerProviderStateMixin {
+  late AnimationController _breathingController;
+  late AnimationController _entranceController;
+  late AnimationController _twinkleController;
+
+  late Animation<double> _shieldScale;
+  late Animation<double> _glowOpacity;
+  late Animation<Offset> _messageSlide;
+  late Animation<double> _messageFade;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _breathingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat(reverse: true);
+
+    _twinkleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _shieldScale = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _breathingController, curve: Curves.easeInOutSine),
+    );
+
+    _glowOpacity = Tween<double>(begin: 0.3, end: 0.7).animate(
+      CurvedAnimation(parent: _breathingController, curve: Curves.easeInOutSine),
+    );
+
+    _messageSlide = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(parent: _entranceController, curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic)),
+    );
+
+    _messageFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: const Interval(0.3, 1.0, curve: Curves.easeIn)),
+    );
+
+    // Start entrance
+    _entranceController.forward();
+  }
+
+  @override
+  void dispose() {
+    _breathingController.dispose();
+    _entranceController.dispose();
+    _twinkleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine status and message
+    final double target = widget.model.calorieNeed ?? 2000.0;
+    final double intake = widget.model.calorieGained;
+    final double burned = widget.model.caloriesBurned;
+
+    String classification;
+    if (burned > (intake - target) + 50) {
+      classification = 'active';
+    } else if ((intake - target).abs() <= 50 || ((intake - target) - burned).abs() <= 50) {
+      classification = 'perfect';
+    } else {
+      classification = 'inconsistent';
+    }
+
+    int dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
+
+    final List<String> activeMsgs = [
+      "Today's calorie burn was outstanding.\nYour consistency is showing.",
+      "Fantastic effort staying active!\nKeep balancing activity with good nutrition.",
+    ];
+    final List<String> perfectMsgs = [
+      "Your energy balance is right on target today.\nKeep this rhythm going!",
+      "Calories in and out are well balanced.\nConsistency like this leads to progress.",
+    ];
+    final List<String> inconsistentMsgs = [
+      "Today's calorie balance was a little off.\nTomorrow is a fresh opportunity.",
+      "Your intake and activity weren't quite aligned.\nSmall adjustments make a big difference.",
+    ];
+
+    String msg;
+    IconData statusIcon;
+    Color iconColor;
+
+    if (classification == 'active') {
+      msg = activeMsgs[dayOfYear % activeMsgs.length];
+      statusIcon = Icons.local_fire_department_rounded;
+      iconColor = Colors.orange;
+    } else if (classification == 'perfect') {
+      msg = perfectMsgs[dayOfYear % perfectMsgs.length];
+      statusIcon = Icons.star_rounded;
+      iconColor = Colors.amber;
+    } else {
+      msg = inconsistentMsgs[dayOfYear % inconsistentMsgs.length];
+      statusIcon = Icons.trending_down_rounded;
+      iconColor = Colors.grey.shade700;
+    }
+
+    final lines = msg.split("\n");
+    final line1 = lines.isNotEmpty ? lines[0] : "";
+    final line2 = lines.length > 1 ? lines[1] : "";
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      // 3px gradient border wrapper
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFF8A65)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withOpacity(0.3),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
         ],
-      ).createShader(rodRect);
-    
-    final RRect rrod = RRect.fromRectAndRadius(rodRect, const Radius.circular(5));
-    canvas.drawRRect(rrod, rodPaint);
-    canvas.drawRRect(rrod, Paint()..color = const Color(0xFF4A2600)..style = PaintingStyle.stroke..strokeWidth = 1);
+      ),
+      child: Container(
+        // Inner container with background
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDECE8), // soft cream-to-warm peach
+          borderRadius: BorderRadius.circular(15.5),
+          border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15.5),
+          child: Stack(
+            children: [
+              // Background pattern
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _HealthcarePatternPainter(),
+                ),
+              ),
 
-    // Draw Ornate Red/Orange Patterned Bands near ends (mimicking scroll bands)
-    final Paint bandBg = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFFB71C1C), Color(0xFFFF5722), Color(0xFFD84315)],
-      ).createShader(rodRect);
-    
-    void drawBand(double xLeft, double xRight) {
-      final Rect bandRect = Rect.fromLTRB(xLeft, 2, xRight, size.height - 2);
-      canvas.drawRect(bandRect, bandBg);
-      final Paint ringPaint = Paint()..color = const Color(0xFFFFD54F)..strokeWidth = 1.2;
-      canvas.drawLine(Offset(xLeft, 2), Offset(xLeft, size.height - 2), ringPaint);
-      canvas.drawLine(Offset(xRight, 2), Offset(xRight, size.height - 2), ringPaint);
-      final Paint dotPaint = Paint()..color = const Color(0xFFFFE082);
-      for (double y = 4; y < size.height - 3; y += 4) {
-        canvas.drawCircle(Offset((xLeft + xRight) / 2, y), 1.0, dotPaint);
-      }
-    }
-    drawBand(16, 23);
-    drawBand(size.width - 23, size.width - 16);
+              // Bottom Accent Wave
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 40,
+                child: CustomPaint(
+                  painter: _BottomAccentWavePainter(),
+                ),
+              ),
 
-    // Draw Golden Finials / Carved End Caps (Triangles/Knobs on both ends)
-    void drawFinial(double xStart, double xTip, bool isLeft) {
-      final Path path = Path();
-      final double midY = size.height / 2;
-      path.moveTo(xStart, 3);
-      path.lineTo(xTip, midY);
-      path.lineTo(xStart, size.height - 3);
-      path.close();
+              // Main Content
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Shield Illustration Section
+                    SizedBox(
+                      height: 50, // decreased height for smaller shield
+                      child: Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Glowing radial light
+                          AnimatedBuilder(
+                            animation: _glowOpacity,
+                            builder: (ctx, child) {
+                              return Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      Colors.orangeAccent.withOpacity(_glowOpacity.value),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
 
-      final Paint finialPaint = Paint()
-        ..shader = LinearGradient(
-          colors: [const Color(0xFFFFD54F), const Color(0xFFB87311)],
-          begin: isLeft ? Alignment.centerRight : Alignment.centerLeft,
-          end: isLeft ? Alignment.centerLeft : Alignment.centerRight,
-        ).createShader(Rect.fromLTRB(math.min(xStart, xTip), 0, math.max(xStart, xTip), size.height));
+                          // Animated Shield & decorations
+                          ScaleTransition(
+                            scale: _shieldScale,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Shield base with gradient & glossy shadow - made wider to fit text
+                                Transform.scale(
+                                  scaleX: 1.35,
+                                  scaleY: 0.95,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (bounds) => const LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
+                                        ).createShader(bounds),
+                                        child: const Icon(Icons.shield, size: 55, color: Colors.white),
+                                      ),
+                                      // Glossy highlight (inner outline)
+                                      const Icon(Icons.shield_outlined, size: 55, color: Colors.white54),
+                                    ],
+                                  ),
+                                ),
+                                // Minimal healthy lifestyle symbols around the shield
+                                Positioned(
+                                  top: -2,
+                                  left: -20,
+                                  child: Icon(Icons.eco_rounded, color: Colors.green.shade300.withOpacity(0.8), size: 16),
+                                ),
+                                Positioned(
+                                  top: -2,
+                                  right: -20,
+                                  child: Icon(Icons.directions_bike_rounded, color: Colors.purple.shade300.withOpacity(0.8), size: 16),
+                                ),
+                                Positioned(
+                                  bottom: 12,
+                                  left: -18,
+                                  child: Icon(Icons.fitness_center_rounded, color: Colors.blue.shade300.withOpacity(0.8), size: 16),
+                                ),
+                                Positioned(
+                                  bottom: 12,
+                                  right: -18,
+                                  child: Icon(Icons.water_drop_rounded, color: Colors.cyan.shade300.withOpacity(0.8), size: 16),
+                                ),
 
-      canvas.drawPath(path, finialPaint);
-      canvas.drawPath(path, Paint()..color = const Color(0xFF5C3000)..style = PaintingStyle.stroke..strokeWidth = 1);
-      canvas.drawCircle(Offset((xStart + xTip) / 2, midY), 1.8, Paint()..color = const Color(0xFFFFF8E1));
-    }
-    drawFinial(12, 1, true);
-    drawFinial(size.width - 12, size.width - 1, false);
+                                // Twinkling Sparkles
+                                AnimatedBuilder(
+                                  animation: _twinkleController,
+                                  builder: (ctx, child) {
+                                    return Positioned(
+                                      top: -10,
+                                      right: -4,
+                                      child: Opacity(
+                                        opacity: _twinkleController.value,
+                                        child: const Icon(Icons.auto_awesome, color: Colors.amber, size: 12),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                AnimatedBuilder(
+                                  animation: _twinkleController,
+                                  builder: (ctx, child) {
+                                    return Positioned(
+                                      bottom: 4,
+                                      left: -4,
+                                      child: Opacity(
+                                        opacity: 1.0 - _twinkleController.value,
+                                        child: const Icon(Icons.auto_awesome, color: Colors.amber, size: 8),
+                                      ),
+                                    );
+                                  },
+                                ),
+
+                                // Text inside shield
+                                const Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      "Today's",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 10.0, // increased font size to match larger shield
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black87,
+                                        letterSpacing: -0.2,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Analysis",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 10.0,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black87,
+                                        letterSpacing: -0.2,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 4), // significantly reduced spacing
+
+                    // Translucent Message Panel
+                    SlideTransition(
+                      position: _messageSlide,
+                      child: FadeTransition(
+                        opacity: _messageFade,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.3), // white glass effect
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.amber, width: 1.5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Message
+                                  Expanded(
+                                    child: RichText(
+                                      text: TextSpan(
+                                        style: const TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF4E342E), // Dark brown
+                                          height: 1.35,
+                                        ),
+                                        children: [
+                                          TextSpan(text: line1 + "\n"),
+                                          TextSpan(
+                                            text: line2,
+                                            style: const TextStyle(color: Color(0xFFD84315)), // Highlight second line in orange/rust
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _VintageParchmentAndBordersPainter extends CustomPainter {
+class _HealthcarePatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Draw decorative left and right border strips (width 14)
-    final Paint borderBg = Paint()..color = const Color(0xFFF7DAC8);
-    canvas.drawRect(Rect.fromLTRB(0, 0, 14, size.height), borderBg);
-    canvas.drawRect(Rect.fromLTRB(size.width - 14, 0, size.width, size.height), borderBg);
+    final paint = Paint()
+      ..color = Colors.black.withOpacity(0.04)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
 
-    final Paint borderLine = Paint()..color = const Color(0xFFE65100)..strokeWidth = 1.0;
-    canvas.drawLine(Offset(14, 0), Offset(14, size.height), borderLine);
-    canvas.drawLine(Offset(size.width - 14, 0), Offset(size.width - 14, size.height), borderLine);
-    canvas.drawLine(Offset(2, 0), Offset(2, size.height), borderLine);
-    canvas.drawLine(Offset(size.width - 2, 0), Offset(size.width - 2, size.height), borderLine);
+    final dotPaint = Paint()
+      ..color = Colors.black.withOpacity(0.03)
+      ..style = PaintingStyle.fill;
 
-    final Paint patternPaint = Paint()..color = const Color(0xFFD84315)..strokeWidth = 0.9..style = PaintingStyle.stroke;
-    final Paint dotPaint = Paint()..color = const Color(0xFFBF360C);
-
-    void drawLatticeColumn(double centerX) {
-      for (double y = 7; y < size.height - 4; y += 11) {
-        final Path diamond = Path()
-          ..moveTo(centerX, y - 3.5)
-          ..lineTo(centerX + 3.0, y)
-          ..lineTo(centerX, y + 3.5)
-          ..lineTo(centerX - 3.0, y)
-          ..close();
-        canvas.drawPath(diamond, patternPaint);
-        canvas.drawCircle(Offset(centerX, y), 0.7, dotPaint);
+    // Draw some dotted background pattern
+    for (double x = 10; x < size.width; x += 30) {
+      for (double y = 10; y < size.height; y += 30) {
+        canvas.drawCircle(Offset(x, y), 1.5, dotPaint);
       }
     }
-    drawLatticeColumn(8);
-    drawLatticeColumn(size.width - 8);
+
+    // Draw some random subtle heartbeat lines
+    final path = Path();
+    path.moveTo(0, size.height * 0.3);
+    path.lineTo(20, size.height * 0.3);
+    path.lineTo(30, size.height * 0.2);
+    path.lineTo(40, size.height * 0.4);
+    path.lineTo(50, size.height * 0.3);
+    path.lineTo(size.width, size.height * 0.3);
+    canvas.drawPath(path, paint);
+
+    // Subtle shield outlines scattered
+    canvas.drawRect(Rect.fromLTWH(size.width * 0.7, size.height * 0.7, 20, 25), paint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+class _BottomAccentWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gradient = const LinearGradient(
+      colors: [Color(0xFFFFCC80), Color(0xFFFFAB91)],
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+    );
+
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.fill
+      ..color = Colors.orange.withOpacity(0.2); // fallback if shader fails
+
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(0, size.height * 0.5);
+    path.quadraticBezierTo(size.width * 0.25, 0, size.width * 0.5, size.height * 0.5);
+    path.quadraticBezierTo(size.width * 0.75, size.height, size.width, size.height * 0.3);
+    path.lineTo(size.width, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+

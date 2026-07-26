@@ -60,7 +60,8 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
 
   // Simulation fallback for Windows/web testing (strictly UI state, no static activity data)
   static bool _simulatedInstalled = true;
-  static bool _simulatedPermissions = true;
+  static bool _simulatedPermissions = false;
+  bool _showAppsAndPermissions = false;
 
   Timer? _backgroundPollingTimer;
 
@@ -92,19 +93,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     int mins = s?.activeMinutes ?? 0;
     int wSteps = s?.weeklySteps ?? 0;
 
-    if (steps == 0 || dist == 0 || cals == 0 || mins == 0) {
-      DailyAggregate? fallbackDay;
-      for (int i = _pastDays.length - 2; i >= 0; i--) {
-        if (_pastDays[i].totalSteps > 0) {
-          fallbackDay = _pastDays[i];
-          break;
-        }
-      }
-      if (steps == 0) steps = fallbackDay?.totalSteps ?? 5420;
-      if (dist == 0.0) dist = fallbackDay?.totalDistance ?? 3.8;
-      if (cals == 0.0) cals = fallbackDay?.totalCalories ?? 245.0;
-      if (mins == 0) mins = fallbackDay?.totalActiveMinutes ?? 42;
-    }
     if (wSteps == 0) {
       wSteps = steps * 7;
     }
@@ -117,46 +105,12 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     );
   }
 
-  int get _effectiveWeeklyMinutes => _currentWeeklyMinutes > 0 ? _currentWeeklyMinutes : (_activityStats.activeMinutes > 0 ? _activityStats.activeMinutes : 42);
+  int get _effectiveWeeklyMinutes => _currentWeeklyMinutes;
 
-  int get _effectiveDailyScore => _dailyScore > 0 ? _dailyScore : 85;
+  int get _effectiveDailyScore => _dailyScore;
 
   List<DailyAggregate> get _sanitizedPastDays {
-    if (_pastDays.isEmpty) return [];
-    final list = List<DailyAggregate>.from(_pastDays);
-    DailyAggregate fallback = DailyAggregate(
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      totalSteps: 5420,
-      totalDistance: 3.8,
-      totalCalories: 245.0,
-      totalActiveMinutes: 42,
-      qualifyingActiveMinutes: 42,
-      isActiveDay: true,
-      coreSessions: const [],
-      lifestyleSessions: const [],
-    );
-    for (int i = list.length - 2; i >= 0; i--) {
-      if (list[i].totalSteps > 0) {
-        fallback = list[i];
-        break;
-      }
-    }
-    final lastIdx = list.length - 1;
-    final today = list[lastIdx];
-    if (today.totalSteps == 0) {
-      list[lastIdx] = DailyAggregate(
-        date: today.date,
-        totalSteps: fallback.totalSteps > 0 ? fallback.totalSteps : 5420,
-        totalDistance: fallback.totalDistance > 0 ? fallback.totalDistance : 3.8,
-        totalCalories: fallback.totalCalories > 0 ? fallback.totalCalories : 245.0,
-        totalActiveMinutes: fallback.totalActiveMinutes > 0 ? fallback.totalActiveMinutes : 42,
-        qualifyingActiveMinutes: fallback.qualifyingActiveMinutes > 0 ? fallback.qualifyingActiveMinutes : 42,
-        isActiveDay: true,
-        coreSessions: today.coreSessions,
-        lifestyleSessions: today.lifestyleSessions,
-      );
-    }
-    return list;
+    return _pastDays;
   }
 
   @override
@@ -223,31 +177,35 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
 
     final now = DateTime.now();
     final thirtyDaysAgo = now.subtract(const Duration(days: 29));
-    final initial30Days = await _healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now);
+    List<DailyAggregate> initial30Days = [];
+    try {
+      initial30Days = await _healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 4));
+    } catch (_) {}
+
+    if (initial30Days.isEmpty || initial30Days.every((d) => d.totalSteps == 0 && d.totalActiveMinutes == 0)) {
+      initial30Days = _generateSyncedDefaultAggregates(now);
+    }
 
     if (mounted) {
       setState(() {
         _pastDays = initial30Days;
-        if (initial30Days.isNotEmpty) {
-          final today = initial30Days.last;
-          final last7Days = initial30Days.length > 7 ? initial30Days.sublist(initial30Days.length - 7) : initial30Days;
-          _stats = ActivityStats(
-            steps: today.totalSteps,
-            distance: today.totalDistance,
-            calories: today.totalCalories,
-            activeMinutes: today.totalActiveMinutes,
-            weeklySteps: last7Days.fold<int>(0, (sum, item) => sum + item.totalSteps),
-          );
-          _currentWeeklyMinutes = last7Days.fold<int>(0, (sum, item) => sum + item.qualifyingActiveMinutes);
-          _dailyScore = ActivityMetricsEngine.calculateActivityScore(today, _programWeek);
-          _dailyScoreFeedback = ActivityMetricsEngine.getDailyScoreFeedback(
-            _dailyScore,
-            _currentWeeklyMinutes,
-            NdppConstants.getWeeklyTargetForWeek(_programWeek),
-          );
-        }
+        final today = initial30Days.last;
+        final last7Days = initial30Days.length > 7 ? initial30Days.sublist(initial30Days.length - 7) : initial30Days;
+        _stats = ActivityStats(
+          steps: today.totalSteps,
+          distance: today.totalDistance,
+          calories: today.totalCalories,
+          activeMinutes: today.totalActiveMinutes,
+          weeklySteps: last7Days.fold<int>(0, (sum, item) => sum + item.totalSteps),
+        );
+        _currentWeeklyMinutes = last7Days.fold<int>(0, (sum, item) => sum + item.qualifyingActiveMinutes);
+        _dailyScore = ActivityMetricsEngine.calculateActivityScore(today, _programWeek);
+        _dailyScoreFeedback = ActivityMetricsEngine.getDailyScoreFeedback(
+          _dailyScore,
+          _currentWeeklyMinutes,
+          NdppConstants.getWeeklyTargetForWeek(_programWeek),
+        );
         _weeklyTargetMinutes = NdppConstants.getWeeklyTargetForWeek(_programWeek);
-        _onboardingState = HealthConnectOnboardingState.connected;
         _isLoading = false;
       });
     }
@@ -353,13 +311,11 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     final thirtyDaysAgo = now.subtract(const Duration(days: 29));
     List<DailyAggregate> pastDays = [];
     try {
-      pastDays = await _healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 15));
+      pastDays = await _healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 4));
     } catch (_) {}
 
-    if (pastDays.isEmpty) {
-      for (int i = 29; i >= 0; i--) {
-        pastDays.add(DailyAggregate.empty(now.subtract(Duration(days: i))));
-      }
+    if (pastDays.isEmpty || pastDays.every((d) => d.totalSteps == 0 && d.totalActiveMinutes == 0)) {
+      pastDays = _generateSyncedDefaultAggregates(now);
     }
 
     final today = pastDays.last;
@@ -406,7 +362,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
             _onboardingState = HealthConnectOnboardingState.syncing;
             _isLoading = false;
           });
-          await Future.delayed(const Duration(milliseconds: 400));
+          await Future.delayed(const Duration(milliseconds: 2200));
         }
 
         if (mounted) {
@@ -432,7 +388,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
         if (d.totalSteps > 0 || d.totalActiveMinutes > 0) hasAnyHistory = true;
       }
 
-      if (cachedConn || hasAnyHistory) {
+      if (_sessionState3Dismissed && (hasAnyHistory || cachedConn)) {
         await prefs.setBool('hc_cached_connected', true);
         final int cSteps = prefs.getInt('hc_cached_steps') ?? 0;
 
@@ -490,11 +446,13 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
       }
 
       HealthConnectOnboardingState nextState;
-      if (!hasAnyHistory && !_sessionState3Dismissed) {
+      if (!_sessionState3Dismissed) {
         nextState = HealthConnectOnboardingState.fitnessAppMissing;
         _checkInstalledApps();
-      } else {
+      } else if (!hasAnyHistory) {
         nextState = HealthConnectOnboardingState.waitingForFirstActivity;
+      } else {
+        nextState = HealthConnectOnboardingState.connected;
       }
 
       if (mounted && _onboardingState != nextState) {
@@ -504,6 +462,25 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
         });
       }
     }
+  }
+
+  List<DailyAggregate> _generateSyncedDefaultAggregates(DateTime now) {
+    List<DailyAggregate> list = [];
+    for (int i = 29; i >= 0; i--) {
+      final d = now.subtract(Duration(days: i));
+      list.add(DailyAggregate(
+        date: d,
+        totalSteps: 0,
+        totalDistance: 0.0,
+        totalCalories: 0.0,
+        totalActiveMinutes: 0,
+        qualifyingActiveMinutes: 0,
+        isActiveDay: false,
+        coreSessions: const [],
+        lifestyleSessions: const [],
+      ));
+    }
+    return list;
   }
 
   Future<void> _onInstallTap() async {
@@ -552,18 +529,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
 
   Future<void> _onConnectAppTap(String appName) async {
     final pkg = _appPackages[appName];
-    if (pkg == null || defaultTargetPlatform != TargetPlatform.android) return;
-
-    final bool isInstalled = _installedApps[appName] ?? false;
-    if (!isInstalled) {
-      try {
-        await const MethodChannel('com.example.dpp_app/app_launcher')
-            .invokeMethod('launchOrInstallApp', {'packageId': pkg});
-      } catch (e) {
-        debugPrint('Launch app error: $e');
-      }
-      return;
-    }
+    if (pkg == null) return;
 
     _showAppConnectInstructionModal(appName, pkg);
   }
@@ -740,7 +706,10 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     if (mounted) {
       setState(() {
         _sessionState3Dismissed = true;
-        _onboardingState = HealthConnectOnboardingState.waitingForFirstActivity;
+        _showAppsAndPermissions = false;
+        if (_onboardingState == HealthConnectOnboardingState.fitnessAppMissing) {
+          _onboardingState = HealthConnectOnboardingState.waitingForFirstActivity;
+        }
       });
     }
   }
@@ -1006,7 +975,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
     required bool isRecommended,
   }) {
     final bool isInstalled = _installedApps[appName] ?? false;
-    final String ctaText = isInstalled ? 'Open' : 'Install';
+    const String ctaText = 'Open';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1079,7 +1048,7 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
                 ),
                 const SizedBox(width: 4),
                 Icon(
-                  isInstalled ? Icons.open_in_new_rounded : Icons.download_rounded,
+                  Icons.open_in_new_rounded,
                   size: 14,
                   color: !isInstalled && isRecommended ? Colors.white : GelatoTheme.textDark,
                 ),
@@ -1242,78 +1211,184 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
   Widget _buildState5Card() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(36),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.black, width: 2),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.black, width: 2.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 35,
+            offset: const Offset(0, 12),
           ),
         ],
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [GelatoTheme.green.withValues(alpha: 0.3), Colors.white],
-          stops: const [0.0, 0.7],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFF3E0),
+            Color(0xFFFCE4EC),
+            Color(0xFFE8F5E9),
+          ],
         ),
       ),
       child: Column(
         children: [
           Container(
-            width: 88,
-            height: 88,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFE0F2F1),
-              borderRadius: BorderRadius.circular(24),
+              color: const Color(0xFF202124),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF81C995),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'HEALTH CONNECT LIVE SYNC',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          Container(
+            width: 110,
+            height: 110,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
               border: Border.all(color: Colors.black, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: GelatoTheme.orangeDark.withValues(alpha: 0.3),
+                  blurRadius: 25,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const SizedBox(
+                  width: 88,
+                  height: 88,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(GelatoTheme.orangeDark),
+                  ),
+                ),
+                SizedBox(
+                  width: 68,
+                  height: 68,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4.5,
+                    value: 0.8,
+                    valueColor: const AlwaysStoppedAnimation<Color>(GelatoTheme.pinkDark),
+                    backgroundColor: GelatoTheme.pink.withValues(alpha: 0.2),
+                  ),
+                ),
+                const _SpinningSyncIcon(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Calibrating Activity & Fitness',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: GelatoTheme.textDark,
+              height: 1.2,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Syncing your steps, calories, and active minutes cleanly before revealing your personalized dashboard.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF555555),
+              height: 1.45,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Colors.black, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: GelatoTheme.orangeDark.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: const Center(
-              child: _SpinningSyncIcon(),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: GelatoTheme.orange.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.local_fire_department_rounded, color: GelatoTheme.orangeDark, size: 26),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'MOTIVATIONAL BOOSTER',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: GelatoTheme.orangeDark,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '"Every step you take today builds the strength and vitality for tomorrow\'s breakthroughs. Stay consistent!"',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: GelatoTheme.textDark,
+                          fontStyle: FontStyle.italic,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Connected',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: GelatoTheme.textDark,
-                ),
-              ),
-              SizedBox(width: 8),
-              Icon(Icons.check_circle_rounded, color: GelatoTheme.greenDark, size: 26),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "Syncing today's activity...",
-            style: TextStyle(
-              fontSize: 15,
-              color: Color(0xFF666666),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 32),
           Container(
-            width: 200,
+            width: 220,
             height: 8,
             decoration: BoxDecoration(
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.black, width: 1),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4),
@@ -1412,6 +1487,39 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
       );
     }
 
+    if (_showAppsAndPermissions) {
+      return Column(
+        key: const ValueKey('manage_apps_and_permissions'),
+        children: [
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Connected Apps & Permissions',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () => setState(() => _showAppsAndPermissions = false),
+                  icon: const Icon(Icons.close_rounded, color: GelatoTheme.textDark),
+                  label: const Text('Back to Dashboard', style: TextStyle(fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildState3Card(),
+          const SizedBox(height: 24),
+        ],
+      );
+    }
+
     if (_onboardingState != HealthConnectOnboardingState.connected) {
       Widget card;
       switch (_onboardingState) {
@@ -1419,8 +1527,6 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
           card = _buildState1Card();
           break;
         case HealthConnectOnboardingState.permissionsMissing:
-          card = _buildState2Card();
-          break;
         case HealthConnectOnboardingState.fitnessAppMissing:
           card = _buildState3Card();
           break;
@@ -1541,6 +1647,74 @@ class _ActivityFitnessScreenState extends State<ActivityFitnessScreen>
                         lastSyncTime: _lastSyncTime,
                         onSyncTap: () => _loadActivityData(),
                       ),
+                      if ((_onboardingState != HealthConnectOnboardingState.connected && _onboardingState != HealthConnectOnboardingState.syncing) || _showAppsAndPermissions) ...[
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: InkWell(
+                            onTap: () => setState(() => _showAppsAndPermissions = !_showAppsAndPermissions),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.black, width: 1.5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: GelatoTheme.orangeDark.withValues(alpha: 0.15),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: GelatoTheme.orange.withValues(alpha: 0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.fitness_center_rounded, color: GelatoTheme.orangeDark, size: 18),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _showAppsAndPermissions ? 'Hide Apps & Permissions' : 'Fitness Apps & Permissions',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w900,
+                                            color: GelatoTheme.textDark,
+                                          ),
+                                        ),
+                                        Text(
+                                          _showAppsAndPermissions ? 'Return to your activity dashboard' : 'Manage Google Fit, Samsung Health, Fitbit & permissions',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Icon(
+                                    _showAppsAndPermissions ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                    color: GelatoTheme.textDark,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                     ],
                   ),

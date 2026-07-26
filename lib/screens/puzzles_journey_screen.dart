@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../main.dart';
+import 'food_tracking_screen.dart';
+import 'activity_fitness_screen.dart';
 
 class PuzzlesJourneyScreen extends StatefulWidget {
   const PuzzlesJourneyScreen({super.key});
@@ -148,7 +150,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
             icon: Icons.restaurant,
             label: 'Meals',
             color: const Color(0xFFE53935), // Red/Orange for meals
-            onTap: () => MainShell.of(context)?.selectedIndex = 3,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTrackingScreen())),
           ),
           const SizedBox(width: 12),
           _buildNavButton(
@@ -156,7 +158,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
             icon: Icons.directions_run,
             label: 'Activity',
             color: const Color(0xFF039BE5), // Blue for activity
-            onTap: () => MainShell.of(context)?.selectedIndex = 4,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityFitnessScreen())),
           ),
           const SizedBox(width: 12),
           _buildNavButton(

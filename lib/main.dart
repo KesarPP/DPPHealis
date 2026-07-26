@@ -10,6 +10,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/leaderboard_screen.dart';
 import 'screens/ai_chatbot_screen.dart';
 import 'screens/puzzles_journey_screen.dart';
+import 'screens/manuscript_screen.dart';
 import 'data/gelato_theme.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -132,6 +133,7 @@ class MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = const [
     PuzzlesJourneyScreen(),
+    ManuscriptScreen(),
     DashboardScreen(),
     LeaderboardScreen(),
     AiChatbotScreen(),
@@ -142,6 +144,11 @@ class MainShellState extends State<MainShell> {
       icon: Icon(Icons.extension_outlined),
       selectedIcon: Icon(Icons.extension),
       label: 'Puzzles',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.auto_stories_outlined),
+      selectedIcon: Icon(Icons.auto_stories),
+      label: 'Journal',
     ),
     NavigationDestination(
       icon: Icon(Icons.home_outlined),
@@ -170,16 +177,20 @@ class MainShellState extends State<MainShell> {
         activeTextColor = GelatoTheme.yellowDark;
         break;
       case 1:
+        indicatorColor = const Color(0xFFDCCCEC); // Match Manuscript look or use purple
+        activeTextColor = const Color(0xFF4A1E63);
+        break;
+      case 2:
         indicatorColor = GelatoTheme.pink;
         activeTextColor = GelatoTheme.pinkDark;
         break;
-      case 2:
+      case 3:
         indicatorColor = GelatoTheme.blue;
         activeTextColor = GelatoTheme.blueDark;
         break;
-      case 3:
-        indicatorColor = GelatoTheme.purple;
-        activeTextColor = GelatoTheme.purpleDark;
+      case 4:
+        indicatorColor = GelatoTheme.green;
+        activeTextColor = GelatoTheme.greenDark;
         break;
       default:
         indicatorColor = Colors.grey[300]!;
