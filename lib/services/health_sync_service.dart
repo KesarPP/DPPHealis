@@ -8,6 +8,20 @@ enum SyncStatus { syncing, success, permissionDenied, healthConnectUnavailable, 
 
 class HealthSyncService {
   final Health _health = Health();
+  static bool _isConfigured = false;
+
+  HealthSyncService() {
+    if (!_isConfigured) {
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        try {
+          _health.configure();
+        } catch (e) {
+          debugPrint('Health configuration error: $e');
+        }
+      }
+      _isConfigured = true;
+    }
+  }
 
   static List<HealthDataType> get _syncTypes => [
         HealthDataType.STEPS,

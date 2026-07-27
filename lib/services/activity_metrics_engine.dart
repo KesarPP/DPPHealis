@@ -479,6 +479,7 @@ class ActivityMissionEngine {
     required double kcalRate,
     MissionGoalMode mode = MissionGoalMode.ndppStrict,
     double stretchMultiplier = 1.0,
+    double? customKcalGoal,
   }) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -498,6 +499,9 @@ class ActivityMissionEngine {
 
     int baseMins = NdppConstants.getWeeklyTargetForWeek(programWeek);
     int kcalGoal = (baseMins * 700.0 / 150.0).round();
+    if (customKcalGoal != null) {
+      kcalGoal = customKcalGoal.round();
+    }
 
     if (mode == MissionGoalMode.ndppStretch) {
       baseMins = (baseMins * stretchMultiplier).round();
@@ -526,6 +530,7 @@ class ActivityMissionEngine {
     required double kcalRate,
     MissionGoalMode mode = MissionGoalMode.ndppStrict,
     double stretchMultiplier = 1.0,
+    double? customKcalGoal,
   }) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -564,6 +569,10 @@ class ActivityMissionEngine {
       }
       baseMins = totalMonthMins.round();
       kcalGoal = totalMonthKcal.round();
+    }
+
+    if (customKcalGoal != null) {
+      kcalGoal = customKcalGoal.round();
     }
 
     if (mode == MissionGoalMode.ndppStretch) {

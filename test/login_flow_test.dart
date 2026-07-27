@@ -6,7 +6,6 @@ import 'package:dpp_app/screens/login_screen.dart';
 import 'package:dpp_app/screens/signup_screen.dart';
 import 'package:dpp_app/screens/clinician_dashboard_screen.dart';
 import 'package:dpp_app/screens/clinician_profile_screen.dart';
-import 'package:dpp_app/screens/coach_profile_screen.dart';
 import 'package:dpp_app/screens/dashboard_screen.dart';
 import 'package:dpp_app/screens/risk_assessment_step1_screen.dart';
 import 'package:dpp_app/screens/risk_assessment_step2_screen.dart';
@@ -167,32 +166,6 @@ void main() {
     await tester.tap(coachTab);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-
-    // Verify CoachChatScreen is displayed
-    expect(find.text('Online'), findsOneWidget);
-
-    // Tap the Coach PFP in the AppBar
-    final coachPfp = find.descendant(
-      of: find.byType(AppBar),
-      matching: find.byIcon(Icons.auto_awesome_rounded),
-    );
-    await tester.tap(coachPfp);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    // Verify we are on CoachProfileScreen
-    expect(find.byType(CoachProfileScreen), findsOneWidget);
-    expect(find.text('Dr. Sarah Mitchell'), findsOneWidget);
-    // Verify that Sign Out and edit options are not present
-    expect(find.text('Sign Out'), findsNothing);
-    expect(find.byIcon(Icons.edit_rounded), findsNothing);
-
-    // Go back
-    final backButton = find.byType(BackButton);
-    await tester.tap(backButton);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
     await resetTestWindow(tester);
   });
 

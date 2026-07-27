@@ -5,6 +5,7 @@ import '../data/gelato_theme.dart';
 import '../models/ndpp_constants.dart';
 import '../services/activity_metrics_engine.dart';
 import '../services/health_sync_service.dart';
+import '../models/calorie_goal_calculator.dart';
 
 class DashboardHeroCards extends StatefulWidget {
   final List<DailyAggregate> trailing30Days;
@@ -197,12 +198,44 @@ class _DashboardActivityCardState extends State<DashboardActivityCard> {
               ],
             ),
             const SizedBox(height: 8),
-            _ActivitySection(
-              isWeekly: _selectedSegment == 0,
-              trailing30Days: widget.trailing30Days,
-              programWeek: widget.programWeek,
-              missionGoalMode: widget.missionGoalMode,
-              stretchMultiplier: widget.stretchMultiplier,
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection('users').doc(AuthService().currentUser?.uid ?? '').snapshots(),
+              builder: (context, snapshot) {
+                double? customWeeklyKcalGoal;
+                double? customMonthlyKcalGoal;
+
+                if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                  final data = snapshot.data!.data() as Map<String, dynamic>?;
+                  if (data != null) {
+                    final double weightKg = (data['current_weight_kg'] as num?)?.toDouble() ??
+                        (data['weight_kg'] as num?)?.toDouble() ?? (data['weight'] as num?)?.toDouble() ?? (data['currentWeight'] as num?)?.toDouble() ?? 0.0;
+                    final double heightRaw = (data['height'] as num?)?.toDouble() ?? 0.0;
+                    final double heightCm = heightRaw < 3.0 ? heightRaw * 100.0 : heightRaw;
+                    final int age = (data['age'] as num?)?.toInt() ?? 0;
+                    final String g = data['gender']?.toString() ?? (data['isMan'] == true ? 'male' : 'female');
+
+                    // Use Active Calorie Burn instead of Dietary Goal
+                    // We only need weight to calculate this, falling back to an average of 75kg if missing
+                    final double effectiveWeight = weightKg > 0 ? weightKg : 75.0;
+                    final int baseMins = NdppConstants.getWeeklyTargetForWeek(widget.programWeek);
+                    
+                    customWeeklyKcalGoal = CalorieGoalCalculator.calculateActiveCalorieBurnGoal(
+                      weightKg: effectiveWeight,
+                      weeklyTargetMins: baseMins,
+                    );
+                    customMonthlyKcalGoal = customWeeklyKcalGoal * (CalorieGoalCalculator.averageDaysPerMonth / 7.0);
+                  }
+                }
+
+                return _ActivitySection(
+                  isWeekly: _selectedSegment == 0,
+                  trailing30Days: widget.trailing30Days,
+                  programWeek: widget.programWeek,
+                  missionGoalMode: widget.missionGoalMode,
+                  stretchMultiplier: widget.stretchMultiplier,
+                  customKcalGoal: _selectedSegment == 0 ? customWeeklyKcalGoal : customMonthlyKcalGoal,
+                );
+              }
             ),
           ],
         ),
@@ -399,6 +432,7 @@ class _ActivitySection extends StatelessWidget {
   final int programWeek;
   final MissionGoalMode missionGoalMode;
   final double stretchMultiplier;
+  final double? customKcalGoal;
 
   const _ActivitySection({
     required this.isWeekly,
@@ -406,6 +440,7 @@ class _ActivitySection extends StatelessWidget {
     required this.programWeek,
     required this.missionGoalMode,
     required this.stretchMultiplier,
+    this.customKcalGoal,
   });
 
   @override
@@ -418,6 +453,7 @@ class _ActivitySection extends StatelessWidget {
             kcalRate: kcalRate,
             mode: missionGoalMode,
             stretchMultiplier: stretchMultiplier,
+            customKcalGoal: customKcalGoal,
           )
         : ActivityMissionEngine.getMonthlySummary(
             trailing30Days: trailing30Days,
@@ -425,6 +461,7 @@ class _ActivitySection extends StatelessWidget {
             kcalRate: kcalRate,
             mode: missionGoalMode,
             stretchMultiplier: stretchMultiplier,
+            customKcalGoal: customKcalGoal,
           );
 
     final double ringValue = (summary.progressPercentage / 100.0).clamp(0.0, 1.0);

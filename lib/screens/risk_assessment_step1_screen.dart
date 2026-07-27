@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'risk_assessment_step2_screen.dart';
 import '../data/gelato_theme.dart';
+import '../data/app_state.dart';
 
 class RiskAssessmentStep1Screen extends StatefulWidget {
   final bool isFromSignup;
@@ -948,6 +949,11 @@ class _RiskAssessmentStep1ScreenState extends State<RiskAssessmentStep1Screen> {
                         }
                         
                         final weightInKg = double.tryParse(_weightController.text) ?? 70.0;
+
+                        AppState.age = ageVal;
+                        AppState.isMan = _isMan;
+                        AppState.heightCm = heightInCm;
+                        AppState.weightKg = weightInKg;
 
                         Navigator.push(
                           context,
