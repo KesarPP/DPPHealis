@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../main.dart';
+<<<<<<< HEAD
 import '../models/calorie_goal_calculator.dart';
 import '../data/app_state.dart';
+=======
+import '../data/app_state.dart';
+
+>>>>>>> 75d20f83f9907072d4e31a5498077ca2f099cb22
 class RiskAssessmentResultScreen extends StatelessWidget {
   final int age;
   final bool isMan;

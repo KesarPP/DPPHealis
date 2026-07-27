@@ -98,7 +98,7 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
 
   Widget _buildHeaderCard(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.13), // Reposition lower
+      padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.06), // Reposition higher
       child: Align(
         alignment: Alignment.center,
         child: Container(
@@ -288,7 +288,7 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                           transform: Matrix4.identity()
                             ..setEntry(3, 2, 0.0015)
                             ..rotateX(-0.15)
-                            ..scale(0.95, 0.99, 1.0) // Decreased height by 5%
+                            ..scale(0.85, 0.99, 1.0) // Decreased width by 10% and height by 5%
                             ..translate(0.0, -15.0, 0.0), // Shifted up to keep top edge anchored
                           child: Padding(
                             padding: EdgeInsets.only(
