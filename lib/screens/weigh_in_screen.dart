@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/gelato_theme.dart';
 import '../services/notification_service.dart';
+import '../data/app_state.dart';
 
 class _WeighInEntry {
   final double weight;
@@ -168,7 +169,7 @@ class _WeighInScreenState extends State<WeighInScreen> {
     return Colors.red;
   }
 
-  void _recordWeighIn() {
+  Future<void> _recordWeighIn() async {
     HapticFeedback.vibrate();
     
     final now = DateTime.now();
@@ -187,6 +188,12 @@ class _WeighInScreenState extends State<WeighInScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final weightToSave = double.parse(_loggedWeight.toStringAsFixed(1));
+        
+        AppState.weightKg = weightToSave;
+        if (AppState.heightCm > 0) {
+          AppState.bmi = weightToSave / ((AppState.heightCm / 100) * (AppState.heightCm / 100));
+        }
+        await AppState.save();
         
         // Update current weight in user document
         FirebaseFirestore.instance.collection('users').doc(user.uid).set({

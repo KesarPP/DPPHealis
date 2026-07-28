@@ -163,6 +163,13 @@ class RiskAssessmentResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final calculatedScore = idrsScore;
     AppState.bmi = bmi;
+    AppState.age = age;
+    AppState.isMan = isMan;
+    AppState.heightCm = height * 2.54;
+    AppState.weightKg = weight;
+    AppState.idrsScore = calculatedScore;
+    AppState.hasIdrsResult = true;
+    AppState.save();
 
     return Scaffold(
       backgroundColor: GelatoTheme.bg,

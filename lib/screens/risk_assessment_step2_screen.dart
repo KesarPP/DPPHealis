@@ -336,6 +336,8 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                           final score = _calculateIdrsScore();
                           AppState.idrsScore = score;
                           AppState.hasIdrsResult = true;
+                          AppState.bmi = widget.weight / ((widget.height / 100) * (widget.height / 100));
+                          await AppState.save();
                           
                           String calculatedRiskLevel = 'Moderate Risk';
                           if (score < 30) {

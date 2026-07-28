@@ -14,6 +14,7 @@ import '../models/food_item.dart';
 import '../services/ai_food_service.dart';
 import '../services/auth_service.dart';
 import 'nutritional_scanner_screen.dart';
+import 'food_detail_screen.dart';
 
 class FoodTrackingScreen extends StatefulWidget {
   const FoodTrackingScreen({super.key});
@@ -36,7 +37,7 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GelatoTheme.green.withValues(alpha: 0.4),
+      backgroundColor: const Color(0xFFEEF5E5), // Very light light green
       body: SafeArea(
         child: Stack(
           children: [
@@ -1039,8 +1040,8 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
         bool isFuture = currentDay.isAfter(todayDate);
         bool isBeforeSignUp = signUpDate != null && currentDay.isBefore(signUpDate);
         
-        bool isComplete = !isFuture && !(date.day == 4 || date.day == 12 || date.day == 19); 
-        bool isIncomplete = !isFuture && !isComplete;
+        bool isComplete = completedDays[dateString] == true; 
+        bool isIncomplete = !isFuture && !isComplete && !isBeforeSignUp;
 
         return GestureDetector(
           onTap: () {
@@ -1178,10 +1179,10 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
     double _fiber = 0;
 
     for (var item in widget.items) {
-      _carbs += item.food.carbs * item.quantity;
-      _protein += item.food.protein * item.quantity;
-      _fat += item.food.fat * item.quantity;
-      _fiber += item.food.fiber * item.quantity;
+      _carbs += item.food.carbs * item.effectiveMultiplier;
+      _protein += item.food.protein * item.effectiveMultiplier;
+      _fat += item.food.fat * item.effectiveMultiplier;
+      _fiber += item.food.fiber * item.effectiveMultiplier;
     }
 
     return GestureDetector(
@@ -1294,20 +1295,34 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
   Widget _buildFoodItemRow(BuildContext context, LoggedFood item) {
     final food = item.food;
     final qty = item.quantity;
-    final totalCals = food.calories * qty;
+    final totalCals = food.calories * item.effectiveMultiplier;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FoodDetailScreen(
+              food: food,
+              mealType: item.mealType,
+              existingLog: item,
+            ),
+          ),
+        );
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(qty > 1 ? '${food.name} (x$qty)' : food.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                Text(qty != 1.0 || item.selectedGrams != item.defaultGrams ? '${food.name} (x${qty == qty.roundToDouble() ? qty.toInt().toString() : qty.toString()} of ${item.selectedGrams.toStringAsFixed(0)}g)' : food.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
                 const SizedBox(height: 2),
-                Text('C:${(food.carbs * qty).toStringAsFixed(1)}g, P:${(food.protein * qty).toStringAsFixed(1)}g, F:${(food.fat * qty).toStringAsFixed(1)}g', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
+                Text('C:${(food.carbs * item.effectiveMultiplier).toStringAsFixed(1)}g, P:${(food.protein * item.effectiveMultiplier).toStringAsFixed(1)}g, F:${(food.fat * item.effectiveMultiplier).toStringAsFixed(1)}g', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GelatoTheme.textDark.withValues(alpha: 0.6))),
               ],
             ),
           ),
@@ -1327,6 +1342,7 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -1535,8 +1551,8 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
       bool isFuture = date.isAfter(todayDate);
       bool isBeforeSignUp = signUpDate != null && date.isBefore(signUpDate);
       
-      bool isComplete = !isFuture && !(date.day == 4 || date.day == 12 || date.day == 19); 
-      bool isIncomplete = !isFuture && !isComplete;
+      bool isComplete = completedDays[dateString] == true; 
+      bool isIncomplete = !isFuture && !isComplete && !isBeforeSignUp;
 
       dayWidgets.add(
         GestureDetector(

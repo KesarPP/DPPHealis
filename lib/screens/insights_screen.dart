@@ -149,9 +149,9 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
     // 2. Highest Calorie Item Logged Today
     if (currentLog != null && currentLog.entries.isNotEmpty) {
       var topEntry = currentLog.entries.first;
-      double maxCal = topEntry.food.calories * topEntry.quantity;
+      double maxCal = topEntry.food.calories * topEntry.effectiveMultiplier;
       for (var e in currentLog.entries) {
-        double c = e.food.calories * e.quantity;
+        double c = e.food.calories * e.effectiveMultiplier;
         if (c > maxCal) {
           maxCal = c;
           topEntry = e;
@@ -172,7 +172,7 @@ class _HorizontalInsightsCarouselState extends State<HorizontalInsightsCarousel>
     for (var log in logs) {
       for (var entry in log.entries) {
         if (entry.mealType == 'Dinner') {
-          dinnerCal += entry.food.calories * entry.quantity;
+          dinnerCal += entry.food.calories * entry.effectiveMultiplier;
           dinnerCount++;
         }
       }

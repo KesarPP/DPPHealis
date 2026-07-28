@@ -6,6 +6,7 @@ import '../services/ai_food_service.dart';
 import '../providers/food_notifiers.dart';
 import '../repositories/food_repository.dart';
 import '../data/gelato_theme.dart';
+import 'food_detail_screen.dart';
 
 class NutritionalScannerScreen extends StatefulWidget {
   final File imageFile;
@@ -23,7 +24,7 @@ class _NutritionalScannerScreenState extends State<NutritionalScannerScreen> {
   
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
-  String _mealType = 'Snack';
+  String _mealType = 'Breakfast';
   bool _isSaving = false;
 
   @override
@@ -102,12 +103,12 @@ class _NutritionalScannerScreenState extends State<NutritionalScannerScreen> {
       final savedItem = await FoodRepository().saveScannedProduct(updatedItem);
       
       if (!mounted) return;
-      final notifier = context.read<FoodDiaryNotifier>();
-      await notifier.logFood(savedItem, _mealType, notifier.selectedDate);
-
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FoodDetailScreen(food: savedItem, mealType: _mealType, isFromScanner: true),
+        ),
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -247,9 +248,10 @@ class _NutritionalScannerScreenState extends State<NutritionalScannerScreen> {
             ),
             items: const [
               DropdownMenuItem(value: 'Breakfast', child: Text('Breakfast')),
+              DropdownMenuItem(value: 'Snack 1', child: Text('Snack 1')),
               DropdownMenuItem(value: 'Lunch', child: Text('Lunch')),
+              DropdownMenuItem(value: 'Snack 2', child: Text('Snack 2')),
               DropdownMenuItem(value: 'Dinner', child: Text('Dinner')),
-              DropdownMenuItem(value: 'Snack', child: Text('Snack')),
             ],
             onChanged: (v) {
               if (v != null) setState(() => _mealType = v);

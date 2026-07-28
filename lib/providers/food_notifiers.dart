@@ -135,12 +135,12 @@ class FoodDiaryNotifier extends ChangeNotifier {
     });
   }
 
-  Future<void> logFood(FoodItem food, String mealType, String date, {int quantity = 1}) async {
+  Future<void> logFood(FoodItem food, String mealType, String date, {double quantity = 1.0, double selectedGrams = 100.0, double defaultGrams = 100.0}) async {
     if (Firebase.apps.isEmpty) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     
-    final entry = LoggedFood(food: food, mealType: mealType, quantity: quantity);
+    final entry = LoggedFood(food: food, mealType: mealType, quantity: quantity, selectedGrams: selectedGrams, defaultGrams: defaultGrams);
     await _repository.addFoodToLog(user.uid, date, entry);
   }
 

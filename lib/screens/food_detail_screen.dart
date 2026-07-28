@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/gelato_theme.dart';
 import '../models/food_item.dart';
+import '../models/food_log.dart';
 import '../providers/food_notifiers.dart';
 
 class FoodDetailScreen extends StatefulWidget {
   final FoodItem food;
   final String mealType;
+  final LoggedFood? existingLog;
+  final bool isFromScanner;
 
   const FoodDetailScreen({
     super.key,
     required this.food,
     required this.mealType,
+    this.existingLog,
+    this.isFromScanner = false,
   });
 
   @override
@@ -19,18 +24,58 @@ class FoodDetailScreen extends StatefulWidget {
 }
 
 class _FoodDetailScreenState extends State<FoodDetailScreen> {
-  int _quantity = 1;
+  double _quantity = 1.0;
+  double _defaultGrams = 100.0;
+  double _selectedGrams = 100.0;
+  
+  final List<double> _gramOptions = [20.0, 50.0, 100.0, 150.0, 200.0];
+  PageController? _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    if (widget.existingLog != null) {
+      _quantity = widget.existingLog!.quantity;
+      _defaultGrams = widget.existingLog!.defaultGrams;
+      _selectedGrams = widget.existingLog!.selectedGrams;
+    } else {
+      _defaultGrams = _parseServingSize(widget.food.servingSize);
+      // Ensure default grams is in our options, otherwise fallback to 100g
+      if (!_gramOptions.contains(_defaultGrams)) {
+        _defaultGrams = 100.0;
+      }
+      _selectedGrams = _defaultGrams;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
+  double _parseServingSize(String? servingSize) {
+    if (servingSize == null || servingSize.isEmpty) return 100.0;
+    final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(servingSize);
+    if (match != null) {
+      return double.tryParse(match.group(0) ?? '') ?? 100.0;
+    }
+    return 100.0;
+  }
 
   void _increment() {
-    setState(() {
-      _quantity++;
-    });
+    if (_quantity < 5.0) {
+      setState(() {
+        _quantity += 0.5;
+      });
+    }
   }
 
   void _decrement() {
-    if (_quantity > 1) {
+    if (_quantity > 0.5) {
       setState(() {
-        _quantity--;
+        _quantity -= 0.5;
       });
     }
   }
@@ -41,18 +86,29 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
 
   Future<void> _addToDiary() async {
     try {
+      if (widget.existingLog != null) {
+        await context.read<FoodDiaryNotifier>().removeFood(widget.existingLog!, _getSelectedDate());
+      }
+      
       await context.read<FoodDiaryNotifier>().logFood(
         widget.food, 
         widget.mealType, 
         _getSelectedDate(),
         quantity: _quantity,
+        selectedGrams: _selectedGrams,
+        defaultGrams: _defaultGrams,
       );
 
       if (!mounted) return;
       
-      // Pop back twice to get to the dashboard (pop the detail screen, pop the search screen)
-      Navigator.pop(context);
-      Navigator.pop(context);
+      if (widget.existingLog != null || widget.isFromScanner) {
+        // If we were editing or coming directly from the scanner, just pop back to the tracker
+        Navigator.pop(context);
+      } else {
+        // Pop back twice to get to the dashboard (pop the detail screen, pop the search screen)
+        Navigator.pop(context);
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,12 +124,21 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_pageController == null) {
+      final initialIndex = _gramOptions.indexOf(_defaultGrams);
+      _pageController = PageController(
+        viewportFraction: 0.33,
+        initialPage: initialIndex != -1 ? initialIndex : 2,
+      );
+    }
+    
     final food = widget.food;
-    final totalCals = food.calories * _quantity;
-    final totalCarbs = food.carbs * _quantity;
-    final totalProtein = food.protein * _quantity;
-    final totalFat = food.fat * _quantity;
-    final totalFiber = food.fiber * _quantity;
+    final multiplier = _defaultGrams > 0 ? (_selectedGrams / _defaultGrams) * _quantity : _quantity;
+    final totalCals = food.calories * multiplier;
+    final totalCarbs = food.carbs * multiplier;
+    final totalProtein = food.protein * multiplier;
+    final totalFat = food.fat * multiplier;
+    final totalFiber = food.fiber * multiplier;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -133,7 +198,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              '${totalCals.toStringAsFixed(0)} kcal',
+                              '${food.calories.toStringAsFixed(0)} kcal (per ${_defaultGrams.toStringAsFixed(0)}g)',
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
@@ -144,27 +209,83 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 32),
+                    
+                    // Portion Selector
+                    // Portion Selector
+                    Center(
+                      child: Text(
+                        '${_getBowlName(_selectedGrams)} (${_selectedGrams.toStringAsFixed(0)}g)',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: GelatoTheme.textDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 80,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: GelatoTheme.blue.withValues(alpha: 0.2),
+                              border: Border.all(color: GelatoTheme.blue, width: 2),
+                            ),
+                          ),
+                          PageView.builder(
+                            controller: _pageController!,
+                            itemCount: _gramOptions.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _selectedGrams = _gramOptions[index];
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final isSelected = _gramOptions[index] == _selectedGrams;
+                              return Center(
+                                child: Text(
+                                  '${_gramOptions[index].toInt()}',
+                                  style: TextStyle(
+                                    fontSize: isSelected ? 24 : 18,
+                                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                                    color: isSelected ? GelatoTheme.textDark : Colors.black45,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                     
                     // Quantity Selector
-                    const Text(
-                      'Quantity',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: GelatoTheme.textDark,
+                    const Center(
+                      child: Text(
+                        'Quantity (Multiplier)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: GelatoTheme.textDark,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildQuantityButton(Icons.remove, _decrement, _quantity > 1),
+                        _buildQuantityButton(Icons.remove, _decrement, _quantity > 0.5),
                         const SizedBox(width: 24),
                         SizedBox(
-                          width: 40,
+                          width: 65,
                           child: Text(
-                            '$_quantity',
+                            _quantity == _quantity.roundToDouble() ? _quantity.toInt().toString() : _quantity.toString(),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 28,
@@ -174,8 +295,20 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                           ),
                         ),
                         const SizedBox(width: 24),
-                        _buildQuantityButton(Icons.add, _increment, true),
+                        _buildQuantityButton(Icons.add, _increment, _quantity < 5.0),
                       ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        'Total: ${(_selectedGrams * _quantity).toStringAsFixed(0)}g -> ${totalCals.toStringAsFixed(0)} kcal',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: GelatoTheme.greenDark,
+                        ),
+                      ),
                     ),
                     
                     const SizedBox(height: 40),
@@ -232,7 +365,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     ),
                   ),
                   child: Text(
-                    'Add $_quantity to ${widget.mealType}',
+                    '${widget.existingLog != null ? 'Update' : 'Add'} ${_quantity == _quantity.roundToDouble() ? _quantity.toInt().toString() : _quantity.toString()} to ${widget.mealType}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -263,6 +396,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
         child: Icon(icon, color: enabled ? GelatoTheme.textDark : Colors.grey, size: 28),
       ),
     );
+  }
+
+  String _getBowlName(double grams) {
+    if (grams == 20.0) return 'Small Scoop';
+    if (grams == 50.0) return 'Small Bowl';
+    if (grams == 100.0) return 'Medium Bowl';
+    if (grams == 150.0) return 'Large Bowl';
+    if (grams == 200.0) return 'Extra Large Bowl';
+    return 'Portion Size';
   }
 
   Widget _buildProgressBar(String label, double current, double limit, Color color) {

@@ -27,6 +27,7 @@ void main() async {
   // await FirebaseAppCheck.instance.activate(
   //   androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
   // );
+  await AppState.load();
   await NotificationService().init();
   runApp(const DPPApp());
 }
@@ -95,7 +96,17 @@ class MainShellState extends State<MainShell> {
         final hasGpaq = data['hasGpaqResult'] == true;
         
         AppState.hasIdrsResult = hasIdrs;
-        if (hasIdrs) AppState.idrsScore = data['idrsScore'] ?? 0;
+        if (hasIdrs) {
+          AppState.idrsScore = data['idrsScore'] ?? 0;
+          if (data.containsKey('age')) AppState.age = (data['age'] as num).toInt();
+          if (data.containsKey('height')) AppState.heightCm = (data['height'] as num).toDouble();
+          if (data.containsKey('currentWeight')) AppState.weightKg = (data['currentWeight'] as num).toDouble();
+          if (data.containsKey('gender')) AppState.isMan = data['gender'] == 'male';
+          if (AppState.heightCm > 0 && AppState.weightKg > 0) {
+            AppState.bmi = AppState.weightKg / ((AppState.heightCm / 100) * (AppState.heightCm / 100));
+          }
+          AppState.save();
+        }
         
         AppState.hasGpaqResult = hasGpaq;
         if (hasGpaq) {

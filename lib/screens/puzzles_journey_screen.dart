@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../main.dart';
+import '../data/gelato_theme.dart';
 import 'food_tracking_screen.dart';
 import 'activity_fitness_screen.dart';
 
@@ -48,16 +49,16 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF3F693B),
+      backgroundColor: GelatoTheme.green,
       body: Stack(
         children: [
           // 1. Scrollable Zoom Map
           InteractiveViewer(
             transformationController: _transformationController,
             constrained: false,
-            minScale: 0.5,
-            maxScale: 3.0,
-            boundaryMargin: const EdgeInsets.all(200),
+            panAxis: PanAxis.vertical,
+            scaleEnabled: false,
+            boundaryMargin: const EdgeInsets.only(bottom: 150),
             child: SizedBox(
               width: canvasWidth,
               height: canvasHeight,
@@ -71,40 +72,53 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
                         ),
                       ),
                       
+                      // Path Nodes (bottom to top)
+                      _buildNode(1, 400, 1400, isCompleted: true),
+                      _buildNode(2, 330, 1310, isCompleted: true),
+                      _buildNode(3, 260, 1220, isCompleted: true),
+                      _buildNode(4, 190, 1130, isCompleted: true),
+                      _buildNode(5, 120, 1040, isCompleted: true),
+
+                      // Decorative fruit basket next to node 5
+                      Positioned(
+                        left: 270,
+                        top: 1010,
+                        child: Image.asset(
+                          'assets/images/fruit_basket.png',
+                          width: 140,
+                          height: 140,
+                          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                        ),
+                      ),
+
+                      _buildNode(6, 180, 950, isCompleted: true),
+                      _buildNode(7, 240, 860, isCompleted: true),
+                      _buildNode(8, 300, 770, isCompleted: true),
+                      _buildNode(9, 360, 680, isCompleted: true),
+                      _buildNode(10, 310, 590, isCompleted: true),
+                      _buildNode(11, 260, 500, isCompleted: true),
+                      _buildNode(12, 210, 410, isCompleted: true),
+                      _buildNode(13, 160, 320, isCompleted: true),
+                      // Locked levels in clouds
+                      _buildNode(14, 210, 230, isCompleted: false),
+                      _buildNode(15, 260, 140, isCompleted: false),
+                      _buildNode(16, 310, 50, isCompleted: false),
+
                       // Clouds (Obscuring future levels)
                       Positioned(
                         top: 0,
                         left: -100,
                         right: -100,
-                        height: 900, // Covers upper half
+                        height: 480, // Covers upper half down to level 12 (y=410)
                         child: _buildCloudsArea(),
                       ),
-
-                      // Path Nodes (bottom to top)
-                      _buildNode(1, 400, 1400, isCompleted: true),
-                      _buildNode(2, 330, 1340, isCompleted: true),
-                      _buildNode(3, 260, 1280, isCompleted: true),
-                      _buildNode(4, 190, 1220, isCompleted: true),
-                      _buildNode(5, 120, 1160, isCompleted: true),
-                      _buildNode(6, 180, 1070, isCompleted: true),
-                      _buildNode(7, 240, 980, isCompleted: true),
-                      _buildNode(8, 300, 890, isCompleted: true),
-                      _buildNode(9, 360, 800, isCompleted: true),
-                      _buildNode(10, 310, 720, isCompleted: true),
-                      _buildNode(11, 260, 640, isCompleted: true),
-                      _buildNode(12, 210, 560, isCompleted: true),
-                      _buildNode(13, 160, 480, isCompleted: true),
-                      // Locked levels in clouds
-                      _buildNode(14, 210, 410, isCompleted: false),
-                      _buildNode(15, 260, 340, isCompleted: false),
-                      _buildNode(16, 310, 270, isCompleted: false),
 
                       // Player Pawn Mascot! Travels from level 1 to 2
                       AnimatedPositioned(
                         duration: const Duration(seconds: 2),
                         curve: Curves.easeInOutCubic,
                         left: (_currentPawnLevel == 1 ? 400.0 : 330.0) + 10, // Offset to center on stump
-                        top: (_currentPawnLevel == 1 ? 1400.0 : 1340.0) - 45, // Shifted up so feet rest on top
+                        top: (_currentPawnLevel == 1 ? 1400.0 : 1310.0) - 45, // Shifted up so feet rest on top
                         child: _PlayerPawn(),
                       ),
                     ],
@@ -128,7 +142,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
     return Positioned(
       left: x,
       top: y,
-      child: isCompleted ? _WoodStumpNode(number: number, isHighlighted: _currentPawnLevel == number) : _StoneBlockNode(number: number),
+      child: _WoodStumpNode(number: number, isHighlighted: _currentPawnLevel == number),
     );
   }
 
@@ -401,10 +415,10 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
 class _IsometricCheckerboardPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paintDark = Paint()..color = const Color(0xFF3A6133);
-    final paintLight = Paint()..color = const Color(0xFF426E3A);
-    final lockedDark = Paint()..color = const Color(0xFF9E9E9E); // Greyish for locked tiles
-    final lockedLight = Paint()..color = const Color(0xFFBDBDBD);
+    final paintDark = Paint()..color = const Color(0xFFC5D4AB);
+    final paintLight = Paint()..color = const Color(0xFFD6E5BD);
+    final lockedDark = Paint()..color = const Color(0xFFB5C49B);
+    final lockedLight = Paint()..color = const Color(0xFFC5D4AB);
 
     // Isometric grid dimensions
     const double tileWidth = 80.0;
@@ -449,8 +463,8 @@ class _WoodStumpNode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 76,
-      height: 66,
+      width: 95,
+      height: 82,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -458,8 +472,8 @@ class _WoodStumpNode extends StatelessWidget {
           Positioned(
             bottom: -2,
             child: Container(
-              width: 66,
-              height: 40,
+              width: 82,
+              height: 50,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -474,8 +488,8 @@ class _WoodStumpNode extends StatelessWidget {
           Positioned(
             bottom: 0,
             child: Container(
-              width: 76,
-              height: 50,
+              width: 95,
+              height: 62,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
@@ -490,8 +504,8 @@ class _WoodStumpNode extends StatelessWidget {
           Positioned(
             top: 0,
             child: Container(
-              width: 72,
-              height: 52,
+              width: 90,
+              height: 65,
               decoration: BoxDecoration(
                 gradient: const RadialGradient(
                   colors: [Color(0xFFEFEBE9), Color(0xFFD7CCC8)],
@@ -500,7 +514,7 @@ class _WoodStumpNode extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isHighlighted ? const Color(0xFFFFD700) : const Color(0xFF8D6E63),
-                  width: isHighlighted ? 4 : 3,
+                  width: isHighlighted ? 5 : 4,
                 ),
                 boxShadow: [
                   isHighlighted
@@ -513,7 +527,7 @@ class _WoodStumpNode extends StatelessWidget {
                 '$number',
                 style: const TextStyle(
                   color: Color(0xFF4E342E),
-                  fontSize: 24,
+                  fontSize: 30,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -561,7 +575,7 @@ class _StoneBlockNode extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFF78909C), Color(0xFF455A64)],
+                  colors: [Color(0xFFB5C49B), Color(0xFF9FB283)],
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -575,11 +589,11 @@ class _StoneBlockNode extends StatelessWidget {
               height: 46,
               decoration: BoxDecoration(
                 gradient: const RadialGradient(
-                  colors: [Color(0xFFECEFF1), Color(0xFFCFD8DC)],
+                  colors: [Color(0xFFE2F0C9), Color(0xFFC5D4AB)],
                   radius: 0.8,
                 ),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF90A4AE), width: 2),
+                border: Border.all(color: const Color(0xFF9FB283), width: 2),
                 boxShadow: [
                   BoxShadow(color: Colors.white.withValues(alpha: 0.7), blurRadius: 2, offset: const Offset(0, -2))
                 ],
@@ -588,7 +602,7 @@ class _StoneBlockNode extends StatelessWidget {
               child: Text(
                 '$number',
                 style: const TextStyle(
-                  color: Color(0xFF546E7A),
+                  color: Color(0xFF3B571B),
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -829,12 +843,7 @@ class _PlayerPawnState extends State<_PlayerPawn> with SingleTickerProviderState
           child: child,
         );
       },
-      child: Image.asset(
-        'assets/images/heart_mascot_red.png',
-        width: 70, // Slightly taller as requested
-        height: 70,
-        fit: BoxFit.contain,
-      ),
+      child: const SizedBox.shrink(),
     );
   }
 }

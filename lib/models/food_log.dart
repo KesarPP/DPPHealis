@@ -2,10 +2,23 @@ import 'food_item.dart';
 
 class LoggedFood {
   final FoodItem food;
-  final int quantity;
+  final double quantity;
+  final double selectedGrams;
+  final double defaultGrams;
   final String mealType;
 
-  LoggedFood({required this.food, this.quantity = 1, required this.mealType});
+  LoggedFood({
+    required this.food,
+    this.quantity = 1.0,
+    this.selectedGrams = 100.0,
+    this.defaultGrams = 100.0,
+    required this.mealType,
+  });
+
+  double get effectiveMultiplier {
+    if (defaultGrams <= 0) return quantity;
+    return quantity * (selectedGrams / defaultGrams);
+  }
 
   Map<String, dynamic> toMap() => {
     'foodId': food.id,
@@ -20,13 +33,17 @@ class LoggedFood {
     if (food.sodium != null) 'sodium': food.sodium,
     if (food.servingSize != null) 'servingSize': food.servingSize,
     'quantity': quantity,
+    'selectedGrams': selectedGrams,
+    'defaultGrams': defaultGrams,
     'mealType': mealType,
   };
 
   factory LoggedFood.fromMap(Map<String, dynamic> map) {
     return LoggedFood(
       mealType: map['mealType'] ?? 'Snack',
-      quantity: map['quantity'] ?? 1,
+      quantity: (map['quantity'] ?? 1.0).toDouble(),
+      selectedGrams: (map['selectedGrams'] ?? 100.0).toDouble(),
+      defaultGrams: (map['defaultGrams'] ?? 100.0).toDouble(),
       food: FoodItem(
         id: map['foodId'] ?? '',
         name: map['name'] ?? '',
