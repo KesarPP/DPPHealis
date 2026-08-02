@@ -113,19 +113,21 @@ class FaqContactScreen extends StatelessWidget {
             child: Icon(icon, color: Colors.black, size: 24),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87),
+                ),
+              ],
+            ),
           ),
         ],
       ),

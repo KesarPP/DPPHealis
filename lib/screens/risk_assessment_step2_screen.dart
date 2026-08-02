@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/app_state.dart';
 // MainShell
 import '../data/gelato_theme.dart';
+import '../data/app_state.dart';
+import '../services/points_service.dart';
 import 'gpaq_step1_screen.dart';
 
 class RiskAssessmentStep2Screen extends StatefulWidget {
@@ -376,6 +378,13 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                                 'date': FieldValue.serverTimestamp(),
                                 'moods': ['Started IDRS Assessment'],
                               }, SetOptions(merge: true));
+                              
+                              final int weekNumber = (now.difference(DateTime(now.year, 1, 1)).inDays / 7).floor();
+                              PointsService.awardPoints(
+                                action: 'weekly_weigh_in',
+                                points: 5,
+                                referenceId: '${now.year}_W$weekNumber',
+                              );
                             }
                           } catch (e) {
                             debugPrint('Failed to save IDRS score: $e');

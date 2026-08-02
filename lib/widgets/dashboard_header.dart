@@ -6,7 +6,6 @@ import '../data/gelato_theme.dart';
 import '../screens/profile_screen.dart';
 import '../services/auth_service.dart';
 
-class StartTourNotification extends Notification {}
 
 class DashboardHeader extends StatefulWidget {
   const DashboardHeader({super.key});
@@ -130,10 +129,8 @@ class _DashboardHeaderState extends State<DashboardHeader>
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                      ).then((value) {
-                        if (value == true) {
-                          StartTourNotification().dispatch(context);
-                        } else if (mounted) {
+                      ).then((_) {
+                        if (mounted) {
                           setState(() {});
                         }
                       });

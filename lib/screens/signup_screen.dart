@@ -8,6 +8,7 @@ import '../data/gelato_theme.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../main.dart';
+import 'risk_assessment_step1_screen.dart';
 
 const _brandColor = Color(0xFF1B3D6D);
 const _slateGrey = Color(0xFF6B7C93);
@@ -82,7 +83,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const MainShell(),
+            builder: (_) => const RiskAssessmentStep1Screen(isFromSignup: true),
           ),
         );
       }

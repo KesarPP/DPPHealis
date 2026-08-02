@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../data/gelato_theme.dart';
 
 class LeaderboardScreen extends StatelessWidget {
@@ -6,18 +8,99 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> leaderboardData = [
-      {'rank': 1, 'name': 'Claire', 'points': '1,450 pts', 'badges': 6, 'isUser': false},
-      {'rank': 2, 'name': 'You', 'points': '1,280 pts', 'badges': 5, 'isUser': true},
-      {'rank': 3, 'name': 'Evander', 'points': '1,120 pts', 'badges': 4, 'isUser': false},
-      {'rank': 4, 'name': 'Kenton', 'points': '980 pts', 'badges': 3, 'isUser': false},
-      {'rank': 5, 'name': 'Zackary R.', 'points': '850 pts', 'badges': 3, 'isUser': false},
-      {'rank': 6, 'name': 'Brittny B.', 'points': '720 pts', 'badges': 2, 'isUser': false},
-      {'rank': 7, 'name': 'Krysta K.', 'points': '540 pts', 'badges': 1, 'isUser': false},
-    ];
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            backgroundColor: GelatoTheme.bg,
+            body: Center(child: CircularProgressIndicator(color: GelatoTheme.purpleDark)),
+          );
+        }
 
-    final top3 = leaderboardData.take(3).toList();
-    final rest = leaderboardData.skip(3).toList();
+        final docs = snapshot.data!.docs;
+        final currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+        final allUsers = <Map<String, dynamic>>[];
+        for (final doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (data.containsKey('role') && data['role'] == 'coach') continue;
+          
+          final int points = data['totalPoints'] as int? ?? 0;
+          final String name = data['name'] as String? ?? 'User';
+          final bool isUser = doc.id == currentUid;
+          
+          allUsers.add({
+            'name': isUser ? 'You' : name,
+            'points': points,
+            'badges': (points / 100).floor(),
+            'isUser': isUser,
+          });
+        }
+
+        final List<Map<String, dynamic>> mockData = [
+          {'name': 'Claire', 'points': 1450, 'badges': 6, 'isUser': false},
+          {'name': 'Evander', 'points': 1120, 'badges': 4, 'isUser': false},
+          {'name': 'Kenton', 'points': 980, 'badges': 3, 'isUser': false},
+          {'name': 'Zackary R.', 'points': 850, 'badges': 3, 'isUser': false},
+          {'name': 'Brittny B.', 'points': 720, 'badges': 2, 'isUser': false},
+          {'name': 'Krysta K.', 'points': 540, 'badges': 1, 'isUser': false},
+        ];
+        
+        // Add mocks if current user isn't beating them yet, they serve as competition
+        // We ensure we don't add duplicate 'You'
+        if (allUsers.isEmpty && currentUid == null) {
+          allUsers.addAll(mockData);
+        } else {
+           allUsers.addAll(mockData);
+        }
+        
+        allUsers.sort((a, b) => (b['points'] as int).compareTo(a['points'] as int));
+        
+        // Find the user's actual rank
+        int userRank = -1;
+        Map<String, dynamic>? userData;
+        for (int i = 0; i < allUsers.length; i++) {
+          if (allUsers[i]['isUser'] == true) {
+            userRank = i + 1;
+            userData = allUsers[i];
+            break;
+          }
+        }
+
+        final topUsers = allUsers.take(7).toList();
+        
+        // If user is not in top 7, replace the 7th item with the user
+        if (userRank > 7 && userData != null) {
+          topUsers[6] = userData;
+          // We don't change the actual array, but we need to remember the rank
+        }
+
+        final List<Map<String, dynamic>> leaderboardData = [];
+        for (int i = 0; i < topUsers.length; i++) {
+          final isCurrentUser = topUsers[i]['isUser'] == true;
+          leaderboardData.add({
+            'rank': isCurrentUser && userRank > 7 ? userRank : i + 1,
+            'name': topUsers[i]['name'],
+            'points': '${topUsers[i]['points']} pts',
+            'badges': topUsers[i]['badges'],
+            'isUser': isCurrentUser,
+          });
+        }
+
+        // Ensure we have at least 3 for podium
+        while (leaderboardData.length < 3) {
+          leaderboardData.add({
+            'rank': leaderboardData.length + 1,
+            'name': 'Bot',
+            'points': '0 pts',
+            'badges': 0,
+            'isUser': false,
+          });
+        }
+
+        final top3 = leaderboardData.take(3).toList();
+        final rest = leaderboardData.skip(3).toList();
 
     return Scaffold(
       backgroundColor: GelatoTheme.bg,
@@ -272,6 +355,7 @@ class LeaderboardScreen extends StatelessWidget {
         ),
       ),
     );
+    });
   }
 }
 

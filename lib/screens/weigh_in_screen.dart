@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../data/gelato_theme.dart';
 import '../services/notification_service.dart';
+import '../services/points_service.dart';
 import '../data/app_state.dart';
 
 class _WeighInEntry {
@@ -211,6 +213,14 @@ class _WeighInScreenState extends State<WeighInScreen> {
           'date': FieldValue.serverTimestamp(),
           'moods': List.from(_history.last.moods),
         });
+        
+        // Award points for weekly weigh in
+        final int weekNumber = (now.difference(DateTime(now.year, 1, 1)).inDays / 7).floor();
+        PointsService.awardPoints(
+          action: 'weekly_weigh_in',
+          points: 5,
+          referenceId: '${now.year}_W$weekNumber',
+        );
       }
     } catch (e) {
       debugPrint('Error saving weight: $e');

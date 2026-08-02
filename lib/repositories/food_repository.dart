@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/food_item.dart';
 import '../models/food_log.dart';
+import '../services/points_service.dart';
 
 class FoodRepository {
   FirebaseFirestore? get _db {
@@ -79,7 +80,7 @@ class FoodRepository {
     if (db == null) return;
     final docRef = db.collection('logs').doc(userId).collection('food_entries').doc(date);
     
-    return db.runTransaction((transaction) async {
+    await db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
       
       if (!snapshot.exists) {
@@ -125,6 +126,14 @@ class FoodRepository {
         });
       }
     });
+    
+    // Award points after successful save
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    await PointsService.awardPoints(
+      action: 'food_logged',
+      points: 5,
+      referenceId: '${newEntry.food.id}_$timestamp',
+    );
   }
 
   Future<void> removeFoodFromLog(String userId, String date, LoggedFood itemToRemove) async {
