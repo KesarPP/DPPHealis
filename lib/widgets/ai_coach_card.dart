@@ -44,7 +44,7 @@ class _AiCoachCardState extends State<AiCoachCard>
           HapticFeedback.mediumImpact();
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CoachChatScreen(forceCoachId: 'AI_COACH')),
+            MaterialPageRoute(builder: (context) => const AiChatbotScreen()),
           );
         },
         onTapCancel: () => setState(() => _buttonPressed = false),
@@ -77,110 +77,111 @@ class _AiCoachCardState extends State<AiCoachCard>
                 child: child,
               );
             },
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.health_and_safety_outlined,
-                        color: Colors.white,
-                        size: 20,
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.health_and_safety_outlined,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'AI Health Coach',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 8),
-                      Text(
-                        'AI Health Coach',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Personalised',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Your consistency improved 18% compared to last week.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
                     ),
-                    child: const Text(
-                      'Personalised',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 1,
+                    width: double.infinity,
+                    color: Colors.white.withValues(alpha: 0.18),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Reducing dinner portions by 20% could lower your score 4-8 pts in two weeks.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Action button style
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Take a 15-min walk after lunch',
+                          style: TextStyle(
+                            color: Color(0xFF0284C7),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Color(0xFF0284C7),
+                          size: 16,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Your consistency improved 18% compared to last week.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 1,
-                width: double.infinity,
-                color: Colors.white.withValues(alpha: 0.18),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Reducing dinner portions by 20% could lower your score 4-8 pts in two weeks.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Action button style
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Take a 15-min walk after lunch',
-                      style: TextStyle(
-                        color: Color(0xFF0284C7),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Color(0xFF0284C7),
-                      size: 16,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

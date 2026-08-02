@@ -76,13 +76,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
   }
 
   double get calorieGoal {
-    if (AppState.idrsScore >= 60) {
-      return 1500.0; // High risk - weight loss focus
-    } else if (AppState.idrsScore >= 30) {
-      return 1800.0; // Moderate risk
-    } else {
-      return 2000.0; // Low risk
-    }
+    return AppState.calculateDailyCalorieGoal();
   }
 
   void setSelectedDate(String date) {
@@ -141,12 +135,12 @@ class FoodDiaryNotifier extends ChangeNotifier {
     });
   }
 
-  Future<void> logFood(FoodItem food, String mealType, String date, {int quantity = 1}) async {
+  Future<void> logFood(FoodItem food, String mealType, String date, {double quantity = 1.0, double selectedGrams = 100.0, double defaultGrams = 100.0}) async {
     if (Firebase.apps.isEmpty) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     
-    final entry = LoggedFood(food: food, mealType: mealType, quantity: quantity);
+    final entry = LoggedFood(food: food, mealType: mealType, quantity: quantity, selectedGrams: selectedGrams, defaultGrams: defaultGrams);
     await _repository.addFoodToLog(user.uid, date, entry);
   }
 

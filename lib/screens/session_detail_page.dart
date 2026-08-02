@@ -18,7 +18,7 @@ class SessionDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: ManuscriptColors.parchment,
       body: AncientBookBackground(
-        backgroundAsset: 'assets/images/session_timeline/book_background_open.png',
+        backgroundAsset: 'assets/images/session_timeline/manuscript_bg_green1.png',
         child: SafeArea(
           child: Column(
             children: [

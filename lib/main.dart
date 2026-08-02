@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -26,6 +27,7 @@ void main() async {
   // await FirebaseAppCheck.instance.activate(
   //   androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
   // );
+  await AppState.load();
   await NotificationService().init();
   runApp(const DPPApp());
 }
@@ -94,7 +96,17 @@ class MainShellState extends State<MainShell> {
         final hasGpaq = data['hasGpaqResult'] == true;
         
         AppState.hasIdrsResult = hasIdrs;
-        if (hasIdrs) AppState.idrsScore = data['idrsScore'] ?? 0;
+        if (hasIdrs) {
+          AppState.idrsScore = data['idrsScore'] ?? 0;
+          if (data.containsKey('age')) AppState.age = (data['age'] as num).toInt();
+          if (data.containsKey('height')) AppState.heightCm = (data['height'] as num).toDouble();
+          if (data.containsKey('currentWeight')) AppState.weightKg = (data['currentWeight'] as num).toDouble();
+          if (data.containsKey('gender')) AppState.isMan = data['gender'] == 'male';
+          if (AppState.heightCm > 0 && AppState.weightKg > 0) {
+            AppState.bmi = AppState.weightKg / ((AppState.heightCm / 100) * (AppState.heightCm / 100));
+          }
+          AppState.save();
+        }
         
         AppState.hasGpaqResult = hasGpaq;
         if (hasGpaq) {
@@ -198,12 +210,16 @@ class MainShellState extends State<MainShell> {
     }
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
       ),
 
-      bottomNavigationBar: NavigationBarTheme(
+      bottomNavigationBar: ClipRRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: NavigationBarTheme(
         data: NavigationBarThemeData(
           indicatorColor: indicatorColor,
           iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -228,12 +244,16 @@ class MainShellState extends State<MainShell> {
           }),
         ),
         child: NavigationBar(
+          backgroundColor: Colors.white.withValues(alpha: 0.8),
+          elevation: 0,
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
             setState(() => _selectedIndex = index);
           },
           destinations: _destinations,
         ),
+      ),
+      ),
       ),
     );
   }

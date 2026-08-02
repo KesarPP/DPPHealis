@@ -1,3 +1,5 @@
+import 'calorie_goal_calculator.dart';
+
 const double defaultKcalBurnRatePerMin = 5.0; // ≈300 kcal/hr brisk walk, light-moderate intensity
 
 class EnergyBalanceModel {
@@ -41,24 +43,21 @@ class EnergyBalanceModel {
       );
     }
 
-    double ree;
-    double af;
-    final g = gender?.trim().toLowerCase() ?? '';
+    final double heightMeters = heightCm / 100.0;
+    final double bmi = weightKg / (heightMeters * heightMeters);
 
-    if (g == 'male' || g == 'man' || g == 'm') {
-      ree = 10.0 * weightKg + 6.25 * heightCm - 5.0 * effectiveAge + 5.0;
-      af = 1.6;
-    } else if (g == 'female' || g == 'woman' || g == 'f') {
-      ree = 10.0 * weightKg + 6.25 * heightCm - 5.0 * effectiveAge - 161.0;
-      af = 1.5;
-    } else {
-      // Use 1.55 if gender is missing/non-binary
-      ree = 10.0 * weightKg + 6.25 * heightCm - 5.0 * effectiveAge - 78.0;
-      af = 1.55;
-    }
+    final String g = gender?.trim().toLowerCase() ?? '';
+    final Sex sexEnum = (g == 'male' || g == 'man' || g == 'm') ? Sex.male : Sex.female;
 
-    final double maintenanceCalories = ree * af;
-    final double computedCalorieNeed = maintenanceCalories - 500.0;
+    final result = CalorieGoalCalculator.calculate(
+      weight: weightKg,
+      height: heightCm,
+      age: effectiveAge,
+      sex: sexEnum,
+      bmi: bmi,
+    );
+
+    final double computedCalorieNeed = result.dailyCalorieGoal;
     
     final double surplus = calorieGained - computedCalorieNeed;
     final double caloriesToBurn = surplus > 0 ? surplus : 0.0;

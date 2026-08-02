@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../data/gelato_theme.dart';
+import '../data/app_state.dart';
 
 class DailyGoals extends StatefulWidget {
   const DailyGoals({super.key});
@@ -132,6 +133,8 @@ class _DailyGoalsState extends State<DailyGoals>
     final caloriesProgress = _progressValues['Calories'] ?? 0.82;
     final activeProgress = _progressValues['Active Minutes'] ?? 0.80;
 
+    final double calorieGoal = AppState.calculateDailyCalorieGoal();
+
     final goalsList = [
       _GoalData(
         label: 'Steps',
@@ -144,11 +147,14 @@ class _DailyGoalsState extends State<DailyGoals>
       ),
       _GoalData(
         label: 'Calories',
-        current: (caloriesProgress * 3000).toInt().toString().replaceAllMapped(
+        current: (caloriesProgress * calorieGoal).toInt().toString().replaceAllMapped(
               RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
               (Match m) => '${m[1]},',
             ),
-        target: '3,000 kcal',
+        target: '${calorieGoal.toInt().toString().replaceAllMapped(
+              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+              (Match m) => '${m[1]},',
+            )} kcal',
         icon: Icons.local_fire_department_rounded,
         progress: caloriesProgress,
         color: GelatoTheme.orangeDark,

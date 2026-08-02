@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import '../data/gelato_theme.dart';
 import '../main.dart';
+<<<<<<< HEAD
+import '../models/calorie_goal_calculator.dart';
+import '../data/app_state.dart';
+=======
+import '../data/app_state.dart';
+
+>>>>>>> 75d20f83f9907072d4e31a5498077ca2f099cb22
 class RiskAssessmentResultScreen extends StatelessWidget {
   final int age;
   final bool isMan;
@@ -155,6 +162,14 @@ class RiskAssessmentResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final calculatedScore = idrsScore;
+    AppState.bmi = bmi;
+    AppState.age = age;
+    AppState.isMan = isMan;
+    AppState.heightCm = height * 2.54;
+    AppState.weightKg = weight;
+    AppState.idrsScore = calculatedScore;
+    AppState.hasIdrsResult = true;
+    AppState.save();
 
     return Scaffold(
       backgroundColor: GelatoTheme.bg,
@@ -594,6 +609,20 @@ class RiskAssessmentResultScreen extends StatelessWidget {
     final hasBp = hasHighBP == 1;
     final hasBpPrescribed = prescribedBPMedication == 1;
 
+    // Calculate Calorie Goals
+    CalorieGoalResult? calorieResult;
+    if (weight > 0 && height > 0 && age > 0) {
+      final double heightCm = height * 2.54;
+      final Sex sexEnum = isMan ? Sex.male : Sex.female;
+      calorieResult = CalorieGoalCalculator.calculate(
+        weight: weight,
+        height: heightCm,
+        age: age,
+        sex: sexEnum,
+        bmi: bmiVal,
+      );
+    }
+
     return _buildCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -621,6 +650,45 @@ class RiskAssessmentResultScreen extends StatelessWidget {
               color: GelatoTheme.textLight,
             ),
           ),
+          if (calorieResult != null) ...[
+            const Divider(color: Colors.black12, height: 24),
+            const Text(
+              'Calorie Goals',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: GelatoTheme.textDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCalorieGoalMiniCard(
+                    title: 'Daily',
+                    value: '${calorieResult.dailyCalorieGoal.round()} kcal',
+                    color: GelatoTheme.blue,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildCalorieGoalMiniCard(
+                    title: 'Weekly',
+                    value: '${calorieResult.weeklyCalorieGoal.round()} kcal',
+                    color: GelatoTheme.green,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildCalorieGoalMiniCard(
+                    title: 'Monthly',
+                    value: '${calorieResult.monthlyCalorieGoal.round()} kcal',
+                    color: GelatoTheme.purple,
+                  ),
+                ),
+              ],
+            ),
+          ],
           const Divider(color: Colors.black12, height: 24),
           Row(
             children: [
@@ -639,6 +707,41 @@ class RiskAssessmentResultScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalorieGoalMiniCard({required String title, required String value, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: color.withOpacity(0.8),
+            ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: color.withOpacity(1.0),
+              ),
+            ),
           ),
         ],
       ),
