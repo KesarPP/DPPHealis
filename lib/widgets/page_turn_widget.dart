@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class PageTurnWidget extends StatefulWidget {
-  final List<Widget> pages;
+  final Widget leftPage;
+  final Widget rightPage;
   final Duration duration;
-  final int initialIndex;
-  final ValueChanged<int>? onPageChanged;
 
   const PageTurnWidget({
     super.key,
-    required this.pages,
+    required this.leftPage,
+    required this.rightPage,
     this.duration = const Duration(milliseconds: 650),
-    this.initialIndex = 0,
-    this.onPageChanged,
   });
 
   @override
@@ -22,37 +20,14 @@ class PageTurnWidget extends StatefulWidget {
 class PageTurnWidgetState extends State<PageTurnWidget> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   double _dragExtent = 0.0;
-  int _currentIndex = 0;
-  double _maxWidth = 400.0;
-  
-  int get currentIndex => _currentIndex;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
     _controller = AnimationController(
       vsync: this,
       duration: widget.duration,
     );
-    _controller.addStatusListener(_onAnimationStatusChanged);
-  }
-
-  void _onAnimationStatusChanged(AnimationStatus status) {
-    if (status == AnimationStatus.completed) {
-      if (_currentIndex < widget.pages.length - 1) {
-        setState(() {
-          _currentIndex++;
-          _controller.value = 0.0;
-          _dragExtent = 0.0;
-        });
-        widget.onPageChanged?.call(_currentIndex);
-      }
-    } else if (status == AnimationStatus.dismissed) {
-      setState(() {
-        _dragExtent = 0.0;
-      });
-    }
   }
 
   @override
@@ -62,61 +37,27 @@ class PageTurnWidgetState extends State<PageTurnWidget> with SingleTickerProvide
   }
 
   void _onPanUpdate(DragUpdateDetails details, double maxWidth) {
-    _maxWidth = maxWidth;
     setState(() {
       _dragExtent -= details.delta.dx;
-      
-      if (_dragExtent < 0.0) {
-        if (_currentIndex > 0) {
-          _currentIndex--;
-          _dragExtent += maxWidth;
-          widget.onPageChanged?.call(_currentIndex);
-        } else {
-          _dragExtent = 0.0;
-        }
-      } else if (_dragExtent > maxWidth) {
-        if (_currentIndex < widget.pages.length - 1) {
-          _currentIndex++;
-          _dragExtent -= maxWidth;
-        } else {
-          _dragExtent = maxWidth;
-        }
-      }
-      
+      _dragExtent = _dragExtent.clamp(0.0, maxWidth);
       _controller.value = _dragExtent / maxWidth;
     });
   }
 
   void _onPanEnd(DragEndDetails details, double maxWidth) {
     if (_controller.value > 0.35 || details.velocity.pixelsPerSecond.dx < -300) {
-      if (_currentIndex < widget.pages.length - 1) {
-        _controller.forward(from: _controller.value);
-      } else {
-        _controller.reverse(from: _controller.value);
-      }
+      _controller.forward(from: _controller.value);
     } else {
       _controller.reverse(from: _controller.value);
     }
   }
 
   void nextPage() {
-    if (_currentIndex < widget.pages.length - 1) {
-      _controller.forward(from: _controller.value);
-    }
+    _controller.forward();
   }
 
   void prevPage() {
-    if (_controller.value == 0.0 && _currentIndex > 0) {
-      setState(() {
-        _currentIndex--;
-        _controller.value = 1.0;
-        _dragExtent = _maxWidth;
-      });
-      widget.onPageChanged?.call(_currentIndex);
-      _controller.reverse(from: 1.0);
-    } else if (_controller.value > 0.0) {
-      _controller.reverse(from: _controller.value);
-    }
+    _controller.reverse();
   }
 
   Widget _buildSegment(int index, int total, double progress, Size size, Widget child, {bool isShadow = false}) {
@@ -126,6 +67,7 @@ class PageTurnWidgetState extends State<PageTurnWidget> with SingleTickerProvide
     
     // Create a curling wave effect. 
     // The angle depends on the index and the global progress.
+    // We want the curl to start at the right (index = total-1) and move left (index = 0).
     final curlPosition = progress * (total + 4) - 2; 
     
     // Distance from the current segment to the center of the curl
@@ -179,13 +121,9 @@ class PageTurnWidgetState extends State<PageTurnWidget> with SingleTickerProvide
 
   @override
   Widget build(BuildContext context) {
-    if (widget.pages.isEmpty) return const SizedBox.shrink();
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
-        _maxWidth = maxWidth; // store for programmatic turns
-        
         return GestureDetector(
           onHorizontalDragUpdate: (details) => _onPanUpdate(details, maxWidth),
           onHorizontalDragEnd: (details) => _onPanEnd(details, maxWidth),
@@ -194,20 +132,15 @@ class PageTurnWidgetState extends State<PageTurnWidget> with SingleTickerProvide
             builder: (context, child) {
               final progress = _controller.value;
               
-              Widget leftPage = widget.pages[_currentIndex];
-              Widget rightPage = _currentIndex < widget.pages.length - 1 
-                  ? widget.pages[_currentIndex + 1] 
-                  : Container(color: Colors.white);
-              
               return Stack(
                 fit: StackFit.expand,
                 children: [
                   // Underneath page (Right Page)
-                  rightPage,
+                  widget.rightPage,
                   
                   // Top page curling (Left Page)
                   if (progress < 1.0)
-                    _buildSegment(0, 10, progress, constraints.biggest, leftPage, isShadow: true),
+                    _buildSegment(0, 10, progress, constraints.biggest, widget.leftPage, isShadow: true),
                 ],
               );
             },
@@ -217,4 +150,3 @@ class PageTurnWidgetState extends State<PageTurnWidget> with SingleTickerProvide
     );
   }
 }
-

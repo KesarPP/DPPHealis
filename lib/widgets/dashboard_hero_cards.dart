@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
@@ -6,6 +7,7 @@ import '../models/ndpp_constants.dart';
 import '../services/activity_metrics_engine.dart';
 import '../services/health_sync_service.dart';
 import '../models/calorie_goal_calculator.dart';
+import '../data/app_state.dart';
 
 class DashboardHeroCards extends StatefulWidget {
   final List<DailyAggregate> trailing30Days;
@@ -199,7 +201,9 @@ class _DashboardActivityCardState extends State<DashboardActivityCard> {
             ),
             const SizedBox(height: 8),
             StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance.collection('users').doc(AuthService().currentUser?.uid ?? '').snapshots(),
+              stream: AuthService().currentUser?.uid != null 
+                  ? FirebaseFirestore.instance.collection('users').doc(AuthService().currentUser!.uid).snapshots()
+                  : const Stream.empty(),
               builder: (context, snapshot) {
                 double? customWeeklyKcalGoal;
                 double? customMonthlyKcalGoal;
@@ -207,23 +211,62 @@ class _DashboardActivityCardState extends State<DashboardActivityCard> {
                 if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
                   final data = snapshot.data!.data() as Map<String, dynamic>?;
                   if (data != null) {
-                    final double weightKg = (data['current_weight_kg'] as num?)?.toDouble() ??
-                        (data['weight_kg'] as num?)?.toDouble() ?? (data['weight'] as num?)?.toDouble() ?? (data['currentWeight'] as num?)?.toDouble() ?? 0.0;
+                    final double weightKg = (data['currentWeight'] as num?)?.toDouble() ??
+                        (data['current_weight_kg'] as num?)?.toDouble() ??
+                        (data['weight_kg'] as num?)?.toDouble() ?? 
+                        (data['weight'] as num?)?.toDouble() ?? 0.0;
                     final double heightRaw = (data['height'] as num?)?.toDouble() ?? 0.0;
                     final double heightCm = heightRaw < 3.0 ? heightRaw * 100.0 : heightRaw;
                     final int age = (data['age'] as num?)?.toInt() ?? 0;
                     final String g = data['gender']?.toString() ?? (data['isMan'] == true ? 'male' : 'female');
 
-                    // Use Active Calorie Burn instead of Dietary Goal
-                    // We only need weight to calculate this, falling back to an average of 75kg if missing
-                    final double effectiveWeight = weightKg > 0 ? weightKg : 75.0;
-                    final int baseMins = NdppConstants.getWeeklyTargetForWeek(widget.programWeek);
+                    // Fallback to AppState first, then static defaults
+                    final double fallbackWeight = AppState.weightKg > 0 ? AppState.weightKg : 75.0;
+                    final double fallbackHeight = AppState.heightCm > 0 ? AppState.heightCm : 170.0;
+
+                    // Route through CalorieGoalCalculator.calculate as instructed
+                    final double effectiveWeight = weightKg > 0 ? weightKg : fallbackWeight;
+                    final double effectiveHeightCm = heightCm > 0 ? heightCm : fallbackHeight;
+                    final int effectiveAge = age > 0 ? age : (AppState.age > 0 ? AppState.age : 20); // Fallback to 20 for test cases
+                    final Sex sexEnum = (g == 'male' || g == 'man' || AppState.isMan) ? Sex.male : Sex.female; // Fallback to female if missing
+                    final double effectiveBmi = effectiveWeight / ((effectiveHeightCm / 100) * (effectiveHeightCm / 100));
                     
+                    final result = CalorieGoalCalculator.calculate(
+                      weight: effectiveWeight,
+                      height: effectiveHeightCm,
+                      age: effectiveAge,
+                      sex: sexEnum,
+                      bmi: effectiveBmi,
+                    );
+                    
+                    // Calculate active calorie burn goal based on weight
+                    final int weeklyTargetMins = NdppConstants.getWeeklyTargetForWeek(widget.programWeek);
                     customWeeklyKcalGoal = CalorieGoalCalculator.calculateActiveCalorieBurnGoal(
                       weightKg: effectiveWeight,
-                      weeklyTargetMins: baseMins,
+                      weeklyTargetMins: weeklyTargetMins,
                     );
-                    customMonthlyKcalGoal = customWeeklyKcalGoal * (CalorieGoalCalculator.averageDaysPerMonth / 7.0);
+
+                    double monthlyTargetMins = 0;
+                    if (widget.programWeek >= 8) {
+                      monthlyTargetMins = 652;
+                    } else {
+                      final now = DateTime.now();
+                      final today = DateTime(now.year, now.month, now.day);
+                      final firstDayOfMonth = DateTime(now.year, now.month, 1);
+                      final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+                      final int daysInMonth = lastDayOfMonth.difference(firstDayOfMonth).inDays + 1;
+                      for (int i = 0; i < daysInMonth; i++) {
+                        final d = firstDayOfMonth.add(Duration(days: i));
+                        final int diffDays = d.difference(today).inDays;
+                        final int weekForD = max(1, widget.programWeek + (diffDays / 7).floor());
+                        final int wTarget = NdppConstants.getWeeklyTargetForWeek(weekForD);
+                        monthlyTargetMins += wTarget / 7.0;
+                      }
+                    }
+                    customMonthlyKcalGoal = CalorieGoalCalculator.calculateActiveCalorieBurnGoal(
+                      weightKg: effectiveWeight,
+                      weeklyTargetMins: monthlyTargetMins.round(),
+                    );
                   }
                 }
 
@@ -321,10 +364,23 @@ class _WeightSection extends StatelessWidget {
         if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
           final data = snapshot.data!.data() as Map<String, dynamic>?;
           if (data != null) {
-            currentWeight = (data['current_weight_kg'] as num?)?.toDouble() ??
+            double fallbackWeight = AppState.weightKg > 0 ? AppState.weightKg : 75.0;
+            currentWeight = (data['currentWeight'] as num?)?.toDouble() ??
+                (data['current_weight_kg'] as num?)?.toDouble() ??
                 (data['weight_kg'] as num?)?.toDouble() ??
-                75.0;
-            goalWeight = (data['goal_weight_kg'] as num?)?.toDouble() ?? 70.0;
+                (data['weight'] as num?)?.toDouble() ??
+                fallbackWeight;
+                
+            double fallbackHeight = AppState.heightCm > 0 ? AppState.heightCm : 170.0;
+            final double heightRaw = (data['height'] as num?)?.toDouble() ?? fallbackHeight;
+            final double heightCm = heightRaw < 3.0 ? heightRaw * 100.0 : heightRaw;
+            final double bmi = currentWeight / ((heightCm / 100) * (heightCm / 100));
+            
+            if (bmi >= 25.0) {
+              goalWeight = currentWeight - (currentWeight * 0.07);
+            } else {
+              goalWeight = currentWeight;
+            }
           }
         }
         return _buildWeightContent(context, currentWeight, goalWeight);

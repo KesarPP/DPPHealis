@@ -15,6 +15,7 @@ class AppState {
   static double weightKg = 0.0;
   static double bmi = 0.0;
 
+
   static Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     idrsScore = prefs.getInt('idrsScore') ?? 0;
@@ -72,4 +73,5 @@ class AppState {
 
     return dailyCalorieGoal;
   }
+
 }

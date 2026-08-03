@@ -158,11 +158,6 @@ class MainShellState extends State<MainShell> {
       label: 'Puzzles',
     ),
     NavigationDestination(
-      icon: Icon(Icons.auto_stories_outlined),
-      selectedIcon: Icon(Icons.auto_stories),
-      label: 'Journal',
-    ),
-    NavigationDestination(
       icon: Icon(Icons.home_outlined),
       selectedIcon: Icon(Icons.home),
       label: 'Dashboard',
@@ -181,26 +176,23 @@ class MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    int navIndex = _selectedIndex == 1 ? 0 : (_selectedIndex > 1 ? _selectedIndex - 1 : _selectedIndex);
     Color indicatorColor;
     Color activeTextColor;
-    switch (_selectedIndex) {
+    switch (navIndex) {
       case 0:
         indicatorColor = GelatoTheme.yellow;
         activeTextColor = GelatoTheme.yellowDark;
         break;
       case 1:
-        indicatorColor = const Color(0xFFDCCCEC); // Match Manuscript look or use purple
-        activeTextColor = const Color(0xFF4A1E63);
-        break;
-      case 2:
         indicatorColor = GelatoTheme.pink;
         activeTextColor = GelatoTheme.pinkDark;
         break;
-      case 3:
+      case 2:
         indicatorColor = GelatoTheme.blue;
         activeTextColor = GelatoTheme.blueDark;
         break;
-      case 4:
+      case 3:
         indicatorColor = GelatoTheme.green;
         activeTextColor = GelatoTheme.greenDark;
         break;
@@ -246,9 +238,9 @@ class MainShellState extends State<MainShell> {
         child: NavigationBar(
           backgroundColor: Colors.white.withValues(alpha: 0.8),
           elevation: 0,
-          selectedIndex: _selectedIndex,
+          selectedIndex: navIndex,
           onDestinationSelected: (index) {
-            setState(() => _selectedIndex = index);
+            setState(() => _selectedIndex = index >= 1 ? index + 1 : index);
           },
           destinations: _destinations,
         ),

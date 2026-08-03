@@ -35,6 +35,14 @@ class CalorieGoalResult {
   /// Monthly calorie target (kcal/month) = dailyCalorieGoal * daysInMonth.
   final double monthlyCalorieGoal;
 
+  /// Weekly "calories to burn" goal (kcal/week) = dailyDeficit * 7.
+  /// Null when bmi < 25 (no deficit — nothing to burn as a goal).
+  final double? weeklyCaloriesToBurn;
+
+  /// Monthly "calories to burn" goal (kcal/month) = dailyDeficit * daysInMonth.
+  /// Null when bmi < 25 (no deficit — nothing to burn as a goal).
+  final double? monthlyCaloriesToBurn;
+
   const CalorieGoalResult({
     required this.ree,
     required this.maintenance,
@@ -42,6 +50,8 @@ class CalorieGoalResult {
     required this.dailyCalorieGoal,
     required this.weeklyCalorieGoal,
     required this.monthlyCalorieGoal,
+    required this.weeklyCaloriesToBurn,
+    required this.monthlyCaloriesToBurn,
   });
 
   @override
@@ -52,7 +62,9 @@ class CalorieGoalResult {
         'dailyDeficit: ${dailyDeficit?.toStringAsFixed(1)}, '
         'dailyCalorieGoal: ${dailyCalorieGoal.toStringAsFixed(1)}, '
         'weeklyCalorieGoal: ${weeklyCalorieGoal.toStringAsFixed(1)}, '
-        'monthlyCalorieGoal: ${monthlyCalorieGoal.toStringAsFixed(1)})';
+        'monthlyCalorieGoal: ${monthlyCalorieGoal.toStringAsFixed(1)}, '
+        'weeklyCaloriesToBurn: ${weeklyCaloriesToBurn?.toStringAsFixed(1)}, '
+        'monthlyCaloriesToBurn: ${monthlyCaloriesToBurn?.toStringAsFixed(1)})';
   }
 }
 
@@ -110,9 +122,16 @@ class CalorieGoalCalculator {
       dailyCalorieGoal = maintenance;
     }
 
-    // Weekly / Monthly extensions
+    // Weekly / Monthly extensions — intake goal
     final double weeklyCalorieGoal = dailyCalorieGoal * 7;
     final double monthlyCalorieGoal = dailyCalorieGoal * daysPerMonth;
+
+    // Weekly / Monthly extensions — "calories to burn" (deficit) goal.
+    // Only meaningful when a deficit exists (bmi >= 25); null otherwise.
+    final double? weeklyCaloriesToBurn =
+        dailyDeficit != null ? dailyDeficit * 7 : null;
+    final double? monthlyCaloriesToBurn =
+        dailyDeficit != null ? dailyDeficit * daysPerMonth : null;
 
     return CalorieGoalResult(
       ree: ree,
@@ -121,6 +140,8 @@ class CalorieGoalCalculator {
       dailyCalorieGoal: dailyCalorieGoal,
       weeklyCalorieGoal: weeklyCalorieGoal,
       monthlyCalorieGoal: monthlyCalorieGoal,
+      weeklyCaloriesToBurn: weeklyCaloriesToBurn,
+      monthlyCaloriesToBurn: monthlyCaloriesToBurn,
     );
   }
 
