@@ -2,8 +2,16 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../main.dart';
 import '../data/gelato_theme.dart';
+import '../data/handouts_data.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/food_notifiers.dart';
+import '../repositories/activity_log_repository_impl.dart';
+import '../services/firestore_activity_log_service.dart';
 import 'food_tracking_screen.dart';
 import 'activity_fitness_screen.dart';
+import 'handouts_screen.dart';
 
 class PuzzlesJourneyScreen extends StatefulWidget {
   const PuzzlesJourneyScreen({super.key});
@@ -20,10 +28,20 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
   final double canvasHeight = 1600;
 
   int _currentPawnLevel = 1;
+  int? _selectedNode;
+  double? _selectedNodeX;
+  double? _selectedNodeY;
+
+  bool _isCardsCollapsed = false;
+  double? _initialY;
+  
+  int _todayActivityMinutes = 0;
+  int _todaySteps = 0;
 
   @override
   void initState() {
     super.initState();
+    _loadTodayActivity();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final Size screenSize = MediaQuery.of(context).size;
       final double scale = screenSize.width / canvasWidth; // Reset to fit exactly one width (same as old FittedBox)
@@ -31,19 +49,67 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
       final Matrix4 matrix = Matrix4.identity()
         ..translate(
           0.0, // Aligned to left
-          -(canvasHeight * scale - screenSize.height) + 120, // Pin to bottom (above bottom bar)
+          -(canvasHeight * scale - screenSize.height) - 150, // Pushed up to show node 1 clearly above cards
         )
         ..scale(scale);
         
       _transformationController.value = matrix;
     });
 
+    double? lastY;
+    _transformationController.addListener(() {
+      final y = _transformationController.value.getTranslation().y;
+      if (lastY == null) {
+        lastY = y;
+        return;
+      }
+
+      final dy = y - lastY!;
+      // Scrolling up (map moving up, y increasing) -> collapse
+      if (dy > 2.0 && !_isCardsCollapsed) {
+        setState(() { _isCardsCollapsed = true; });
+      } 
+      // Scrolling down (map moving down, y decreasing) -> expand
+      else if (dy < -2.0 && _isCardsCollapsed) {
+        setState(() { _isCardsCollapsed = false; });
+      }
+      
+      lastY = y;
+    });
   }
 
   @override
   void dispose() {
     _transformationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTodayActivity() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final int cachedSteps = prefs.getInt('hc_cached_steps') ?? 0;
+      
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final repo = ActivityLogRepositoryImpl(FirestoreActivityLogService());
+        final logs = await repo.getTodayActivityLogs(); // Wait, let's use getTodayActivityLogs
+        int mins = logs.fold(0, (sum, log) => sum + log.durationMinutes);
+        if (mounted) {
+          setState(() {
+            _todayActivityMinutes = mins;
+            _todaySteps = cachedSteps;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _todaySteps = cachedSteps;
+          });
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   @override
@@ -58,7 +124,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
             constrained: false,
             panAxis: PanAxis.vertical,
             scaleEnabled: false,
-            boundaryMargin: const EdgeInsets.only(bottom: 150),
+            boundaryMargin: const EdgeInsets.only(bottom: 400),
             child: SizedBox(
               width: canvasWidth,
               height: canvasHeight,
@@ -72,6 +138,9 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
                         ),
                       ),
                       
+                      // Decorative Trees along the sides
+                      ..._buildTrees(),
+                      
                       // Path Nodes (bottom to top)
                       _buildNode(1, 400, 1400, isCompleted: true),
                       _buildNode(2, 330, 1310, isCompleted: true),
@@ -79,17 +148,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
                       _buildNode(4, 190, 1130, isCompleted: true),
                       _buildNode(5, 120, 1040, isCompleted: true),
 
-                      // Decorative fruit basket next to node 5
-                      Positioned(
-                        left: 270,
-                        top: 1010,
-                        child: Image.asset(
-                          'assets/images/fruit_basket.png',
-                          width: 140,
-                          height: 140,
-                          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                        ),
-                      ),
+
 
                       _buildNode(6, 180, 950, isCompleted: true),
                       _buildNode(7, 240, 860, isCompleted: true),
@@ -121,17 +180,29 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
                         top: (_currentPawnLevel == 1 ? 1400.0 : 1310.0) - 45, // Shifted up so feet rest on top
                         child: _PlayerPawn(),
                       ),
+                      
+                      // Dropdown Menu (on top of everything, centered above the block)
+                      if (_selectedNode != null && _selectedNodeX != null && _selectedNodeY != null)
+                        Positioned(
+                          left: _selectedNodeX! - 105, // Center the 300px wide dropdown above the 90px wide block
+                          bottom: canvasHeight - _selectedNodeY! + 10, // Place 10px above the top of the block
+                          child: _buildDropdownMenu(_selectedNode!),
+                        ),
                     ],
                   ),
                 ),
               ),
           
-          // 4. Bottom UI Overlay
+          // 4. Bottom UI Overlay - Floating Cards
           Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomBar(context),
+            bottom: 120,
+            left: 20,
+            child: _buildMealLogCard(context),
+          ),
+          Positioned(
+            bottom: 120,
+            right: 20,
+            child: _buildActivityCard(context),
           ),
         ],
       ),
@@ -142,89 +213,375 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
     return Positioned(
       left: x,
       top: y,
-      child: _WoodStumpNode(number: number, isHighlighted: _currentPawnLevel == number),
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            if (_selectedNode == number) {
+              _selectedNode = null;
+            } else {
+              _selectedNode = number;
+              _selectedNodeX = x;
+              _selectedNodeY = y;
+            }
+          });
+        },
+        child: _ColorfulBlockNode(number: number, isHighlighted: _currentPawnLevel == number),
+      ),
     );
   }
 
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildMealLogCard(BuildContext context) {
+    // Dynamic meal count from FoodDiaryNotifier
+    final foodNotifier = Provider.of<FoodDiaryNotifier>(context, listen: true);
+    final int mealsLogged = foodNotifier.dailyLog?.entries.length ?? 0;
+    
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTrackingScreen())),
+      child: Container(
+        width: 130, // Increased width
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white, width: 2), // Gives crisp edges
+          boxShadow: const [
+            BoxShadow(color: Colors.black45, blurRadius: 24, spreadRadius: 6, offset: Offset(0, 12)),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFDAB9), // Peach
+                borderRadius: BorderRadius.vertical(
+                  top: const Radius.circular(16),
+                  bottom: Radius.circular(_isCardsCollapsed ? 16 : 0),
+                ),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.restaurant, color: Color(0xFFD87093), size: 24),
+                    SizedBox(height: 4),
+                    Text('Meal Log', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ],
+                ),
+              ),
+            ),
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  children: [
+                    const Text("Today's Log", style: TextStyle(fontSize: 12, color: Colors.black54)),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CircularProgressIndicator(
+                            value: (mealsLogged / 5).clamp(0.0, 1.0),
+                            strokeWidth: 6,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE57373)),
+                          ),
+                          Center(child: Text("$mealsLogged/5", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text("Meals Logged", style: TextStyle(fontSize: 10, color: Colors.black54)),
+                  ],
+                ),
+              ),
+              crossFadeState: _isCardsCollapsed ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              duration: const Duration(milliseconds: 250),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityFitnessScreen())),
+      child: Container(
+        width: 130, // Same width as Meal Log card
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [
+            BoxShadow(color: Colors.black45, blurRadius: 24, spreadRadius: 6, offset: Offset(0, 12)),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFFBBDEFB), // Light blue
+                borderRadius: BorderRadius.vertical(
+                  top: const Radius.circular(16),
+                  bottom: Radius.circular(_isCardsCollapsed ? 16 : 0),
+                ),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.directions_run, color: Color(0xFF1976D2), size: 24),
+                    SizedBox(height: 4),
+                    Text('Activity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ],
+                ),
+              ),
+            ),
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                child: Column(
+                  children: [
+                    const Text("Daily Steps", style: TextStyle(fontSize: 12, color: Colors.black54)),
+                    const SizedBox(height: 6),
+                    Text("$_todaySteps / 10000 steps", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: (_todaySteps / 10000).clamp(0.0, 1.0),
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ],
+                ),
+              ),
+              crossFadeState: _isCardsCollapsed ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              duration: const Duration(milliseconds: 250),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownMenu(int number) {
     return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).padding.bottom + 16,
-      ),
+      width: 300,
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF355231).withValues(alpha: 0.95),
+        color: const Color(0xFFFFF8E1), // Light cream color
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, 6)),
+        ],
       ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDropdownItem(Icons.play_circle_fill, 'Video', 0.5, true),
+          const SizedBox(height: 24),
+          _buildDropdownItem(Icons.description, 'Handout', 0.0, false, onTap: () {
+            _openSessionHandout(context, number);
+          }),
+          const SizedBox(height: 24),
+          _buildDropdownItem(Icons.quiz, 'Quiz', 0.0, false),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdownItem(IconData icon, String title, double progress, bool isStarred, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
-          _buildNavButton(
-            context: context,
-            icon: Icons.restaurant,
-            label: 'Meals',
-            color: const Color(0xFFE53935), // Red/Orange for meals
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTrackingScreen())),
-          ),
+          Icon(icon, color: const Color(0xFF795548), size: 28),
           const SizedBox(width: 12),
-          _buildNavButton(
-            context: context,
-            icon: Icons.directions_run,
-            label: 'Activity',
-            color: const Color(0xFF039BE5), // Blue for activity
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityFitnessScreen())),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                if (progress > 0) ...[
+                  const SizedBox(height: 6),
+                  LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.grey.shade300,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF455A64)),
+                    minHeight: 6,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ]
+              ],
+            ),
           ),
-          const SizedBox(width: 12),
-          _buildNavButton(
-            context: context,
-            icon: Icons.play_arrow,
-            label: 'Sessions',
-            color: const Color(0xFF7CB342), // Green for sessions
-            onTap: () => MainShell.of(context)?.selectedIndex = 5,
+          const SizedBox(width: 8),
+          Icon(
+            isStarred ? Icons.star : Icons.star_border,
+            color: isStarred ? const Color(0xFFFFCA28) : Colors.grey.shade300,
+            size: 20,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNavButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 52,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                offset: const Offset(0, 4),
+  void _openSessionHandout(BuildContext context, int sessionNumber) {
+    ModuleHandout? targetModule;
+    SessionHandout? targetSession;
+    
+    for (var module in ndppHandouts) {
+      for (var session in module.sessions) {
+        if (session.sessionName.contains('Session $sessionNumber:') || 
+            (sessionNumber == 16 && session.sessionName.contains('Module 5'))) {
+          targetModule = module;
+          targetSession = session;
+          break;
+        }
+      }
+      if (targetSession != null) break;
+    }
+
+    if (targetModule != null && targetSession != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HandoutsScreen(
+            title: 'Session $sessionNumber Handout',
+            handouts: [
+              ModuleHandout(
+                targetModule!.moduleNumber, 
+                targetModule.moduleName, 
+                [targetSession!],
               )
             ],
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 22),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
         ),
+      );
+    }
+  }
+
+  List<Widget> _buildTrees() {
+    final List<Offset> nodePositions = [
+      const Offset(400, 1400), const Offset(330, 1310), const Offset(260, 1220),
+      const Offset(190, 1130), const Offset(120, 1040), const Offset(180, 950),
+      const Offset(240, 860), const Offset(300, 770), const Offset(360, 680),
+      const Offset(310, 590), const Offset(260, 500), const Offset(210, 410),
+      const Offset(160, 320), const Offset(210, 230), const Offset(260, 140),
+      const Offset(310, 50),
+    ];
+
+    final math.Random rng = math.Random(12345); // Fixed seed for consistent layout across rebuilds
+    final List<Widget> trees = [];
+    final List<Offset> placedTrees = []; // Track centers to prevent clumping
+
+    // Create an extremely dense grid of potential tree spots
+    final double step = 35.0;
+    for (double y = -100; y < canvasHeight + 300; y += step) {
+      for (double x = -150; x < canvasWidth + 150; x += step) {
+         
+         double px = x + rng.nextDouble() * 50 - 25;
+         double py = y + rng.nextDouble() * 50 - 25;
+         double size = 130 + rng.nextDouble() * 50; // Random size between 130 and 180
+         
+         // Only restrict vertical top/bottom extremes to avoid infinite scrolling, 
+         // but explicitly allow them to cross the horizontal phone boundaries!
+         if (py < -150 || py > canvasHeight + 250) {
+            continue;
+         }
+
+         double tcx = px + size / 2;
+         double tcy = py + size / 2;
+
+         // 1. Keep away from blocks AND the paths connecting them
+         bool tooCloseToPath = false;
+         for (int i = 0; i < nodePositions.length; i++) {
+            var node = nodePositions[i];
+            double ncx = node.dx + 45; // center X of 90px wide node
+            double ncy = node.dy + 35; // center Y of 70px tall node
+            
+            double dx = tcx - ncx;
+            double dy = tcy - ncy;
+            
+            // Invisible border radius around blocks
+            if (math.sqrt(dx * dx + dy * dy) < 95) {
+               tooCloseToPath = true;
+               break;
+            }
+
+            // Also check the path line connecting to the NEXT node
+            if (i < nodePositions.length - 1) {
+               var nextNode = nodePositions[i + 1];
+               double nextNcx = nextNode.dx + 45;
+               double nextNcy = nextNode.dy + 35;
+               
+               double mx = (ncx + nextNcx) / 2; // Midpoint of the path
+               double my = (ncy + nextNcy) / 2;
+               
+               double mdx = tcx - mx;
+               double mdy = tcy - my;
+               
+               // Keep away from the path lines
+               if (math.sqrt(mdx * mdx + mdy * mdy) < 95) {
+                  tooCloseToPath = true;
+                  break;
+               }
+            }
+         }
+         
+         if (tooCloseToPath) continue;
+
+         // 2. Keep away from other trees to prevent complete clumping
+         bool tooCloseToTree = false;
+         for (var other in placedTrees) {
+            double dx = tcx - other.dx;
+            double dy = tcy - other.dy;
+            
+            // Minimum distance between trees (increased to provide more breathing room)
+            double minDistance = 95;
+            
+            // Extreme thinning for the space specifically below block 1
+            if (py > 1400) {
+               minDistance = 140; // Less dense than the sides, but more than before
+            }
+
+            if (math.sqrt(dx * dx + dy * dy) < minDistance) {
+               tooCloseToTree = true;
+               break;
+            }
+         }
+
+         if (tooCloseToTree) continue;
+
+         // Spot is valid!
+         placedTrees.add(Offset(tcx, tcy));
+         bool isApple = rng.nextBool();
+         trees.add(_buildTree(isApple ? 'apple_tree.png' : 'orange_tree.png', px, py, size));
+      }
+    }
+    return trees;
+  }
+
+  Widget _buildTree(String fileName, double x, double y, double size) {
+    return Positioned(
+      left: x,
+      top: y,
+      width: size,
+      height: size,
+      child: Image.asset(
+        'assets/images/$fileName',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => const SizedBox(), // Hide if file not found
       ),
     );
   }
@@ -455,16 +812,38 @@ class _IsometricCheckerboardPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _WoodStumpNode extends StatelessWidget {
+class _ColorfulBlockNode extends StatelessWidget {
   final int number;
   final bool isHighlighted;
-  const _WoodStumpNode({required this.number, this.isHighlighted = false});
+  const _ColorfulBlockNode({required this.number, this.isHighlighted = false});
+
+  List<Color> _getColorsForNumber(int number) {
+    switch (number) {
+      case 1: return [const Color(0xFFFFE082), const Color(0xFFFFCA28), const Color(0xFFFFA000)]; // Yellow
+      case 2: return [const Color(0xFF80DEEA), const Color(0xFF4DD0E1), const Color(0xFF0097A7)]; // Teal
+      case 3: return [const Color(0xFFFFCC80), const Color(0xFFFFB74D), const Color(0xFFF57C00)]; // Peach
+      case 4: return [const Color(0xFFEF9A9A), const Color(0xFFE57373), const Color(0xFFD32F2F)]; // Pink-red
+      case 5: return [const Color(0xFFF8BBD0), const Color(0xFFF48FB1), const Color(0xFFC2185B)]; // Pink
+      case 6: return [const Color(0xFFC8E6C9), const Color(0xFFA5D6A7), const Color(0xFF388E3C)]; // Light Green
+      case 7: return [const Color(0xFFB2EBF2), const Color(0xFF80DEEA), const Color(0xFF0097A7)]; // Cyan
+      case 8:
+      case 9:
+      case 10: return [const Color(0xFFE1BEE7), const Color(0xFFCE93D8), const Color(0xFF8E24AA)]; // Purple
+      case 11: return [const Color(0xFFBBDEFB), const Color(0xFF90CAF9), const Color(0xFF1976D2)]; // Light blue
+      default: return [const Color(0xFFE0E0E0), const Color(0xFFBDBDBD), const Color(0xFF757575)]; // Grey
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final colors = _getColorsForNumber(number);
+    final Color topColor = colors[0];
+    final Color borderColor = colors[1];
+    final Color baseColor = colors[2];
+
     return SizedBox(
-      width: 95,
-      height: 82,
+      width: 90,
+      height: 70,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -472,49 +851,42 @@ class _WoodStumpNode extends StatelessWidget {
           Positioned(
             bottom: -2,
             child: Container(
-              width: 82,
-              height: 50,
+              width: 80,
+              height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   isHighlighted
                       ? const BoxShadow(color: Color(0xFFFFD700), blurRadius: 16, offset: Offset(0, 4))
-                      : const BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 8))
+                      : const BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 6))
                 ],
               ),
             ),
           ),
-          // Base depth (darker wood)
+          // Base depth
           Positioned(
             bottom: 0,
             child: Container(
-              width: 95,
-              height: 62,
+              width: 90,
+              height: 52,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF6D4C41), Color(0xFF3E2723)],
-                ),
+                color: baseColor,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
           ),
-          // Top cut surface (lighter wood)
+          // Top surface
           Positioned(
             top: 0,
             child: Container(
-              width: 90,
-              height: 65,
+              width: 86,
+              height: 56,
               decoration: BoxDecoration(
-                gradient: const RadialGradient(
-                  colors: [Color(0xFFEFEBE9), Color(0xFFD7CCC8)],
-                  radius: 0.8,
-                ),
+                color: topColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isHighlighted ? const Color(0xFFFFD700) : const Color(0xFF8D6E63),
-                  width: isHighlighted ? 5 : 4,
+                  color: isHighlighted ? const Color(0xFFFFD700) : borderColor,
+                  width: isHighlighted ? 4 : 3,
                 ),
                 boxShadow: [
                   isHighlighted
@@ -523,13 +895,20 @@ class _WoodStumpNode extends StatelessWidget {
                 ],
               ),
               alignment: Alignment.center,
-              child: Text(
-                '$number',
-                style: const TextStyle(
-                  color: Color(0xFF4E342E),
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Book watermark icon in the background
+                  Icon(Icons.menu_book, color: Colors.white.withValues(alpha: 0.4), size: 36),
+                  Text(
+                    '$number',
+                    style: const TextStyle(
+                      color: Color(0xFF424242),
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
