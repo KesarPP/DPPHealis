@@ -215,15 +215,8 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
       top: y,
       child: GestureDetector(
         onTap: () {
-          setState(() {
-            if (_selectedNode == number) {
-              _selectedNode = null;
-            } else {
-              _selectedNode = number;
-              _selectedNodeX = x;
-              _selectedNodeY = y;
-            }
-          });
+          // Redirect to Journal tab when clicking a level
+          MainShell.of(context)?.selectedIndex = 1;
         },
         child: _ColorfulBlockNode(number: number, isHighlighted: _currentPawnLevel == number),
       ),
