@@ -147,15 +147,18 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     if (mounted) setState(() { _syncStatus = SyncStatus.syncing; });
     try {
       final healthSync = HealthSyncService();
-      bool sdkUnavailable = false;
+      bool sdkUnavailable = true; // TEMPORARILY DISABLED TO PREVENT ANR
+      /*
       try {
         final sdkStatus = await Health().getHealthConnectSdkStatus();
         if (sdkStatus == HealthConnectSdkStatus.sdkUnavailable) {
           sdkUnavailable = true;
         }
       } catch (_) {}
+      */
 
       bool granted = false;
+      /*
       if (!sdkUnavailable) {
         try {
           granted = await healthSync.hasPermissions();
@@ -166,14 +169,17 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
           debugPrint('Dashboard requestPermissions error: $e');
         }
       }
+      */
       final now = DateTime.now();
       final thirtyDaysAgo = now.subtract(const Duration(days: 29));
       List<DailyAggregate> past30Days = [];
+      /* TEMPORARILY DISABLED TO PREVENT ANR
       try {
         past30Days = await healthSync.getStatsForInterval(startTime: thirtyDaysAgo, endTime: now).timeout(const Duration(seconds: 4));
       } catch (e) {
         debugPrint('Dashboard getStatsForInterval error: $e');
       }
+      */
       
       if (past30Days.isEmpty || past30Days.every((d) => d.totalSteps == 0 && d.totalActiveMinutes == 0)) {
         past30Days = _generateSyncedDefaultAggregates(now);

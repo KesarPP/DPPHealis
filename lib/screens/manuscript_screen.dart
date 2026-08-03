@@ -11,6 +11,8 @@ import 'food_tracking_screen.dart';
 import 'weigh_in_screen.dart';
 import 'handouts_screen.dart';
 import '../data/handouts_data.dart';
+import '../widgets/bouncing_button.dart';
+import '../widgets/page_turn_widget.dart';
 
 class ManuscriptScreen extends StatefulWidget {
   const ManuscriptScreen({super.key});
@@ -27,8 +29,15 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
   bool _isBookOpen = false;
   bool _isOpening = false;
   late final AnimationController _coverController;
+  late final Animation<double> _buttonCompress;
+  late final Animation<double> _journalLift;
+  late final Animation<double> _claspOpen;
   late final Animation<double> _coverAngle;
   late final Animation<double> _pagesOpacity;
+  late final Animation<double> _pageRipple;
+
+  late final AnimationController _idleController;
+  late final Animation<double> _idleFloat;
 
   @override
   void didChangeDependencies() {
@@ -42,22 +51,61 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
     super.initState();
     _coverController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 1600), // Extended for complex sequence
     );
 
-    // Swings the cover open from 0 to -115 degrees (-2.0 radians) along spine
-    _coverAngle = Tween<double>(begin: 0.0, end: -2.0).animate(
+    _buttonCompress = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(
         parent: _coverController,
-        curve: const Interval(0.0, 0.85, curve: Curves.easeInOutCubic),
+        curve: const Interval(0.0, 0.1, curve: Curves.easeIn),
       ),
     );
 
-    // Fades in the inside pages right as the cover begins opening
+    _journalLift = Tween<double>(begin: 0.0, end: -4.0).animate(
+      CurvedAnimation(
+        parent: _coverController,
+        curve: const Interval(0.1, 0.25, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _claspOpen = Tween<double>(begin: 0.0, end: 0.3).animate(
+      CurvedAnimation(
+        parent: _coverController,
+        curve: const Interval(0.2, 0.35, curve: Curves.easeInBack),
+      ),
+    );
+
+    // Swings the cover open from 0 to -165 degrees (-2.88 radians) along spine
+    _coverAngle = Tween<double>(begin: 0.0, end: -2.88).animate(
+      CurvedAnimation(
+        parent: _coverController,
+        curve: const Interval(0.35, 0.85, curve: Curves.easeOutBack), // Natural bounce
+      ),
+    );
+
     _pagesOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _coverController,
-        curve: const Interval(0.2, 0.9, curve: Curves.easeOut),
+        curve: const Interval(0.35, 0.45, curve: Curves.easeOut), // Quick fade in of pages underneath
+      ),
+    );
+
+    _pageRipple = Tween<double>(begin: 1.02, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _coverController,
+        curve: const Interval(0.85, 1.0, curve: Curves.elasticOut), // Page settling ripple
+      ),
+    );
+
+    _idleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
+
+    _idleFloat = Tween<double>(begin: -1.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _idleController,
+        curve: Curves.easeInOutSine,
       ),
     );
   }
@@ -65,6 +113,7 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
   @override
   void dispose() {
     _coverController.dispose();
+    _idleController.dispose();
     super.dispose();
   }
 
@@ -120,7 +169,7 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                             fontSize: 24, // Decreased font
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF2E5339),
-                            letterSpacing: -0.5,
+                            letterSpacing: 0.5, // Increased spacing
                           ),
                         ),
                         TextSpan(
@@ -130,7 +179,8 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFFD96B85),
-                            letterSpacing: -0.5,
+                            letterSpacing: 0.5,
+                            height: 1.2, // Improved vertical spacing
                           ),
                         ),
                         TextSpan(
@@ -140,8 +190,8 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF2E5339),
-                            letterSpacing: -0.5,
-                            height: 1.1,
+                            letterSpacing: 0.5,
+                            height: 1.2,
                           ),
                         ),
                       ],
@@ -197,224 +247,24 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
       backgroundColor: const Color(0xFF1C120C),
       body: Stack(
         fit: StackFit.expand,
-        children: [
-          // 1. Scholar's Desk Background (The background table around/behind the book)
-          Image.asset(
-            'assets/images/session_timeline/manuscript_bg_green1.png',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF2A1B0D), Color(0xFF140D06), Color(0xFF0F0904)],
-                ),
-              ),
-            ),
-          ),
+        children: <Widget>[
+          // Base Ambient Background
+          const AncientBookBackground(child: SizedBox.expand()),
+          
+          // Render Cover or Pages based on state
+          if (_isBookOpen)
+            _OpenBookInterior(
+              weeks: weeks,
+              rowHeight: _rowHeight,
+              horizontalInset: _cardHorizontalInset,
+              onCloseBook: _closeBook,
+            )
+          else
+            _BookCoverPage(onOpen: _openBook),
 
-          // Floating ambient particles over the desk
-          LayoutBuilder(
-            builder: (context, constraints) => FloatingParticles(
-              areaSize: Size(constraints.maxWidth, constraints.maxHeight),
-            ),
-          ),
-
-          // 2. The Book Container (Open Manuscript State) sitting cleanly on the scholar's desk
-          Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0015)
-              ..rotateX(-0.15)
-              ..scale(0.85) // Reduced size significantly
-              ..translate(0.0, 0.0, 0.0), // Centered vertically
-            child: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.12,
-                  bottom: MediaQuery.of(context).size.height * 0.12,
-                  left: MediaQuery.of(context).size.width * 0.04,
-                  right: MediaQuery.of(context).size.width * 0.04,
-                ),
-                child: AnimatedBuilder(
-              animation: _coverController,
-              builder: (context, child) {
-                final opacity = (_isBookOpen && !_isOpening)
-                    ? 1.0
-                    : _pagesOpacity.value;
-                return Opacity(
-                  opacity: opacity,
-                  child: child,
-                );
-              },
-              child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Stack(
-                          children: [
-                            Positioned.fill(
-                              child: FloatingParticles(
-                                areaSize: Size(constraints.maxWidth, constraints.maxHeight),
-                              ),
-                            ),
-                            _OpenBookInterior(
-                                weeks: weeks,
-                                rowHeight: _rowHeight,
-                                horizontalInset: _cardHorizontalInset,
-                                onCloseBook: _closeBook,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ],
-                ),
-              ),
-            ),
-          ), // padding
-          ), // transform
-
-          // 3. 3D Swinging Book Cover Overlay and bottom unlock button sitting right on the desk bg image
-          if (!_isBookOpen || _isOpening)
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildHeaderCard(context),
-                  Expanded(
-                    child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.0015)
-                            ..rotateX(-0.15)
-                            ..scale(0.85, 0.99, 1.0) // Decreased width by 10% and height by 5%
-                            ..translate(0.0, -15.0, 0.0), // Shifted up to keep top edge anchored
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              top: MediaQuery.of(context).size.height * 0.01,
-                              bottom: 0,
-                              left: MediaQuery.of(context).size.width * 0.02,
-                              right: MediaQuery.of(context).size.width * 0.02,
-                            ),
-                          child: AnimatedBuilder(
-                      animation: _coverController,
-                      builder: (context, child) {
-                        final progress = _coverController.value;
-                        return Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            IgnorePointer(
-                                ignoring: progress > 0.6 || _isBookOpen,
-                                child: Transform(
-                                  alignment: Alignment.centerLeft,
-                                  transform: Matrix4.identity()
-                                    ..setEntry(3, 2, 0.0012)
-                                    ..rotateY(_coverAngle.value),
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      // Removed all box shadows because they draw a solid rectangle behind the transparent PNG cover
-                                    ),
-                                    // Removed ClipRRect so the native PNG bookmark and corners are not cut off
-                                    child: _BookCoverPage(
-                                      onOpen: _openBook,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Shimmer overlay during opening
-                              if (progress > 0.05 && progress < 0.95)
-                                IgnorePointer(
-                                  child: Opacity(
-                                    opacity: math.sin(progress * math.pi) * 0.35,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(22),
-                                        gradient: const RadialGradient(
-                                          colors: [ManuscriptColors.goldLight, Colors.transparent],
-                                          radius: 0.8,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  ),
-                    // Tap to unlock button adapted to the vintage gold/leather scroll theme
-                    if (!_isBookOpen && !_isOpening)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          top: 8,
-                          bottom: MediaQuery.of(context).size.height * 0.02, // moved lower
-                        ),
-                        child: GestureDetector(
-                          onTap: _openBook,
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            alignment: Alignment.center,
-                            width: 260, // decreased width
-                            height: 48, // decreased height
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Color(0xFFFBB8D0), Color(0xFFF07BA8)], // Soft pink gradient
-                              ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(color: Colors.white, width: 2.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                                  blurRadius: 25,
-                                  spreadRadius: 4,
-                                ),
-                                BoxShadow(
-                                  color: const Color(0xFFF07BA8).withValues(alpha: 0.4),
-                                  blurRadius: 35,
-                                  spreadRadius: 8,
-                                ),
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.favorite,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'OPEN MY JOURNAL',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1.2,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                ],
-              ),
-            ),
+          // Header Overlay when closed (Title + Quote)
+          if (!_isBookOpen && !_isOpening)
+            _buildHeaderCard(context),
         ],
       ),
     );
@@ -440,34 +290,24 @@ class _OpenBookInterior extends StatefulWidget {
 }
 
 class _OpenBookInteriorState extends State<_OpenBookInterior> {
-  late final PageController _pageController;
+  final GlobalKey<PageTurnWidgetState> _pageTurnKey = GlobalKey<PageTurnWidgetState>();
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: 0);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     super.dispose();
   }
 
   void _nextPage() {
-    _pageController.animateToPage(
-      1,
-      duration: const Duration(milliseconds: 650),
-      curve: Curves.easeInOutCubic,
-    );
+    _pageTurnKey.currentState?.nextPage();
   }
 
   void _prevPage() {
-    _pageController.animateToPage(
-      0,
-      duration: const Duration(milliseconds: 650),
-      curve: Curves.easeInOutCubic,
-    );
+    _pageTurnKey.currentState?.prevPage();
   }
 
   Widget _buildManuscriptButton({required IconData icon, required String label, required VoidCallback onTap}) {
@@ -511,32 +351,61 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
     double bgAlpha = 0.1,
     bool showIcons = true,
   }) {
-    return GestureDetector(
+    return BouncingButton(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      scaleFactor: 0.96, // Slight 2-3px compression equivalent
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        margin: const EdgeInsets.only(bottom: 12), // Increased breathing room
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: baseColor.withValues(alpha: bgAlpha),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+          color: const Color(0xFFFDFBF7), // Premium warm paper
+          borderRadius: BorderRadius.circular(6), // Slightly rounded paper strip
+          border: Border.all(color: baseColor.withValues(alpha: 0.3), width: 1),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFFFDFBF7),
+              baseColor.withValues(alpha: bgAlpha + 0.05),
+            ],
+          ),
+          boxShadow: [
+            // Inner shadow for slight embossing
+            BoxShadow(
+              color: Colors.white,
+              offset: const Offset(-1, -1),
+              blurRadius: 1,
+            ),
+            // Realistic sharp paper shadow
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              offset: const Offset(1, 3),
+              blurRadius: 4,
+            ),
+          ],
         ),
         child: Row(
           children: [
             // Left circular icon
             if (showIcons) ...[
               Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: baseColor.withValues(alpha: 0.15),
-                  border: Border.all(color: baseColor.withValues(alpha: 0.3)),
+                  color: baseColor.withValues(alpha: 0.1),
+                  border: Border.all(color: baseColor.withValues(alpha: 0.4), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.white,
+                      offset: Offset(-1, -1),
+                      blurRadius: 2,
+                    ),
+                  ],
                 ),
-                child: Icon(leftIcon, color: baseColor, size: 16),
+                child: Icon(leftIcon, color: baseColor.withValues(alpha: 0.9), size: 18),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
             ],
             // Text content
             Expanded(
@@ -549,19 +418,21 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                     style: TextStyle(
                       fontFamily: 'Georgia',
                       fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                      fontSize: 13,
                       color: const Color(0xFF2E5339),
+                      letterSpacing: 0.3,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle,
                     textAlign: showIcons ? TextAlign.left : TextAlign.center,
                     style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 9,
+                      fontFamily: 'Georgia', // Switched from Roboto to Georgia
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic,
                       color: const Color(0xFF2E5339).withValues(alpha: 0.8),
-                      height: 1.2,
+                      height: 1.3,
                     ),
                   ),
                 ],
@@ -569,19 +440,83 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
             ),
             // Right Arrow
             if (showIcons)
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: baseColor.withValues(alpha: 0.4)),
-                  color: Colors.white,
-                ),
-                child: Icon(Icons.arrow_forward_ios_rounded, size: 10, color: baseColor),
-              ),
+              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: baseColor.withValues(alpha: 0.6)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBookmarkButton({
+    required String title,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return BouncingButton(
+      onTap: onTap,
+      scaleFactor: 0.95,
+      child: Container(
+        height: 48, // Explicit height to prevent crushing by IntrinsicHeight
+        margin: const EdgeInsets.only(bottom: 12), // Matching the bottom margin of action cards
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF9ED), // Richer cream color to contrast with the page
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(6),
+            bottomRight: Radius.circular(6),
+          ),
+          border: Border(
+            top: BorderSide(color: color.withValues(alpha: 0.6), width: 4), // Stronger fold highlight
+            left: BorderSide(color: Colors.black.withValues(alpha: 0.08), width: 1),
+            right: BorderSide(color: Colors.black.withValues(alpha: 0.08), width: 1),
+            bottom: BorderSide(color: Colors.black.withValues(alpha: 0.15), width: 1.5),
+          ),
+          boxShadow: [
+            // Very subtle fold detail shadow, no heavy shadows
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 3,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'Georgia',
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color, // Fully opaque text
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmbossedIcon(IconData icon, Color color, double size) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFBF7), // Warm ivory paper tone
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 0.5),
+        boxShadow: [
+          // Laminated drop shadow
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            offset: const Offset(1, 2),
+            blurRadius: 3,
+          ),
+          // Emboss highlight
+          const BoxShadow(
+            color: Colors.white,
+            offset: Offset(-1, -1),
+            blurRadius: 2,
+          ),
+        ],
+      ),
+      child: Icon(icon, color: color.withValues(alpha: 0.8), size: size),
     );
   }
 
@@ -589,19 +524,47 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        PageView(
-          controller: _pageController,
-          physics: const BouncingScrollPhysics(),
-          children: [
-            // Page 1: Manuscript Left Page
-            Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRect(
-                  child: Image.asset(
-                    'assets/images/session_timeline/manuscript_page_left_new.png',
-                    fit: BoxFit.contain, // Changed from cover to contain to fit its native rounded corners
-                    errorBuilder: (c, e, s) => const SizedBox.shrink(),
+        PageTurnWidget(
+          key: _pageTurnKey,
+          leftPage: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRect(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/images/session_timeline/manuscript_page_left_new.png',
+                        fit: BoxFit.contain, // Changed from cover to contain to fit its native rounded corners
+                        errorBuilder: (c, e, s) => const SizedBox.shrink(),
+                      ),
+                      // Paper texture overlay
+                      IgnorePointer(
+                        child: Container(
+                          color: const Color(0xFFFAF7F2).withValues(alpha: 0.15), // Warm ivory tint
+                        ),
+                      ),
+                      // Gutter Shadow (Ambient Occlusion)
+                      IgnorePointer(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            width: 60,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerRight,
+                                end: Alignment.centerLeft,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.25),
+                                  Colors.black.withValues(alpha: 0.05),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 // Content overlaid on the left page
@@ -622,13 +585,24 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [
+                                // Outer container for the gradient border
                                 AspectRatio(
                                   aspectRatio: 16 / 9,
                                   child: Container(
+                                    padding: const EdgeInsets.all(8), // This forms the thick gradient border
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFBB8D0).withValues(alpha: 0.2), // Pastel Pink Tint
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: const Color(0xFFF07BA8).withValues(alpha: 0.4), width: 3), // Pink border
+                                      borderRadius: BorderRadius.circular(20),
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Color(0xFFE5B96E), // Pastel Gold
+                                          Color(0xFFFDFBF7), // Warm paper
+                                          Color(0xFFD4AF37), // Metallic Gold
+                                          Color(0xFFFFF8DC), // Cornsilk
+                                        ],
+                                        stops: [0.0, 0.3, 0.7, 1.0],
+                                      ),
                                       boxShadow: [
                                         BoxShadow(
                                           color: const Color(0xFFD96B85).withValues(alpha: 0.15),
@@ -637,54 +611,76 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                                         ),
                                       ],
                                     ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(13),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF3F4F6), // Light neutral gray/white for video area
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: Colors.white, width: 2),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
                                       child: Stack(
                                         fit: StackFit.expand,
                                         children: [
-                                          // Pastel placeholder background
-                                          Container(
-                                            decoration: const BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                                colors: [
-                                                  Color(0xFFE1F5FE), // Light Pastel Blue
-                                                  Color(0xFFF3E5F5), // Light Pastel Purple
-                                                ],
+                                          // Soft ambient background circles
+                                          Positioned(
+                                            top: -20,
+                                            right: -20,
+                                            child: Container(
+                                              width: 100,
+                                              height: 100,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: const Color(0xFFFFB6C1).withValues(alpha: 0.2),
                                               ),
-                                            ),
-                                            child: const Icon(
-                                              Icons.play_circle_fill_rounded,
-                                              color: Colors.white54,
-                                              size: 64,
                                             ),
                                           ),
-                                          // "Watch Video" label
                                           Positioned(
-                                            bottom: 12,
-                                            left: 16,
+                                            bottom: -30,
+                                            left: 20,
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              width: 120,
+                                              height: 120,
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withValues(alpha: 0.8),
-                                                borderRadius: BorderRadius.circular(20),
+                                                shape: BoxShape.circle,
+                                                color: const Color(0xFFB0E0E6).withValues(alpha: 0.2),
                                               ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: const [
-                                                  Icon(Icons.spa_rounded, color: Color(0xFF81C784), size: 14),
-                                                  SizedBox(width: 4),
-                                                  Text(
-                                                    'Session Video',
-                                                    style: TextStyle(
-                                                      color: Color(0xFF2E5339),
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.bold,
-                                                      fontFamily: 'Georgia',
+                                            ),
+                                          ),
+                                          // Sparkles
+                                          const Positioned(top: 20, left: 40, child: Text('✨', style: TextStyle(fontSize: 10))),
+                                          const Positioned(bottom: 30, right: 50, child: Text('✨', style: TextStyle(fontSize: 14))),
+                                          const Positioned(top: 40, right: 30, child: Icon(Icons.eco, color: Color(0xFFC1E1C1), size: 14)),
+                                          const Positioned(bottom: 20, left: 60, child: Icon(Icons.eco, color: Color(0xFFC1E1C1), size: 12)),
+                                          
+                                          // Big Play Button
+                                          Center(
+                                            child: BouncingButton(
+                                              onTap: () {
+                                                // Handle video play
+                                              },
+                                              child: Container(
+                                                width: 55,
+                                                height: 55,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black.withValues(alpha: 0.15),
+                                                      blurRadius: 8,
+                                                      offset: const Offset(0, 4),
                                                     ),
-                                                  ),
-                                                ],
+                                                  ],
+                                                ),
+                                                child: const Center(
+                                                  child: Icon(Icons.play_arrow_rounded, color: Color(0xFFFF4757), size: 36),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -693,22 +689,74 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                                     ),
                                   ),
                                 ),
-                                // Cute decorative leaf 1 (top left)
+                                
+                                // Decorative Elements overlapping the border
+                                // Top Left Heart Monitor
                                 Positioned(
-                                  top: -12,
-                                  left: -12,
+                                  top: -10,
+                                  left: 15,
+                                  child: _buildEmbossedIcon(Icons.favorite_rounded, const Color(0xFFFF6B81), 18),
+                                ),
+                                // Top Right Water Drop
+                                Positioned(
+                                  top: -22,
+                                  right: 5,
                                   child: Transform.rotate(
-                                    angle: -0.5,
-                                    child: const Icon(Icons.eco_rounded, color: Color(0xFFC5E1A5), size: 32),
+                                    angle: 0.2,
+                                    child: _buildEmbossedIcon(Icons.water_drop_rounded, const Color(0xFF64B5F6), 24),
                                   ),
                                 ),
-                                // Cute decorative leaf 2 (bottom right)
+                                // Bottom Left Shoes
+                                Positioned(
+                                  bottom: -20,
+                                  left: -15,
+                                  child: Transform.rotate(
+                                    angle: -0.15,
+                                    child: _buildEmbossedIcon(Icons.directions_run_rounded, const Color(0xFFFF9800), 28),
+                                  ),
+                                ),
+                                // Bottom Center Health Icon
                                 Positioned(
                                   bottom: -12,
-                                  right: -12,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(
+                                    child: _buildEmbossedIcon(Icons.monitor_heart_rounded, const Color(0xFF4ADE80), 20),
+                                  ),
+                                ),
+                                // Bottom Right Salad
+                                Positioned(
+                                  bottom: -20,
+                                  right: -15,
                                   child: Transform.rotate(
-                                    angle: 2.5,
-                                    child: const Icon(Icons.eco_rounded, color: Color(0xFF81C784), size: 36),
+                                    angle: 0.1,
+                                    child: _buildEmbossedIcon(Icons.restaurant_rounded, const Color(0xFF81C784), 28),
+                                  ),
+                                ),
+                                
+                                // Extra Leaves
+                                Positioned(
+                                  top: -20,
+                                  left: -15,
+                                  child: Transform.rotate(
+                                    angle: -0.3,
+                                    child: _buildEmbossedIcon(Icons.eco_rounded, const Color(0xFFC5E1A5), 20),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: -5,
+                                  right: -25,
+                                  child: Transform.rotate(
+                                    angle: 0.5,
+                                    child: _buildEmbossedIcon(Icons.eco_rounded, const Color(0xFFC5E1A5), 18),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 10,
+                                  right: -30,
+                                  child: Transform.rotate(
+                                    angle: 2.2,
+                                    child: _buildEmbossedIcon(Icons.eco_rounded, const Color(0xFFC5E1A5), 16),
                                   ),
                                 ),
                               ],
@@ -730,10 +778,7 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                           title: 'Turn Page',
                           subtitle: 'Flip the page to see more options.',
                           onTap: () {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 400),
-                              curve: Curves.easeInOut,
-                            );
+                            _pageTurnKey.currentState?.nextPage();
                           },
                           bgAlpha: 0.6, // More vibrant fill
                         ),
@@ -745,14 +790,64 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
             ),
 
             // Page 2: Manuscript Right Page
-            Stack(
+            rightPage: Stack(
               fit: StackFit.expand,
               children: [
                 ClipRect(
-                  child: Image.asset(
-                    'assets/images/session_timeline/manuscript_page_right_new.png',
-                    fit: BoxFit.contain, // Fit like a page without cropping or zooming
-                    errorBuilder: (c, e, s) => const SizedBox.shrink(),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/images/session_timeline/manuscript_page_right_new.png',
+                        fit: BoxFit.contain, // Fit like a page without cropping or zooming
+                        errorBuilder: (c, e, s) => const SizedBox.shrink(),
+                      ),
+                      // Paper texture overlay
+                      IgnorePointer(
+                        child: Container(
+                          color: const Color(0xFFFAF7F2).withValues(alpha: 0.15), // Warm ivory tint
+                        ),
+                      ),
+                      // Gutter Shadow (Ambient Occlusion)
+                      IgnorePointer(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: 60,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.25),
+                                  Colors.black.withValues(alpha: 0.05),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Tab Depth Shadow (Right Edge)
+                      IgnorePointer(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            width: 25,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerRight,
+                                end: Alignment.centerLeft,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.12),
+                                  Colors.black.withValues(alpha: 0.0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 // Content overlaid on the right page
@@ -907,24 +1002,18 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                         Row(
                           children: [
                             Expanded(
-                              child: _buildActionCard(
-                                baseColor: const Color(0xFFFFD54F), // Pastel Yellow
-                                leftIcon: Icons.arrow_back_ios_new_rounded,
+                              child: _buildBookmarkButton(
                                 title: 'Previous Page',
-                                subtitle: 'Go back.',
-                                onTap: _prevPage,
-                                showIcons: false,
+                                color: const Color(0xFFD4AF37), // Muted Gold
+                                onTap: () => _pageTurnKey.currentState?.prevPage(),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: _buildActionCard(
-                                baseColor: const Color(0xFFE57373), // Pastel Red
-                                leftIcon: Icons.close_rounded,
+                              child: _buildBookmarkButton(
                                 title: 'Close Book',
-                                subtitle: 'Finish for now.',
+                                color: const Color(0xFFE57373), // Muted Rose
                                 onTap: widget.onCloseBook,
-                                showIcons: false,
                               ),
                             ),
                           ],
@@ -941,8 +1030,7 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
             ),
               ],
             ),
-          ],
-        ),
+          ),
       ],
     );
   }
@@ -989,6 +1077,32 @@ class _BookCoverPageState extends State<_BookCoverPage>
           Stack(
             fit: StackFit.expand,
             children: [
+              // Contact Shadow (Grounding)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: FractionallySizedBox(
+                  widthFactor: 0.85,
+                  heightFactor: 0.1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        // Deep contact shadow directly underneath
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15),
+                        ),
+                        // Soft bounce shadow spreading outward
+                        BoxShadow(
+                          color: const Color(0xFF3E2723).withValues(alpha: 0.3),
+                          blurRadius: 80,
+                          offset: const Offset(0, 30),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               // Actual Image
               Image.asset(
                 'assets/images/session_timeline/book_cover_transparent.png',
@@ -999,48 +1113,98 @@ class _BookCoverPageState extends State<_BookCoverPage>
                   errorBuilder: (c, e, s) => const SizedBox.shrink(),
                 ),
               ),
-              // FIX: Removed Lighting Integration overlays that caused black screen
+              // Clasp Ambient Occlusion (Right Edge)
+              Align(
+                alignment: Alignment.centerRight,
+                child: FractionallySizedBox(
+                  widthFactor: 0.2,
+                  heightFactor: 0.4,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment.centerRight,
+                        radius: 1.0,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.4), // Darker near clasp
+                          Colors.black.withValues(alpha: 0.0), // Fades out
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               // Gold Medallion Specular Highlight
               AnimatedBuilder(
                 animation: _specularController,
                 builder: (context, child) {
                   final progress = _specularController.value;
-                  double highlightPos = -1.0;
-                  // ~0.8s duration in a 9s loop is about 0.088 of the progress
-                  if (progress < 0.1) {
-                    highlightPos = -1.0 + (progress * 20.0); // maps 0.0->0.1 to -1.0->1.0
-                  } else {
-                    highlightPos = 2.0; // keep offscreen for the rest of the loop
-                  }
-
                   return Center(
                     child: Container(
                       width: 140, // Match medallion size approx
                       height: 140,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white.withValues(alpha: 0.6), // Specular highlight
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: [
-                            0.0,
-                            (highlightPos - 0.1).clamp(0.0, 1.0),
-                            highlightPos.clamp(0.0, 1.0),
-                            (highlightPos + 0.1).clamp(0.0, 1.0),
-                            1.0,
-                          ],
+                        // Realistic drop shadow for medallion resting on leather
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 6),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 3,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        // Inner bevel shadow approximation
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          width: 2.0,
+                        ),
+                      ),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) {
+                          return SweepGradient(
+                            center: Alignment.center,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.0),
+                              Colors.white.withValues(alpha: 0.9), // Bright metallic reflection
+                              const Color(0xFFD4AF37).withValues(alpha: 0.5), // Brushed bronze tone
+                              Colors.white.withValues(alpha: 0.0),
+                              Colors.white.withValues(alpha: 0.8), // Secondary reflection
+                              const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                              Colors.white.withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 0.15, 0.25, 0.5, 0.65, 0.75, 1.0],
+                            transform: GradientRotation(progress * 4 * math.pi),
+                          ).createShader(bounds);
+                        },
+                        blendMode: BlendMode.screen,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   );
                 },
+              ),
+              // Subtle Leather Texture Overlay
+              IgnorePointer(
+                child: Opacity(
+                  opacity: 0.04,
+                  child: Image.asset(
+                    'assets/images/backgrounds/noise_texture.png', // Assuming a standard noise texture exists, or we use a basic color blend
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => Container(
+                      color: Colors.brown, // fallback blend
+                    ),
+                    colorBlendMode: BlendMode.overlay,
+                  ),
+                ),
               ),
             ],
           ),
