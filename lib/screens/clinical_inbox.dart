@@ -269,7 +269,6 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                     StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('Coachuserchats')
-                          .where('coachId', isEqualTo: AuthService().currentUser?.uid)
                           .orderBy('lastMessageTime', descending: true)
                           .snapshots(),
                       builder: (context, snapshot) {

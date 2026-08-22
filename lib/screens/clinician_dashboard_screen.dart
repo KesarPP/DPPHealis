@@ -191,7 +191,6 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
       stream: FirebaseFirestore.instance
           .collection('users')
           .where('role', isEqualTo: 'user')
-          .where('assignedCoachId', isEqualTo: AuthService().currentUser?.uid)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -929,7 +928,6 @@ class PatientsListScreen extends StatelessWidget {
             stream: FirebaseFirestore.instance
                 .collection('users')
                 .where('role', isEqualTo: 'user')
-                .where('assignedCoachId', isEqualTo: AuthService().currentUser?.uid)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {

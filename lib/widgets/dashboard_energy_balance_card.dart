@@ -82,7 +82,6 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
         gender: AppState.isMan ? 'male' : 'female',
         calorieGained: calorieGained,
         caloriesBurned: _activityBurnedCalories,
-        bmi: AppState.bmi > 0 ? AppState.bmi : null,
       );
       return _buildCardContent(context, model);
     }
@@ -157,7 +156,6 @@ class _DashboardEnergyBalanceCardState extends State<DashboardEnergyBalanceCard>
           gender: gender,
           calorieGained: calorieGained,
           caloriesBurned: _activityBurnedCalories,
-          bmi: AppState.bmi > 0 ? AppState.bmi : null,
         );
 
         return _buildCardContent(context, model);
