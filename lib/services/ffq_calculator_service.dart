@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'ffq_excel_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/food_analysis_screen.dart';
 import '../data/nutrition_database.dart';
 
@@ -10,15 +13,76 @@ class FfqCalculatorService {
 
   final Map<String, FfqAnswer> _responses = {};
 
+  Future<void> loadCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? cachedData = prefs.getString('ffq_responses_cache');
+      if (cachedData != null) {
+        final Map<String, dynamic> map = json.decode(cachedData);
+        _responses.clear();
+        map.forEach((key, value) {
+          _responses[key] = FfqAnswer.fromJson(value);
+        });
+      }
+    } catch (e) {
+      print('Error parsing ffq cache: $e');
+    }
+  }
+
+  Future<void> _persistCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final Map<String, dynamic> map = {};
+      _responses.forEach((key, value) {
+        map[key] = value.toJson();
+      });
+      await prefs.setString('ffq_responses_cache', json.encode(map));
+    } catch (_) {}
+  }
+
   void saveAnswer(String foodName, FfqAnswer answer) {
     _responses[foodName] = answer;
+    _persistCache();
+    
+    // Update local excel file
+    double calories = calculateSingleItemCalories(foodName, answer);
+    FfqExcelService().updateRow(foodName, answer, calories);
+  }
+
+  double calculateSingleItemCalories(String name, FfqAnswer answer) {
+    if (answer.frequency == 'Never') return 0.0;
+    double caloriesPer100g = 0.0;
+    if (answer.selectedVarieties.isNotEmpty) {
+      double totalCal = 0.0;
+      for (final v in answer.selectedVarieties) {
+        totalCal += _getCaloriesFromDb(name, v);
+      }
+      caloriesPer100g = totalCal / answer.selectedVarieties.length;
+    } else {
+      caloriesPer100g = _getCaloriesFromDb(name, answer.selectedVariety);
+    }
+    final double portionGrams = _extractGrams(name, answer.size);
+    final double quantity = answer.quantityAtTime;
+    final double times = answer.timesPerDay.toDouble();
+    double frequencyFactor = 0.0;
+    if (answer.frequency == 'Daily') {
+      frequencyFactor = 1.0;
+    } else if (answer.frequency == 'Per Week') {
+      frequencyFactor = 1.0 / 7.0;
+    } else if (answer.frequency == 'Per Month') {
+      frequencyFactor = 1.0 / 30.0;
+    }
+    return (caloriesPer100g / 100.0) * portionGrams * quantity * times * frequencyFactor;
   }
 
   FfqAnswer? getAnswer(String foodName) => _responses[foodName];
 
   Map<String, FfqAnswer> getAllResponses() => _responses;
 
-  void clear() => _responses.clear();
+  void clear() {
+    _responses.clear();
+    _persistCache();
+  }
 
   // ── Main calculation ──────────────────────────────────────────────────────
 

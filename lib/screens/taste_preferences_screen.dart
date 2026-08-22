@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/gelato_theme.dart';
 
 class TastePreferencesScreen extends StatefulWidget {
@@ -24,6 +26,40 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
   ];
 
   final Map<String, int> _rankings = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  Future<void> _loadCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('taste_preferences_cache');
+      if (cached != null) {
+        final Map<String, dynamic> map = json.decode(cached);
+        if (mounted) {
+          setState(() {
+            map.forEach((key, value) {
+              if (value is int) {
+                _rankings[key] = value;
+              }
+            });
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading taste preferences cache: $e');
+    }
+  }
+
+  Future<void> _saveCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('taste_preferences_cache', json.encode(_rankings));
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +204,7 @@ class _TastePreferencesScreenState extends State<TastePreferencesScreen> {
                   setState(() {
                     _rankings[taste] = rank;
                   });
+                  _saveCache();
                 },
                 child: Column(
                   children: [

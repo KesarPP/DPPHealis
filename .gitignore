@@ -21,4 +21,13 @@ lib/firebase_options.dart
 # Vercel project configurations
 .vercel/
 lib/secrets.dart
+# ----------------- SECURITY IGNORING -----------------
+# Do not commit Google Services files (API Keys)
 android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+
+# Do not commit Firebase Admin SDK Service Account Keys
+serviceAccountKey.json
+*.pem
+*.p12

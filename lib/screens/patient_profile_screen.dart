@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'clinician_dashboard_screen.dart'; // To import the Patient model
 import 'patient_chat_screen.dart';
-
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 const _navy = Color(0xFF1B3D6D);
 
 class PatientProfileScreen extends StatelessWidget {
@@ -40,6 +44,8 @@ class PatientProfileScreen extends StatelessWidget {
                     _buildCurriculumCard(),
                     const SizedBox(height: 12),
                     _buildFoodLogCard(),
+                    const SizedBox(height: 12),
+                    _buildFfqReportCard(),
                     const SizedBox(height: 12),
                     _buildConsistencyCard(),
                     const SizedBox(height: 80), // extra padding for FAB
@@ -738,6 +744,72 @@ class PatientProfileScreen extends StatelessWidget {
           ),
         );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildFfqReportCard() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('FFQ').doc(patient.id).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+           return const SizedBox.shrink(); // Hide if no FFQ data
+        }
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final String? excelBase64 = data['excelBase64'] as String?;
+        final num? totalCalories = data['totalCalories'] as num?;
+
+        if (excelBase64 == null) return const SizedBox.shrink();
+
+        return _ProfileCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('FFQ Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Icon(Icons.assessment_rounded, color: _navy, size: 20),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (totalCalories != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text('Estimated Daily Calories: ${totalCalories.toStringAsFixed(1)} kcal', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      // Decode Base64
+                      final bytes = base64Decode(excelBase64);
+                      
+                      // Save to temporary file
+                      final dir = await getTemporaryDirectory();
+                      final tempFile = File('${dir.path}/ffq_report_${patient.id}.xlsx');
+                      await tempFile.writeAsBytes(bytes);
+                      
+                      // Share file
+                      await Share.shareXFiles([XFile(tempFile.path)], text: 'FFQ Report for ${patient.name}');
+                    } catch (e) {
+                      debugPrint('Error sharing FFQ: $e');
+                    }
+                  },
+                  icon: const Icon(Icons.share_rounded, size: 18),
+                  label: const Text('Export Excel Report'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE0E7FF),
+                    foregroundColor: _navy,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

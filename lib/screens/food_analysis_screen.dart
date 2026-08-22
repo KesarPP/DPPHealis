@@ -7,7 +7,9 @@ import '../services/ffq_calculator_service.dart';
 import '../services/auth_service.dart';
 import 'taste_preferences_screen.dart';
 import '../data/nutrition_database.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/ffq_excel_service.dart';
+import '../services/ffq_upload_service.dart';
 // ── FFQ Calorie breakdown result ─────────────────────────────────────────────
 class FoodCalorieEntry {
   final String name;
@@ -283,6 +285,26 @@ class FfqAnswer {
     this.selectedVariety,
     List<String>? selectedVarieties,
   }) : selectedVarieties = selectedVarieties ?? (selectedVariety != null ? [selectedVariety] : []);
+
+  Map<String, dynamic> toJson() => {
+        'frequency': frequency,
+        'timesPerDay': timesPerDay,
+        'size': size,
+        'quantityAtTime': quantityAtTime,
+        'selectedVariety': selectedVariety,
+        'selectedVarieties': selectedVarieties,
+      };
+
+  factory FfqAnswer.fromJson(Map<String, dynamic> json) => FfqAnswer(
+        frequency: json['frequency'] ?? 'Never',
+        timesPerDay: json['timesPerDay'] ?? 1,
+        size: json['size'] ?? 'Medium',
+        quantityAtTime: (json['quantityAtTime'] ?? 1.0).toDouble(),
+        selectedVariety: json['selectedVariety'],
+        selectedVarieties: json['selectedVarieties'] != null
+            ? List<String>.from(json['selectedVarieties'])
+            : null,
+      );
 }
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -304,6 +326,21 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
   @override
   void initState() {
     super.initState();
+    FfqExcelService().init();
+    // Load cached responses from memory first
+    _populateAnswersFromService();
+    
+    // Then load from disk to persist across app restarts
+    FfqCalculatorService().loadCache().then((_) {
+      if (mounted) {
+        setState(() {
+          _populateAnswersFromService();
+        });
+      }
+    });
+  }
+
+  void _populateAnswersFromService() {
     final cached = FfqCalculatorService().getAllResponses();
     for (final cat in kFfqCategories) {
       for (final item in cat.items) {
@@ -541,6 +578,29 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
     final double totalCalories = result.totalCalories;
     final List<FoodCalorieEntry> topItems = result.breakdown.take(5).toList();
     
+    // Save FFQ to Firestore
+    try {
+      final user = AuthService().currentUser;
+      final String uid = user != null ? user.uid : 'test_user_no_login';
+      
+      final dataToSave = {
+        'userId': uid,
+        'totalCalories': totalCalories,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
+      // Save to a top-level FFQ collection
+      FirebaseFirestore.instance
+          .collection('FFQ')
+          .doc(uid)
+          .set(dataToSave, SetOptions(merge: true));
+          
+      // Upload Excel to Storage in background
+      FfqUploadService().uploadFfqExcel();
+    } catch (e) {
+      debugPrint('Error saving FFQ: $e');
+    }
+
     showDialog(
       context: context,
       builder: (context) {
@@ -853,7 +913,7 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  'Complete Analysis',
+                                  'Taste Preferences',
                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
                                   overflow: TextOverflow.ellipsis,
                                 ),

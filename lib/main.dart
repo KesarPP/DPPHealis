@@ -2,7 +2,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/app_state.dart';
@@ -18,6 +17,7 @@ import 'package:provider/provider.dart';
 import 'providers/food_notifiers.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
+import 'services/ffq_upload_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -84,6 +84,7 @@ class MainShellState extends State<MainShell> {
       }).catchError((_) {});
       _checkMissingAssessments(user.uid);
       NotificationService().startChatListener();
+      FfqUploadService().retryPendingUpload();
     }
   }
 
