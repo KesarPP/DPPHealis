@@ -1,5 +1,1 @@
-{
-  "functions": {
-    "source": "firebase_functions"
-  }
-}
+{"functions":{"source":"firebase_functions"},"flutter":{"platforms":{"android":{"default":{"projectId":"dpp-healis-v2-dev","appId":"1:413701958013:android:8bfa7938dd535b74728414","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"dpp-healis-v2-dev","configurations":{"android":"1:413701958013:android:8bfa7938dd535b74728414","ios":"1:413701958013:ios:173b7190c8c2e3e2728414","macos":"1:413701958013:ios:173b7190c8c2e3e2728414","web":"1:413701958013:web:d22dc345d94a42e9728414","windows":"1:413701958013:web:6b3721d65f4775ff728414"}}}}}}
