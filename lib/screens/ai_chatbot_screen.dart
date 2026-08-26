@@ -532,8 +532,35 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                itemCount: _currentSessionMessages.length,
+                itemCount: _currentSessionMessages.length + (_isTyping ? 1 : 0),
                 itemBuilder: (context, index) {
+                  if (_isTyping && index == _currentSessionMessages.length) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(18),
+                            topRight: Radius.circular(18),
+                            bottomLeft: Radius.circular(4),
+                            bottomRight: Radius.circular(18),
+                          ),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const _TypingIndicator(),
+                      ),
+                    );
+                  }
                   final msg = _currentSessionMessages[index];
                   final showDateLabel = index == 0;
                   return Column(
@@ -897,3 +924,61 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   }
 }
 
+class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator({Key? key}) : super(key: key);
+
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final delay = index * 0.2;
+            var t = (_controller.value - delay) % 1.0;
+            if (t < 0) t += 1.0;
+            // Simple up/down bounce math
+            double offset = 0;
+            if (t < 0.25) {
+              offset = - (t * 4 * 4); 
+            } else if (t < 0.5) {
+              offset = - ((0.5 - t) * 4 * 4);
+            }
+            return Transform.translate(
+              offset: Offset(0, offset),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF6B7C93),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          },
+        );
+      }),
+    );
+  }
+}

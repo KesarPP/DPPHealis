@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
   if (groqApiKey && !groqApiKey.includes('PASTE_YOUR')) {
     try {
-      console.log('Attempting Primary Model: Groq (llama-3.1-8b-instant)...');
+      console.log('Attempting Primary Model: Groq (llama3-8b-8192)...');
       const groqReq = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -60,14 +60,14 @@ export default async function handler(req, res) {
           'Authorization': `Bearer ${groqApiKey}`
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'llama3-8b-8192',
           messages: [
             { role: 'system', content: systemInstruction },
             ...history,
             { role: 'user', content: message }
           ],
           temperature: 0.7,
-          max_tokens: 512
+          max_tokens: 2048
         })
       });
 
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
         const reply = groqData.choices?.[0]?.message?.content;
         if (reply) {
           console.log('Successfully generated response via Groq.');
-          return res.status(200).json({ response: reply, model: 'groq-llama-3.1-8b-instant' });
+          return res.status(200).json({ response: reply, model: 'groq-llama3-8b-8192' });
         }
       } else {
         const errText = await groqReq.text();
@@ -95,8 +95,8 @@ export default async function handler(req, res) {
   // ─── 2. FALLBACK AI: GOOGLE GEMINI API ─────────────────────────────────────
   if (geminiApiKey && !geminiApiKey.includes('PASTE_YOUR')) {
     try {
-      console.log('Attempting Fallback Model: Google Gemini (gemini-2.0-flash)...');
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+      console.log('Attempting Fallback Model: Google Gemini (gemini-3.6-flash)...');
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiApiKey}`;
       const geminiReq = await fetch(geminiUrl, {
         method: 'POST',
         headers: {
@@ -115,7 +115,7 @@ export default async function handler(req, res) {
           ],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 512
+            maxOutputTokens: 2048
           }
         })
       });
@@ -125,7 +125,7 @@ export default async function handler(req, res) {
         const reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (reply) {
           console.log('Successfully generated response via Gemini fallback.');
-          return res.status(200).json({ response: reply, model: 'gemini-2.0-flash' });
+          return res.status(200).json({ response: reply, model: 'gemini-3.6-flash' });
         }
       } else {
         const errText = await geminiReq.text();
