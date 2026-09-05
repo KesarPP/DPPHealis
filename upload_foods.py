@@ -13,7 +13,7 @@ except ImportError:
 # ---------------------------------------------------------------
 # UPDATE THESE TWO PATHS BEFORE RUNNING
 # ---------------------------------------------------------------
-SERVICE_ACCOUNT_KEY_PATH = r'C:\Users\angelina\Downloads\dppproject-1998e-firebase-adminsdk-fbsvc-a2fa529c44.json'
+SERVICE_ACCOUNT_KEY_PATH = r'C:\Users\angelina\Downloads\dpp-healis-v2-dev-firebase-adminsdk-fbsvc-470a92bb93.json'
 CSV_FILE_PATH = r'C:\Users\angelina\Downloads\food_extra.csv'
 # ---------------------------------------------------------------
 

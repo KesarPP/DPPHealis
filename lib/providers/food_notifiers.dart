@@ -48,6 +48,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
   StreamSubscription? _subscription;
   StreamSubscription? _allLogsSubscription;
   Map<String, bool> _completedDays = {};
+  Map<String, int> _loggedMealsCount = {};
   Map<String, bool> _nutritionNinjaDays = {};
   List<DailyFoodLog> _allLogsList = [];
   String _selectedDate = DateTime.now().toIso8601String().split('T')[0];
@@ -59,6 +60,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
 
   DailyFoodLog? get dailyLog => _dailyLog;
   Map<String, bool> get completedDays => _completedDays;
+  Map<String, int> get loggedMealsCount => _loggedMealsCount;
   Map<String, bool> get nutritionNinjaDays => _nutritionNinjaDays;
   List<DailyFoodLog> get allLogsList => _allLogsList;
   String get selectedDate => _selectedDate;
@@ -111,11 +113,13 @@ class FoodDiaryNotifier extends ChangeNotifier {
     _allLogsSubscription = _repository.getAllLogs(user.uid).listen((logs) {
       _allLogsList = logs;
       final newCompletedDays = <String, bool>{};
+      final newLoggedMealsCount = <String, int>{};
       final newNutritionNinjaDays = <String, bool>{};
       final goal = calorieGoal;
       
       for (final log in logs) {
         final types = log.entries.map((e) => e.mealType).toSet();
+        newLoggedMealsCount[log.date] = types.length;
         if (types.length >= 5) {
           newCompletedDays[log.date] = true;
         } else if (types.isNotEmpty) {
@@ -130,6 +134,7 @@ class FoodDiaryNotifier extends ChangeNotifier {
         }
       }
       _completedDays = newCompletedDays;
+      _loggedMealsCount = newLoggedMealsCount;
       _nutritionNinjaDays = newNutritionNinjaDays;
       notifyListeners();
     });

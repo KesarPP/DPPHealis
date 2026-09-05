@@ -28,6 +28,87 @@ class InsightsScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: GelatoTheme.textDark),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => Dialog(
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Insights — Quick Guide',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: GelatoTheme.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Flexible(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Welcome to your Insights!\nHere you can see how your meals are adding up and discover simple ways to improve your daily nutrition.',
+                                  style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text('✨ Recommendations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Get personalized tips based on the meals you\'ve logged throughout the day. These suggestions help you make better food choices and stay motivated.',
+                                  style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text('🔥 Weekly Calories Trend', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'See how your daily calorie intake changes across the week.\nUse the goal line as a guide and aim to stay close to your personalized target.',
+                                  style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text('🥗 Macros Breakdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'See your daily intake of Carbohydrates, Protein & Fats at a glance.\nA balanced intake helps you make more informed food choices.',
+                                  style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text('🌸 Nutrition Score', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Your score reflects how closely your daily intake matches your recommended nutrition goals.\n\nTap the card to see your weekly nutrition score trend and track your progress over time.\n\nSmall choices add up — keep going!',
+                                  style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.bold, color: GelatoTheme.textDark)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [

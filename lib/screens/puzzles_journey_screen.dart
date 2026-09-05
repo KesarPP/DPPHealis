@@ -231,7 +231,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FoodTrackingScreen())),
       child: Container(
-        width: 130, // Increased width
+        width: 110, // Decreased width
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -305,7 +305,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityFitnessScreen())),
       child: Container(
-        width: 130, // Same width as Meal Log card
+        width: 110, // Same width as Meal Log card
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),

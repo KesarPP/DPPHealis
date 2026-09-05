@@ -72,20 +72,55 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
   Widget _buildBanner(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        height: 150,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.black87, width: 1.5),
-          boxShadow: [
-            BoxShadow(color: GelatoTheme.green.withValues(alpha: 0.2), blurRadius: 0, offset: const Offset(4, 4)),
-          ],
-          image: const DecorationImage(
-            image: AssetImage('assets/images/meals_banner.png'),
-            fit: BoxFit.cover,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            height: 150,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.black87, width: 1.5),
+              boxShadow: [
+                BoxShadow(color: GelatoTheme.green.withValues(alpha: 0.2), blurRadius: 0, offset: const Offset(4, 4)),
+              ],
+              image: const DecorationImage(
+                image: AssetImage('assets/images/meals_banner.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            bottom: -1.5,
+            right: -1.5,
+            child: GestureDetector(
+              onTap: () {
+                _showLegendDialog(context);
+              },
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  color: GelatoTheme.green,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(20),
+                  ),
+                  border: Border(
+                    top: BorderSide(color: Colors.black87, width: 1.5),
+                    left: BorderSide(color: Colors.black87, width: 1.5),
+                  ),
+                ),
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 2, left: 2),
+                    child: Icon(Icons.info_outline, size: 18, color: GelatoTheme.textDark),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -142,6 +177,99 @@ class _FoodTrackingScreenState extends State<FoodTrackingScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showLegendDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Meal Logging — Quick Guide',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: GelatoTheme.textDark,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Welcome to your Meal Logging screen! 💚\n\nKeep track of your meals, calories, and nutrition throughout the day. The more you log, the better we can understand your eating habits and personalize your guidance.',
+                          style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('🍽️ Your 5 Meals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Log Breakfast, Snack 1, Lunch, Snack 2 & Dinner each day.\n\nTry to complete all 5 so we can get a clearer picture of your daily eating habits. ✨\n\nTap the ⓘ on the Breakfast card to learn how meal logging works.',
+                          style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('💡 Insights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Get a quick look at your calories, nutrition & eating patterns.\nTap to explore your progress in more detail!',
+                          style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('📦 Label Scanner', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Scan a packaged food\'s nutrition label to quickly view its calories and nutrients and add it to your meal.',
+                          style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('📚 Resources', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Need a little guidance? Explore tips on healthy meals, balanced choices, portion control & motivation. 🌿',
+                          style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('📅 Calendar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Keep an eye on your meal-logging journey!\n\n💛 Today — Current date\n🧡 Orange — Some meals logged\n💚 Green — All 5 meals logged\n\nTap the calendar to view your monthly progress and check what you logged on previous days. You can remove existing items, but new items can\'t be added to past dates.\n\nLet’s keep those days green! 💚',
+                          style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('🎯 Today’s Goal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'See your personalized calorie target, how much you\'ve eaten, and how much you have left.\n\nYour numbers update automatically as you add or remove food.',
+                          style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.bold, color: GelatoTheme.textDark)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -928,14 +1056,14 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
         },
         child: Container(
           decoration: BoxDecoration(
-          color: GelatoTheme.pink,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.black87, width: 1.5),
-          boxShadow: [
-            BoxShadow(color: GelatoTheme.green.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(4, 4)),
-          ],
-        ),
-        child: Column(
+            color: GelatoTheme.pink,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.black87, width: 1.5),
+            boxShadow: [
+              BoxShadow(color: GelatoTheme.green.withValues(alpha: 0.5), blurRadius: 0, offset: const Offset(4, 4)),
+            ],
+          ),
+          child: Column(
           children: [
             // Month Year Header
             Container(
@@ -1026,7 +1154,9 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
       signUpDate = DateTime(signUpTime.year, signUpTime.month, signUpTime.day);
     }
     DateTime todayDate = DateTime(_today.year, _today.month, _today.day);
-    final selectedDate = context.read<FoodDiaryNotifier>().selectedDate;
+    final foodNotifier = context.read<FoodDiaryNotifier>();
+    final selectedDate = foodNotifier.selectedDate;
+    final loggedMealsCountMap = foodNotifier.loggedMealsCount;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1040,8 +1170,19 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
         bool isFuture = currentDay.isAfter(todayDate);
         bool isBeforeSignUp = signUpDate != null && currentDay.isBefore(signUpDate);
         
-        bool isComplete = completedDays[dateString] == true; 
-        bool isIncomplete = !isFuture && !isComplete && !isBeforeSignUp;
+        int mealsCount = loggedMealsCountMap[dateString] ?? 0;
+        bool showRedDot = !isFuture && !isBeforeSignUp && mealsCount == 0 && !isToday;
+
+        Color circleColor = Colors.transparent;
+        if (isSelected) {
+          circleColor = const Color(0xFFFFF59D); // Yellow
+        } else if (!isFuture && !isBeforeSignUp) {
+          if (mealsCount >= 5) {
+            circleColor = GelatoTheme.green;
+          } else if (mealsCount > 0) {
+            circleColor = const Color(0xFFFFCC80); // Orange
+          }
+        }
 
         return GestureDetector(
           onTap: () {
@@ -1062,7 +1203,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: isSelected ? GelatoTheme.green : Colors.transparent,
+                        color: circleColor,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -1076,7 +1217,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                         ),
                       ),
                     ),
-                  if (isIncomplete && !isToday)
+                  if (showRedDot)
                     Positioned(
                       bottom: -2,
                       child: Container(
@@ -1084,18 +1225,6 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                         height: 4,
                         decoration: const BoxDecoration(
                           color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  if (isComplete && !isToday)
-                    Positioned(
-                      bottom: -2,
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: GelatoTheme.greenDark,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -1255,6 +1384,106 @@ class _ExpandableMealCardState extends State<_ExpandableMealCard> {
                         child: const Icon(Icons.add, size: 20, color: GelatoTheme.textDark),
                       ),
                     ),
+                    if (widget.title == 'Breakfast') ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => Dialog(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Welcome to Meal Logging!',
+                                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: GelatoTheme.textDark),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Flexible(
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Each meal card helps you record and manage the food you eat throughout the day. The same features are available across all 5 meal cards.',
+                                              style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text('⌄ View Your Meal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              'Tap the down arrow to expand the meal card and view the food items you\'ve logged along with their calorie and nutrient details.',
+                                              style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text('📷 Scan Your Food', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              'Use the camera icon to scan your plate. Our food recognition feature identifies the food items present and helps add them to your meal automatically.\n\nRemember to check and adjust the quantity after scanning for more accurate nutrition information.',
+                                              style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text('＋ Add Food Manually', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              'Tap the + icon to manually add the food items you\'ve eaten.\n\nThis is useful when you prefer to enter your meal yourself or when a food item cannot be identified by the scanner.',
+                                              style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text('− Remove Food', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              'Once food has been added to your meal, a − icon appears beside the item.\n\nTap it to remove a food item if it was added by mistake or you no longer want it included in your meal.',
+                                              style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text('⚖️ Adjust Your Quantity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              'Already logged a food item but had a different portion?\n\nTap the logged food item to edit the quantity you actually consumed. Updating the quantity helps keep your calorie and nutrient calculations more accurate.',
+                                              style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text('🎯 Keep Your Meals Accurate', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: GelatoTheme.textDark)),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              'Try to log all 5 meals each day and enter the quantities as accurately as possible. The more complete your food log is, the better we can understand your eating patterns and support your health goals.',
+                                              style: TextStyle(fontSize: 14, color: GelatoTheme.textDark),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Got it', style: TextStyle(fontWeight: FontWeight.bold, color: GelatoTheme.textDark)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black87, width: 1.2),
+                          ),
+                          child: const Icon(Icons.info_outline, size: 20, color: GelatoTheme.textDark),
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),
@@ -1519,6 +1748,7 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
   Widget _buildMonthGrid() {
     final foodNotifier = context.watch<FoodDiaryNotifier>();
     final completedDays = foodNotifier.completedDays;
+    final loggedMealsCountMap = foodNotifier.loggedMealsCount;
 
     int daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
     int firstWeekday = DateTime(_currentMonth.year, _currentMonth.month, 1).weekday;
@@ -1551,8 +1781,19 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
       bool isFuture = date.isAfter(todayDate);
       bool isBeforeSignUp = signUpDate != null && date.isBefore(signUpDate);
       
-      bool isComplete = completedDays[dateString] == true; 
-      bool isIncomplete = !isFuture && !isComplete && !isBeforeSignUp;
+      int mealsCount = loggedMealsCountMap[dateString] ?? 0;
+      bool showRedDot = !isFuture && !isBeforeSignUp && mealsCount == 0 && !isToday;
+
+      Color circleColor = Colors.transparent;
+      if (isSelected) {
+        circleColor = const Color(0xFFFFF59D); // Yellow
+      } else if (!isFuture && !isBeforeSignUp) {
+        if (mealsCount >= 5) {
+          circleColor = GelatoTheme.green;
+        } else if (mealsCount > 0) {
+          circleColor = const Color(0xFFFFCC80); // Orange
+        }
+      }
 
       dayWidgets.add(
         GestureDetector(
@@ -1572,7 +1813,7 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: isSelected ? GelatoTheme.green : Colors.transparent,
+                    color: circleColor,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -1586,7 +1827,7 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
                     ),
                   ),
                 ),
-              if (isIncomplete && !isToday)
+              if (showRedDot)
                 Positioned(
                   bottom: -2,
                   child: Container(
@@ -1594,18 +1835,6 @@ class _MonthlyCalendarOverlayState extends State<_MonthlyCalendarOverlay> {
                     height: 4,
                     decoration: const BoxDecoration(
                       color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              if (isComplete && !isToday)
-                Positioned(
-                  bottom: -2,
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: GelatoTheme.greenDark,
                       shape: BoxShape.circle,
                     ),
                   ),
