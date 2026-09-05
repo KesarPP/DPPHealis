@@ -11,7 +11,7 @@ class AiFoodService {
   Future<String?> identifyFood(File imageFile) async {
     try {
       final model = FirebaseAI.googleAI().generativeModel(
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.6-flash',
       );
 
       final imageBytes = await imageFile.readAsBytes();
@@ -36,7 +36,7 @@ class AiFoodService {
   Future<FoodItem?> analyzeNutritionalLabel(File imageFile) async {
     try {
       final model = FirebaseAI.googleAI().generativeModel(
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.6-flash',
       );
 
       final imageBytes = await imageFile.readAsBytes();

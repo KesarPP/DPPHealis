@@ -1,3 +1,4 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -23,10 +24,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // Temporarily disabling App Check for testing
-  // await FirebaseAppCheck.instance.activate(
-  //   androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-  // );
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+  );
   await AppState.load();
   await NotificationService().init();
   runApp(const DPPApp());
