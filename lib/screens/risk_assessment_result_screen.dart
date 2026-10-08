@@ -616,6 +616,11 @@ class RiskAssessmentResultScreen extends StatelessWidget {
         sex: sexEnum,
         bmi: bmiVal,
       );
+      print('--- CalorieGoalCalculator output ---');
+      print('dailyCalorieGoal: ${calorieResult.dailyCalorieGoal}');
+      print('weeklyCalorieGoal: ${calorieResult.weeklyCalorieGoal}');
+      print('monthlyCalorieGoal: ${calorieResult.monthlyCalorieGoal}');
+      print('------------------------------------');
     }
 
     return _buildCard(
@@ -679,6 +684,30 @@ class RiskAssessmentResultScreen extends StatelessWidget {
                     title: 'Monthly',
                     value: '${calorieResult.monthlyCalorieGoal.round()} kcal',
                     color: GelatoTheme.purple,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCalorieGoalMiniCard(
+                    title: 'Weekly calories to burn',
+                    value: calorieResult.weeklyCaloriesToBurn != null 
+                        ? '${calorieResult.weeklyCaloriesToBurn!.round()} kcal' 
+                        : 'No deficit needed',
+                    color: Colors.orange,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildCalorieGoalMiniCard(
+                    title: 'Monthly calories to burn',
+                    value: calorieResult.monthlyCaloriesToBurn != null 
+                        ? '${calorieResult.monthlyCaloriesToBurn!.round()} kcal' 
+                        : 'No deficit needed',
+                    color: Colors.redAccent,
                   ),
                 ),
               ],

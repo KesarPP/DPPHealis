@@ -1,0 +1,6 @@
+# Add under dependencies: in the existing pubspec.yaml.
+# Do not duplicate if a video/player package already exists — check first.
+
+dependencies:
+  youtube_player_iframe: ^5.2.1   # verify latest stable on pub.dev before pinning
+  shared_preferences: ^2.3.2      # only add if not already a dependency

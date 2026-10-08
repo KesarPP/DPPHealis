@@ -6,6 +6,7 @@ import '../models/food_item.dart';
 import '../models/food_log.dart';
 import '../repositories/food_repository.dart';
 import '../services/notification_service.dart';
+import '../models/calorie_goal_calculator.dart';
 import '../data/app_state.dart';
 
 class FoodSearchNotifier extends ChangeNotifier {
@@ -78,7 +79,22 @@ class FoodDiaryNotifier extends ChangeNotifier {
   }
 
   double get calorieGoal {
-    return AppState.calculateDailyCalorieGoal();
+    if (Firebase.apps.isEmpty) return 2000.0;
+    
+    // We get the biometrics from AppState since they are already stored there
+    final double weight = AppState.weightKg > 0 ? AppState.weightKg : 75.0;
+    final double height = AppState.heightCm > 0 ? AppState.heightCm : 170.0;
+    final int age = AppState.age > 0 ? AppState.age : 30;
+    final double bmi = AppState.bmi > 0 ? AppState.bmi : (weight / ((height / 100) * (height / 100)));
+    
+    final result = CalorieGoalCalculator.calculate(
+      weight: weight,
+      height: height,
+      age: age,
+      sex: AppState.isMan ? Sex.male : Sex.female,
+      bmi: bmi,
+    );
+    return result.dailyCalorieGoal;
   }
 
   void setSelectedDate(String date) {

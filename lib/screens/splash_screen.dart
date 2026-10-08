@@ -84,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         if (role == 'coach') {
           if (authService.isFirebaseInitialized) {
             try {
-              final doc = await FirebaseFirestore.instance.collection('coaches').doc(user.uid).get();
+              final doc = await FirebaseFirestore.instance.collection('coaches').doc(user.uid).get().timeout(const Duration(seconds: 5));
               isProfileComplete = doc.exists;
             } catch (_) {
               isProfileComplete = false;

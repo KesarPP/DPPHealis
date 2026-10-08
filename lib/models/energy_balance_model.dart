@@ -27,6 +27,7 @@ class EnergyBalanceModel {
     required double calorieGained,
     double caloriesBurned = 0.0,
     double kcalBurnRatePerMinute = defaultKcalBurnRatePerMin,
+    double? bmi,
   }) {
     // Default age if missing from older assessment versions
     final int effectiveAge = (age == null || age <= 0) ? 42 : age;
@@ -44,7 +45,7 @@ class EnergyBalanceModel {
     }
 
     final double heightMeters = heightCm / 100.0;
-    final double bmi = weightKg / (heightMeters * heightMeters);
+    final double calculatedBmi = bmi ?? (weightKg / (heightMeters * heightMeters));
 
     final String g = gender?.trim().toLowerCase() ?? '';
     final Sex sexEnum = (g == 'male' || g == 'man' || g == 'm') ? Sex.male : Sex.female;
@@ -54,7 +55,7 @@ class EnergyBalanceModel {
       height: heightCm,
       age: effectiveAge,
       sex: sexEnum,
-      bmi: bmi,
+      bmi: calculatedBmi,
     );
 
     final double computedCalorieNeed = result.dailyCalorieGoal;

@@ -209,11 +209,11 @@ class AuthService {
 
     try {
       // Check if user is a coach
-      final coachDoc = await _firestore!.collection('coaches').doc(user.uid).get();
+      final coachDoc = await _firestore!.collection('coaches').doc(user.uid).get().timeout(const Duration(seconds: 5));
       if (coachDoc.exists) return 'coach';
 
       // Check if user is a patient
-      final userDoc = await _firestore!.collection('users').doc(user.uid).get();
+      final userDoc = await _firestore!.collection('users').doc(user.uid).get().timeout(const Duration(seconds: 5));
       if (userDoc.exists) return 'user';
     } catch (_) {}
 

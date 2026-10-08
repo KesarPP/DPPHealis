@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'handouts_screen.dart';
+import 'manuscript_screen.dart';
 import '../data/handouts_data.dart';
+import '../providers/session_notifiers.dart';
+import '../providers/journal_launcher.dart';
+import '../main.dart';
 import 'journey_screen.dart';
 
 import '../data/gelato_theme.dart';
@@ -57,7 +62,7 @@ class SessionsScreen extends StatelessWidget {
             const SizedBox(height: 20),
             const _SectionLabel('Current Session'),
             const SizedBox(height: 10),
-            _buildCurrentSessionCard(),
+            _buildCurrentSessionCard(context),
             const SizedBox(height: 20),
             const _SectionLabel('Session Timeline'),
             const SizedBox(height: 12),
@@ -219,7 +224,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCurrentSessionCard() {
+  Widget _buildCurrentSessionCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20), // Increased padding
       decoration: BoxDecoration(
@@ -262,7 +267,11 @@ class SessionsScreen extends StatelessWidget {
                       label: 'Watch Video',
                       color: _pastelPeach,
                       darkColor: _peachDark,
-                      onTap: () {})),
+                      onTap: () {
+                        // TODO: Current-session card is hardcoded to SESSION 6.
+                        launchSessionJournal(context, 'session_06');
+                        MainShell.of(context)?.selectedIndex = 1;
+                      })),
               const SizedBox(width: 12),
               Expanded(
                   child: _ActionButton(

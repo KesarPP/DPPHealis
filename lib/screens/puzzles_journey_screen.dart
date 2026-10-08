@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import '../main.dart';
 import '../data/gelato_theme.dart';
 import '../data/handouts_data.dart';
+import '../providers/journal_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -216,6 +217,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
       child: GestureDetector(
         onTap: () {
           // Redirect to Journal tab when clicking a level
+          launchSessionJournal(context, sessionIdForLevel(number));
           MainShell.of(context)?.selectedIndex = 1;
         },
         child: _ColorfulBlockNode(number: number, isHighlighted: _currentPawnLevel == number),

@@ -2,6 +2,11 @@ import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:provider/provider.dart';
+import 'manuscript_screen.dart';
+import '../providers/session_notifiers.dart';
+import '../providers/journal_launcher.dart';
+import '../main.dart';
 import '../data/journey_data.dart';
 
 class JourneyMap extends StatefulWidget {
@@ -324,7 +329,6 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
   @override
   Widget build(BuildContext context) {
     final isLocked = widget.module.state == ModuleState.locked;
-    final isCompleted = widget.module.state == ModuleState.completed;
     
     // Brighter border glow for completed cards
     // Removed completionPulse as per request to remove glow
@@ -419,6 +423,12 @@ class _InteractiveModuleCardState extends State<_InteractiveModuleCard> {
       onTapDown: isLocked ? null : (_) => setState(() => _isPressed = true),
       onTapUp: isLocked ? null : (_) => setState(() => _isPressed = false),
       onTapCancel: isLocked ? null : () => setState(() => _isPressed = false),
+      onTap: isLocked
+          ? null
+          : () {
+              launchSessionJournal(context, sessionIdForLevel(widget.module.number));
+              MainShell.of(context)?.selectedIndex = 1;
+            },
       child: AnimatedScale(
         scale: _isPressed ? 0.95 : 1.0,
         duration: const Duration(milliseconds: 150),

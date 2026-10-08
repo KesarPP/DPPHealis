@@ -518,7 +518,7 @@ class ActivityMissionEngine {
       completedMinutes: completedMins,
       completedKcal: completedCals.round(),
       progressPercentage: progressPct,
-      goalText: '~${_formatNumber(kcalGoal)} cal',
+      goalText: '${_formatNumber(kcalGoal)} cal',
       completedText: '${_formatNumber(completedCals.round())} cal',
     );
   }
@@ -590,7 +590,7 @@ class ActivityMissionEngine {
       completedMinutes: completedMins,
       completedKcal: completedCals.round(),
       progressPercentage: progressPct,
-      goalText: '~${_formatNumber(kcalGoal)} cal',
+      goalText: '${_formatNumber(kcalGoal)} cal',
       completedText: '${_formatNumber(completedCals.round())} cal',
     );
   }

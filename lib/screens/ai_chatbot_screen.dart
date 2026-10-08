@@ -65,6 +65,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
   }
 
   Future<void> _initTts() async {
+    return; // TEMPORARILY DISABLED TO PREVENT ANR
     try {
       await _flutterTts.setVolume(1.0);
       await _flutterTts.setSpeechRate(0.5);

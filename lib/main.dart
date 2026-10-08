@@ -1,7 +1,6 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,8 +15,10 @@ import 'data/gelato_theme.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'providers/food_notifiers.dart';
+import 'providers/journal_launcher.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
+import 'services/session_video_progress_service.dart';
 import 'services/ffq_upload_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,8 @@ class DPPApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => FoodSearchNotifier()),
         ChangeNotifierProvider(create: (_) => FoodDiaryNotifier()),
+        ChangeNotifierProvider(create: (_) => SessionVideoProgressService()),
+        ChangeNotifierProvider(create: (_) => JournalLaunchNotifier()),
       ],
       child: MaterialApp(
         title: 'Diabetes Prevention Program',

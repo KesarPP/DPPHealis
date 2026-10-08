@@ -1,19 +1,31 @@
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../models/dpp_session_video.dart';
 import '../models/week_model.dart';
+import '../data/dpp_session_videos.dart';
+import '../services/session_video_progress_service.dart';
+import '../providers/session_notifiers.dart';
+import '../providers/journal_launcher.dart'; // NEW
 import '../theme/manuscript_theme.dart';
-import '../widgets/ancient_book_background.dart';
 import '../widgets/floating_particles.dart';
+import '../widgets/dpp_youtube_video_player.dart';
 import 'activity_fitness_screen.dart';
 import 'food_tracking_screen.dart';
 import 'weigh_in_screen.dart';
 import 'handouts_screen.dart';
 import '../data/handouts_data.dart';
 
+/// The left page PNG already has "Today's Session / Learn • Grow • Thrive"
+/// printed on it. Content on Page 1 starts below that baked-in header.
+/// If the video card sits too high/low, tweak this one number.
+const double _kBakedHeaderClearance = 70;
+
 class ManuscriptScreen extends StatefulWidget {
-  const ManuscriptScreen({super.key});
+  const ManuscriptScreen({super.key, this.sessionId});
+
+  final String? sessionId;
 
   @override
   State<ManuscriptScreen> createState() => _ManuscriptScreenState();
@@ -30,11 +42,20 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
   late final Animation<double> _coverAngle;
   late final Animation<double> _pagesOpacity;
 
+  // NEW: lets us reset the book to page 1 when a level is launched.
+  final GlobalKey<_OpenBookInteriorState> _interiorKey =
+      GlobalKey<_OpenBookInteriorState>();
+
+  // NEW: last JournalLaunchNotifier.requestId we reacted to.
+  int _handledLaunchId = 0;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    precacheImage(const AssetImage('assets/images/session_timeline/manuscript_page_left_new.png'), context);
-    precacheImage(const AssetImage('assets/images/session_timeline/manuscript_page_right_new.png'), context);
+    try {
+      precacheImage(const AssetImage('assets/images/session_timeline/manuscript_page_left_new.png'), context);
+      precacheImage(const AssetImage('assets/images/session_timeline/manuscript_page_right_new.png'), context);
+    } catch (_) {}
   }
 
   @override
@@ -94,6 +115,16 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
         setState(() => _isOpening = false);
       }
     });
+  }
+
+  /// NEW: a journey level (or "Watch Video") asked for a session's journal.
+  /// Open the book if it is closed, otherwise jump back to the video page.
+  void _showJournalForLaunch() {
+    if (_isBookOpen) {
+      _interiorKey.currentState?.goToFirstPage();
+    } else if (!_isOpening) {
+      _openBook();
+    }
   }
 
   Widget _buildHeaderCard(BuildContext context) {
@@ -161,11 +192,11 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  const Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.spa, color: Color(0xFF6B8E76), size: 12),
                       SizedBox(width: 4),
                       Text(
@@ -192,6 +223,28 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
   @override
   Widget build(BuildContext context) {
     final weeks = generateDummyWeeks();
+
+    // CHANGED: session resolution order is now
+    //   1. constructor sessionId
+    //   2. the most recent journey-level / "Watch Video" launch
+    //   3. CurrentSessionNotifier (legacy)
+    //   4. session_01   (was session_06, which hid the real bug)
+    final launch =
+        Provider.of<JournalLaunchNotifier?>(context, listen: true);
+    final currentSessionId = widget.sessionId ??
+        launch?.sessionId ??
+        Provider.of<CurrentSessionNotifier?>(context, listen: true)?.sessionId ??
+        'session_01';
+    final sessionVideo =
+        findDppSessionVideo(currentSessionId) ?? dppSessionVideos.first;
+
+    // NEW: react once per launch request (open the book / go to page 1).
+    if (launch != null && launch.requestId != _handledLaunchId) {
+      _handledLaunchId = launch.requestId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showJournalForLaunch();
+      });
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF1C120C),
@@ -237,30 +290,32 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                   right: MediaQuery.of(context).size.width * 0.04,
                 ),
                 child: AnimatedBuilder(
-              animation: _coverController,
-              builder: (context, child) {
-                final opacity = (_isBookOpen && !_isOpening)
-                    ? 1.0
-                    : _pagesOpacity.value;
-                return Opacity(
-                  opacity: opacity,
-                  child: child,
-                );
-              },
-              child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Stack(
-                          children: [
-                            Positioned.fill(
-                              child: FloatingParticles(
-                                areaSize: Size(constraints.maxWidth, constraints.maxHeight),
+                  animation: _coverController,
+                  builder: (context, child) {
+                    final opacity = (_isBookOpen && !_isOpening)
+                        ? 1.0
+                        : _pagesOpacity.value;
+                    return Opacity(
+                      opacity: opacity,
+                      child: child,
+                    );
+                  },
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Stack(
+                            children: [
+                              Positioned.fill(
+                                child: FloatingParticles(
+                                  areaSize: Size(constraints.maxWidth, constraints.maxHeight),
+                                ),
                               ),
-                            ),
-                            _OpenBookInterior(
+                              _OpenBookInterior(
+                                key: _interiorKey, // NEW
                                 weeks: weeks,
+                                sessionVideo: sessionVideo,
                                 rowHeight: _rowHeight,
                                 horizontalInset: _cardHorizontalInset,
                                 onCloseBook: _closeBook,
@@ -270,11 +325,11 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                         },
                       ),
                     ],
+                  ),
                 ),
               ),
             ),
-          ), // padding
-          ), // transform
+          ),
 
           // 3. 3D Swinging Book Cover Overlay and bottom unlock button sitting right on the desk bg image
           if (!_isBookOpen || _isOpening)
@@ -284,134 +339,134 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
                   _buildHeaderCard(context),
                   Expanded(
                     child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.0015)
-                            ..rotateX(-0.15)
-                            ..scale(0.85, 0.99, 1.0) // Decreased width by 10% and height by 5%
-                            ..translate(0.0, -15.0, 0.0), // Shifted up to keep top edge anchored
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              top: MediaQuery.of(context).size.height * 0.01,
-                              bottom: 0,
-                              left: MediaQuery.of(context).size.width * 0.02,
-                              right: MediaQuery.of(context).size.width * 0.02,
-                            ),
-                          child: AnimatedBuilder(
-                      animation: _coverController,
-                      builder: (context, child) {
-                        final progress = _coverController.value;
-                        return Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            IgnorePointer(
-                                ignoring: progress > 0.6 || _isBookOpen,
-                                child: Transform(
-                                  alignment: Alignment.centerLeft,
-                                  transform: Matrix4.identity()
-                                    ..setEntry(3, 2, 0.0012)
-                                    ..rotateY(_coverAngle.value),
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      // Removed all box shadows because they draw a solid rectangle behind the transparent PNG cover
-                                    ),
-                                    // Removed ClipRRect so the native PNG bookmark and corners are not cut off
-                                    child: _BookCoverPage(
-                                      onOpen: _openBook,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Shimmer overlay during opening
-                              if (progress > 0.05 && progress < 0.95)
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.0015)
+                        ..rotateX(-0.15)
+                        ..scale(0.85, 0.99, 1.0) // Decreased width by 10% and height by 5%
+                        ..translate(0.0, -15.0, 0.0), // Shifted up to keep top edge anchored
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).size.height * 0.01,
+                          bottom: 0,
+                          left: MediaQuery.of(context).size.width * 0.02,
+                          right: MediaQuery.of(context).size.width * 0.02,
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _coverController,
+                          builder: (context, child) {
+                            final progress = _coverController.value;
+                            return Stack(
+                              fit: StackFit.expand,
+                              children: [
                                 IgnorePointer(
-                                  child: Opacity(
-                                    opacity: math.sin(progress * math.pi) * 0.35,
+                                  ignoring: progress > 0.6 || _isBookOpen,
+                                  child: Transform(
+                                    alignment: Alignment.centerLeft,
+                                    transform: Matrix4.identity()
+                                      ..setEntry(3, 2, 0.0012)
+                                      ..rotateY(_coverAngle.value),
                                     child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(22),
-                                        gradient: const RadialGradient(
-                                          colors: [ManuscriptColors.goldLight, Colors.transparent],
-                                          radius: 0.8,
-                                        ),
+                                      decoration: const BoxDecoration(
+                                        // Removed all box shadows because they draw a solid rectangle behind the transparent PNG cover
+                                      ),
+                                      // Removed ClipRRect so the native PNG bookmark and corners are not cut off
+                                      child: _BookCoverPage(
+                                        onOpen: _openBook,
                                       ),
                                     ),
                                   ),
                                 ),
-                            ],
-                          );
-                        },
+                                // Shimmer overlay during opening
+                                if (progress > 0.05 && progress < 0.95)
+                                  IgnorePointer(
+                                    child: Opacity(
+                                      opacity: math.sin(progress * math.pi) * 0.35,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(22),
+                                          gradient: const RadialGradient(
+                                            colors: [ManuscriptColors.goldLight, Colors.transparent],
+                                            radius: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
-                  ),
-                    // Tap to unlock button adapted to the vintage gold/leather scroll theme
-                    if (!_isBookOpen && !_isOpening)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          top: 8,
-                          bottom: MediaQuery.of(context).size.height * 0.02, // moved lower
-                        ),
-                        child: GestureDetector(
-                          onTap: _openBook,
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            alignment: Alignment.center,
-                            width: 260, // decreased width
-                            height: 48, // decreased height
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Color(0xFFFBB8D0), Color(0xFFF07BA8)], // Soft pink gradient
+                  // Tap to unlock button adapted to the vintage gold/leather scroll theme
+                  if (!_isBookOpen && !_isOpening)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 8,
+                        bottom: MediaQuery.of(context).size.height * 0.02, // moved lower
+                      ),
+                      child: GestureDetector(
+                        onTap: _openBook,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          alignment: Alignment.center,
+                          width: 260, // decreased width
+                          height: 48, // decreased height
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0xFFFBB8D0), Color(0xFFF07BA8)], // Soft pink gradient
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.white, width: 2.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                                blurRadius: 25,
+                                spreadRadius: 4,
                               ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(color: Colors.white, width: 2.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                                  blurRadius: 25,
-                                  spreadRadius: 4,
-                                ),
-                                BoxShadow(
-                                  color: const Color(0xFFF07BA8).withValues(alpha: 0.4),
-                                  blurRadius: 35,
-                                  spreadRadius: 8,
-                                ),
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.favorite,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'OPEN MY JOURNAL',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1.2,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                              BoxShadow(
+                                color: const Color(0xFFF07BA8).withValues(alpha: 0.4),
+                                blurRadius: 35,
+                                spreadRadius: 8,
+                              ),
+                              BoxShadow(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.favorite,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'OPEN MY JOURNAL',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.2,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    ),
                 ],
               ),
             ),
@@ -424,12 +479,15 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
 /// Renders the open book interior with sequential Left & Right manuscript pages and zero extra cards
 class _OpenBookInterior extends StatefulWidget {
   final List<WeekModel> weeks;
+  final DppSessionVideo sessionVideo;
   final double rowHeight;
   final double horizontalInset;
   final VoidCallback onCloseBook;
 
   const _OpenBookInterior({
+    super.key, // NEW
     required this.weeks,
+    required this.sessionVideo,
     required this.rowHeight,
     required this.horizontalInset,
     required this.onCloseBook,
@@ -442,10 +500,39 @@ class _OpenBookInterior extends StatefulWidget {
 class _OpenBookInteriorState extends State<_OpenBookInterior> {
   late final PageController _pageController;
 
+  // NEW: lets "Replay Session" drive the player.
+  final DppPlayerHandle _playerHandle = DppPlayerHandle();
+
+  SessionVideoProgressService? get _progressService {
+    try {
+      return Provider.of<SessionVideoProgressService>(context, listen: false);
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _progressService?.load(widget.sessionVideo.sessionId);
+      }
+    });
+  }
+
+  // NEW: a different session was selected -> load its progress, show page 1.
+  @override
+  void didUpdateWidget(covariant _OpenBookInterior oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sessionVideo.sessionId != widget.sessionVideo.sessionId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _progressService?.load(widget.sessionVideo.sessionId);
+        goToFirstPage();
+      });
+    }
   }
 
   @override
@@ -454,6 +541,18 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
     super.dispose();
   }
 
+  /// NEW: called by the parent when a level is launched.
+  void goToFirstPage() {
+    if (_pageController.hasClients && (_pageController.page ?? 0) > 0.01) {
+      _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  // ignore: unused_element
   void _nextPage() {
     _pageController.animateToPage(
       1,
@@ -470,6 +569,36 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
     );
   }
 
+  // NEW: "Replay Session" now restarts the video from 0 and plays it.
+  Future<void> _replaySession() async {
+    HapticFeedback.selectionClick();
+    if (!widget.sessionVideo.isPlayable || !_playerHandle.isAttached) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text("This session's video is coming soon."),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    await _playerHandle.replay();
+  }
+
+  // CHANGE: video completion handler — persists completion, then hands
+  // off to the existing session-completion/unlock system.
+  void _handleVideoCompleted() {
+    _progressService?.markCompleted(widget.sessionVideo.sessionId);
+    try {
+      Provider.of<CurrentSessionNotifier>(context, listen: false)
+          .markSessionVideoCompleted(widget.sessionVideo.sessionId);
+    } catch (_) {}
+  }
+
+  void _handleVideoProgress(double progress) {
+    _progressService?.updateProgress(widget.sessionVideo.sessionId, progress);
+  }
+
+  // ignore: unused_element
   Widget _buildManuscriptButton({required IconData icon, required String label, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
@@ -502,6 +631,8 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
     );
   }
 
+  // CHANGED: fixed `height: 64` -> `minHeight: 64`, and text is clamped.
+  // This removes "BOTTOM OVERFLOWED BY 4.0 PIXELS" when a subtitle wraps.
   Widget _buildActionCard({
     required Color baseColor,
     required IconData leftIcon,
@@ -515,51 +646,65 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        constraints: const BoxConstraints(minHeight: 64),
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: baseColor.withValues(alpha: bgAlpha),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: baseColor.withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
             // Left circular icon
             if (showIcons) ...[
               Container(
-                width: 32,
-                height: 32,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: baseColor.withValues(alpha: 0.15),
-                  border: Border.all(color: baseColor.withValues(alpha: 0.3)),
+                  color: Colors.white,
+                  border: Border.all(color: baseColor.withValues(alpha: 0.4)),
                 ),
-                child: Icon(leftIcon, color: baseColor, size: 16),
+                child: Icon(leftIcon, color: baseColor, size: 20),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
             ],
             // Text content
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: showIcons ? CrossAxisAlignment.start : CrossAxisAlignment.center,
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     textAlign: showIcons ? TextAlign.left : TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Georgia',
                       fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      color: const Color(0xFF2E5339),
+                      fontSize: 13,
+                      color: Color(0xFF2E5339),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     textAlign: showIcons ? TextAlign.left : TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Roboto',
-                      fontSize: 9,
+                      fontSize: 10,
                       color: const Color(0xFF2E5339).withValues(alpha: 0.8),
                       height: 1.2,
                     ),
@@ -570,14 +715,14 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
             // Right Arrow
             if (showIcons)
               Container(
-                width: 20,
-                height: 20,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: baseColor.withValues(alpha: 0.4)),
                   color: Colors.white,
                 ),
-                child: Icon(Icons.arrow_forward_ios_rounded, size: 10, color: baseColor),
+                child: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: baseColor),
               ),
           ],
         ),
@@ -607,242 +752,82 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                 // Content overlaid on the left page
                 Positioned.fill(
                   child: Padding(
-                    padding: EdgeInsets.only(
+                    padding: const EdgeInsets.only(
                       top: 10,
                       left: 45,
-                      right: 55, // Increased to prevent bleeding into the right side
-                      bottom: 40,
+                      right: 55, // Prevent bleeding into right side
+                      bottom: 30,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: Center(
-                            child: FractionallySizedBox(
-                              widthFactor: 0.9,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  AspectRatio(
-                                    aspectRatio: 16 / 9,
-                                    child: Container(
-                                      margin: const EdgeInsets.only(bottom: 16),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFBB8D0).withValues(alpha: 0.2), // Pastel Pink Tint
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(color: const Color(0xFFF07BA8).withValues(alpha: 0.4), width: 3), // Pink border
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFD96B85).withValues(alpha: 0.15),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 8),
-                                          ),
-                                        ],
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(13),
-                                        child: Stack(
-                                          fit: StackFit.expand,
-                                          children: [
-                                            // Pastel placeholder background
-                                            Container(
-                                              decoration: const BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                  colors: [
-                                                    Color(0xFFE1F5FE), // Light Pastel Blue
-                                                    Color(0xFFF3E5F5), // Light Pastel Purple
-                                                  ],
-                                                ),
-                                              ),
-                                              child: const Icon(
-                                                Icons.play_circle_fill_rounded,
-                                                color: Colors.white54,
-                                                size: 64,
-                                              ),
-                                            ),
-                                            // "Watch Video" label
-                                            Positioned(
-                                              bottom: 12,
-                                              left: 16,
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white.withValues(alpha: 0.8),
-                                                  borderRadius: BorderRadius.circular(20),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: const [
-                                                    Icon(Icons.spa_rounded, color: Color(0xFF81C784), size: 14),
-                                                    SizedBox(width: 4),
-                                                    Text(
-                                                      'Session Video',
-                                                      style: TextStyle(
-                                                        color: Color(0xFF2E5339),
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.bold,
-                                                        fontFamily: 'Georgia',
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              // Elaborate Health & Fitness Elements Around the Frame
-                              // Top Left: Apple & Leaves
-                              Positioned(
-                                top: -25,
-                                left: -20,
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Transform.rotate(
-                                      angle: -0.2,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(2, 4)),
-                                          ],
-                                        ),
-                                        child: const Icon(Icons.apple_rounded, color: Color(0xFFE57373), size: 36),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: -10,
-                                      right: -10,
-                                      child: Transform.rotate(
-                                        angle: 0.5,
-                                        child: const Icon(Icons.eco_rounded, color: Color(0xFF81C784), size: 24),
-                                      ),
-                                    ),
-                                  ],
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // REMOVED: the code-drawn "Today's Session" title and
+                          // "Learn • Grow • Thrive" subtitle. They are already
+                          // printed on the page PNG, which caused the doubled
+                          // overlapping header. We just leave room for it.
+                          const SizedBox(height: _kBakedHeaderClearance),
+
+                          // Animated Video Card Hero
+                          TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOut,
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: Transform.translate(
+                                  offset: Offset(0, (1.0 - value) * 12),
+                                  child: child,
                                 ),
-                              ),
-                              // Top Right: Heart & Pulse
-                              Positioned(
-                                top: -20,
-                                right: -15,
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Transform.rotate(
-                                      angle: 0.1,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(-2, 4)),
-                                          ],
-                                        ),
-                                        child: const Icon(Icons.monitor_heart_rounded, color: Color(0xFFF06292), size: 36),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: -5,
-                                      left: -15,
-                                      child: const Icon(Icons.favorite_rounded, color: Color(0xFFF48FB1), size: 20),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Bottom Left: Fitness/Dumbbell
-                              Positioned(
-                                bottom: -20,
-                                left: -10,
-                                child: Transform.rotate(
-                                  angle: -0.3,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
-                                      ],
-                                    ),
-                                    child: const Icon(Icons.fitness_center_rounded, color: Color(0xFF64B5F6), size: 32),
-                                  ),
-                                ),
-                              ),
-                              // Bottom Right: Scale/Weight
-                              Positioned(
-                                bottom: -15,
-                                right: -20,
-                                child: Transform.rotate(
-                                  angle: 0.2,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
-                                      ],
-                                    ),
-                                    child: const Icon(Icons.monitor_weight_rounded, color: Color(0xFFBA68C8), size: 32),
-                                  ),
-                                ),
-                              ),
-                              // Side Floating Leaves
-                              Positioned(
-                                top: 80,
-                                left: -25,
-                                child: Transform.rotate(
-                                  angle: -1.0,
-                                  child: const Icon(Icons.spa_rounded, color: Color(0xFFAED581), size: 28),
-                                ),
-                              ),
-                              Positioned(
-                                top: 90,
-                                right: -25,
-                                child: Transform.rotate(
-                                  angle: 1.0,
-                                  child: const Icon(Icons.local_dining_rounded, color: Color(0xFFFFB74D), size: 28),
-                                ),
-                              ),
-                            ],
+                              );
+                            },
+                            child: DppYoutubeVideoPlayer(
+                              // NEW: fresh player state per session, so a new
+                              // level can never reuse the previous video.
+                              key: ValueKey(widget.sessionVideo.sessionId),
+                              videoId: widget.sessionVideo.videoId,
+                              isPlaceholder: !widget.sessionVideo.isPlayable,
+                              sessionLabel: 'Session ${widget.sessionVideo.order}',
+                              title: widget.sessionVideo.title,
+                              showBadges: true,
+                              handle: _playerHandle, // NEW
+                              onCompleted: _handleVideoCompleted,
+                              onProgress: (pos, dur) {
+                                if (dur > 0) {
+                                  _handleVideoProgress(pos / dur);
+                                }
+                              },
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 12),
+
+                          // Action Buttons
+                          _buildActionCard(
+                            baseColor: const Color(0xFF64B5F6), // Pastel Blue
+                            leftIcon: Icons.replay_rounded,
+                            title: 'Replay Session',
+                            subtitle: 'Watch the session video again on YouTube.',
+                            onTap: _replaySession, // CHANGED: was () {}
+                            bgAlpha: 0.6,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildActionCard(
+                            baseColor: const Color(0xFF81C784), // Pastel Green
+                            leftIcon: Icons.last_page_rounded,
+                            title: 'Turn Page',
+                            subtitle: 'Flip the page for more options.',
+                            onTap: () {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 400),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                            bgAlpha: 0.6,
+                          ),
+                        ],
                       ),
-                    ),
-                        const SizedBox(height: 16),
-                        _buildActionCard(
-                          baseColor: const Color(0xFF64B5F6), // Pastel Blue
-                          leftIcon: Icons.replay_rounded,
-                          title: 'Replay Session',
-                          subtitle: 'Listen to the session audio again.',
-                          onTap: () {},
-                          bgAlpha: 0.6, // More vibrant fill
-                        ),
-                        _buildActionCard(
-                          baseColor: const Color(0xFF81C784), // Pastel Green
-                          leftIcon: Icons.last_page_rounded,
-                          title: 'Turn Page',
-                          subtitle: 'Flip the page to see more options.',
-                          onTap: () {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 400),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          bgAlpha: 0.6, // More vibrant fill
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -863,7 +848,7 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                 // Content overlaid on the right page
                 Positioned.fill(
                   child: Padding(
-                    padding: EdgeInsets.only(
+                    padding: const EdgeInsets.only(
                       top: 10,
                       left: 55, // clear the binding
                       right: 48, // clear the tabs
@@ -882,158 +867,158 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                        const SizedBox(height: 6),
-                        // Today's Session Header
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.eco_rounded, color: Color(0xFFC5E1A5), size: 20),
-                                const SizedBox(width: 6),
-                                RichText(
-                                  text: const TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: "Today's ",
-                                        style: TextStyle(
-                                          fontFamily: 'Georgia',
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                          color: Color(0xFF2E5339),
+                                    const SizedBox(height: 6),
+                                    // Today's Session Header
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.eco_rounded, color: Color(0xFFC5E1A5), size: 20),
+                                            const SizedBox(width: 6),
+                                            RichText(
+                                              text: const TextSpan(
+                                                children: [
+                                                  TextSpan(
+                                                    text: "Today's ",
+                                                    style: TextStyle(
+                                                      fontFamily: 'Georgia',
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: Color(0xFF2E5339),
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text: "Session",
+                                                    style: TextStyle(
+                                                      fontFamily: 'Georgia',
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: Color(0xFFF06292),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            const Icon(Icons.eco_rounded, color: Color(0xFFC5E1A5), size: 20),
+                                          ],
                                         ),
-                                      ),
-                                      TextSpan(
-                                        text: "Session",
-                                        style: TextStyle(
-                                          fontFamily: 'Georgia',
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                          color: Color(0xFFF06292),
+                                        const SizedBox(height: 2),
+                                        const Text(
+                                          "Learn • Grow • Thrive",
+                                          style: TextStyle(
+                                            fontFamily: 'Georgia',
+                                            fontSize: 11,
+                                            color: Color(0xFF81C784),
+                                            letterSpacing: 0.5,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                const Icon(Icons.eco_rounded, color: Color(0xFFC5E1A5), size: 20),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              "Learn • Grow • Thrive",
-                              style: TextStyle(
-                                fontFamily: 'Georgia',
-                                fontSize: 11,
-                                color: Color(0xFF81C784),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildActionCard(
-                          baseColor: const Color(0xFFF06292), // Pink
-                          leftIcon: Icons.description_rounded,
-                          title: 'Session Handouts',
-                          subtitle: 'View and download resources from today\'s session.',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const HandoutsScreen(
-                                title: 'Session Handouts',
-                                handouts: ndppHandouts,
-                              )),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        _buildActionCard(
-                          baseColor: const Color(0xFFFF9800), // Orange
-                          leftIcon: Icons.assignment_turned_in_rounded,
-                          title: 'Session Quiz',
-                          subtitle: 'Test your knowledge with a quick quiz.',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => Scaffold(
-                                appBar: AppBar(
-                                  backgroundColor: const Color(0xFFFAF7F2),
-                                  title: const Text('Session Quiz', style: TextStyle(color: Colors.black87)),
-                                  iconTheme: const IconThemeData(color: Colors.black87),
-                                  elevation: 0,
-                                ),
-                                body: const Center(child: Text('Quiz Page Coming Soon')),
-                              )),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        _buildActionCard(
-                          baseColor: const Color(0xFFAB47BC), // Purple
-                          leftIcon: Icons.monitor_weight_rounded,
-                          title: 'Weekly Weigh-In',
-                          subtitle: 'Track your progress and celebrate your wins.',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const WeighInScreen()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        _buildActionCard(
-                          baseColor: const Color(0xFF81C784), // Green
-                          leftIcon: Icons.restaurant_rounded,
-                          title: 'Meal Log',
-                          subtitle: 'Log your meals and build healthier habits.',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const FoodTrackingScreen()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        _buildActionCard(
-                          baseColor: const Color(0xFF64B5F6), // Blue
-                          leftIcon: Icons.directions_run_rounded,
-                          title: 'Activity',
-                          subtitle: 'Record your activities and stay active every day.',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const ActivityFitnessScreen()),
-                            );
-                          },
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildActionCard(
-                                baseColor: const Color(0xFFFFD54F), // Pastel Yellow
-                                leftIcon: Icons.arrow_back_ios_new_rounded,
-                                title: 'Previous Page',
-                                subtitle: 'Go back.',
-                                onTap: _prevPage,
-                                showIcons: false,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildActionCard(
-                                baseColor: const Color(0xFFE57373), // Pastel Red
-                                leftIcon: Icons.close_rounded,
-                                title: 'Close Book',
-                                subtitle: 'Finish for now.',
-                                onTap: widget.onCloseBook,
-                                showIcons: false,
-                              ),
-                            ),
-                          ],
-                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildActionCard(
+                                      baseColor: const Color(0xFFF06292), // Pink
+                                      leftIcon: Icons.description_rounded,
+                                      title: 'Session Handouts',
+                                      subtitle: 'View and download resources from today\'s session.',
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const HandoutsScreen(
+                                            title: 'Session Handouts',
+                                            handouts: ndppHandouts,
+                                          )),
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildActionCard(
+                                      baseColor: const Color(0xFFFF9800), // Orange
+                                      leftIcon: Icons.assignment_turned_in_rounded,
+                                      title: 'Session Quiz',
+                                      subtitle: 'Test your knowledge with a quick quiz.',
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => Scaffold(
+                                            appBar: AppBar(
+                                              backgroundColor: const Color(0xFFFAF7F2),
+                                              title: const Text('Session Quiz', style: TextStyle(color: Colors.black87)),
+                                              iconTheme: const IconThemeData(color: Colors.black87),
+                                              elevation: 0,
+                                            ),
+                                            body: const Center(child: Text('Quiz Page Coming Soon')),
+                                          )),
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildActionCard(
+                                      baseColor: const Color(0xFFAB47BC), // Purple
+                                      leftIcon: Icons.monitor_weight_rounded,
+                                      title: 'Weekly Weigh-In',
+                                      subtitle: 'Track your progress and celebrate your wins.',
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const WeighInScreen()),
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildActionCard(
+                                      baseColor: const Color(0xFF81C784), // Green
+                                      leftIcon: Icons.restaurant_rounded,
+                                      title: 'Meal Log',
+                                      subtitle: 'Log your meals and build healthier habits.',
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const FoodTrackingScreen()),
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildActionCard(
+                                      baseColor: const Color(0xFF64B5F6), // Blue
+                                      leftIcon: Icons.directions_run_rounded,
+                                      title: 'Activity',
+                                      subtitle: 'Record your activities and stay active every day.',
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const ActivityFitnessScreen()),
+                                        );
+                                      },
+                                    ),
+                                    const Spacer(),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildActionCard(
+                                            baseColor: const Color(0xFFFFD54F), // Pastel Yellow
+                                            leftIcon: Icons.arrow_back_ios_new_rounded,
+                                            title: 'Previous Page',
+                                            subtitle: 'Go back.',
+                                            onTap: _prevPage,
+                                            showIcons: false,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: _buildActionCard(
+                                            baseColor: const Color(0xFFE57373), // Pastel Red
+                                            leftIcon: Icons.close_rounded,
+                                            title: 'Close Book',
+                                            subtitle: 'Finish for now.',
+                                            onTap: widget.onCloseBook,
+                                            showIcons: false,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -1042,8 +1027,8 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                         },
                       ),
                     ),
-              ),
-            ),
+                  ),
+                ),
               ],
             ),
           ],
@@ -1109,54 +1094,54 @@ class _BookCoverPageState extends State<_BookCoverPage>
                       errorBuilder: (c, e, s) => const SizedBox.shrink(),
                     ),
                   ),
-              // FIX: Removed Lighting Integration overlays that caused black screen
-              // Gold Medallion Specular Highlight
-              AnimatedBuilder(
-                animation: _specularController,
-                builder: (context, child) {
-                  final progress = _specularController.value;
-                  double highlightPos = -1.0;
-                  // ~0.8s duration in a 9s loop is about 0.088 of the progress
-                  if (progress < 0.1) {
-                    highlightPos = -1.0 + (progress * 20.0); // maps 0.0->0.1 to -1.0->1.0
-                  } else {
-                    highlightPos = 2.0; // keep offscreen for the rest of the loop
-                  }
+                  // FIX: Removed Lighting Integration overlays that caused black screen
+                  // Gold Medallion Specular Highlight
+                  AnimatedBuilder(
+                    animation: _specularController,
+                    builder: (context, child) {
+                      final progress = _specularController.value;
+                      double highlightPos = -1.0;
+                      // ~0.8s duration in a 9s loop is about 0.088 of the progress
+                      if (progress < 0.1) {
+                        highlightPos = -1.0 + (progress * 20.0); // maps 0.0->0.1 to -1.0->1.0
+                      } else {
+                        highlightPos = 2.0; // keep offscreen for the rest of the loop
+                      }
 
-                  return Center(
-                    child: Container(
-                      width: 140, // Match medallion size approx
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white.withValues(alpha: 0.6), // Specular highlight
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: [
-                            0.0,
-                            (highlightPos - 0.1).clamp(0.0, 1.0),
-                            highlightPos.clamp(0.0, 1.0),
-                            (highlightPos + 0.1).clamp(0.0, 1.0),
-                            1.0,
-                          ],
+                      return Center(
+                        child: Container(
+                          width: 140, // Match medallion size approx
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.0),
+                                Colors.white.withValues(alpha: 0.0),
+                                Colors.white.withValues(alpha: 0.6), // Specular highlight
+                                Colors.white.withValues(alpha: 0.0),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
+                              stops: [
+                                0.0,
+                                (highlightPos - 0.1).clamp(0.0, 1.0),
+                                highlightPos.clamp(0.0, 1.0),
+                                (highlightPos + 0.1).clamp(0.0, 1.0),
+                                1.0,
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-      // Floating particles
+          // Floating particles
           LayoutBuilder(
             builder: (context, constraints) => FloatingParticles(
               areaSize: Size(constraints.maxWidth, constraints.maxHeight),
