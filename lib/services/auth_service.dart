@@ -7,7 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/coach_profile.dart';
-import '../main.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -225,36 +224,16 @@ class AuthService {
   /// Authenticate a patient with email and password.
   /// Verifies the account belongs to the 'users' collection in Firestore.
   /// Throws a [FirebaseAuthException] or [Exception] on failure.
-  Future<User?> signInWithEmailAndPassword(String emailOrPhone, String password) async {
+  Future<User?> signInWithEmailAndPassword(String email, String password) async {
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
-    String resolvedEmail = emailOrPhone;
-
-    final isPhone = RegExp(r'^\d{10}$').hasMatch(emailOrPhone);
-    if (isPhone) {
-      if (_firestore != null) {
-        final docQuery = await _firestore!
-            .collection('users')
-            .where('phoneNumber', isEqualTo: emailOrPhone)
-            .limit(1)
-            .get();
-        if (docQuery.docs.isNotEmpty) {
-          resolvedEmail = docQuery.docs.first.data()['email'] as String;
-        } else {
-          throw Exception('No patient account found with this phone number.');
-        }
-      } else {
-        // Mock mode lookup
-        resolvedEmail = prefs.getString('phone_email_map_$emailOrPhone') ?? '$emailOrPhone@mock.com';
-      }
-    }
 
     if (auth == null) {
       throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
     }
 
     final credential = await auth.signInWithEmailAndPassword(
-      email: resolvedEmail,
+      email: email.trim(),
       password: password,
     );
     final user = credential.user;
@@ -283,13 +262,9 @@ class AuthService {
     required String email,
     required String password,
     required String name,
-    required String phoneNumber,
   }) async {
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
-    if (phoneNumber.isNotEmpty) {
-      await prefs.setString('phone_email_map_$phoneNumber', email);
-    }
     if (auth == null) {
       throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
     }
@@ -311,7 +286,6 @@ class AuthService {
         'uid': user.uid,
         'name': name,
         'email': email,
-        'phoneNumber': phoneNumber,
         'role': 'user',
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -335,37 +309,17 @@ class AuthService {
   /// Validates healis.org domain AND verifies the account is in the 'coaches' Firestore collection.
   /// Throws if the email is not a healis.org address, or on Firebase failure.
   Future<User?> signInCoachWithEmailAndPassword(
-      String emailOrPhone, String password) async {
+      String email, String password) async {
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
-    String resolvedEmail = emailOrPhone;
-
-    final isPhone = RegExp(r'^\d{10}$').hasMatch(emailOrPhone);
-    if (isPhone) {
-      if (_firestore != null) {
-        final docQuery = await _firestore!
-            .collection('coaches')
-            .where('phoneNumber', isEqualTo: emailOrPhone)
-            .limit(1)
-            .get();
-        if (docQuery.docs.isNotEmpty) {
-          resolvedEmail = docQuery.docs.first.data()['email'] as String;
-        } else {
-          throw Exception('No coach account found with this phone number.');
-        }
-      } else {
-        // Mock mode lookup
-        resolvedEmail = prefs.getString('phone_email_map_$emailOrPhone') ?? '$emailOrPhone@healis.org';
-      }
-    }
-
-    _assertCoachEmail(resolvedEmail);
+    final normalizedEmail = email.trim();
+    _assertCoachEmail(normalizedEmail);
     if (auth == null) {
       throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
     }
 
     final credential = await auth.signInWithEmailAndPassword(
-      email: resolvedEmail,
+      email: normalizedEmail,
       password: password,
     );
     final user = credential.user;
@@ -391,14 +345,10 @@ class AuthService {
     required String email,
     required String password,
     required String name,
-    required String phoneNumber,
   }) async {
     _assertCoachEmail(email);
     final auth = _auth;
     final prefs = await SharedPreferences.getInstance();
-    if (phoneNumber.isNotEmpty) {
-      await prefs.setString('phone_email_map_$phoneNumber', email);
-    }
     if (auth == null) {
       throw Exception('Firebase Authentication is not initialized. Please configure Firebase.');
     }
@@ -434,118 +384,19 @@ class AuthService {
   /// Sends a password reset email.
   Future<String> sendPasswordReset(String email, bool isCoach) async {
     final auth = _auth;
-    String resolvedEmail = email.trim();
+    final normalizedEmail = email.trim();
 
     if (isCoach) {
-      _assertCoachEmail(resolvedEmail);
+      _assertCoachEmail(normalizedEmail);
     }
 
     if (auth != null) {
-      await auth.sendPasswordResetEmail(email: resolvedEmail);
+      await auth.sendPasswordResetEmail(email: normalizedEmail);
     } else {
       await Future.delayed(const Duration(milliseconds: 300));
     }
 
-    return 'A password reset link has been sent to $resolvedEmail.';
-  }
-
-  /// Initiates phone number verification for password reset.
-  Future<void> verifyPhoneNumberForReset(
-    String phoneNumber,
-    bool isCoach, {
-    required Function(String verificationId) onCodeSent,
-    required Function(String error) onError,
-  }) async {
-    final auth = _auth;
-    final prefs = await SharedPreferences.getInstance();
-    final cleanPhone = phoneNumber.trim();
-
-    // Verify phone number exists in Firestore or local mock
-    if (_firestore != null) {
-      final collectionName = isCoach ? 'coaches' : 'users';
-      final docQuery = await _firestore!
-          .collection(collectionName)
-          .where('phoneNumber', isEqualTo: cleanPhone)
-          .limit(1)
-          .get();
-      if (docQuery.docs.isEmpty) {
-        onError('No ${isCoach ? 'coach' : 'patient'} account found with this phone number.');
-        return;
-      }
-    } else {
-      final mappedEmail = prefs.getString('phone_email_map_$cleanPhone');
-      if (mappedEmail == null && cleanPhone != '9876543210' && cleanPhone != '1234567890') {
-        // Allow fallback test numbers or mapped numbers in mock mode
-        await prefs.setString('phone_email_map_$cleanPhone', '$cleanPhone@${isCoach ? 'healis.org' : 'mock.com'}');
-      }
-    }
-
-    if (auth != null) {
-      try {
-        // We ensure phone has country code for Firebase Auth, default to +91 or +1 if not present
-        String formattedPhone = cleanPhone;
-        if (!formattedPhone.startsWith('+')) {
-          formattedPhone = '+91$cleanPhone'; // default India/standard prefix if user enters 10 digits
-        }
-        await auth.verifyPhoneNumber(
-          phoneNumber: formattedPhone,
-          verificationCompleted: (PhoneAuthCredential credential) {},
-          verificationFailed: (FirebaseAuthException e) {
-            onError(e.message ?? 'Phone verification failed.');
-          },
-          codeSent: (String verificationId, int? resendToken) {
-            onCodeSent(verificationId);
-          },
-          codeAutoRetrievalTimeout: (String verificationId) {},
-        );
-      } catch (e) {
-        onError(e.toString());
-      }
-    } else {
-      // Mock mode: simulate code sent
-      await Future.delayed(const Duration(milliseconds: 400));
-      onCodeSent('mock_verification_id');
-    }
-  }
-
-  /// Confirms OTP and resets the password.
-  Future<void> confirmPasswordResetWithOtp({
-    required String verificationId,
-    required String smsCode,
-    required String newPassword,
-    required String phoneNumber,
-    required bool isCoach,
-  }) async {
-    final auth = _auth;
-    final prefs = await SharedPreferences.getInstance();
-
-    if (auth != null && verificationId != 'mock_verification_id') {
-      try {
-        final credential = PhoneAuthProvider.credential(
-          verificationId: verificationId,
-          smsCode: smsCode.trim(),
-        );
-        // Sign in with the credential to authenticate the user
-        final userCredential = await auth.signInWithCredential(credential);
-        if (userCredential.user != null) {
-          await userCredential.user!.updatePassword(newPassword);
-          // Sign out so they can log in with their new password
-          await auth.signOut();
-        } else {
-          throw Exception('Failed to authenticate with OTP.');
-        }
-      } catch (e) {
-        throw Exception('Invalid OTP or failed to reset password: ${e.toString().replaceFirst('Exception: ', '')}');
-      }
-    } else {
-      // Mock mode verification
-      if (smsCode.trim() != '123456') {
-        throw Exception('Invalid OTP. For mock testing, please enter 123456.');
-      }
-      await Future.delayed(const Duration(milliseconds: 400));
-      // Save updated mock state if needed
-      await prefs.setString('mock_password_$phoneNumber', newPassword);
-    }
+    return 'A password reset link has been sent to $normalizedEmail.';
   }
 
   // ─── Coach Profile Persistence & Retrieval ─────────────────────────────────

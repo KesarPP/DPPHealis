@@ -1,4 +1,5 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -22,14 +23,36 @@ import 'services/session_video_progress_service.dart';
 import 'services/ffq_upload_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await FirebaseAppCheck.instance.activate(
-    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-  );
-  await AppState.load();
-  await NotificationService().init();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase init error: $e");
+  }
+
+  try {
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: kDebugMode
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+    );
+  } catch (e) {
+    debugPrint("Firebase App Check activation error: $e");
+  }
+
+  try {
+    await AppState.load();
+  } catch (e) {
+    debugPrint("AppState load error: $e");
+  }
+
+  try {
+    await NotificationService().init();
+  } catch (e) {
+    debugPrint("NotificationService init error: $e");
+  }
+
   runApp(const DPPApp());
 }
 

@@ -190,7 +190,6 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
-          .where('role', isEqualTo: 'user')
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -206,37 +205,36 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
         int activityAchieved = 0;
         int activityInProgress = 0;
         int activityLow = 0;
+        int activityTracked = 0;
         
-        for (var i = 0; i < docs.length; i++) {
-          final doc = docs[i];
+        for (final doc in docs) {
           final data = doc.data() as Map<String, dynamic>;
-          
-          // Automatically seed riskLevel and gpaqMetMinutes in Firestore if missing
-          if (!data.containsKey('riskLevel') || !data.containsKey('gpaqMetMinutes')) {
-            final sampleRisks = ['HIGH RISK', 'MODERATE', 'LOW RISK'];
-            final sampleMins = [750, 450, 200];
-            doc.reference.set({
-              'riskLevel': data['riskLevel'] ?? sampleRisks[i % sampleRisks.length],
-              'gpaqMetMinutes': data['gpaqMetMinutes'] ?? sampleMins[i % sampleMins.length],
-            }, SetOptions(merge: true));
-          }
 
-          final risk = (data['riskLevel'] as String? ?? 'MODERATE').toUpperCase();
-          if (risk == 'HIGH RISK' || risk == 'HIGH') {
-            highRiskCount++;
-          } else if (risk == 'LOW RISK' || risk == 'LOW') {
-            lowRiskCount++;
-          } else {
-            modRiskCount++;
+          final riskLevel = data['riskLevel'] as String?;
+          final idrsScore = data['idrsScore'] as num?;
+          if (riskLevel != null || idrsScore != null) {
+            final risk = (riskLevel ??
+                    (idrsScore! >= 60 ? 'HIGH RISK' : idrsScore >= 30 ? 'MODERATE' : 'LOW RISK'))
+                .toUpperCase();
+            if (risk == 'HIGH RISK' || risk == 'HIGH') {
+              highRiskCount++;
+            } else if (risk == 'LOW RISK' || risk == 'LOW') {
+              lowRiskCount++;
+            } else {
+              modRiskCount++;
+            }
           }
           
-          final metMins = data['gpaqMetMinutes'] as int? ?? 0;
-          if (metMins >= 600) {
-            activityAchieved++;
-          } else if (metMins >= 300) {
-            activityInProgress++;
-          } else {
-            activityLow++;
+          final metMins = data['gpaqMetMinutes'] as num?;
+          if (metMins != null) {
+            activityTracked++;
+            if (metMins >= 600) {
+              activityAchieved++;
+            } else if (metMins >= 300) {
+              activityInProgress++;
+            } else {
+              activityLow++;
+            }
           }
         }
         
@@ -249,7 +247,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
         final displayInProgress = activityInProgress;
         final displayActivityLow = activityLow;
         
-        final activityProgressValue = displayTotal > 0 ? displayAchieved / displayTotal : 0.0;
+        final activityProgressValue = activityTracked > 0 ? displayAchieved / activityTracked : 0.0;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -287,7 +285,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
 
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>? ?? {};
-      final score = (data['idrsScore'] as num? ?? 45).toInt();
+      final scoreValue = data['idrsScore'] as num?;
+      if (scoreValue == null) continue;
+      final score = scoreValue.toInt();
       totalScore += score;
       validCount++;
 
@@ -328,10 +328,10 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('$avgScore', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+              Text(validCount == 0 ? '—' : '$avgScore', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
               const Text(' / 100', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
               const Spacer(),
-              Text(avgScore >= 60 ? 'HIGH RISK AVG' : avgScore >= 30 ? 'MODERATE AVG' : 'LOW RISK AVG',
+              Text(validCount == 0 ? 'NO DATA' : avgScore >= 60 ? 'HIGH RISK AVG' : avgScore >= 30 ? 'MODERATE AVG' : 'LOW RISK AVG',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: avgScore >= 60 ? const Color(0xFFB91C1C) : const Color(0xFF9A3412)),
               ),
             ],
@@ -361,7 +361,9 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
 
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>? ?? {};
-      final metMins = (data['gpaqMetMinutes'] as num? ?? 450).toInt();
+      final metMinsValue = data['gpaqMetMinutes'] as num?;
+      if (metMinsValue == null) continue;
+      final metMins = metMinsValue.toInt();
       totalMins += metMins;
       validCount++;
 
@@ -402,10 +404,10 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('$avgMetMins', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
+              Text(validCount == 0 ? '—' : '$avgMetMins', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.black)),
               const Text(' MET-min', style: TextStyle(fontSize: 18, color: Color(0xFF6B7280))),
               const Spacer(),
-              Text(avgMetMins >= 600 ? 'ACTIVE AVG' : 'MODERATE AVG',
+              Text(validCount == 0 ? 'NO DATA' : avgMetMins >= 600 ? 'ACTIVE AVG' : 'MODERATE AVG',
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
               ),
             ],
@@ -927,7 +929,6 @@ class PatientsListScreen extends StatelessWidget {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('users')
-                .where('role', isEqualTo: 'user')
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -958,9 +959,18 @@ class PatientsListScreen extends StatelessWidget {
                     return parts[0][0].toUpperCase();
                   }
 
-                  final riskLevel = (data['riskLevel'] as String? ?? 'MODERATE').toUpperCase();
+                    final idrsScoreValue = data['idrsScore'] as num?;
+                    final riskLevel = ((data['riskLevel'] as String?) ??
+                        (idrsScoreValue == null
+                          ? 'NOT RECORDED'
+                          : idrsScoreValue >= 60
+                            ? 'HIGH RISK'
+                            : idrsScoreValue >= 30
+                              ? 'MODERATE'
+                              : 'LOW RISK'))
+                      .toUpperCase();
                   final currentWeight = (data['currentWeight'] as num?)?.toDouble();
-                  final gpaqMetMinutes = data['gpaqMetMinutes'] as int?;
+                  final gpaqMetMinutes = (data['gpaqMetMinutes'] as num?)?.toInt();
                   final gpaqLevel = data['gpaqLevel'] as String?;
                   final idrsScore = (data['idrsScore'] as num?)?.toInt();
 
@@ -986,6 +996,9 @@ class PatientsListScreen extends StatelessWidget {
               } else if (p.riskLevel == 'LOW RISK' || p.riskLevel == 'LOW') {
                 riskColor = const Color(0xFF065F46);
                 riskBg = const Color(0xFF6EE7B7);
+              } else if (p.riskLevel == 'NOT RECORDED') {
+                riskColor = const Color(0xFF475569);
+                riskBg = const Color(0xFFE2E8F0);
               } else {
                 riskColor = const Color(0xFF9A3412);
                 riskBg = const Color(0xFFFFEDD5);
@@ -1018,7 +1031,7 @@ class PatientsListScreen extends StatelessWidget {
                             children: [
                               Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 16)),
                               const SizedBox(height: 4),
-                              Text('Participant • Session ${p.sessionNumber}', style: const TextStyle(color: Colors.black54, fontSize: 13)),
+                              const Text('Participant', style: TextStyle(color: Colors.black54, fontSize: 13)),
                             ],
                           ),
                         ),

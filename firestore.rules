@@ -1,0 +1,109 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Clinical administrators are explicitly provisioned by trusted staff by
+    // creating clinicalAdmins/{Firebase Auth UID}. Clients cannot manage these records.
+    function isClinicalAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/clinicalAdmins/$(request.auth.uid));
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Patient records. Owners retain their existing access; clinical admins
+    // receive read-only access across patients.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isClinicalAdmin();
+      allow write: if isOwner(userId);
+
+      match /{subcollection}/{docId} {
+        allow read: if isOwner(userId) || isClinicalAdmin();
+        allow write: if isOwner(userId);
+      }
+    }
+
+    // Patient food and activity logs, keyed by patient UID.
+    match /logs/{userId} {
+      allow read: if isOwner(userId) || isClinicalAdmin();
+      allow write: if isOwner(userId);
+
+      match /{subcollection}/{docId} {
+        allow read: if isOwner(userId) || isClinicalAdmin();
+        allow write: if isOwner(userId);
+      }
+    }
+
+    // Food-frequency questionnaire reports, keyed by patient UID.
+    match /FFQ/{userId} {
+      allow read: if isOwner(userId) || isClinicalAdmin();
+      allow write: if isOwner(userId);
+    }
+
+    // AI assistant conversations, keyed by user UID.
+    match /chats/{userId} {
+      allow read: if isOwner(userId) || isClinicalAdmin();
+      allow write: if isOwner(userId);
+
+      match /messages/{messageId} {
+        allow read: if isOwner(userId) || isClinicalAdmin();
+        allow write: if isOwner(userId);
+      }
+    }
+
+    // Only signed-in users can read coach profiles; each coach controls their own.
+    match /coaches/{coachId} {
+      allow read: if request.auth != null;
+      allow write: if isOwner(coachId);
+    }
+
+    // Shared food reference data is read-only for signed-in users.
+    match /foods/{foodId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Clinical-admin membership is managed outside the client (Console/Admin SDK).
+    match /clinicalAdmins/{adminUid} {
+      allow read, write: if false;
+    }
+
+    // Chat document IDs are patientId_coachId; participant IDs are stored
+    // explicitly in the parent chat document. Admins can inspect chats read-only.
+    match /Coachuserchats/{chatId} {
+      allow read: if isClinicalAdmin()
+        || (request.auth != null
+          && (request.auth.uid == resource.data.patientId
+            || request.auth.uid == resource.data.coachId));
+      allow create: if request.auth != null
+        && (request.auth.uid == request.resource.data.patientId
+          || request.auth.uid == request.resource.data.coachId);
+      allow update: if request.auth != null
+        && (request.auth.uid == resource.data.patientId
+          || request.auth.uid == resource.data.coachId);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function chatParent() {
+          return get(/databases/$(database)/documents/Coachuserchats/$(chatId)).data;
+        }
+
+        allow read: if isClinicalAdmin()
+          || (request.auth != null
+            && (request.auth.uid == chatParent().patientId
+              || request.auth.uid == chatParent().coachId));
+        allow create: if request.auth != null
+          && (request.auth.uid == chatParent().patientId
+            || request.auth.uid == chatParent().coachId);
+        allow update, delete: if false;
+      }
+    }
+
+    // Deny all collections not explicitly listed above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

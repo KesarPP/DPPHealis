@@ -127,13 +127,13 @@ class _PatientChatScreenState extends State<PatientChatScreen> {
 
   Future<void> _pickDocumentAttachment() async {
     try {
-      final FilePickerResult? result = await FilePicker.pickFiles(
+      final files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx'],
       );
 
-      if (result != null && result.files.single.path != null) {
-        final file = result.files.single;
+      if (files.isNotEmpty && files.single.path != null) {
+        final file = files.single;
         setState(() {
           _selectedAttachmentName = file.name;
           _selectedAttachmentType = 'document';

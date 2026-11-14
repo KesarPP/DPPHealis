@@ -33,6 +33,8 @@ class PatientProfileScreen extends StatelessWidget {
                   children: [
                     _buildProfileSummaryCard(),
                     const SizedBox(height: 12),
+                    _buildPatientDetailsCard(),
+                    const SizedBox(height: 12),
                     _buildIdrsCard(),
                     const SizedBox(height: 12),
                     _buildGpaqScorecard(),
@@ -198,6 +200,77 @@ class PatientProfileScreen extends StatelessWidget {
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildPatientDetailsCard() {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').doc(patient.id).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const _ProfileCard(
+            child: Text('Unable to load patient details.'),
+          );
+        }
+
+        final data = snapshot.data?.data() ?? <String, dynamic>{};
+        final details = <String, String>{};
+        void addText(String label, dynamic value) {
+          if (value is String && value.trim().isNotEmpty) {
+            details[label] = value.trim();
+          }
+        }
+
+        addText('Email', data['email']);
+        addText('Phone', data['phoneNumber']);
+        addText('Gender', data['gender']);
+
+        final age = data['age'];
+        if (age is num) details['Age'] = '${age.toInt()} years';
+
+        final height = data['heightCm'] ?? data['height'];
+        if (height is num) details['Height'] = '${height.toStringAsFixed(1)} cm';
+
+        final weight = data['currentWeight'];
+        if (weight is num) details['Current weight'] = '${weight.toStringAsFixed(1)} kg';
+
+        final createdAt = data['createdAt'];
+        if (createdAt is Timestamp) {
+          final date = createdAt.toDate();
+          details['Joined'] = '${date.day}/${date.month}/${date.year}';
+        }
+
+        return _ProfileCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Patient Details',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              if (details.isEmpty)
+                const Text('No additional profile details recorded.', style: TextStyle(color: Colors.black54))
+              else
+                ...details.entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          child: Text(entry.key, style: const TextStyle(color: Colors.black54)),
+                        ),
+                        Expanded(child: Text(entry.value, style: const TextStyle(color: Colors.black87))),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
