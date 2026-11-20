@@ -472,7 +472,7 @@ class _PodiumItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                '${rank == 1 ? '1st' : rank == 2 ? '2nd' : '3rd'}',
+                rank == 1 ? '1st' : rank == 2 ? '2nd' : '3rd',
                 style: TextStyle(
                   fontSize: isUser ? 24 : 20,
                   fontWeight: FontWeight.w900,
