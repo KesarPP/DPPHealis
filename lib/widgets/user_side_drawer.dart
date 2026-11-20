@@ -10,6 +10,8 @@ import '../screens/trophy_collection_screen.dart';
 import '../screens/faq_contact_screen.dart';
 import '../services/auth_service.dart';
 import '../screens/login_screen.dart';
+import '../tour/app_tour_controller.dart';
+import '../main.dart';
 
 class UserSideDrawer extends StatelessWidget {
   const UserSideDrawer({super.key});
@@ -140,6 +142,25 @@ class UserSideDrawer extends StatelessWidget {
                           builder: (_) => const FaqContactScreen(),
                         ),
                       );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.explore_outlined,
+                    title: 'App Tour',
+                    bgColor: GelatoTheme.blue,
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer
+                      // Immediately switch back to the Puzzle Screen (Tab 0)
+                      MainShellState.instance?.selectedIndex = 0;
+
+                      // Start the tour with the active context
+                      Future.delayed(const Duration(milliseconds: 250), () {
+                        final navContext = DPPApp.navigatorKey.currentContext;
+                        if (navContext != null) {
+                          AppTourController.instance.startTour(navContext, showWelcome: true);
+                        }
+                      });
                     },
                   ),
 

@@ -21,6 +21,7 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/session_video_progress_service.dart';
 import 'services/ffq_upload_service.dart';
+import 'tour/app_tour_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -57,6 +58,8 @@ void main() async {
 }
 
 class DPPApp extends StatelessWidget {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   const DPPApp({super.key});
 
   @override
@@ -69,6 +72,7 @@ class DPPApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => JournalLaunchNotifier()),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'Diabetes Prevention Program',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -87,7 +91,7 @@ class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   static MainShellState? of(BuildContext context) {
-    return context.findAncestorStateOfType<MainShellState>();
+    return MainShellState.instance ?? context.findAncestorStateOfType<MainShellState>();
   }
 
   @override
@@ -95,11 +99,13 @@ class MainShell extends StatefulWidget {
 }
 
 class MainShellState extends State<MainShell> {
+  static MainShellState? instance;
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    instance = this;
     NotificationService().requestPermissions();
     final user = AuthService().currentUser;
     if (user != null) {
@@ -112,6 +118,12 @@ class MainShellState extends State<MainShell> {
       NotificationService().startChatListener();
       FfqUploadService().retryPendingUpload();
     }
+  }
+
+  @override
+  void dispose() {
+    if (instance == this) instance = null;
+    super.dispose();
   }
 
   Future<void> _checkMissingAssessments(String uid) async {
@@ -141,6 +153,11 @@ class MainShellState extends State<MainShell> {
           AppState.gpaqLevel = data['gpaqLevel'] ?? 'Low Activity';
         }
 
+        // Trigger App Tour if IDRS and GPAQ are completed and tour has not been seen
+        if (hasIdrs && hasGpaq) {
+          _checkAppTour();
+        }
+
         // Check if past user
         final createdAt = data['createdAt'] as Timestamp?;
         if (createdAt != null) {
@@ -161,6 +178,17 @@ class MainShellState extends State<MainShell> {
       }
     } catch (e) {
       debugPrint('Failed to check assessments: $e');
+    }
+  }
+
+  Future<void> _checkAppTour() async {
+    final hasSeen = await AppTourController.instance.hasSeenTour();
+    if (!hasSeen && mounted) {
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted && !AppTourController.instance.isActive) {
+          AppTourController.instance.startTour(context);
+        }
+      });
     }
   }
 
