@@ -509,7 +509,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => ForgotPasswordScreen(isPatient: _isPatientSelected),
+                                    builder: (_) => ForgotPasswordScreen(
+                                      isPatient: _isPatientSelected,
+                                      initialEmail: _emailController.text.trim(),
+                                    ),
                                   ),
                                 );
                               },

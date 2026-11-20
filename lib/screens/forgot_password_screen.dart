@@ -9,8 +9,9 @@ const _borderBlue = Color(0xFF4A88C5);
 
 class ForgotPasswordScreen extends StatefulWidget {
   final bool isPatient;
+  final String? initialEmail;
 
-  const ForgotPasswordScreen({super.key, required this.isPatient});
+  const ForgotPasswordScreen({super.key, required this.isPatient, this.initialEmail});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -19,6 +20,14 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialEmail != null && widget.initialEmail!.isNotEmpty) {
+      _emailController.text = widget.initialEmail!;
+    }
+  }
 
   @override
   void dispose() {
@@ -40,7 +49,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final message = await AuthService().sendPasswordReset(email, !widget.isPatient);
+      await AuthService().sendPasswordReset(email, !widget.isPatient);
       if (!mounted) return;
 
       await showDialog<void>(
@@ -51,8 +60,45 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             borderRadius: BorderRadius.circular(20),
             side: widget.isPatient ? const BorderSide(color: Colors.black, width: 2) : BorderSide.none,
           ),
-          title: const Text('Reset Link Sent', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text(message),
+          title: const Row(
+            children: [
+              Icon(Icons.mark_email_read_rounded, color: Colors.green, size: 24),
+              SizedBox(width: 8),
+              Text('Reset Link Sent', style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'A password reset link has been sent to:\n$email',
+                style: const TextStyle(height: 1.4, fontSize: 14),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFD97706)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'If you don\'t see the email within 1–2 minutes, please check your Spam or Junk folder.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF92400E), height: 1.3, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           actions: [
             ElevatedButton(
               onPressed: () {
@@ -65,10 +111,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
       );
     } on FirebaseAuthException catch (error) {
+      String message = 'Could not send the reset email.';
+      if (error.code == 'user-not-found') {
+        message = 'No account found with this email address. Please check your spelling or sign up.';
+      } else if (error.code == 'invalid-email') {
+        message = 'Please enter a valid email address format.';
+      } else if (error.code == 'too-many-requests') {
+        message = 'Too many attempts. Please wait a few moments before trying again.';
+      } else if (error.code == 'network-request-failed') {
+        message = 'Network error. Please check your internet connection.';
+      } else if (error.message != null) {
+        message = error.message!;
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error.message ?? 'Could not send the reset email.'),
+            content: Text(message),
             backgroundColor: Colors.redAccent,
           ),
         );
