@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/coach_profile.dart';
+import 'points_service.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -103,6 +104,7 @@ class AuthService {
             .collection('users')
             .doc(uid)
             .set({'name': name}, SetOptions(merge: true));
+        await PointsService.updateLeaderboardName(uid, name);
       }
     } catch (_) {}
   }
@@ -251,6 +253,10 @@ class AuthService {
       }
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'user');
+
+      // Ensure patient is represented in the dynamic leaderboard
+      final patientName = (doc.data()?['name'] as String?) ?? user.displayName ?? 'User';
+      PointsService.ensureLeaderboardEntry(user.uid, patientName);
     }
     return user;
   }
@@ -291,6 +297,9 @@ class AuthService {
       });
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_role', 'user');
+
+      // Initialize leaderboard entry for the new patient
+      await PointsService.ensureLeaderboardEntry(user.uid, name);
     }
     return auth.currentUser;
   }
