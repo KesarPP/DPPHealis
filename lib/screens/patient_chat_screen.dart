@@ -132,8 +132,8 @@ class _PatientChatScreenState extends State<PatientChatScreen> {
         allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx'],
       );
 
-      if (files.isNotEmpty && files.single.path != null) {
-        final file = files.single;
+      if (files != null && files.files.isNotEmpty && files.files.single.path != null) {
+        final file = files.files.single;
         setState(() {
           _selectedAttachmentName = file.name;
           _selectedAttachmentType = 'document';

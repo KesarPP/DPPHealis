@@ -25,9 +25,11 @@ class PointsService {
       final String docId = '${action}_$referenceId';
       final historyRef = _db.collection('users').doc(uid).collection('points_history').doc(docId);
       final userRef = _db.collection('users').doc(uid);
+      final leaderboardRef = _db.collection('leaderboard').doc(uid);
 
       await _db.runTransaction((transaction) async {
         final historyDoc = await transaction.get(historyRef);
+        final userDoc = await transaction.get(userRef);
         
         if (!historyDoc.exists) {
           // Add to history to prevent duplicates
@@ -41,6 +43,18 @@ class PointsService {
           // Increment user total points
           transaction.set(userRef, {
             'totalPoints': FieldValue.increment(points),
+          }, SetOptions(merge: true));
+
+          final currentPoints = (userDoc.data()?['totalPoints'] as num? ?? 0).toInt();
+          final newTotalPoints = currentPoints + points;
+          final userName = (userDoc.data()?['name'] as String?) ?? user.displayName ?? 'User';
+
+          // Sync projection to /leaderboard/{uid}
+          transaction.set(leaderboardRef, {
+            'name': userName,
+            'totalPoints': newTotalPoints,
+            'weeklyPoints': newTotalPoints,
+            'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         } else {
           debugPrint('Points already awarded for $docId');

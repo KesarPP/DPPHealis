@@ -6,57 +6,62 @@ import '../data/gelato_theme.dart';
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({super.key});
 
+  static const List<Map<String, dynamic>> _defaultMockData = [
+    {'name': 'Claire', 'points': 1450, 'badges': 6, 'isUser': false},
+    {'name': 'Evander', 'points': 1120, 'badges': 4, 'isUser': false},
+    {'name': 'Kenton', 'points': 980, 'badges': 3, 'isUser': false},
+    {'name': 'Zackary R.', 'points': 850, 'badges': 3, 'isUser': false},
+    {'name': 'Brittny B.', 'points': 720, 'badges': 2, 'isUser': false},
+    {'name': 'Krysta K.', 'points': 540, 'badges': 1, 'isUser': false},
+  ];
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      stream: FirebaseFirestore.instance.collection('leaderboard').snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData && !snapshot.hasError) {
           return const Scaffold(
             backgroundColor: GelatoTheme.bg,
             body: Center(child: CircularProgressIndicator(color: GelatoTheme.purpleDark)),
           );
         }
 
-        final docs = snapshot.data!.docs;
         final currentUid = FirebaseAuth.instance.currentUser?.uid;
-
         final allUsers = <Map<String, dynamic>>[];
-        for (final doc in docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          if (data.containsKey('role') && data['role'] == 'coach') continue;
-          
-          final int points = data['totalPoints'] as int? ?? 0;
-          final String name = data['name'] as String? ?? 'User';
-          final bool isUser = doc.id == currentUid;
-          
-          allUsers.add({
-            'name': isUser ? 'You' : name,
-            'points': points,
-            'badges': (points / 100).floor(),
-            'isUser': isUser,
-          });
+
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          for (final doc in snapshot.data!.docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            final int points = (data['weeklyPoints'] as num?)?.toInt() ??
+                (data['totalPoints'] as num?)?.toInt() ??
+                0;
+            final rawName = data['name'] as String?;
+            final String name = (rawName != null && rawName.trim().isNotEmpty) ? rawName.trim() : 'User';
+            final bool isUser = doc.id == currentUid;
+
+            allUsers.add({
+              'name': isUser ? 'You' : name,
+              'points': points,
+              'badges': (points / 100).floor(),
+              'isUser': isUser,
+            });
+          }
         }
 
-        final List<Map<String, dynamic>> mockData = [
-          {'name': 'Claire', 'points': 1450, 'badges': 6, 'isUser': false},
-          {'name': 'Evander', 'points': 1120, 'badges': 4, 'isUser': false},
-          {'name': 'Kenton', 'points': 980, 'badges': 3, 'isUser': false},
-          {'name': 'Zackary R.', 'points': 850, 'badges': 3, 'isUser': false},
-          {'name': 'Brittny B.', 'points': 720, 'badges': 2, 'isUser': false},
-          {'name': 'Krysta K.', 'points': 540, 'badges': 1, 'isUser': false},
-        ];
-        
-        // Add mocks if current user isn't beating them yet, they serve as competition
-        // We ensure we don't add duplicate 'You'
-        if (allUsers.isEmpty && currentUid == null) {
-          allUsers.addAll(mockData);
+        // Add mock competitors if no real users yet or to populate the competition
+        if (allUsers.isEmpty) {
+          allUsers.addAll(_defaultMockData);
         } else {
-           allUsers.addAll(mockData);
+          for (final mock in _defaultMockData) {
+            if (!allUsers.any((u) => u['name'] == mock['name'])) {
+              allUsers.add(Map<String, dynamic>.from(mock));
+            }
+          }
         }
-        
+
         allUsers.sort((a, b) => (b['points'] as int).compareTo(a['points'] as int));
-        
+
         // Find the user's actual rank
         int userRank = -1;
         Map<String, dynamic>? userData;
@@ -69,11 +74,10 @@ class LeaderboardScreen extends StatelessWidget {
         }
 
         final topUsers = allUsers.take(7).toList();
-        
+
         // If user is not in top 7, replace the 7th item with the user
-        if (userRank > 7 && userData != null) {
+        if (userRank > 7 && userData != null && topUsers.length >= 7) {
           topUsers[6] = userData;
-          // We don't change the actual array, but we need to remember the rank
         }
 
         final List<Map<String, dynamic>> leaderboardData = [];
@@ -81,7 +85,7 @@ class LeaderboardScreen extends StatelessWidget {
           final isCurrentUser = topUsers[i]['isUser'] == true;
           leaderboardData.add({
             'rank': isCurrentUser && userRank > 7 ? userRank : i + 1,
-            'name': topUsers[i]['name'],
+            'name': topUsers[i]['name'] as String,
             'points': '${topUsers[i]['points']} pts',
             'badges': topUsers[i]['badges'],
             'isUser': isCurrentUser,
@@ -92,7 +96,7 @@ class LeaderboardScreen extends StatelessWidget {
         while (leaderboardData.length < 3) {
           leaderboardData.add({
             'rank': leaderboardData.length + 1,
-            'name': 'Bot',
+            'name': 'Participant',
             'points': '0 pts',
             'badges': 0,
             'isUser': false,
@@ -405,7 +409,9 @@ class _PodiumItem extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  (user['name'] as String).substring(0, 1),
+                  ((user['name'] as String?)?.trim().isNotEmpty ?? false)
+                      ? (user['name'] as String).trim()[0].toUpperCase()
+                      : 'U',
                   style: TextStyle(
                     fontSize: isFirst ? 24 : 20,
                     fontWeight: FontWeight.w900,

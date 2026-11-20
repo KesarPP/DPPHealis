@@ -30,4 +30,5 @@ linter:
 analyzer:
   exclude:
     - "code_files/**"
+    - "vid_integration_files/**"
 
