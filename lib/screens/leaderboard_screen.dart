@@ -14,6 +14,7 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   // 0 = This Week, 1 = All Time
   int _selectedFilterIndex = 0;
+  Map<String, dynamic>? _fallbackUser;
 
   @override
   void initState() {
@@ -21,13 +22,32 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     _ensureCurrentUserInLeaderboard();
   }
 
-  void _ensureCurrentUserInLeaderboard() {
+  void _ensureCurrentUserInLeaderboard() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      PointsService.ensureLeaderboardEntry(
+      await PointsService.ensureLeaderboardEntry(
         user.uid,
         user.displayName ?? 'User',
       );
+
+      // Fetch user's own points as reliable fallback in case /leaderboard stream has permissions error
+      try {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (userDoc.exists && mounted) {
+          final totalPoints = (userDoc.data()?['totalPoints'] as num?)?.toInt() ?? 0;
+          final name = (userDoc.data()?['name'] as String?) ?? user.displayName ?? 'User';
+          setState(() {
+            _fallbackUser = {
+              'uid': user.uid,
+              'name': 'You',
+              'displayName': name,
+              'points': totalPoints,
+              'badges': (totalPoints / 100).floor(),
+              'isUser': true,
+            };
+          });
+        }
+      } catch (_) {}
     }
   }
 
@@ -49,48 +69,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           );
         }
 
-        if (snapshot.hasError) {
-          return Scaffold(
-            backgroundColor: GelatoTheme.bg,
-            appBar: AppBar(
-              title: const Text(
-                'Leaderboard',
-                style: TextStyle(
-                  color: GelatoTheme.textDark,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 24,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              backgroundColor: Colors.white,
-              elevation: 0,
-              centerTitle: true,
-            ),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.cloud_off_rounded, size: 54, color: Colors.orange),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Connection Issue',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GelatoTheme.textDark),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${snapshot.error}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 12, color: GelatoTheme.textLight),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-
+        final bool hasPermissionError = snapshot.hasError;
         final isWeekly = _selectedFilterIndex == 0;
         final allUsers = <Map<String, dynamic>>[];
 
@@ -120,6 +99,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               'isUser': isUser,
             });
           }
+        }
+
+        // If stream errored (e.g. firestore.rules on cloud not yet updated for /leaderboard),
+        // fallback to the user's personal record so they still see their score on the podium!
+        if (allUsers.isEmpty && _fallbackUser != null) {
+          allUsers.add(Map<String, dynamic>.from(_fallbackUser!));
         }
 
         // Sort descending by points
@@ -213,6 +198,34 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                if (hasPermissionError) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 22),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Showing your personal progress. To view all participants, update the /leaderboard rules in Firebase Console.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF78350F),
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 // Filter Tab Selector (This Week vs All Time)
                 Container(
                   padding: const EdgeInsets.all(4),

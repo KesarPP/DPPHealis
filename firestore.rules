@@ -75,10 +75,10 @@ service cloud.firestore {
       allow write: if isOwner(coachId);
     }
 
-    // Public / shared leaderboard projections: signed-in users can read rankings,
+    // Public / shared leaderboard projections: anyone can read rankings,
     // and each user can update their own public projection.
     match /leaderboard/{userId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if isOwner(userId);
     }
 
