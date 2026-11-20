@@ -12,8 +12,6 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  // 0 = This Week, 1 = All Time
-  int _selectedFilterIndex = 0;
   Map<String, dynamic>? _fallbackUser;
 
   @override
@@ -70,7 +68,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         }
 
         final bool hasPermissionError = snapshot.hasError;
-        final isWeekly = _selectedFilterIndex == 0;
         final allUsers = <Map<String, dynamic>>[];
 
         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
@@ -80,7 +77,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 (data['weeklyPoints'] as num?)?.toInt() ?? 0;
             final int totalPoints =
                 (data['totalPoints'] as num?)?.toInt() ?? 0;
-            final int points = isWeekly ? weeklyPoints : totalPoints;
+            final int points = weeklyPoints > 0 ? weeklyPoints : totalPoints;
 
             final rawName = data['name'] as String?;
             final String name =
@@ -226,99 +223,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     ),
                   ),
                 ],
-                // Filter Tab Selector (This Week vs All Time)
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.black, width: 1.5),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            if (_selectedFilterIndex != 0) {
-                              setState(() => _selectedFilterIndex = 0);
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedFilterIndex == 0
-                                  ? Colors.white
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedFilterIndex == 0
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 3,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Center(
-                              child: Text(
-                                'This Week',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: _selectedFilterIndex == 0
-                                      ? GelatoTheme.textDark
-                                      : GelatoTheme.textLight,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            if (_selectedFilterIndex != 1) {
-                              setState(() => _selectedFilterIndex = 1);
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedFilterIndex == 1
-                                  ? Colors.white
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedFilterIndex == 1
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 3,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Center(
-                              child: Text(
-                                'All Time',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: _selectedFilterIndex == 1
-                                      ? GelatoTheme.textDark
-                                      : GelatoTheme.textLight,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
                 // Leaderboard Banner Card
                 Container(
                   padding: const EdgeInsets.all(18),
@@ -348,41 +252,37 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isWeekly ? 'Weekly Sprint' : 'All-Time Champions',
-                              style: const TextStyle(
+                              'Weekly Challenge',
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
                                 color: GelatoTheme.textDark,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Text(
-                              isWeekly
-                                  ? 'Earn points this week by logging meals, meeting goals, and recording weight!'
-                                  : 'Lifetime points earned since joining the program.',
-                              style: const TextStyle(
+                              'Earn points this week by logging meals, meeting goals, and recording weight!',
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF78350F),
                                 height: 1.3,
                               ),
                             ),
-                            if (isWeekly) ...[
-                              const SizedBox(height: 6),
-                              const Text(
-                                '⏱ Resets every Sunday midnight',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFFD97706),
-                                ),
+                            SizedBox(height: 6),
+                            Text(
+                              '⏱ Resets every Sunday midnight',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFFD97706),
                               ),
-                            ],
+                            ),
                           ],
                         ),
                       ),
