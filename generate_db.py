@@ -2,7 +2,7 @@ import csv
 import openpyxl
 import os
 
-BASE_DIR = r'C:\Users\Neha\AndroidStudioProjects\DPP'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 db = {}
 
