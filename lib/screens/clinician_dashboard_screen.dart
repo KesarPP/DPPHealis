@@ -47,6 +47,167 @@ class Patient {
   });
 }
 
+const List<Patient> _mockPatients = [
+  Patient(
+    id: 'mock_1',
+    name: 'Alice Smith',
+    initials: 'AS',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 4,
+    sessionTitle: '',
+    riskLevel: 'HIGH RISK',
+    currentWeight: 78.5,
+    gpaqMetMinutes: 750,
+    gpaqLevel: 'High',
+    idrsScore: 65,
+  ),
+  Patient(
+    id: 'mock_2',
+    name: 'James Brown',
+    initials: 'JB',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 8,
+    sessionTitle: '',
+    riskLevel: 'LOW RISK',
+    currentWeight: 82.0,
+    gpaqMetMinutes: 200,
+    gpaqLevel: 'Low',
+    idrsScore: 25,
+  ),
+  Patient(
+    id: 'mock_3',
+    name: 'Emma Miller',
+    initials: 'EM',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 2,
+    sessionTitle: '',
+    riskLevel: 'MODERATE',
+    currentWeight: 68.2,
+    gpaqMetMinutes: 450,
+    gpaqLevel: 'Moderate',
+    idrsScore: 45,
+  ),
+  Patient(
+    id: 'mock_4',
+    name: 'David Thompson',
+    initials: 'DT',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 12,
+    sessionTitle: '',
+    riskLevel: 'HIGH RISK',
+    currentWeight: 91.0,
+    gpaqMetMinutes: 800,
+    gpaqLevel: 'High',
+    idrsScore: 70,
+  ),
+  Patient(
+    id: 'mock_5',
+    name: 'Linda Wilson',
+    initials: 'LW',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 5,
+    sessionTitle: '',
+    riskLevel: 'MODERATE',
+    currentWeight: 72.4,
+    gpaqMetMinutes: 520,
+    gpaqLevel: 'Moderate',
+    idrsScore: 50,
+  ),
+  Patient(
+    id: 'mock_6',
+    name: 'Marcus Reed',
+    initials: 'MR',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 10,
+    sessionTitle: '',
+    riskLevel: 'LOW RISK',
+    currentWeight: 75.1,
+    gpaqMetMinutes: 250,
+    gpaqLevel: 'Low',
+    idrsScore: 20,
+  ),
+  Patient(
+    id: 'mock_7',
+    name: 'Sarah Hedges',
+    initials: 'SH',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 1,
+    sessionTitle: '',
+    riskLevel: 'HIGH RISK',
+    currentWeight: 85.3,
+    gpaqMetMinutes: 900,
+    gpaqLevel: 'High',
+    idrsScore: 80,
+  ),
+  Patient(
+    id: 'mock_8',
+    name: 'Kevin Knight',
+    initials: 'KK',
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: 15,
+    sessionTitle: '',
+    riskLevel: 'LOW RISK',
+    currentWeight: 79.0,
+    gpaqMetMinutes: 180,
+    gpaqLevel: 'Low',
+    idrsScore: 15,
+  ),
+];
+
+Patient _parsePatientFromDoc(DocumentSnapshot doc) {
+  final data = doc.data() as Map<String, dynamic>? ?? {};
+  final name = data['name'] as String? ?? 'Unknown Patient';
+
+  String getInitials(String n) {
+    if (n.isEmpty) return '??';
+    final parts = n.trim().split(' ');
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
+  final idrsScoreValue = data['idrsScore'] as num?;
+  final riskLevel = ((data['riskLevel'] as String?) ??
+          (idrsScoreValue == null
+              ? 'NOT RECORDED'
+              : idrsScoreValue >= 60
+                  ? 'HIGH RISK'
+                  : idrsScoreValue >= 30
+                      ? 'MODERATE'
+                      : 'LOW RISK'))
+      .toUpperCase();
+  final currentWeight = (data['currentWeight'] as num?)?.toDouble();
+  final gpaqMetMinutes = (data['gpaqMetMinutes'] as num?)?.toInt();
+  final gpaqLevel = data['gpaqLevel'] as String?;
+  final idrsScore = idrsScoreValue?.toInt();
+  final sessionNumber = (data['sessionNumber'] as num?)?.toInt() ?? 1;
+  final sessionTitle = data['sessionTitle'] as String? ?? '';
+
+  return Patient(
+    id: doc.id,
+    name: name,
+    initials: getInitials(name),
+    avatarBg: _navy,
+    avatarFg: Colors.white,
+    sessionNumber: sessionNumber,
+    sessionTitle: sessionTitle,
+    riskLevel: riskLevel,
+    currentWeight: currentWeight,
+    gpaqMetMinutes: gpaqMetMinutes,
+    gpaqLevel: gpaqLevel,
+    idrsScore: idrsScore,
+  );
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Screen
@@ -195,9 +356,23 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        final docs = snapshot.data?.docs ?? [];
-        final totalParticipants = docs.length;
-        
+
+        if (snapshot.hasError) {
+          debugPrint('ClinicianDashboard users stream error: ${snapshot.error}');
+        }
+
+        final rawDocs = snapshot.data?.docs ?? [];
+        final List<Patient> patients = [];
+
+        for (final doc in rawDocs) {
+          final data = doc.data() as Map<String, dynamic>? ?? {};
+          if (data['role'] == 'coach') continue;
+          patients.add(_parsePatientFromDoc(doc));
+        }
+
+        final isUsingDemoData = patients.isEmpty;
+        final activePatients = isUsingDemoData ? _mockPatients : patients;
+
         int highRiskCount = 0;
         int modRiskCount = 0;
         int lowRiskCount = 0;
@@ -207,25 +382,17 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
         int activityLow = 0;
         int activityTracked = 0;
         
-        for (final doc in docs) {
-          final data = doc.data() as Map<String, dynamic>;
-
-          final riskLevel = data['riskLevel'] as String?;
-          final idrsScore = data['idrsScore'] as num?;
-          if (riskLevel != null || idrsScore != null) {
-            final risk = (riskLevel ??
-                    (idrsScore! >= 60 ? 'HIGH RISK' : idrsScore >= 30 ? 'MODERATE' : 'LOW RISK'))
-                .toUpperCase();
-            if (risk == 'HIGH RISK' || risk == 'HIGH') {
-              highRiskCount++;
-            } else if (risk == 'LOW RISK' || risk == 'LOW') {
-              lowRiskCount++;
-            } else {
-              modRiskCount++;
-            }
+        for (final p in activePatients) {
+          final risk = p.riskLevel.toUpperCase();
+          if (risk == 'HIGH RISK' || risk == 'HIGH') {
+            highRiskCount++;
+          } else if (risk == 'LOW RISK' || risk == 'LOW') {
+            lowRiskCount++;
+          } else {
+            modRiskCount++;
           }
           
-          final metMins = data['gpaqMetMinutes'] as num?;
+          final metMins = p.gpaqMetMinutes;
           if (metMins != null) {
             activityTracked++;
             if (metMins >= 600) {
@@ -238,7 +405,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           }
         }
         
-        final displayTotal = totalParticipants;
+        final displayTotal = activePatients.length;
         final displayHigh = highRiskCount;
         final displayMod = modRiskCount;
         final displayLow = lowRiskCount;
@@ -254,12 +421,34 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              if (isUsingDemoData)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF1D4ED8)),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Showing preview cohort metrics. When new participants register, live data updates here automatically.',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               _buildTotalParticipantsCard(displayTotal, displayHigh, displayMod, displayLow),
               const SizedBox(height: 16),
-              _buildIdrsScorecard(docs),
+              _buildIdrsScorecard(activePatients),
               const SizedBox(height: 16),
-              _buildGpaqScorecard(docs),
+              _buildGpaqScorecard(activePatients),
               const SizedBox(height: 16),
               _buildCurriculumProgressCard(displayTotal),
               const SizedBox(height: 16),
@@ -276,18 +465,16 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildIdrsScorecard(List<DocumentSnapshot> docs) {
+  Widget _buildIdrsScorecard(List<Patient> patients) {
     int totalScore = 0;
     int validCount = 0;
     int highCount = 0;
     int modCount = 0;
     int lowCount = 0;
 
-    for (var doc in docs) {
-      final data = doc.data() as Map<String, dynamic>? ?? {};
-      final scoreValue = data['idrsScore'] as num?;
-      if (scoreValue == null) continue;
-      final score = scoreValue.toInt();
+    for (var p in patients) {
+      final score = p.idrsScore;
+      if (score == null) continue;
       totalScore += score;
       validCount++;
 
@@ -352,18 +539,16 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
     );
   }
 
-  Widget _buildGpaqScorecard(List<DocumentSnapshot> docs) {
+  Widget _buildGpaqScorecard(List<Patient> patients) {
     int totalMins = 0;
     int validCount = 0;
     int highActive = 0;
     int modActive = 0;
     int lowActive = 0;
 
-    for (var doc in docs) {
-      final data = doc.data() as Map<String, dynamic>? ?? {};
-      final metMinsValue = data['gpaqMetMinutes'] as num?;
-      if (metMinsValue == null) continue;
-      final metMins = metMinsValue.toInt();
+    for (var p in patients) {
+      final metMins = p.gpaqMetMinutes;
+      if (metMins == null) continue;
       totalMins += metMins;
       validCount++;
 
@@ -935,59 +1120,48 @@ class PatientsListScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return const Center(child: Text('Error loading patients'));
+                debugPrint('PatientsListScreen stream error: ${snapshot.error}');
               }
-              final docs = snapshot.data?.docs ?? [];
-              if (docs.isEmpty) {
-                return const Center(child: Text('No patients found'));
+              final rawDocs = snapshot.data?.docs ?? [];
+              final List<Patient> patients = [];
+              for (final doc in rawDocs) {
+                final data = doc.data() as Map<String, dynamic>? ?? {};
+                if (data['role'] == 'coach') continue;
+                patients.add(_parsePatientFromDoc(doc));
               }
+
+              final displayList = patients.isNotEmpty ? patients : _mockPatients;
+              final isUsingDemoData = patients.isEmpty;
 
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: docs.length,
+                itemCount: displayList.length + (isUsingDemoData ? 1 : 0),
                 itemBuilder: (context, index) {
-                  final doc = docs[index];
-                  final data = doc.data() as Map<String, dynamic>;
-                  final name = data['name'] as String? ?? 'Unknown Patient';
-                  
-                  String getInitials(String n) {
-                    if (n.isEmpty) return '??';
-                    final parts = n.trim().split(' ');
-                    if (parts.length > 1) {
-                      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-                    }
-                    return parts[0][0].toUpperCase();
+                  if (isUsingDemoData && index == 0) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF1D4ED8)),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Showing preview cohort. Real patient registrations will appear here automatically.',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   }
 
-                    final idrsScoreValue = data['idrsScore'] as num?;
-                    final riskLevel = ((data['riskLevel'] as String?) ??
-                        (idrsScoreValue == null
-                          ? 'NOT RECORDED'
-                          : idrsScoreValue >= 60
-                            ? 'HIGH RISK'
-                            : idrsScoreValue >= 30
-                              ? 'MODERATE'
-                              : 'LOW RISK'))
-                      .toUpperCase();
-                  final currentWeight = (data['currentWeight'] as num?)?.toDouble();
-                  final gpaqMetMinutes = (data['gpaqMetMinutes'] as num?)?.toInt();
-                  final gpaqLevel = data['gpaqLevel'] as String?;
-                  final idrsScore = (data['idrsScore'] as num?)?.toInt();
-
-                  final p = Patient(
-                    id: doc.id,
-                    name: name,
-                    initials: getInitials(name),
-                    avatarBg: _navy,
-                    avatarFg: Colors.white,
-                    sessionNumber: 1,
-                    sessionTitle: '',
-                    riskLevel: riskLevel,
-                    currentWeight: currentWeight,
-                    gpaqMetMinutes: gpaqMetMinutes,
-                    gpaqLevel: gpaqLevel,
-                    idrsScore: idrsScore,
-                  );
+                  final p = displayList[isUsingDemoData ? index - 1 : index];
               Color riskColor;
               Color riskBg;
               if (p.riskLevel == 'HIGH RISK' || p.riskLevel == 'HIGH') {

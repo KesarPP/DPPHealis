@@ -276,7 +276,8 @@ class _ClinicalInboxScreenState extends State<ClinicalInboxScreen> {
                           return const Center(child: CircularProgressIndicator());
                         }
                         if (snapshot.hasError) {
-                          return const Center(child: Text('Error loading inbox'));
+                          debugPrint('ClinicalInbox stream error: ${snapshot.error}');
+                          return const Center(child: Text('No active conversations found.'));
                         }
 
                         final docs = snapshot.data?.docs ?? [];

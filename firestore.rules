@@ -2,11 +2,13 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Clinical administrators are explicitly provisioned by trusted staff by
-    // creating clinicalAdmins/{Firebase Auth UID}. Clients cannot manage these records.
+    // Clinical administrators and coaches are provisioned in clinicalAdmins,
+    // coaches collection, or possess an authorized @healis.org clinician email.
     function isClinicalAdmin() {
       return request.auth != null
-        && exists(/databases/$(database)/documents/clinicalAdmins/$(request.auth.uid));
+        && (exists(/databases/$(database)/documents/clinicalAdmins/$(request.auth.uid))
+            || exists(/databases/$(database)/documents/coaches/$(request.auth.uid))
+            || (request.auth.token.email != null && request.auth.token.email.matches('.*@healis[.]org$')));
     }
 
     function isOwner(userId) {
