@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/app_state.dart';
 import '../main.dart'; // MainShell
 import '../data/gelato_theme.dart';
+import '../services/assessment_sync_service.dart';
 
 
 class GPAQResultsScreen extends StatefulWidget {
@@ -122,6 +123,33 @@ class _GPAQResultsScreenState extends State<GPAQResultsScreen> {
           'hasGpaqResult': true,
         }, SetOptions(merge: true));
       }
+
+      // Sync full question-by-question responses to Firestore & Google Sheets
+      AssessmentSyncService.syncGpaqResponse(
+        workVigorous: widget.workVigorous,
+        workVigorousDays: widget.workVigorousDays,
+        workVigorousMinutes: widget.workVigorousMinutes,
+        workModerate: widget.workModerate,
+        workModerateDays: widget.workModerateDays,
+        workModerateMinutes: widget.workModerateMinutes,
+        travel: widget.travel,
+        travelDays: widget.travelDays,
+        travelMinutes: widget.travelMinutes,
+        recVigorous: widget.recVigorous,
+        recVigorousDays: widget.recVigorousDays,
+        recVigorousMinutes: widget.recVigorousMinutes,
+        recModerate: widget.recModerate,
+        recModerateDays: widget.recModerateDays,
+        recModerateMinutes: widget.recModerateMinutes,
+        sedentaryMinutes: widget.sedentaryMinutes,
+        workVigorousMet: workVigorousMet,
+        workModerateMet: workModerateMet,
+        travelMet: travelMet,
+        recVigorousMet: recVigorousMet,
+        recModerateMet: recModerateMet,
+        totalMetMinutes: totalMetMinutes,
+        activityLevel: activityLevel,
+      );
     } catch (e) {
       debugPrint('Error saving GPAQ score: $e');
     }

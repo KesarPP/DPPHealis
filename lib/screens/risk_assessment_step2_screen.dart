@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/app_state.dart';
-// MainShell
 import '../data/gelato_theme.dart';
-import '../data/app_state.dart';
 import '../services/points_service.dart';
+import '../services/assessment_sync_service.dart';
 import 'gpaq_step1_screen.dart';
 
 class RiskAssessmentStep2Screen extends StatefulWidget {
@@ -41,6 +40,98 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
 
   // 1 = Regular, 2 = Mild/occasional, 3 = No exercise
   int _exerciseLevel = 0;
+
+  Future<void> _submitIdrs() async {
+    if (_parentDiabetic == 0 ||
+        _siblingDiabetic == 0 ||
+        _hasHighBP == 0 ||
+        _exerciseLevel == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please answer all questions.')),
+      );
+      return;
+    }
+
+    if (_hasHighBP == 1 && _prescribedBPMedication == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please answer the follow-up question for High BP.')),
+      );
+      return;
+    }
+
+    final score = _calculateIdrsScore();
+    AppState.idrsScore = score;
+    AppState.hasIdrsResult = true;
+    AppState.bmi = widget.weight / ((widget.height / 100) * (widget.height / 100));
+    await AppState.save();
+    
+    String calculatedRiskLevel = 'Moderate Risk';
+    if (score < 30) {
+      calculatedRiskLevel = 'Low Risk';
+    } else if (score >= 30 && score < 60) {
+      calculatedRiskLevel = 'Moderate Risk';
+    } else {
+      calculatedRiskLevel = 'High Risk';
+    }
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'idrsScore': score,
+          'riskLevel': calculatedRiskLevel,
+          'hasIdrsResult': true,
+          'currentWeight': widget.weight,
+          'height': widget.height,
+          'age': widget.age,
+          'gender': widget.isMan ? 'male' : 'female',
+          'lastWeighInDate': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Also add it to weight_history so it shows up in Weekly Weigh-In
+        final now = DateTime.now();
+        final todayStr = "${now.year}-${now.month}-${now.day}";
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('weight_history')
+            .doc('idrs_$todayStr')
+            .set({
+          'weight': widget.weight,
+          'date': FieldValue.serverTimestamp(),
+          'moods': ['Started IDRS Assessment'],
+        }, SetOptions(merge: true));
+        
+        final int weekNumber = (now.difference(DateTime(now.year, 1, 1)).inDays / 7).floor();
+        PointsService.awardPoints(
+          action: 'weekly_weigh_in',
+          points: 5,
+          referenceId: '${now.year}_W$weekNumber',
+        );
+      }
+
+      // Sync full question-by-question responses to Firestore & Google Sheets
+      await AssessmentSyncService.syncIdrsResponse(
+        age: widget.age,
+        isMan: widget.isMan,
+        height: widget.height,
+        weight: widget.weight,
+        waist: widget.waist,
+        bmi: AppState.bmi,
+        parentDiabetic: _parentDiabetic,
+        siblingDiabetic: _siblingDiabetic,
+        hasHighBP: _hasHighBP,
+        prescribedBPMedication: _prescribedBPMedication,
+        exerciseLevel: _exerciseLevel,
+        idrsScore: score,
+        riskLevel: calculatedRiskLevel,
+      );
+    } catch (e) {
+      debugPrint('Failed to save IDRS score: $e');
+    }
+
+    _showRiskResultBottomSheet(score);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -317,81 +408,7 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: () async {
-                          if (_parentDiabetic == 0 ||
-                              _siblingDiabetic == 0 ||
-                              _hasHighBP == 0 ||
-                              _exerciseLevel == 0) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please answer all questions.')),
-                            );
-                            return;
-                          }
-
-                          if (_hasHighBP == 1 && _prescribedBPMedication == 0) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please answer the follow-up question for High BP.')),
-                            );
-                            return;
-                          }
-
-                          final score = _calculateIdrsScore();
-                          AppState.idrsScore = score;
-                          AppState.hasIdrsResult = true;
-                          AppState.bmi = widget.weight / ((widget.height / 100) * (widget.height / 100));
-                          await AppState.save();
-                          
-                          String calculatedRiskLevel = 'Moderate Risk';
-                          if (score < 30) {
-                            calculatedRiskLevel = 'Low Risk';
-                          } else if (score >= 30 && score < 60) {
-                            calculatedRiskLevel = 'Moderate Risk';
-                          } else {
-                            calculatedRiskLevel = 'High Risk';
-                          }
-
-                          try {
-                            final user = FirebaseAuth.instance.currentUser;
-                            if (user != null) {
-                              await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                                'idrsScore': score,
-                                'riskLevel': calculatedRiskLevel,
-                                'hasIdrsResult': true,
-                                'currentWeight': widget.weight,
-                                'height': widget.height,
-                                'age': widget.age,
-                                'gender': widget.isMan ? 'male' : 'female',
-                                'lastWeighInDate': FieldValue.serverTimestamp(),
-                              }, SetOptions(merge: true));
-
-                              // Also add it to weight_history so it shows up in Weekly Weigh-In
-                              // Use a date-based ID so multiple taps/retakes on the same day don't duplicate
-                              final now = DateTime.now();
-                              final todayStr = "${now.year}-${now.month}-${now.day}";
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(user.uid)
-                                  .collection('weight_history')
-                                  .doc('idrs_$todayStr')
-                                  .set({
-                                'weight': widget.weight,
-                                'date': FieldValue.serverTimestamp(),
-                                'moods': ['Started IDRS Assessment'],
-                              }, SetOptions(merge: true));
-                              
-                              final int weekNumber = (now.difference(DateTime(now.year, 1, 1)).inDays / 7).floor();
-                              PointsService.awardPoints(
-                                action: 'weekly_weigh_in',
-                                points: 5,
-                                referenceId: '${now.year}_W$weekNumber',
-                              );
-                            }
-                          } catch (e) {
-                            debugPrint('Failed to save IDRS score: $e');
-                          }
-
-                          _showRiskResultBottomSheet(score);
-                        },
+                        onPressed: _submitIdrs,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: GelatoTheme.purple,
                           foregroundColor: GelatoTheme.purpleDark,
@@ -476,14 +493,7 @@ class _RiskAssessmentStep2ScreenState extends State<RiskAssessmentStep2Screen> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const GPAQStep1Screen(),
-                          ),
-                        );
-                      },
+                      onPressed: _submitIdrs,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: GelatoTheme.purple,
                         foregroundColor: GelatoTheme.purpleDark,

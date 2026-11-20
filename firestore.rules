@@ -44,6 +44,20 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
+    // Global IDRS responses for reporting and backups
+    match /idrs_responses/{docId} {
+      allow read: if isClinicalAdmin() || (request.auth != null && request.auth.uid == resource.data.userId);
+      allow create, update: if request.auth != null;
+      allow delete: if isClinicalAdmin();
+    }
+
+    // Global GPAQ responses for reporting and backups
+    match /gpaq_responses/{docId} {
+      allow read: if isClinicalAdmin() || (request.auth != null && request.auth.uid == resource.data.userId);
+      allow create, update: if request.auth != null;
+      allow delete: if isClinicalAdmin();
+    }
+
     // AI assistant conversations, keyed by user UID.
     match /chats/{userId} {
       allow read: if isOwner(userId) || isClinicalAdmin();
