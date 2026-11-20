@@ -47,121 +47,6 @@ class Patient {
   });
 }
 
-const List<Patient> _mockPatients = [
-  Patient(
-    id: 'mock_1',
-    name: 'Alice Smith',
-    initials: 'AS',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 4,
-    sessionTitle: '',
-    riskLevel: 'HIGH RISK',
-    currentWeight: 78.5,
-    gpaqMetMinutes: 750,
-    gpaqLevel: 'High',
-    idrsScore: 65,
-  ),
-  Patient(
-    id: 'mock_2',
-    name: 'James Brown',
-    initials: 'JB',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 8,
-    sessionTitle: '',
-    riskLevel: 'LOW RISK',
-    currentWeight: 82.0,
-    gpaqMetMinutes: 200,
-    gpaqLevel: 'Low',
-    idrsScore: 25,
-  ),
-  Patient(
-    id: 'mock_3',
-    name: 'Emma Miller',
-    initials: 'EM',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 2,
-    sessionTitle: '',
-    riskLevel: 'MODERATE',
-    currentWeight: 68.2,
-    gpaqMetMinutes: 450,
-    gpaqLevel: 'Moderate',
-    idrsScore: 45,
-  ),
-  Patient(
-    id: 'mock_4',
-    name: 'David Thompson',
-    initials: 'DT',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 12,
-    sessionTitle: '',
-    riskLevel: 'HIGH RISK',
-    currentWeight: 91.0,
-    gpaqMetMinutes: 800,
-    gpaqLevel: 'High',
-    idrsScore: 70,
-  ),
-  Patient(
-    id: 'mock_5',
-    name: 'Linda Wilson',
-    initials: 'LW',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 5,
-    sessionTitle: '',
-    riskLevel: 'MODERATE',
-    currentWeight: 72.4,
-    gpaqMetMinutes: 520,
-    gpaqLevel: 'Moderate',
-    idrsScore: 50,
-  ),
-  Patient(
-    id: 'mock_6',
-    name: 'Marcus Reed',
-    initials: 'MR',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 10,
-    sessionTitle: '',
-    riskLevel: 'LOW RISK',
-    currentWeight: 75.1,
-    gpaqMetMinutes: 250,
-    gpaqLevel: 'Low',
-    idrsScore: 20,
-  ),
-  Patient(
-    id: 'mock_7',
-    name: 'Sarah Hedges',
-    initials: 'SH',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 1,
-    sessionTitle: '',
-    riskLevel: 'HIGH RISK',
-    currentWeight: 85.3,
-    gpaqMetMinutes: 900,
-    gpaqLevel: 'High',
-    idrsScore: 80,
-  ),
-  Patient(
-    id: 'mock_8',
-    name: 'Kevin Knight',
-    initials: 'KK',
-    avatarBg: _navy,
-    avatarFg: Colors.white,
-    sessionNumber: 15,
-    sessionTitle: '',
-    riskLevel: 'LOW RISK',
-    currentWeight: 79.0,
-    gpaqMetMinutes: 180,
-    gpaqLevel: 'Low',
-    idrsScore: 15,
-  ),
-];
-
 Patient _parsePatientFromDoc(DocumentSnapshot doc) {
   final data = doc.data() as Map<String, dynamic>? ?? {};
   final name = data['name'] as String? ?? 'Unknown Patient';
@@ -169,7 +54,7 @@ Patient _parsePatientFromDoc(DocumentSnapshot doc) {
   String getInitials(String n) {
     if (n.isEmpty) return '??';
     final parts = n.trim().split(' ');
-    if (parts.length > 1) {
+    if (parts.length > 1 && parts[1].isNotEmpty) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
     return parts[0][0].toUpperCase();
@@ -359,6 +244,28 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
 
         if (snapshot.hasError) {
           debugPrint('ClinicianDashboard users stream error: ${snapshot.error}');
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Unable to fetch patients data',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         final rawDocs = snapshot.data?.docs ?? [];
@@ -370,9 +277,6 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           patients.add(_parsePatientFromDoc(doc));
         }
 
-        final isUsingDemoData = patients.isEmpty;
-        final activePatients = isUsingDemoData ? _mockPatients : patients;
-
         int highRiskCount = 0;
         int modRiskCount = 0;
         int lowRiskCount = 0;
@@ -382,7 +286,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
         int activityLow = 0;
         int activityTracked = 0;
         
-        for (final p in activePatients) {
+        for (final p in patients) {
           final risk = p.riskLevel.toUpperCase();
           if (risk == 'HIGH RISK' || risk == 'HIGH') {
             highRiskCount++;
@@ -405,7 +309,7 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
           }
         }
         
-        final displayTotal = activePatients.length;
+        final displayTotal = patients.length;
         final displayHigh = highRiskCount;
         final displayMod = modRiskCount;
         final displayLow = lowRiskCount;
@@ -422,33 +326,11 @@ class _ClinicianDashboardScreenState extends State<ClinicianDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              if (isUsingDemoData)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF1D4ED8)),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Showing preview cohort metrics. When new participants register, live data updates here automatically.',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               _buildTotalParticipantsCard(displayTotal, displayHigh, displayMod, displayLow),
               const SizedBox(height: 16),
-              _buildIdrsScorecard(activePatients),
+              _buildIdrsScorecard(patients),
               const SizedBox(height: 16),
-              _buildGpaqScorecard(activePatients),
+              _buildGpaqScorecard(patients),
               const SizedBox(height: 16),
               _buildCurriculumProgressCard(displayTotal),
               const SizedBox(height: 16),
@@ -1121,6 +1003,28 @@ class PatientsListScreen extends StatelessWidget {
               }
               if (snapshot.hasError) {
                 debugPrint('PatientsListScreen stream error: ${snapshot.error}');
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Error loading patients from Firebase',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${snapshot.error}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               }
               final rawDocs = snapshot.data?.docs ?? [];
               final List<Patient> patients = [];
@@ -1130,38 +1034,36 @@ class PatientsListScreen extends StatelessWidget {
                 patients.add(_parsePatientFromDoc(doc));
               }
 
-              final displayList = patients.isNotEmpty ? patients : _mockPatients;
-              final isUsingDemoData = patients.isEmpty;
+              if (patients.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.people_outline_rounded, size: 64, color: _navy.withValues(alpha: 0.2)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No Patients Found',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _navy),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'No registered participants found in Firestore. When patients create an account, their records will appear here.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: _slate),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: displayList.length + (isUsingDemoData ? 1 : 0),
+                itemCount: patients.length,
                 itemBuilder: (context, index) {
-                  if (isUsingDemoData && index == 0) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF1D4ED8)),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Showing preview cohort. Real patient registrations will appear here automatically.',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final p = displayList[isUsingDemoData ? index - 1 : index];
+                  final p = patients[index];
               Color riskColor;
               Color riskBg;
               if (p.riskLevel == 'HIGH RISK' || p.riskLevel == 'HIGH') {
