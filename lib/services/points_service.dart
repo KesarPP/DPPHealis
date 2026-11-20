@@ -17,33 +17,54 @@ class PointsService {
   }
 
   /// Ensures a user has an entry in /leaderboard projection.
-  /// Also performs automatic weekly points rollover if a new week has started.
+  /// Also performs automatic weekly points rollover if a new week has started
+  /// and syncs lifetime points from users/{uid} if missing.
   static Future<void> ensureLeaderboardEntry(String uid, String name) async {
     try {
       final docRef = _db.collection('leaderboard').doc(uid);
       final doc = await docRef.get();
       final currentWeek = getCurrentWeekKey();
 
+      // Read current points from users collection to avoid starting at 0 if points exist
+      int existingTotalPoints = 0;
+      try {
+        final userDoc = await _db.collection('users').doc(uid).get();
+        if (userDoc.exists) {
+          existingTotalPoints = (userDoc.data()?['totalPoints'] as num?)?.toInt() ?? 0;
+        }
+      } catch (_) {}
+
       if (!doc.exists) {
         await docRef.set({
           'name': name.trim().isNotEmpty ? name.trim() : 'User',
-          'totalPoints': 0,
-          'weeklyPoints': 0,
+          'totalPoints': existingTotalPoints,
+          'weeklyPoints': existingTotalPoints,
           'weekKey': currentWeek,
-          'badgesCount': 0,
+          'badgesCount': (existingTotalPoints / 100).floor(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
         final data = doc.data();
         final storedWeekKey = data?['weekKey'] as String?;
+        final storedWeeklyPoints = (data?['weeklyPoints'] as num?)?.toInt() ?? 0;
+        final updateData = <String, dynamic>{
+          'name': name.trim().isNotEmpty ? name.trim() : 'User',
+        };
+
         // If calendar week has rolled over, reset weeklyPoints to 0
         if (storedWeekKey != currentWeek) {
-          await docRef.set({
-            'weeklyPoints': 0,
-            'weekKey': currentWeek,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          updateData['weeklyPoints'] = 0;
+          updateData['weekKey'] = currentWeek;
+        } else if (storedWeeklyPoints == 0 && existingTotalPoints > 0) {
+          updateData['weeklyPoints'] = existingTotalPoints;
         }
+
+        if (existingTotalPoints > 0) {
+          updateData['totalPoints'] = existingTotalPoints;
+          updateData['badgesCount'] = (existingTotalPoints / 100).floor();
+        }
+
+        await docRef.set(updateData, SetOptions(merge: true));
       }
     } catch (e) {
       debugPrint('Error ensuring leaderboard entry: $e');
@@ -75,7 +96,10 @@ class PointsService {
   }) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        debugPrint('[PointsService] Cannot award points: No logged in user.');
+        return;
+      }
       
       final String uid = user.uid;
       final currentWeekKey = getCurrentWeekKey();
@@ -86,58 +110,58 @@ class PointsService {
       final userRef = _db.collection('users').doc(uid);
       final leaderboardRef = _db.collection('leaderboard').doc(uid);
 
-      await _db.runTransaction((transaction) async {
-        final historyDoc = await transaction.get(historyRef);
-        final userDoc = await transaction.get(userRef);
-        final leaderboardDoc = await transaction.get(leaderboardRef);
-        
-        if (!historyDoc.exists) {
-          // Add to history to prevent duplicates
-          transaction.set(historyRef, {
-            'action': action,
-            'points': points,
-            'referenceId': referenceId,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
-          
-          // Increment user total points
-          transaction.set(userRef, {
-            'totalPoints': FieldValue.increment(points),
-          }, SetOptions(merge: true));
+      // 1. Check history to prevent duplicate points
+      final historyDoc = await historyRef.get();
+      if (historyDoc.exists) {
+        debugPrint('[PointsService] Points already awarded for $docId');
+        return;
+      }
 
-          final currentPoints = (userDoc.data()?['totalPoints'] as num? ?? 0).toInt();
-          final newTotalPoints = currentPoints + points;
-          final userName = (userDoc.data()?['name'] as String?) ?? user.displayName ?? 'User';
-
-          // Determine weekly points with week rollover
-          final storedWeekKey = leaderboardDoc.data()?['weekKey'] as String?;
-          final storedWeeklyPoints = (leaderboardDoc.data()?['weeklyPoints'] as num? ?? 0).toInt();
-
-          int newWeeklyPoints;
-          if (storedWeekKey == currentWeekKey) {
-            newWeeklyPoints = storedWeeklyPoints + points;
-          } else {
-            // New week: start fresh with this action's points
-            newWeeklyPoints = points;
-          }
-
-          final badgesCount = (newTotalPoints / 100).floor();
-
-          // Sync projection to /leaderboard/{uid}
-          transaction.set(leaderboardRef, {
-            'name': userName,
-            'totalPoints': newTotalPoints,
-            'weeklyPoints': newWeeklyPoints,
-            'weekKey': currentWeekKey,
-            'badgesCount': badgesCount,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
-        } else {
-          debugPrint('Points already awarded for $docId');
-        }
+      // 2. Record points history
+      await historyRef.set({
+        'action': action,
+        'points': points,
+        'referenceId': referenceId,
+        'timestamp': FieldValue.serverTimestamp(),
       });
+
+      // 3. Increment user total points
+      await userRef.set({
+        'totalPoints': FieldValue.increment(points),
+      }, SetOptions(merge: true));
+
+      // 4. Read latest user profile and leaderboard status
+      final userDoc = await userRef.get();
+      final currentPoints = (userDoc.data()?['totalPoints'] as num? ?? points).toInt();
+      final userName = (userDoc.data()?['name'] as String?) ?? user.displayName ?? 'User';
+
+      final leaderboardDoc = await leaderboardRef.get();
+      final storedWeekKey = leaderboardDoc.data()?['weekKey'] as String?;
+      final storedWeeklyPoints = (leaderboardDoc.data()?['weeklyPoints'] as num? ?? 0).toInt();
+
+      int newWeeklyPoints;
+      if (storedWeekKey == currentWeekKey) {
+        newWeeklyPoints = storedWeeklyPoints + points;
+      } else {
+        // New week: start fresh with this action's points
+        newWeeklyPoints = points;
+      }
+
+      final badgesCount = (currentPoints / 100).floor();
+
+      // 5. Update /leaderboard/{uid}
+      await leaderboardRef.set({
+        'name': userName,
+        'totalPoints': currentPoints,
+        'weeklyPoints': newWeeklyPoints,
+        'weekKey': currentWeekKey,
+        'badgesCount': badgesCount,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint('[PointsService] Successfully awarded $points points to $userName ($uid)! Total: $currentPoints, Weekly: $newWeeklyPoints');
     } catch (e) {
-      debugPrint('Error awarding points: $e');
+      debugPrint('[PointsService] Error awarding points: $e');
     }
   }
 }

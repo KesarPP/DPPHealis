@@ -10,6 +10,7 @@ import '../data/nutrition_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/ffq_excel_service.dart';
 import '../services/ffq_upload_service.dart';
+import '../services/points_service.dart';
 // ── FFQ Calorie breakdown result ─────────────────────────────────────────────
 class FoodCalorieEntry {
   final String name;
@@ -573,7 +574,7 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
     );
   }
 
-  void _completeAnalysis() {
+  Future<void> _completeAnalysis() async {
     final CalorieResult result = FfqCalculatorService().calculateDailyCaloriesWithBreakdown();
     final double totalCalories = result.totalCalories;
     final List<FoodCalorieEntry> topItems = result.breakdown.take(5).toList();
@@ -590,13 +591,21 @@ class _FoodAnalysisScreenState extends State<FoodAnalysisScreen> {
       };
 
       // Save to a top-level FFQ collection
-      FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('FFQ')
           .doc(uid)
           .set(dataToSave, SetOptions(merge: true));
           
       // Upload Excel to Storage in background
       FfqUploadService().uploadFfqExcel();
+
+      // Award points for completing the food frequency assessment
+      final todayStr = DateTime.now().toIso8601String().split('T')[0];
+      await PointsService.awardPoints(
+        action: 'food_logged',
+        points: 25,
+        referenceId: 'ffq_$todayStr',
+      );
     } catch (e) {
       debugPrint('Error saving FFQ: $e');
     }

@@ -219,6 +219,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       if (mealCount == 0) {
         mealCount = prefs.getInt('mission_meal_$nowStr') ?? 0;
       }
+      if (mealCount > 0) {
+        PointsService.awardPoints(
+          action: 'food_logged',
+          points: 10,
+          referenceId: nowStr,
+        );
+      }
 
       // 2. Check Activity Log from backend
       bool actLogged = false;

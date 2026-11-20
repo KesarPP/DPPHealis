@@ -49,6 +49,48 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           );
         }
 
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: GelatoTheme.bg,
+            appBar: AppBar(
+              title: const Text(
+                'Leaderboard',
+                style: TextStyle(
+                  color: GelatoTheme.textDark,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 24,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              centerTitle: true,
+            ),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.cloud_off_rounded, size: 54, color: Colors.orange),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Connection Issue',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GelatoTheme.textDark),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12, color: GelatoTheme.textLight),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
         final isWeekly = _selectedFilterIndex == 0;
         final allUsers = <Map<String, dynamic>>[];
 
