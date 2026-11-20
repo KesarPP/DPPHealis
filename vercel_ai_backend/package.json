@@ -1,7 +1,8 @@
 {
   "name": "dpp-vercel-ai-backend",
   "version": "1.0.0",
-  "description": "Serverless AI backend for DPP app with Groq primary and Gemini fallback",
+  "description": "Serverless AI backend for DPP app powered by Google Gemini (gemini-2.5-flash)",
+  "type": "module",
   "main": "api/chat.js",
   "engines": {
     "node": ">=18.0.0"

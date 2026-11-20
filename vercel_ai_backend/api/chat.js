@@ -1,7 +1,13 @@
 // Vercel Serverless Function: /api/chat
-// Primary AI: Groq (Llama 3) | Fallback AI: Google Gemini (Gemini 1.5 Flash)
+// Primary AI: Google Gemini (gemini-2.5-flash)
 
 export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ status: 'OK' });
@@ -11,7 +17,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed. Please use POST.' });
   }
 
-  const { message, history = [], user_id, user_context } = req.body;
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (_) {
+      body = {};
+    }
+  } else if (!body) {
+    body = {};
+  }
+
+  const { message, history = [], user_id, user_context } = body;
 
   if (!message) {
     return res.status(400).json({ error: 'Missing "message" in request body.' });
@@ -42,109 +59,96 @@ export default async function handler(req, res) {
   }
 
   // ─── API KEY CONFIGURATION ────────────────────────────────────────────────
-  // You can either set these in Vercel Environment Variables OR paste them directly below:
-  const groqApiKey = process.env.GROQ_API_KEY;
-  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const geminiApiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
 
-  // ─── 1. PRIMARY AI: GROQ API ───────────────────────────────────────────────
-  let groqErrorMsg = "";
+  // ─── GOOGLE GEMINI API (Primary: gemini-2.5-flash) ─────────────────────────
   let geminiErrorMsg = "";
 
-  if (groqApiKey && !groqApiKey.includes('PASTE_YOUR')) {
-    try {
-      console.log('Attempting Primary Model: Groq (llama3-8b-8192)...');
-      const groqReq = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${groqApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'llama3-8b-8192',
-          messages: [
-            { role: 'system', content: systemInstruction },
-            ...history,
-            { role: 'user', content: message }
-          ],
-          temperature: 0.7,
-          max_tokens: 2048
-        })
-      });
+  if (geminiApiKey) {
+    // Gemini conversation requirements:
+    // 1. Roles must be 'user' or 'model'
+    // 2. The conversation in `contents` must begin with a 'user' turn
+    // 3. Turns must strictly alternate between user and model
+    const contents = [];
+    if (Array.isArray(history)) {
+      for (const h of history) {
+        if (!h || !h.content || typeof h.content !== 'string') continue;
+        const role = (h.role === 'assistant' || h.role === 'model') ? 'model' : 'user';
 
-      if (groqReq.ok) {
-        const groqData = await groqReq.json();
-        const reply = groqData.choices?.[0]?.message?.content;
-        if (reply) {
-          console.log('Successfully generated response via Groq.');
-          return res.status(200).json({ response: reply, model: 'groq-llama3-8b-8192' });
-        }
-      } else {
-        const errText = await groqReq.text();
-        groqErrorMsg = `Groq API Error (${groqReq.status}): ${errText}`;
-        console.warn(groqErrorMsg);
+        // Skip leading assistant/model messages
+        if (contents.length === 0 && role === 'model') continue;
+
+        // Skip consecutive messages with the same role
+        if (contents.length > 0 && contents[contents.length - 1].role === role) continue;
+
+        contents.push({
+          role,
+          parts: [{ text: h.content }]
+        });
       }
-    } catch (groqError) {
-      groqErrorMsg = `Groq Fetch Exception: ${groqError.message}`;
-      console.warn(groqErrorMsg, groqError);
     }
-  } else {
-    groqErrorMsg = "GROQ_API_KEY is missing or contains placeholder.";
-    console.warn(groqErrorMsg);
-  }
 
-  // ─── 2. FALLBACK AI: GOOGLE GEMINI API ─────────────────────────────────────
-  if (geminiApiKey && !geminiApiKey.includes('PASTE_YOUR')) {
-    try {
-      console.log('Attempting Fallback Model: Google Gemini (gemini-3.6-flash)...');
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiApiKey}`;
-      const geminiReq = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemInstruction }]
+    // If last history turn was user, drop it so current user message doesn't repeat 'user' role
+    if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+      contents.pop();
+    }
+
+    contents.push({
+      role: 'user',
+      parts: [{ text: message }]
+    });
+
+    const geminiModels = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+    for (const geminiModel of geminiModels) {
+      try {
+        console.log(`Attempting Gemini Model: ${geminiModel}...`);
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
+
+        const geminiReq = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          contents: [
-            ...history.map(h => ({
-              role: h.role === 'assistant' ? 'model' : 'user',
-              parts: [{ text: h.content }]
-            })),
-            { role: 'user', parts: [{ text: message }] }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048
-          }
-        })
-      });
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemInstruction }]
+            },
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2048
+            }
+          }),
+          signal: AbortSignal.timeout(9000)
+        });
 
-      if (geminiReq.ok) {
-        const geminiData = await geminiReq.json();
-        const reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (reply) {
-          console.log('Successfully generated response via Gemini fallback.');
-          return res.status(200).json({ response: reply, model: 'gemini-3.6-flash' });
+        if (geminiReq.ok) {
+          const geminiData = await geminiReq.json();
+          const reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (reply) {
+            console.log(`Successfully generated response via Gemini (${geminiModel}).`);
+            return res.status(200).json({ response: reply, model: geminiModel });
+          }
+        } else {
+          const errText = await geminiReq.text();
+          geminiErrorMsg = `Gemini API Error (${geminiModel} - ${geminiReq.status}): ${errText}`;
+          console.error(geminiErrorMsg);
+          if (geminiReq.status === 404) continue;
+          break;
         }
-      } else {
-        const errText = await geminiReq.text();
-        geminiErrorMsg = `Gemini API Error (${geminiReq.status}): ${errText}`;
+      } catch (geminiError) {
+        geminiErrorMsg = `Gemini Fetch Exception (${geminiModel}): ${geminiError.message}`;
         console.error(geminiErrorMsg);
       }
-    } catch (geminiError) {
-      geminiErrorMsg = `Gemini Fetch Exception: ${geminiError.message}`;
-      console.error(geminiErrorMsg, geminiError);
     }
   } else {
     geminiErrorMsg = "GEMINI_API_KEY is missing or contains placeholder.";
     console.error(geminiErrorMsg);
   }
 
-  // ─── 3. FINAL FALLBACK: ERROR / MOCK MESSAGE ───────────────────────────────
-  // Return status 200 so the Flutter app displays the exact API error details in the chat bubble!
+  // ─── FINAL FALLBACK: ERROR MESSAGE ─────────────────────────────────────────
   return res.status(200).json({
-    response: `⚠️ AI API Request Rejected by Groq & Gemini.\n\n1. ${groqErrorMsg}\n\n2. ${geminiErrorMsg}\n\nPlease check that your API keys are active and valid!`,
-    error: 'API keys rejected.'
+    response: `⚠️ AI API Request Failed.\n\n${geminiErrorMsg}\n\nPlease check your Gemini API key and quota!`,
+    error: 'Gemini API call failed.'
   });
 }
