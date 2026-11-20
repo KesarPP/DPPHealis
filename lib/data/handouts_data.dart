@@ -247,3 +247,32 @@ const List<ModuleHandout> ndppHandouts = [
   ...maintenanceHandouts,
   ...graduationHandouts,
 ];
+
+/// Finds the handout module containing only the requested session's handouts.
+/// [sessionIdentifier] can be an [int] (1..16), a numeric [String] ('1'..'16'), or a sessionId ('session_01').
+ModuleHandout? getHandoutForSession(dynamic sessionIdentifier) {
+  int? sessionNumber;
+  if (sessionIdentifier is int) {
+    sessionNumber = sessionIdentifier;
+  } else if (sessionIdentifier is String) {
+    final digits = sessionIdentifier.replaceAll(RegExp(r'[^0-9]'), '');
+    sessionNumber = int.tryParse(digits);
+  }
+
+  if (sessionNumber == null || sessionNumber < 1) return null;
+
+  for (final module in ndppHandouts) {
+    for (final session in module.sessions) {
+      final name = session.sessionName.trim();
+      final pattern = RegExp(r'^Session\s+' + sessionNumber.toString() + r'[:\s]', caseSensitive: false);
+      if (pattern.hasMatch(name) || (sessionNumber == 16 && name.contains('Module 5'))) {
+        return ModuleHandout(
+          module.moduleNumber,
+          module.moduleName,
+          [session],
+        );
+      }
+    }
+  }
+  return null;
+}

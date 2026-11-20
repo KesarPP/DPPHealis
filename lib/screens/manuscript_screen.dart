@@ -924,12 +924,17 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                                       title: 'Session Handouts',
                                       subtitle: 'View and download resources from today\'s session.',
                                       onTap: () {
+                                        final sessionHandout = getHandoutForSession(widget.sessionVideo.order);
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const HandoutsScreen(
-                                            title: 'Session Handouts',
-                                            handouts: ndppHandouts,
-                                          )),
+                                          MaterialPageRoute(
+                                            builder: (context) => HandoutsScreen(
+                                              title: 'Session ${widget.sessionVideo.order} Handouts',
+                                              handouts: sessionHandout != null
+                                                  ? [sessionHandout]
+                                                  : ndppHandouts,
+                                            ),
+                                          ),
                                         );
                                       },
                                     ),

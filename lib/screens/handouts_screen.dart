@@ -71,7 +71,10 @@ class _ModuleCard extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         // Sessions
-        ...module.sessions.map((s) => _SessionCard(session: s)),
+        ...module.sessions.map((s) => _SessionCard(
+              session: s,
+              initiallyExpanded: module.sessions.length == 1,
+            )),
         const SizedBox(height: 20),
       ],
     );
@@ -80,14 +83,24 @@ class _ModuleCard extends StatelessWidget {
 
 class _SessionCard extends StatefulWidget {
   final SessionHandout session;
-  const _SessionCard({required this.session});
+  final bool initiallyExpanded;
+  const _SessionCard({
+    required this.session,
+    this.initiallyExpanded = false,
+  });
 
   @override
   State<_SessionCard> createState() => _SessionCardState();
 }
 
 class _SessionCardState extends State<_SessionCard> {
-  bool _expanded = false;
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
 
   @override
   Widget build(BuildContext context) {

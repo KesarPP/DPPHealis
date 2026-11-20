@@ -432,34 +432,14 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
   }
 
   void _openSessionHandout(BuildContext context, int sessionNumber) {
-    ModuleHandout? targetModule;
-    SessionHandout? targetSession;
-    
-    for (var module in ndppHandouts) {
-      for (var session in module.sessions) {
-        if (session.sessionName.contains('Session $sessionNumber:') || 
-            (sessionNumber == 16 && session.sessionName.contains('Module 5'))) {
-          targetModule = module;
-          targetSession = session;
-          break;
-        }
-      }
-      if (targetSession != null) break;
-    }
-
-    if (targetModule != null && targetSession != null) {
+    final targetModule = getHandoutForSession(sessionNumber);
+    if (targetModule != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => HandoutsScreen(
             title: 'Session $sessionNumber Handout',
-            handouts: [
-              ModuleHandout(
-                targetModule!.moduleNumber, 
-                targetModule.moduleName, 
-                [targetSession!],
-              )
-            ],
+            handouts: [targetModule],
           ),
         ),
       );
