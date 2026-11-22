@@ -27,12 +27,40 @@ class ManuscriptScreen extends StatefulWidget {
 
   final String? sessionId;
 
+  static void ensureBookOpen() {
+    _ManuscriptScreenState.ensureBookOpen();
+  }
+
+  static void showNotesPage() {
+    _ManuscriptScreenState.showNotesPage();
+  }
+
+  static void showVideoPage() {
+    _ManuscriptScreenState.showVideoPage();
+  }
+
   @override
   State<ManuscriptScreen> createState() => _ManuscriptScreenState();
 }
 
 class _ManuscriptScreenState extends State<ManuscriptScreen>
     with TickerProviderStateMixin {
+  static _ManuscriptScreenState? instance;
+
+  static void ensureBookOpen() {
+    if (instance != null && !instance!._isBookOpen) {
+      instance!._openBook();
+    }
+  }
+
+  static void showNotesPage() {
+    instance?._interiorKey.currentState?._nextPage();
+  }
+
+  static void showVideoPage() {
+    instance?._interiorKey.currentState?._prevPage();
+  }
+
   static const double _rowHeight = 248;
   static const double _cardHorizontalInset = 20;
 
@@ -61,6 +89,7 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
   @override
   void initState() {
     super.initState();
+    instance = this;
     _coverController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
@@ -85,6 +114,7 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
 
   @override
   void dispose() {
+    if (instance == this) instance = null;
     _coverController.dispose();
     super.dispose();
   }

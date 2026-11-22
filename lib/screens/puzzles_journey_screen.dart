@@ -17,11 +17,50 @@ import 'handouts_screen.dart';
 class PuzzlesJourneyScreen extends StatefulWidget {
   const PuzzlesJourneyScreen({super.key});
 
+  static void animateMapPreview() {
+    _PuzzlesJourneyScreenState.animateMapPreview();
+  }
+
   @override
   State<PuzzlesJourneyScreen> createState() => _PuzzlesJourneyScreenState();
 }
 
-class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
+class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen>
+    with TickerProviderStateMixin {
+  static _PuzzlesJourneyScreenState? instance;
+
+  static void animateMapPreview() {
+    instance?._runMapSwiftMotion();
+  }
+
+  void _runMapSwiftMotion() {
+    if (!mounted) return;
+    final currentMatrix = _transformationController.value.clone();
+    final startY = currentMatrix.getTranslation().y;
+    final scale = currentMatrix.getMaxScaleOnAxis();
+
+    final animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    final anim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: animController, curve: Curves.easeInOutCubic),
+    );
+
+    anim.addListener(() {
+      final progress = anim.value;
+      final peakOffset = math.sin(progress * math.pi) * 160.0;
+      final newMatrix = Matrix4.identity()
+        ..translate(0.0, startY + peakOffset)
+        ..scale(scale);
+      _transformationController.value = newMatrix;
+    });
+
+    animController.forward().then((_) {
+      if (mounted) animController.dispose();
+    });
+  }
+
   final TransformationController _transformationController = TransformationController();
 
   // Define canvas size
@@ -42,6 +81,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
   @override
   void initState() {
     super.initState();
+    instance = this;
     _loadTodayActivity();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final Size screenSize = MediaQuery.of(context).size;
@@ -81,6 +121,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen> {
 
   @override
   void dispose() {
+    if (instance == this) instance = null;
     _transformationController.dispose();
     super.dispose();
   }

@@ -10,6 +10,7 @@ class ChatboxBubble extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onSkip;
   final bool isLastStep;
+  final double arrowAlignmentX;
 
   const ChatboxBubble({
     super.key,
@@ -20,6 +21,7 @@ class ChatboxBubble extends StatelessWidget {
     required this.onBack,
     required this.onSkip,
     this.isLastStep = false,
+    this.arrowAlignmentX = 0.0,
   });
 
   @override
@@ -28,36 +30,39 @@ class ChatboxBubble extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (step.arrowDirection == ArrowDirection.top)
-          _buildArrow(pointingUp: true),
+          Align(
+            alignment: Alignment(arrowAlignmentX, 0.0),
+            child: _buildArrow(pointingUp: true),
+          ),
         Container(
           width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 20),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: step.cardColor,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: Colors.black, width: 2.0),
             boxShadow: const [
               BoxShadow(
                 color: Colors.black,
-                offset: Offset(3.5, 3.5),
+                offset: Offset(3.0, 3.0),
                 blurRadius: 0,
               ),
             ],
           ),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header row: Section pill + Step counter + Close button
+              // Header row: Section pill + Close button (NO SLIDE COUNTER)
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black, width: 1.5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.black, width: 1.4),
                     ),
                     child: Text(
                       step.sectionLabel,
@@ -65,17 +70,8 @@ class ChatboxBubble extends StatelessWidget {
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                         color: GelatoTheme.textDark,
-                        letterSpacing: 0.3,
+                        letterSpacing: 0.2,
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${currentIndex + 1} of $totalSteps',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black54,
                     ),
                   ),
                   const Spacer(),
@@ -84,38 +80,38 @@ class ChatboxBubble extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black, width: 1.5),
+                        border: Border.all(color: Colors.black, width: 1.4),
                       ),
-                      child: const Icon(Icons.close, size: 14, color: Colors.black),
+                      child: const Icon(Icons.close, size: 12, color: Colors.black),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               // Title
               Text(
                 step.title,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w900,
                   color: GelatoTheme.textDark,
-                  height: 1.25,
+                  height: 1.2,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 5),
               // Body
               Text(
                 step.body,
                 style: const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: 12.8,
                   fontWeight: FontWeight.w500,
                   color: GelatoTheme.textDark,
-                  height: 1.4,
+                  height: 1.35,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               // Bottom Action Bar: Skip on left, Back & Next on right
               Row(
                 children: [
@@ -124,7 +120,7 @@ class ChatboxBubble extends StatelessWidget {
                     child: const Text(
                       'Skip Tour',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: Colors.black54,
                         decoration: TextDecoration.underline,
@@ -136,15 +132,15 @@ class ChatboxBubble extends StatelessWidget {
                     GestureDetector(
                       onTap: onBack,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.black, width: 1.8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black, width: 1.6),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black,
-                              offset: Offset(2, 2),
+                              offset: Offset(1.8, 1.8),
                               blurRadius: 0,
                             ),
                           ],
@@ -152,7 +148,7 @@ class ChatboxBubble extends StatelessWidget {
                         child: const Text(
                           'Back',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: GelatoTheme.textDark,
                           ),
@@ -164,15 +160,15 @@ class ChatboxBubble extends StatelessWidget {
                   GestureDetector(
                     onTap: onNext,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.black, width: 2.0),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.black, width: 1.8),
                         boxShadow: const [
                           BoxShadow(
                             color: Colors.black,
-                            offset: Offset(2.5, 2.5),
+                            offset: Offset(2.0, 2.0),
                             blurRadius: 0,
                           ),
                         ],
@@ -183,14 +179,14 @@ class ChatboxBubble extends StatelessWidget {
                           Text(
                             isLastStep ? 'Finish 🎉' : 'Next',
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w900,
                               color: GelatoTheme.textDark,
                             ),
                           ),
                           if (!isLastStep) ...[
                             const SizedBox(width: 4),
-                            const Icon(Icons.arrow_forward, size: 14, color: Colors.black),
+                            const Icon(Icons.arrow_forward, size: 13, color: Colors.black),
                           ],
                         ],
                       ),
@@ -202,7 +198,10 @@ class ChatboxBubble extends StatelessWidget {
           ),
         ),
         if (step.arrowDirection == ArrowDirection.bottom)
-          _buildArrow(pointingUp: false),
+          Align(
+            alignment: Alignment(arrowAlignmentX, 0.0),
+            child: _buildArrow(pointingUp: false),
+          ),
       ],
     );
   }

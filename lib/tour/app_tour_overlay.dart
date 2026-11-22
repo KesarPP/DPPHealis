@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/gelato_theme.dart';
 import 'app_tour_models.dart';
 import 'chatbox_bubble.dart';
 
@@ -39,7 +40,7 @@ class _AppTourOverlayState extends State<AppTourOverlay>
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 0.98, end: 1.04).animate(
+    _pulseAnimation = Tween<double>(begin: 0.98, end: 1.03).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -54,6 +55,8 @@ class _AppTourOverlayState extends State<AppTourOverlay>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     final spotlightRect = widget.step.spotlightFraction != null
         ? Rect.fromLTWH(
             widget.step.spotlightFraction!.left * size.width,
@@ -63,34 +66,39 @@ class _AppTourOverlayState extends State<AppTourOverlay>
           )
         : null;
 
+    final isBottomAnchored = widget.step.topFraction >= 0.65;
     final bubbleTop = (widget.step.topFraction * size.height).clamp(
-      topPadding + 20,
-      size.height - 320,
+      topPadding + 10,
+      size.height - 220,
     );
+
+    double arrowAlignmentX = 0.0;
+    if (spotlightRect != null) {
+      final fractionX = spotlightRect.center.dx / size.width;
+      arrowAlignmentX = ((fractionX * 2.0) - 1.0).clamp(-0.75, 0.75);
+    }
+
+    final isDrawerShowcase = widget.step.id == 'menu_drawer_showcase';
 
     return Material(
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Semi-transparent backdrop with cutout hole
-          if (spotlightRect != null)
-            ClipPath(
-              clipper: _SpotlightClipper(spotlightRect),
+          // Feather-light transparent barrier so the entire screen is 100% visible
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {}, // absorbs outside clicks without darkening screen
               child: Container(
-                width: size.width,
-                height: size.height,
-                color: Colors.black.withValues(alpha: 0.65),
+                color: isDrawerShowcase
+                    ? Colors.transparent
+                    : Colors.black.withValues(alpha: 0.04),
               ),
-            )
-          else
-            Container(
-              width: size.width,
-              height: size.height,
-              color: Colors.black.withValues(alpha: 0.65),
             ),
+          ),
 
-          // Animated pulse border around the spotlight
-          if (spotlightRect != null)
+          // Transparent highlight frame around spotlight target (if any, not a blackout cutout)
+          if (spotlightRect != null && !isDrawerShowcase)
             Positioned(
               left: spotlightRect.left,
               top: spotlightRect.top,
@@ -103,16 +111,17 @@ class _AppTourOverlayState extends State<AppTourOverlay>
                     scale: _pulseAnimation.value,
                     child: Container(
                       decoration: BoxDecoration(
+                        color: widget.step.cardColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: widget.step.cardColor.withValues(alpha: 0.9),
-                          width: 2.5,
+                          color: Colors.black,
+                          width: 2.0,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: widget.step.cardColor.withValues(alpha: 0.4),
-                            blurRadius: 10,
-                            spreadRadius: 2,
+                            color: widget.step.cardColor.withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
@@ -122,52 +131,99 @@ class _AppTourOverlayState extends State<AppTourOverlay>
               ),
             ),
 
-          // Positioned Chatbox Bubble
-          Positioned(
-            top: bubbleTop,
-            left: 0,
-            right: 0,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: size.height - bubbleTop - 16,
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: ChatboxBubble(
-                  step: widget.step,
-                  currentIndex: widget.currentIndex,
-                  totalSteps: widget.totalSteps,
-                  onNext: widget.onNext,
-                  onBack: widget.onBack,
-                  onSkip: widget.onSkip,
-                  isLastStep: widget.isLastStep,
+          // Render: Drawer Showcase minimal pill vs Floaty Chatbox Bubble
+          if (isDrawerShowcase)
+            Positioned(
+              bottom: bottomPadding + 24,
+              left: 20,
+              right: 20,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: GelatoTheme.green,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.black, width: 2.2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(3.5, 3.5),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: widget.onSkip,
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      GestureDetector(
+                        onTap: widget.onNext,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Next: Leaderboard',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w900,
+                                color: GelatoTheme.textDark,
+                              ),
+                            ),
+                            SizedBox(width: 6),
+                            Icon(Icons.arrow_forward, size: 15, color: Colors.black),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+            )
+          else if (isBottomAnchored)
+            Positioned(
+              bottom: bottomPadding + 16,
+              left: 0,
+              right: 0,
+              child: ChatboxBubble(
+                step: widget.step,
+                currentIndex: widget.currentIndex,
+                totalSteps: widget.totalSteps,
+                onNext: widget.onNext,
+                onBack: widget.onBack,
+                onSkip: widget.onSkip,
+                isLastStep: widget.isLastStep,
+                arrowAlignmentX: arrowAlignmentX,
+              ),
+            )
+          else
+            Positioned(
+              top: bubbleTop,
+              left: 0,
+              right: 0,
+              child: ChatboxBubble(
+                step: widget.step,
+                currentIndex: widget.currentIndex,
+                totalSteps: widget.totalSteps,
+                onNext: widget.onNext,
+                onBack: widget.onBack,
+                onSkip: widget.onSkip,
+                isLastStep: widget.isLastStep,
+                arrowAlignmentX: arrowAlignmentX,
+              ),
             ),
-          ),
         ],
       ),
     );
   }
-}
-
-class _SpotlightClipper extends CustomClipper<Path> {
-  final Rect targetRect;
-
-  _SpotlightClipper(this.targetRect);
-
-  @override
-  Path getClip(Size size) {
-    final path = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final rrect = RRect.fromRectAndRadius(targetRect, const Radius.circular(16));
-    path.addRRect(rrect);
-    path.fillType = PathFillType.evenOdd;
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant _SpotlightClipper oldClipper) =>
-      oldClipper.targetRect != targetRect;
 }

@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../screens/food_tracking_screen.dart';
 import '../screens/activity_fitness_screen.dart';
+import '../screens/manuscript_screen.dart';
+import '../screens/puzzles_journey_screen.dart';
+import '../screens/dashboard_screen.dart';
 import 'app_tour_models.dart';
 import 'app_tour_steps_data.dart';
 import 'app_tour_overlay.dart';
@@ -78,9 +81,10 @@ class AppTourController {
     // Ensure we are firmly on the Puzzle Map
     MainShellState.instance?.selectedIndex = 0;
 
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 150), () {
       final activeCtx = DPPApp.navigatorKey.currentContext ?? context;
       _showCurrentOverlay(activeCtx);
+      PuzzlesJourneyScreen.animateMapPreview();
     });
   }
 
@@ -132,15 +136,27 @@ class AppTourController {
     // 1. Moving from Puzzle shortcuts (index 2) -> Journal (index 3)
     if (_currentStepIndex == 2) {
       MainShellState.instance?.selectedIndex = 1; // Tab 1: Journal
-      _currentStepIndex++;
-      Future.delayed(const Duration(milliseconds: 150), () {
+      _currentStepIndex = 3;
+      Future.delayed(const Duration(milliseconds: 200), () {
+        ManuscriptScreen.ensureBookOpen();
         _showCurrentOverlay(context);
       });
       return;
     }
 
-    // 2. Moving from Journal end (index 8) -> Level Unlock Blueprint
-    if (_currentStepIndex == 8) {
+    // 2. Moving from Journal Video (index 4) -> Journal Notes (index 5)
+    // Smooth page swiping motion
+    if (_currentStepIndex == 4) {
+      ManuscriptScreen.showNotesPage();
+      _currentStepIndex = 5;
+      Future.delayed(const Duration(milliseconds: 350), () {
+        _showCurrentOverlay(context);
+      });
+      return;
+    }
+
+    // 3. Moving from Journal Weigh-In (index 7) -> Level Unlock Blueprint
+    if (_currentStepIndex == 7) {
       _overlayEntry?.remove();
       _overlayEntry = null;
 
@@ -153,7 +169,7 @@ class AppTourController {
         builder: (dialogCtx) => AppTourLevelUnlockDialog(
           onNext: () {
             Navigator.pop(dialogCtx);
-            _currentStepIndex = 9; // First step of Meal Logging
+            _currentStepIndex = 8; // First step of Meal Logging (meals_intro)
             Future.delayed(const Duration(milliseconds: 250), () {
               final activeCtx = DPPApp.navigatorKey.currentContext ?? targetContext;
               _pushFoodTrackingScreen(activeCtx);
@@ -162,7 +178,7 @@ class AppTourController {
           onBack: () {
             Navigator.pop(dialogCtx);
             MainShellState.instance?.selectedIndex = 1;
-            _currentStepIndex = 8;
+            _currentStepIndex = 7;
             Future.delayed(const Duration(milliseconds: 250), () {
               final activeCtx = DPPApp.navigatorKey.currentContext ?? targetContext;
               _showCurrentOverlay(activeCtx);
@@ -177,13 +193,13 @@ class AppTourController {
       return;
     }
 
-    // 3. Moving from Meal Logging end (index 17) -> Activity Screen
-    if (_currentStepIndex == 17) {
+    // 4. Moving from Meal Logging Calendar (index 10) -> Activity Screen
+    if (_currentStepIndex == 10) {
       if (_isFoodTrackingPushed) {
         Navigator.of(context).maybePop();
         _isFoodTrackingPushed = false;
       }
-      _currentStepIndex = 18; // First step of Activity
+      _currentStepIndex = 11; // First step of Activity (activity_intro)
       Future.delayed(const Duration(milliseconds: 250), () {
         final activeCtx = DPPApp.navigatorKey.currentContext ?? context;
         _pushActivityFitnessScreen(activeCtx);
@@ -191,52 +207,54 @@ class AppTourController {
       return;
     }
 
-    // 4. Moving from Activity end (index 26) -> Dashboard
-    if (_currentStepIndex == 26) {
+    // 5. Moving from Activity Tracking Info (index 13) -> Dashboard
+    if (_currentStepIndex == 13) {
       if (_isActivityPushed) {
         Navigator.of(context).maybePop();
         _isActivityPushed = false;
       }
       MainShellState.instance?.selectedIndex = 2; // Tab 2: Dashboard
-      _currentStepIndex = 27; // First step of Dashboard
+      _currentStepIndex = 14; // Dashboard Intro
       Future.delayed(const Duration(milliseconds: 250), () {
         _showCurrentOverlay(context);
       });
       return;
     }
 
-    // 5. Moving from Dashboard end (index 31) -> User Menu
-    if (_currentStepIndex == 31) {
-      Scaffold.of(context).openEndDrawer();
-      _currentStepIndex = 32; // User Menu
-      Future.delayed(const Duration(milliseconds: 250), () {
+    // 6. Moving from Dashboard Menu Indicator (index 15) -> User Menu Drawer Showcase
+    // Pop open the drawer; overlay switches to minimal bottom pill so user sees menu cleanly
+    if (_currentStepIndex == 15) {
+      DashboardScreen.openDrawer();
+      _currentStepIndex = 16; // menu_drawer_showcase
+      Future.delayed(const Duration(milliseconds: 350), () {
         _showCurrentOverlay(context);
       });
       return;
     }
 
-    // 6. Moving from User Menu end (index 37) -> Leaderboard
-    if (_currentStepIndex == 37) {
-      Navigator.of(context).maybePop(); // Close drawer
+    // 7. Moving from Drawer Showcase (index 16) -> Leaderboard
+    if (_currentStepIndex == 16) {
+      DashboardScreen.closeDrawer();
+      Navigator.of(context).maybePop(); // Close drawer route if needed
       MainShellState.instance?.selectedIndex = 3; // Tab 3: Leaderboard
-      _currentStepIndex = 38;
+      _currentStepIndex = 17; // Leaderboard Intro
       Future.delayed(const Duration(milliseconds: 250), () {
         _showCurrentOverlay(context);
       });
       return;
     }
 
-    // 7. Moving from Leaderboard end (index 40) -> AI Coach
-    if (_currentStepIndex == 40) {
+    // 8. Moving from Leaderboard Intro (index 17) -> AI Coach
+    if (_currentStepIndex == 17) {
       MainShellState.instance?.selectedIndex = 4; // Tab 4: AI Coach
-      _currentStepIndex = 41;
+      _currentStepIndex = 18; // AI Coach Intro
       Future.delayed(const Duration(milliseconds: 150), () {
         _showCurrentOverlay(context);
       });
       return;
     }
 
-    // 8. Completed last step of AI Coach (index 43) -> Final Congratulations!
+    // 9. Completed last step of AI Coach (index 18) -> Final Congratulations!
     if (_currentStepIndex >= totalSteps - 1) {
       _overlayEntry?.remove();
       _overlayEntry = null;
@@ -275,8 +293,18 @@ class AppTourController {
       return;
     }
 
-    // Moving back from Meal Logging start (index 9) -> Level Unlock Blueprint
-    if (_currentStepIndex == 9) {
+    // Moving back from Journal Notes (index 5) -> Journal Video (index 4)
+    if (_currentStepIndex == 5) {
+      ManuscriptScreen.showVideoPage();
+      _currentStepIndex = 4;
+      Future.delayed(const Duration(milliseconds: 350), () {
+        _showCurrentOverlay(context);
+      });
+      return;
+    }
+
+    // Moving back from Meal Logging start (index 8) -> Level Unlock Blueprint
+    if (_currentStepIndex == 8) {
       if (_isFoodTrackingPushed) {
         Navigator.of(context).maybePop();
         _isFoodTrackingPushed = false;
@@ -291,7 +319,7 @@ class AppTourController {
         builder: (dialogCtx) => AppTourLevelUnlockDialog(
           onNext: () {
             Navigator.pop(dialogCtx);
-            _currentStepIndex = 9;
+            _currentStepIndex = 8;
             Future.delayed(const Duration(milliseconds: 250), () {
               final activeCtx = DPPApp.navigatorKey.currentContext ?? targetContext;
               _pushFoodTrackingScreen(activeCtx);
@@ -300,7 +328,7 @@ class AppTourController {
           onBack: () {
             Navigator.pop(dialogCtx);
             MainShellState.instance?.selectedIndex = 1;
-            _currentStepIndex = 8;
+            _currentStepIndex = 7;
             Future.delayed(const Duration(milliseconds: 250), () {
               final activeCtx = DPPApp.navigatorKey.currentContext ?? targetContext;
               _showCurrentOverlay(activeCtx);
@@ -315,13 +343,13 @@ class AppTourController {
       return;
     }
 
-    // Moving back from Activity start (index 18) -> Meal Logging
-    if (_currentStepIndex == 18) {
+    // Moving back from Activity start (index 11) -> Meal Logging
+    if (_currentStepIndex == 11) {
       if (_isActivityPushed) {
         Navigator.of(context).maybePop();
         _isActivityPushed = false;
       }
-      _currentStepIndex = 17;
+      _currentStepIndex = 10;
       Future.delayed(const Duration(milliseconds: 250), () {
         final activeCtx = DPPApp.navigatorKey.currentContext ?? context;
         _pushFoodTrackingScreen(activeCtx);
@@ -329,9 +357,9 @@ class AppTourController {
       return;
     }
 
-    // Moving back from Dashboard start (index 27) -> Activity
-    if (_currentStepIndex == 27) {
-      _currentStepIndex = 26;
+    // Moving back from Dashboard (index 14) -> Activity
+    if (_currentStepIndex == 14) {
+      _currentStepIndex = 13;
       Future.delayed(const Duration(milliseconds: 250), () {
         final activeCtx = DPPApp.navigatorKey.currentContext ?? context;
         _pushActivityFitnessScreen(activeCtx);
@@ -339,31 +367,41 @@ class AppTourController {
       return;
     }
 
-    // Moving back from User Menu start (index 32) -> Dashboard
-    if (_currentStepIndex == 32) {
-      Navigator.of(context).maybePop(); // Close drawer
-      _currentStepIndex = 31;
+    // Moving back from Dashboard Menu (index 15) -> Dashboard Intro (index 14)
+    if (_currentStepIndex == 15) {
+      _currentStepIndex = 14;
+      _showCurrentOverlay(context);
+      return;
+    }
+
+    // Moving back from Drawer Showcase (index 16) -> Dashboard Menu
+    if (_currentStepIndex == 16) {
+      DashboardScreen.closeDrawer();
+      Navigator.of(context).maybePop();
+      _currentStepIndex = 15;
       Future.delayed(const Duration(milliseconds: 250), () {
         _showCurrentOverlay(context);
       });
       return;
     }
 
-    // Moving back from Leaderboard start (index 38) -> User Menu
-    if (_currentStepIndex == 38) {
-      MainShellState.instance?.selectedIndex = 2;
-      Scaffold.of(context).openEndDrawer();
-      _currentStepIndex = 37;
+    // Moving back from Leaderboard start (index 17) -> Drawer Showcase
+    if (_currentStepIndex == 17) {
+      MainShellState.instance?.selectedIndex = 2; // Dashboard
+      _currentStepIndex = 16;
       Future.delayed(const Duration(milliseconds: 250), () {
-        _showCurrentOverlay(context);
+        DashboardScreen.openDrawer();
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _showCurrentOverlay(context);
+        });
       });
       return;
     }
 
-    // Moving back from AI Coach start (index 41) -> Leaderboard
-    if (_currentStepIndex == 41) {
+    // Moving back from AI Coach start (index 18) -> Leaderboard
+    if (_currentStepIndex == 18) {
       MainShellState.instance?.selectedIndex = 3;
-      _currentStepIndex = 40;
+      _currentStepIndex = 17;
       Future.delayed(const Duration(milliseconds: 150), () {
         _showCurrentOverlay(context);
       });
@@ -378,6 +416,8 @@ class AppTourController {
     _isActive = false;
     _overlayEntry?.remove();
     _overlayEntry = null;
+
+    DashboardScreen.closeDrawer();
 
     if (_isFoodTrackingPushed || _isActivityPushed) {
       Navigator.of(context).popUntil((route) => route.isFirst);

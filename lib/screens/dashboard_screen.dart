@@ -26,6 +26,16 @@ import 'package:health/health.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
+  static final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+  static void openDrawer() {
+    scaffoldKey.currentState?.openEndDrawer();
+  }
+
+  static void closeDrawer() {
+    scaffoldKey.currentState?.closeEndDrawer();
+  }
+
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -314,6 +324,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: DashboardScreen.scaffoldKey,
         backgroundColor: GelatoTheme.bg,
         endDrawer: const UserSideDrawer(),
         body: SafeArea(

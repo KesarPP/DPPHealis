@@ -93,7 +93,7 @@ class AppTourWelcomeDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Welcome to your Diabetes Prevention Program! This app is designed to help you build healthier habits, make informed lifestyle choices, and stay consistent with your health goals.\n\nExplore your personalized journey, track your meals and activities, complete weekly sessions, and celebrate your progress along the way!',
+                    'Welcome to your Diabetes Prevention Program! This app is designed to help you build healthier habits, make informed lifestyle choices, and stay consistent with your health goals.',
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w500,
