@@ -88,7 +88,8 @@ class DPPApp extends StatelessWidget {
 // ─── Main shell with Bottom Navigation ───────────────────────────────────────
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  final bool isFirstLogin;
+  const MainShell({super.key, this.isFirstLogin = false});
 
   static MainShellState? of(BuildContext context) {
     return MainShellState.instance ?? context.findAncestorStateOfType<MainShellState>();
@@ -101,6 +102,7 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> {
   static MainShellState? instance;
   int _selectedIndex = 0;
+  bool _isCheckingTour = false;
 
   @override
   void initState() {
@@ -117,6 +119,14 @@ class MainShellState extends State<MainShell> {
       _checkMissingAssessments(user.uid);
       NotificationService().startChatListener();
       FfqUploadService().retryPendingUpload();
+    }
+
+    // ONLY automatically trigger the App Tour when the user logs in for the very first time.
+    // Opening the app or logging in subsequently will NOT trigger the tour automatically.
+    if (widget.isFirstLogin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAppTour();
+      });
     }
   }
 
@@ -153,11 +163,6 @@ class MainShellState extends State<MainShell> {
           AppState.gpaqLevel = data['gpaqLevel'] ?? 'Low Activity';
         }
 
-        // Trigger App Tour if IDRS and GPAQ are completed and tour has not been seen
-        if (hasIdrs && hasGpaq) {
-          _checkAppTour();
-        }
-
         // Check if past user
         final createdAt = data['createdAt'] as Timestamp?;
         if (createdAt != null) {
@@ -182,13 +187,23 @@ class MainShellState extends State<MainShell> {
   }
 
   Future<void> _checkAppTour() async {
-    final hasSeen = await AppTourController.instance.hasSeenTour();
-    if (!hasSeen && mounted) {
-      Future.delayed(const Duration(milliseconds: 700), () {
-        if (mounted && !AppTourController.instance.isActive) {
-          AppTourController.instance.startTour(context);
-        }
-      });
+    if (_isCheckingTour || AppTourController.instance.isActive || AppTourController.instance.isStarting) {
+      return;
+    }
+    _isCheckingTour = true;
+    try {
+      final hasSeen = await AppTourController.instance.hasSeenTour();
+      if (!hasSeen && mounted) {
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted && !AppTourController.instance.isActive && !AppTourController.instance.isStarting) {
+            AppTourController.instance.startTour(context);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking app tour: $e');
+    } finally {
+      _isCheckingTour = false;
     }
   }
 

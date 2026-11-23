@@ -1,5 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'signup_screen.dart';
 import 'clinician_dashboard_screen.dart';
 import 'coach_profile_setup_screen.dart';
@@ -47,14 +49,54 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await authService.signInWithEmailAndPassword(email, password);
+      final user = await authService.signInWithEmailAndPassword(email, password);
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => const MainShell(),
-          ),
-        );
+        final prefs = await SharedPreferences.getInstance();
+        final uid = user?.uid;
+        bool isFirstLogin = false;
+
+        if (uid != null && uid.isNotEmpty) {
+          final hasLoggedInBeforeLocal = prefs.getBool('has_logged_in_before_$uid') ?? false;
+          final hasSeenTourLocal = prefs.getBool('has_completed_app_tour_$uid') ?? false;
+
+          if (!hasLoggedInBeforeLocal && !hasSeenTourLocal) {
+            bool hasLoggedInFirestore = false;
+            bool hasSeenTourFirestore = false;
+            try {
+              final doc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(uid)
+                  .get()
+                  .timeout(const Duration(seconds: 3));
+              if (doc.exists && doc.data() != null) {
+                final data = doc.data()!;
+                hasLoggedInFirestore = data['hasLoggedInBefore'] == true;
+                hasSeenTourFirestore = data['hasSeenTour'] == true || data['hasCompletedAppTour'] == true;
+              }
+            } catch (_) {}
+
+            if (!hasLoggedInFirestore && !hasSeenTourFirestore) {
+              isFirstLogin = true;
+            }
+          }
+
+          // Mark this user as having logged in, so future logins and app opens are NOT treated as first login
+          await prefs.setBool('has_logged_in_before_$uid', true);
+          try {
+            await FirebaseFirestore.instance.collection('users').doc(uid).set({
+              'hasLoggedInBefore': true,
+            }, SetOptions(merge: true));
+          } catch (_) {}
+        }
+
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => MainShell(isFirstLogin: isFirstLogin),
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Authentication failed. Please try again.';

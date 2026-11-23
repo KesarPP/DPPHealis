@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
 import '../main.dart';
 import '../screens/food_tracking_screen.dart';
 import '../screens/activity_fitness_screen.dart';
@@ -20,6 +22,7 @@ class AppTourController {
   static const String _tourCompletedKey = 'has_completed_app_tour';
 
   bool _isActive = false;
+  bool _isStarting = false;
   int _currentStepIndex = 0;
   OverlayEntry? _overlayEntry;
 
@@ -28,21 +31,73 @@ class AppTourController {
   bool _isActivityPushed = false;
 
   bool get isActive => _isActive;
+  bool get isStarting => _isStarting;
   int get currentStepIndex => _currentStepIndex;
   int get totalSteps => AppTourStepsData.steps.length;
 
-  Future<bool> hasSeenTour() async {
+  Future<bool> hasSeenTour([String? uid]) async {
     final prefs = await SharedPreferences.getInstance();
+    final currentUid = uid ?? AuthService().currentUser?.uid;
+
+    if (currentUid != null && currentUid.isNotEmpty) {
+      // 1. Check user-specific SharedPreferences key first (fast local check)
+      final userCompleted = prefs.getBool('${_tourCompletedKey}_$currentUid');
+      if (userCompleted != null) {
+        return userCompleted;
+      }
+
+      // 2. Check Firestore in case user completed it on another session/device
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .get()
+            .timeout(const Duration(seconds: 3));
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          if (data['hasSeenTour'] == true || data['hasCompletedAppTour'] == true) {
+            await prefs.setBool('${_tourCompletedKey}_$currentUid', true);
+            return true;
+          }
+        }
+      } catch (_) {}
+
+      // If neither local user key nor firestore says true, this user hasn't seen it!
+      return false;
+    }
+
+    // Fallback if no user is logged in (e.g. demo mode)
     return prefs.getBool(_tourCompletedKey) ?? false;
   }
 
-  Future<void> markTourCompleted() async {
+  Future<void> markTourCompleted([String? uid]) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_tourCompletedKey, true);
+
+    final currentUid = uid ?? AuthService().currentUser?.uid;
+    if (currentUid != null && currentUid.isNotEmpty) {
+      await prefs.setBool('${_tourCompletedKey}_$currentUid', true);
+      await prefs.setBool('has_logged_in_before_$currentUid', true);
+
+      // Persist to Firestore so it stays synced across sessions and devices
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(currentUid).set(
+          {
+            'hasSeenTour': true,
+            'hasCompletedAppTour': true,
+            'hasLoggedInBefore': true,
+          },
+          SetOptions(merge: true),
+        );
+      } catch (_) {}
+    }
   }
 
   /// Launch the tour from the beginning
   void startTour(BuildContext context, {bool showWelcome = true}) {
+    if (_isActive || _isStarting) return;
+    _isStarting = true;
+
     // 1. Immediately switch to the Puzzle Map screen (Tab 0)
     MainShellState.instance?.selectedIndex = 0;
     _currentStepIndex = 0;
@@ -57,6 +112,7 @@ class AppTourController {
         barrierDismissible: false,
         builder: (dialogCtx) => AppTourWelcomeDialog(
           onStart: () {
+            _isStarting = false;
             Navigator.pop(dialogCtx);
             // Delay slightly so the dialog route finishes its pop animation cleanly
             Future.delayed(const Duration(milliseconds: 250), () {
@@ -65,12 +121,16 @@ class AppTourController {
             });
           },
           onSkip: () {
+            _isStarting = false;
             Navigator.pop(dialogCtx);
             markTourCompleted();
           },
         ),
-      );
+      ).then((_) {
+        _isStarting = false;
+      });
     } else {
+      _isStarting = false;
       _beginStepSequence(targetContext);
     }
   }
@@ -259,6 +319,7 @@ class AppTourController {
       _overlayEntry?.remove();
       _overlayEntry = null;
       _isActive = false;
+      _isStarting = false;
 
       final targetContext = DPPApp.navigatorKey.currentContext ?? context;
       showDialog(
@@ -414,6 +475,7 @@ class AppTourController {
 
   void skipTour(BuildContext context) {
     _isActive = false;
+    _isStarting = false;
     _overlayEntry?.remove();
     _overlayEntry = null;
 

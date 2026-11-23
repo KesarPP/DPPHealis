@@ -48,7 +48,7 @@ flowchart TD
 
 ### Phase 1: Screen 1 — Welcome Screen Modal
 
-- **Trigger / Context**: Appears automatically upon completing baseline assessments (IDRS & GPAQ) or when manually launched via the User Menu.
+- **Trigger / Context**: Appears automatically on first-time user login or initial app entry, upon completing baseline assessments, or when manually launched via the User Menu ("App Tour").
 - **Card Type**: Centered Modal Dialog with rounded corners (`24px`), 2.5px solid black border, 4px drop shadow.
 - **Visual Asset**: Top hero illustration banner (`assets/images/diaprevent_illustration.jpg`).
 
