@@ -30,8 +30,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
       // Fetch user's own points as reliable fallback in case /leaderboard stream has permissions error
       try {
+        final lbDoc = await FirebaseFirestore.instance.collection('leaderboard').doc(user.uid).get();
+        final currentWeekKey = PointsService.getCurrentWeekKey();
+        final int thisWeekPoints = (lbDoc.exists && lbDoc.data()?['weekKey'] == currentWeekKey)
+            ? ((lbDoc.data()?['weeklyPoints'] as num?)?.toInt() ?? 0)
+            : 0;
+
         final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        if (userDoc.exists && mounted) {
+        if (mounted) {
           final totalPoints = (userDoc.data()?['totalPoints'] as num?)?.toInt() ?? 0;
           final name = (userDoc.data()?['name'] as String?) ?? user.displayName ?? 'User';
           setState(() {
@@ -39,7 +45,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               'uid': user.uid,
               'name': 'You',
               'displayName': name,
-              'points': totalPoints,
+              'points': thisWeekPoints,
               'badges': (totalPoints / 100).floor(),
               'isUser': true,
             };
@@ -68,16 +74,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         }
 
         final bool hasPermissionError = snapshot.hasError;
+        final currentWeekKey = PointsService.getCurrentWeekKey();
         final allUsers = <Map<String, dynamic>>[];
 
         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
           for (final doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
-            final int weeklyPoints =
-                (data['weeklyPoints'] as num?)?.toInt() ?? 0;
+            final String? docWeekKey = data['weekKey'] as String?;
+
+            // If the document is from an earlier week, points reset to 0 for this week!
+            final int weeklyPoints = (docWeekKey == currentWeekKey)
+                ? ((data['weeklyPoints'] as num?)?.toInt() ?? 0)
+                : 0;
+
             final int totalPoints =
                 (data['totalPoints'] as num?)?.toInt() ?? 0;
-            final int points = weeklyPoints > 0 ? weeklyPoints : totalPoints;
+            final int points = weeklyPoints;
 
             final rawName = data['name'] as String?;
             final String name =

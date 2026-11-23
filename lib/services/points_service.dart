@@ -38,7 +38,7 @@ class PointsService {
         await docRef.set({
           'name': name.trim().isNotEmpty ? name.trim() : 'User',
           'totalPoints': existingTotalPoints,
-          'weeklyPoints': existingTotalPoints,
+          'weeklyPoints': 0,
           'weekKey': currentWeek,
           'badgesCount': (existingTotalPoints / 100).floor(),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -46,7 +46,6 @@ class PointsService {
       } else {
         final data = doc.data();
         final storedWeekKey = data?['weekKey'] as String?;
-        final storedWeeklyPoints = (data?['weeklyPoints'] as num?)?.toInt() ?? 0;
         final updateData = <String, dynamic>{
           'name': name.trim().isNotEmpty ? name.trim() : 'User',
         };
@@ -55,8 +54,6 @@ class PointsService {
         if (storedWeekKey != currentWeek) {
           updateData['weeklyPoints'] = 0;
           updateData['weekKey'] = currentWeek;
-        } else if (storedWeeklyPoints == 0 && existingTotalPoints > 0) {
-          updateData['weeklyPoints'] = existingTotalPoints;
         }
 
         if (existingTotalPoints > 0) {

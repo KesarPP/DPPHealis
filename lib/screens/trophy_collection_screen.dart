@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/gelato_theme.dart';
+import '../services/points_service.dart';
 import '../services/achievements_service.dart';
 import '../services/activity_metrics_engine.dart';
 import '../widgets/dashboard_achievements.dart';
@@ -104,12 +105,18 @@ class TrophyCollectionScreen extends StatelessWidget {
           );
         }
 
+        final currentWeekKey = PointsService.getCurrentWeekKey();
         final allUsers = <Map<String, dynamic>>[];
         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
           for (final doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
-            final int weeklyPoints =
-                (data['weeklyPoints'] as num?)?.toInt() ?? 0;
+            final String? docWeekKey = data['weekKey'] as String?;
+
+            // If the document is from an earlier week, points reset to 0 for this week
+            final int weeklyPoints = (docWeekKey == currentWeekKey)
+                ? ((data['weeklyPoints'] as num?)?.toInt() ?? 0)
+                : 0;
+
             final int totalPoints =
                 (data['totalPoints'] as num?)?.toInt() ?? 0;
             final rawName = data['name'] as String?;
