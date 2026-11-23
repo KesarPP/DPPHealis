@@ -56,7 +56,7 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     _initTts();
     _currentSessionMessages.add(
       ChatMessage(
-        text: 'Hello! I am your AI Chatbot. I can answer specific questions about diabetes prevention.',
+        text: 'Hello! I am your AI Health Assistant. I can answer your questions about the DPP app, diabetes prevention, nutrition, exercise, and how to improve your health.',
         isUser: false,
         time: _currentTime(),
         timestamp: DateTime.now(),
@@ -486,7 +486,8 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       return _qaMap[query]!;
     }
     
-    String normalized = query.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final lower = query.toLowerCase();
+    String normalized = lower.replaceAll(RegExp(r'[^a-z0-9]'), '');
     
     if (normalized.contains('prediabetes')) {
       return _qaMap["What is prediabetes?"]!;
@@ -500,17 +501,34 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       }
     } else if (normalized.contains('gpaq') || normalized.contains('metminute')) {
       return 'The GPAQ (Global Physical Activity Questionnaire) evaluates your weekly physical activity level across work, travel, and recreation. You can check your score in the User Menu under GPAQ Score Card!';
+    } else if (lower.contains('improve') || lower.contains('health') || lower.contains('healthy') || lower.contains('lifestyle') || lower.contains('tips')) {
+      return 'To improve your overall health and prevent diabetes, focus on these evidence-based DPP pillars:\n\n'
+          '1. **Balanced Nutrition:** Fill half your plate with non-starchy vegetables, one-quarter with lean proteins (lentils, paneer, chicken), and one-quarter with complex whole grains.\n'
+          '2. **Active Living:** Aim for at least 150 minutes of moderate physical activity (like brisk walking) each week.\n'
+          '3. **Weight Management:** Even a modest 5-7% weight reduction significantly improves insulin sensitivity.\n'
+          '4. **Hydration & Sleep:** Drink 8-10 glasses of water daily and prioritize 7-8 hours of quality sleep.\n'
+          '5. **Consistency:** Log your meals in the DPP Food Log and track your daily steps!';
     } else if (normalized.contains('lower') && (normalized.contains('sugar') || normalized.contains('glucose'))) {
       return _qaMap["How can I lower my blood sugar naturally?"]!;
-    } else if (normalized.contains('food') || normalized.contains('diet') || normalized.contains('eat')) {
+    } else if (normalized.contains('food') || normalized.contains('diet') || normalized.contains('eat') || normalized.contains('nutrition') || normalized.contains('meal')) {
       return _qaMap["What are the best foods for a diabetic diet?"]!;
-    } else if (normalized.contains('exercise') || normalized.contains('workout') || normalized.contains('activity')) {
+    } else if (normalized.contains('exercise') || normalized.contains('workout') || normalized.contains('activity') || normalized.contains('walk') || normalized.contains('step')) {
       return _qaMap["How much exercise do I need each week?"]!;
     } else if (normalized.contains('symptom') || normalized.contains('sign')) {
       return _qaMap["What are the early symptoms of diabetes?"]!;
+    } else if (lower.contains('weight') || lower.contains('loss') || lower.contains('fat')) {
+      return 'Sustainable weight management in the Diabetes Prevention Program is built on realistic, gradual progress:\n\n'
+          '• Create a mild daily calorie deficit by cutting added sugars and refined flour.\n'
+          '• Track your daily meals in the Food Log to stay mindful of portions.\n'
+          '• Combine brisk walking with light resistance exercises to preserve muscle mass.\n'
+          '• Log your weekly weigh-in in the app to monitor your trend over time!';
     }
     
-    return 'I can only answer specific questions about diabetes prevention. Please choose one of the suggested questions above, or ask me about diet, exercise, or symptoms!';
+    return 'In the Diabetes Prevention Program (DPP), healthy living starts with simple, consistent daily habits:\n\n'
+        '• **Nutrition:** Focus on high-fiber foods, whole pulses, and vegetables while limiting sugary drinks and processed snacks.\n'
+        '• **Movement:** Try to take brisk walks after meals and reach at least 150 active minutes per week.\n'
+        '• **App Tools:** Use the Food Log, Activity Tracker, IDRS Score Card, and DPP Modules to guide your progress.\n\n'
+        'Feel free to ask me anything about your diet, workouts, blood sugar, or how to use the app!';
   }
 
   @override
