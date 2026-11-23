@@ -54,6 +54,7 @@ export default async function handler(req, res) {
     '6. Provide supportive, empathetic, and evidence-based health guidance. When explaining app features (like IDRS or GPAQ), be clear and encouraging.\n' +
     '7. Always remind users to consult a certified medical professional or their assigned human coach in the app for formal medical diagnoses.';
 
+
   if (user_context) {
     systemInstruction += '\n\nUSER PROGRESS CONTEXT:\n' + user_context + '\nUse this user context to provide personalized recommendations. Acknowledge their streaks, activity levels, and meal logging when relevant.';
   }
