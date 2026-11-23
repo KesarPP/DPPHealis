@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/food_notifiers.dart';
+import '../services/session_video_progress_service.dart';
 import '../repositories/activity_log_repository_impl.dart';
 import '../services/firestore_activity_log_service.dart';
 import 'food_tracking_screen.dart';
@@ -252,16 +253,37 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen>
   }
 
   Widget _buildNode(int number, double x, double y, {required bool isCompleted}) {
+    final progressService = Provider.of<SessionVideoProgressService?>(context, listen: true);
+    final isUnlocked = progressService?.isLevelUnlocked(number) ?? (number == 1);
+    final isDone = progressService?.isLevelCompleted(number) ?? false;
+
     return Positioned(
       left: x,
       top: y,
       child: GestureDetector(
         onTap: () {
-          // Redirect to Journal tab when clicking a level
+          if (!isUnlocked) {
+            final lockedMessage = progressService?.getLockedLevelMessage(number) ??
+                'Complete the previous session video to unlock your next level.';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(lockedMessage),
+                duration: const Duration(seconds: 3),
+                backgroundColor: const Color(0xFF1B3D6D),
+              ),
+            );
+            return;
+          }
+          // Redirect to Journal tab when clicking an unlocked level
           launchSessionJournal(context, sessionIdForLevel(number));
           MainShell.of(context)?.selectedIndex = 1;
         },
-        child: _ColorfulBlockNode(number: number, isHighlighted: _currentPawnLevel == number),
+        child: _ColorfulBlockNode(
+          number: number,
+          isHighlighted: _currentPawnLevel == number,
+          isLocked: !isUnlocked,
+          isCompleted: isDone,
+        ),
       ),
     );
   }
@@ -287,7 +309,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              height: 60,
+              height: 68,
               decoration: BoxDecoration(
                 color: const Color(0xFFFFDAB9), // Peach
                 borderRadius: BorderRadius.vertical(
@@ -361,7 +383,7 @@ class _PuzzlesJourneyScreenState extends State<PuzzlesJourneyScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              height: 60,
+              height: 68,
               decoration: BoxDecoration(
                 color: const Color(0xFFBBDEFB), // Light blue
                 borderRadius: BorderRadius.vertical(
@@ -831,9 +853,20 @@ class _IsometricCheckerboardPainter extends CustomPainter {
 class _ColorfulBlockNode extends StatelessWidget {
   final int number;
   final bool isHighlighted;
-  const _ColorfulBlockNode({required this.number, this.isHighlighted = false});
+  final bool isLocked;
+  final bool isCompleted;
+
+  const _ColorfulBlockNode({
+    required this.number,
+    this.isHighlighted = false,
+    this.isLocked = false,
+    this.isCompleted = false,
+  });
 
   List<Color> _getColorsForNumber(int number) {
+    if (isLocked) {
+      return [const Color(0xFFB0BEC5), const Color(0xFF90A4AE), const Color(0xFF607D8B)]; // Muted Slate/Grey
+    }
     switch (number) {
       case 1: return [const Color(0xFFFFE082), const Color(0xFFFFCA28), const Color(0xFFFFA000)]; // Yellow
       case 2: return [const Color(0xFF80DEEA), const Color(0xFF4DD0E1), const Color(0xFF0097A7)]; // Teal
@@ -874,7 +907,11 @@ class _ColorfulBlockNode extends StatelessWidget {
                 boxShadow: [
                   isHighlighted
                       ? const BoxShadow(color: Color(0xFFFFD700), blurRadius: 16, offset: Offset(0, 4))
-                      : const BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 6))
+                      : BoxShadow(
+                          color: isLocked ? Colors.black12 : Colors.black26,
+                          blurRadius: 8,
+                          offset: const Offset(0, 6),
+                        )
                 ],
               ),
             ),
@@ -907,23 +944,35 @@ class _ColorfulBlockNode extends StatelessWidget {
                 boxShadow: [
                   isHighlighted
                       ? BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.8), blurRadius: 8, offset: const Offset(0, -2))
-                      : BoxShadow(color: Colors.white.withValues(alpha: 0.6), blurRadius: 2, offset: const Offset(0, -2))
+                      : BoxShadow(color: Colors.white.withValues(alpha: isLocked ? 0.2 : 0.6), blurRadius: 2, offset: const Offset(0, -2))
                 ],
               ),
               alignment: Alignment.center,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Book watermark icon in the background
-                  Icon(Icons.menu_book, color: Colors.white.withValues(alpha: 0.4), size: 36),
+                  if (isLocked)
+                    const Icon(Icons.lock_outline_rounded, color: Colors.white70, size: 30)
+                  else
+                    Icon(Icons.menu_book, color: Colors.white.withValues(alpha: 0.4), size: 36),
                   Text(
                     '$number',
-                    style: const TextStyle(
-                      color: Color(0xFF424242),
-                      fontSize: 26,
+                    style: TextStyle(
+                      color: isLocked ? const Color(0xFF37474F) : const Color(0xFF424242),
+                      fontSize: isLocked ? 22 : 26,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
+                  if (isCompleted)
+                    const Positioned(
+                      top: 4,
+                      right: 6,
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF2E7D32),
+                        size: 16,
+                      ),
+                    ),
                 ],
               ),
             ),

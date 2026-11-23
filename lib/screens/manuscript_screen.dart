@@ -261,12 +261,27 @@ class _ManuscriptScreenState extends State<ManuscriptScreen>
     //   4. session_01   (was session_06, which hid the real bug)
     final launch =
         Provider.of<JournalLaunchNotifier?>(context, listen: true);
-    final currentSessionId = widget.sessionId ??
-        launch?.sessionId ??
-        Provider.of<CurrentSessionNotifier?>(context, listen: true)?.sessionId ??
-        'session_01';
+    final progressService =
+        Provider.of<SessionVideoProgressService?>(context, listen: true);
+    
+    // If an explicit sessionId is passed directly to the constructor (e.g. tests or direct route),
+    // respect it directly.
+    final String targetSessionId;
+    if (widget.sessionId != null) {
+      targetSessionId = widget.sessionId!;
+    } else {
+      final requestedId = launch?.sessionId ??
+          Provider.of<CurrentSessionNotifier?>(context, listen: true)?.sessionId ??
+          'session_01';
+      final requestedOrder = DppSessionVideos.lookup(requestedId)?.order ?? 1;
+      final isAllowed = progressService?.isLevelUnlocked(requestedOrder) ?? (requestedOrder == 1);
+      targetSessionId = isAllowed
+          ? requestedId
+          : (progressService?.currentActiveSessionId ?? 'session_01');
+    }
+
     final sessionVideo =
-        findDppSessionVideo(currentSessionId) ?? dppSessionVideos.first;
+        findDppSessionVideo(targetSessionId) ?? dppSessionVideos.first;
 
     // NEW: react once per launch request (open the book / go to page 1).
     if (launch != null && launch.requestId != _handledLaunchId) {
@@ -813,21 +828,29 @@ class _OpenBookInteriorState extends State<_OpenBookInterior> {
                                 ),
                               );
                             },
-                            child: DppYoutubeVideoPlayer(
-                              // NEW: fresh player state per session, so a new
-                              // level can never reuse the previous video.
-                              key: ValueKey(widget.sessionVideo.sessionId),
-                              videoId: widget.sessionVideo.videoId,
-                              isPlaceholder: !widget.sessionVideo.isPlayable,
-                              sessionLabel: 'Session ${widget.sessionVideo.order}',
-                              title: widget.sessionVideo.title,
-                              showBadges: true,
-                              handle: _playerHandle, // NEW
-                              onCompleted: _handleVideoCompleted,
-                              onProgress: (pos, dur) {
-                                if (dur > 0) {
-                                  _handleVideoProgress(pos / dur);
-                                }
+                            child: ListenableBuilder(
+                              listenable: _progressService ?? Listenable.merge(const []),
+                              builder: (context, _) {
+                                final isDone = _progressService
+                                        ?.isCompleted(widget.sessionVideo.sessionId) ??
+                                    false;
+                                return DppYoutubeVideoPlayer(
+                                  key: ValueKey(widget.sessionVideo.sessionId),
+                                  sessionVideo: widget.sessionVideo,
+                                  videoId: widget.sessionVideo.videoId,
+                                  isPlaceholder: !widget.sessionVideo.isPlayable,
+                                  sessionLabel: 'Session ${widget.sessionVideo.order}',
+                                  title: widget.sessionVideo.title,
+                                  showBadges: true,
+                                  isCompleted: isDone,
+                                  handle: _playerHandle, // NEW
+                                  onCompleted: _handleVideoCompleted,
+                                  onProgress: (pos, dur) {
+                                    if (dur > 0) {
+                                      _handleVideoProgress(pos / dur);
+                                    }
+                                  },
+                                );
                               },
                             ),
                           ),

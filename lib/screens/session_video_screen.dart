@@ -65,8 +65,10 @@ class _SessionVideoScreenState extends State<SessionVideoScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DppYoutubeVideoPlayer(
+                  sessionVideo: video,
                   videoId: video.videoId,
                   isPlaceholder: !video.isPlayable,
+                  isCompleted: completed,
                   onCompleted: _handleCompleted,
                   onProgress: (pos, dur) {
                     if (dur > 0) {

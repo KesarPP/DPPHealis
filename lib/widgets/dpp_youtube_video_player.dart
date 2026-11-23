@@ -1,360 +1,757 @@
-// lib/widgets/dpp_youtube_video_player.dart  (REPLACES the embedded-player version)
-//
-// Simple video holder: shows the video's thumbnail with a YouTube-style play
-// button. Tapping it opens the video in the YouTube app (or the browser).
-// No embedded player, no WebView, no fullscreen/speed controls.
-//
-// Same class name and constructor as before, so ManuscriptScreen needs no changes.
-// Only dependency: url_launcher.
-//
-// NOTE: because playback happens in YouTube, the app can no longer tell when the
-// video has finished, so `onCompleted` and `onProgress` are accepted but never called.
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
-const _kPink = Color(0xFFF06292);
-const _kInk = Color(0xFF3E4A3D);
+import '../models/dpp_session_video.dart';
+import '../data/dpp_session_videos.dart';
+import '../services/video_completion_detector.dart';
 
-/// Lets a parent (e.g. the "Replay Session" button) trigger the same action as
-/// tapping the video: open it on YouTube.
+enum _PlayerLoadState { placeholder, loading, ready, error, offline }
+
+/// Lets a parent (e.g. the "Replay Session" button) trigger a replay or external launch on the active video player.
 class DppPlayerHandle {
-  Future<void> Function()? _open;
+  Future<void> Function()? _replay;
+  Future<void> Function()? _openExternal;
 
-  bool get isAttached => _open != null;
+  bool get isAttached => _replay != null || _openExternal != null;
 
-  Future<void> replay() async => _open?.call();
-}
-
-/// Accepts a bare 11-character ID or any common YouTube link
-/// (watch?v=, youtu.be/, shorts/, embed/, "?si=" suffixes, stray spaces).
-String? _normalizeYoutubeId(String raw) {
-  final clean = RegExp(r'^[A-Za-z0-9_-]{11}$');
-  final s = raw.trim();
-  if (clean.hasMatch(s)) return s;
-
-  final uri = Uri.tryParse(s);
-  if (uri == null) return null;
-
-  String? candidate;
-  if (uri.host.contains('youtu.be') && uri.pathSegments.isNotEmpty) {
-    candidate = uri.pathSegments.first;
-  } else if (uri.queryParameters['v'] != null) {
-    candidate = uri.queryParameters['v'];
-  } else if (uri.pathSegments.length >= 2 &&
-      const {'shorts', 'embed', 'live', 'v'}.contains(uri.pathSegments.first)) {
-    candidate = uri.pathSegments[1];
+  Future<void> replay() async {
+    if (_replay != null) {
+      await _replay!();
+    } else if (_openExternal != null) {
+      await _openExternal!();
+    }
   }
-  return (candidate != null && clean.hasMatch(candidate)) ? candidate : null;
 }
 
+/// Reusable HEALIS embedded YouTube player for DPP sessions.
+///
+/// Features:
+/// - Uses `youtube_player_iframe` for real in-app streaming.
+/// - Integrated with `PlaybackCoverageTracker` via `VideoCompletionDetector`
+///   to ensure legitimate continuous watching and prevent seek-to-end cheating.
+/// - Safely shows a "Session video coming soon" placeholder for unconfigured/placeholder sessions
+///   without initializing YouTube or causing crashes.
+/// - Full lifecycle management: clean controller disposal, stream cancellation, 16:9 ratio.
 class DppYoutubeVideoPlayer extends StatefulWidget {
   const DppYoutubeVideoPlayer({
     super.key,
-    required this.videoId,
+    this.sessionVideo,
+    this.videoId,
     this.isPlaceholder = false,
     this.sessionLabel,
     this.title,
     this.showBadges = true,
+    this.autoPlay = false,
+    this.showControls = true,
     this.handle,
-    this.onCompleted, // kept for compatibility; never called
-    this.onProgress, // kept for compatibility; never called
+    this.isCompleted = false,
+    this.onCompleted,
+    this.onVideoCompleted,
+    this.onProgress,
+    this.onProgressChanged,
   });
 
-  final String videoId;
+  final DppSessionVideo? sessionVideo;
+  final String? videoId;
   final bool isPlaceholder;
   final String? sessionLabel;
   final String? title;
   final bool showBadges;
+  final bool autoPlay;
+  final bool showControls;
   final DppPlayerHandle? handle;
+  final bool isCompleted;
+
+  /// Called when verified playback reaches the end of the video.
   final VoidCallback? onCompleted;
+  final VoidCallback? onVideoCompleted;
+
+  /// Progress updates.
   final void Function(double position, double duration)? onProgress;
+  final ValueChanged<double>? onProgressChanged;
 
   @override
   State<DppYoutubeVideoPlayer> createState() => _DppYoutubeVideoPlayerState();
 }
 
 class _DppYoutubeVideoPlayerState extends State<DppYoutubeVideoPlayer> {
-  String? get _id => _normalizeYoutubeId(widget.videoId);
+  YoutubePlayerController? _controller;
+  StreamSubscription<YoutubePlayerValue>? _valueSub;
+  StreamSubscription<YoutubeVideoState>? _videoStateSub;
+  late VideoCompletionDetector _completionDetector;
 
-  bool get _isPlaceholderState =>
-      widget.isPlaceholder || widget.videoId.trim().isEmpty;
+  Duration _currentDuration = Duration.zero;
+  PlayerState _currentPlayerState = PlayerState.unknown;
 
-  bool get _canOpen => !_isPlaceholderState && _id != null;
+  _PlayerLoadState _loadState = _PlayerLoadState.placeholder;
+  String? _errorMessage;
+
+  DppSessionVideo get _resolvedSessionVideo {
+    if (widget.sessionVideo != null) return widget.sessionVideo!;
+    final vid = widget.videoId ?? '';
+    final found = dppSessionVideos.where((v) => v.videoId == vid).firstOrNull;
+    if (found != null) return found;
+
+    return DppSessionVideo(
+      sessionId: 'custom_video',
+      title: widget.title ?? 'Session Video',
+      videoId: vid,
+      order: 1,
+      isAvailable: !widget.isPlaceholder && vid.isNotEmpty && !vid.startsWith('PLACEHOLDER_'),
+    );
+  }
+
+  bool get _isPlayable => _resolvedSessionVideo.isPlayable && !widget.isPlaceholder;
 
   @override
   void initState() {
     super.initState();
-    widget.handle?._open = _openYoutube;
+    _completionDetector = VideoCompletionDetector(
+      tolerance: const Duration(seconds: 3),
+      enforceVerifiedCoverage: true,
+    );
+    _attachHandle();
+    _initForCurrentSessionVideo();
+  }
+
+  void _attachHandle() {
+    if (widget.handle != null) {
+      widget.handle!._replay = _replay;
+      widget.handle!._openExternal = _openExternalVideo;
+    }
   }
 
   @override
-  void didUpdateWidget(covariant DppYoutubeVideoPlayer old) {
-    super.didUpdateWidget(old);
-    if (old.handle != widget.handle) {
-      old.handle?._open = null;
-      widget.handle?._open = _openYoutube;
+  void didUpdateWidget(covariant DppYoutubeVideoPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.handle != widget.handle) {
+      oldWidget.handle?._replay = null;
+      oldWidget.handle?._openExternal = null;
+      _attachHandle();
     }
+
+    final oldVid = oldWidget.sessionVideo?.videoId ?? oldWidget.videoId;
+    final newVid = widget.sessionVideo?.videoId ?? widget.videoId;
+    if (oldVid != newVid) {
+      _disposeController();
+      _completionDetector = VideoCompletionDetector(
+        tolerance: const Duration(seconds: 3),
+        enforceVerifiedCoverage: true,
+      );
+      _initForCurrentSessionVideo();
+    }
+  }
+
+  Future<void> _openExternalVideo() async {
+    final videoId = _resolvedSessionVideo.videoId;
+    if (videoId.isEmpty || widget.isPlaceholder || videoId.startsWith('PLACEHOLDER_')) {
+      return;
+    }
+    final uri = Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    if (await canLaunchUrl(uri)) {
+      // External YouTube playback is unverified.
+      // It must strictly be viewing-only and CANNOT grant completion or unlock levels.
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _initForCurrentSessionVideo() {
+    if (!_isPlayable) {
+      setState(() => _loadState = _PlayerLoadState.placeholder);
+      return;
+    }
+
+    setState(() => _loadState = _PlayerLoadState.loading);
+    _createController(_resolvedSessionVideo.videoId);
+  }
+
+  void _createController(String videoId) {
+    try {
+      final controller = YoutubePlayerController(
+        params: YoutubePlayerParams(
+          showControls: widget.showControls,
+          showFullscreenButton: true,
+          playsInline: true,
+          strictRelatedVideos: true,
+          mute: false,
+        ),
+      );
+
+      if (widget.autoPlay) {
+        controller.loadVideoById(videoId: videoId);
+      } else {
+        controller.cueVideoById(videoId: videoId);
+      }
+
+      _valueSub = controller.stream.listen(
+        (value) {
+          if (value.metaData.duration > Duration.zero) {
+            _currentDuration = value.metaData.duration;
+          }
+          _currentPlayerState = value.playerState;
+
+          if (value.hasError) {
+            _handleError();
+          }
+        },
+        onError: (_) => _handleError(),
+      );
+
+      _videoStateSub = controller.videoStateStream.listen(
+        _handleVideoState,
+        onError: (_) => _handleError(),
+      );
+
+      _controller = controller;
+      if (mounted) {
+        setState(() => _loadState = _PlayerLoadState.ready);
+      }
+    } catch (_) {
+      _handleError();
+    }
+  }
+
+  void _handleVideoState(YoutubeVideoState state) {
+    var duration = _currentDuration;
+    if (duration <= Duration.zero && _resolvedSessionVideo.duration != null) {
+      duration = _resolvedSessionVideo.duration!;
+    }
+
+    final position = state.position;
+    final isPlaying = _currentPlayerState == PlayerState.playing;
+    final isEnded = _currentPlayerState == PlayerState.ended;
+
+    if (duration > Duration.zero) {
+      final posSec = position.inMilliseconds / 1000.0;
+      final durSec = duration.inMilliseconds / 1000.0;
+      widget.onProgress?.call(posSec, durSec);
+
+      final fraction = VideoCompletionDetector.progressFraction(
+        position: position,
+        duration: duration,
+      );
+      widget.onProgressChanged?.call(fraction);
+    }
+
+    final justCompleted = _completionDetector.onPlaybackUpdate(
+      position: position,
+      duration: duration,
+      playerReportedEnded: isEnded,
+      isPlaying: isPlaying,
+    );
+
+    if (justCompleted) {
+      widget.onCompleted?.call();
+      widget.onVideoCompleted?.call();
+    }
+  }
+
+  Future<void> _replay() async {
+    final controller = _controller;
+    if (controller != null) {
+      await controller.seekTo(seconds: 0.0);
+      await controller.playVideo();
+    }
+  }
+
+  void _handleError() {
+    if (!mounted) return;
+    setState(() {
+      _loadState = _PlayerLoadState.error;
+      _errorMessage = 'Unable to stream session video.\n'
+          'Please verify your internet connection and try again.';
+    });
+  }
+
+  void _retry() {
+    _disposeController();
+    _completionDetector.reset();
+    _initForCurrentSessionVideo();
+  }
+
+  void _disposeController() {
+    _valueSub?.cancel();
+    _valueSub = null;
+    _videoStateSub?.cancel();
+    _videoStateSub = null;
+    _controller?.close();
+    _controller = null;
   }
 
   @override
   void dispose() {
-    widget.handle?._open = null;
+    widget.handle?._replay = null;
+    _disposeController();
     super.dispose();
-  }
-
-  Future<void> _openYoutube() async {
-    final id = _id;
-    if (id == null || _isPlaceholderState) return;
-    final opened = await launchUrl(
-      Uri.parse('https://www.youtube.com/watch?v=$id'),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!opened && mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(content: Text("Couldn't open YouTube on this device.")),
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (widget.sessionLabel != null || widget.title != null) _header(),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3.5),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF8BBD0), Color(0xFFFFCCBC)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _kPink.withValues(alpha: 0.25),
-                      blurRadius: 22,
-                      offset: const Offset(0, 10),
+    switch (_loadState) {
+      case _PlayerLoadState.placeholder:
+        return _PlaceholderState(
+          sessionLabel: widget.sessionLabel ?? 'Session ${_resolvedSessionVideo.order}',
+          title: widget.title ?? _resolvedSessionVideo.title,
+          isCompleted: widget.isCompleted,
+        );
+      case _PlayerLoadState.loading:
+        return const _LoadingState();
+      case _PlayerLoadState.error:
+      case _PlayerLoadState.offline:
+        return _VideoFallbackCard(
+          sessionVideo: _resolvedSessionVideo,
+          sessionLabel: widget.sessionLabel ?? 'Session ${_resolvedSessionVideo.order}',
+          title: widget.title ?? _resolvedSessionVideo.title,
+          onWatchOnYoutube: _openExternalVideo,
+          onRetry: _retry,
+          isCompleted: widget.isCompleted,
+        );
+      case _PlayerLoadState.ready:
+        final controller = _controller;
+        if (controller == null) return const _LoadingState();
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                YoutubePlayer(controller: controller),
+                if (widget.isCompleted)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E7D32).withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF81C784), width: 1),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle_rounded, color: Colors.white, size: 12),
+                          SizedBox(width: 4),
+                          Text(
+                            'COMPLETED',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20.5),
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: _canOpen ? _thumbnailWithPlay() : _unavailable(),
                   ),
-                ),
-              ),
-              if (widget.showBadges) ...[
-                const Positioned(
-                    top: -14,
-                    left: -12,
-                    child: _Badge(icon: Icons.apple, color: Color(0xFFE53935))),
-                const Positioned(
-                    top: -14,
-                    right: -12,
-                    child: _Badge(
-                        icon: Icons.monitor_heart_outlined,
-                        color: Color(0xFFEC407A))),
-                const Positioned(
-                    bottom: -14,
-                    left: -12,
-                    child: _Badge(
-                        icon: Icons.fitness_center,
-                        color: Color(0xFF29B6F6))),
-                const Positioned(
-                    bottom: -14,
-                    right: -12,
-                    child: _Badge(
-                        icon: Icons.monitor_weight_outlined,
-                        color: Color(0xFFAB47BC))),
               ],
-            ],
+            ),
           ),
+        );
+    }
+  }
+}
+
+class _PlaceholderState extends StatelessWidget {
+  const _PlaceholderState({
+    required this.sessionLabel,
+    required this.title,
+    this.isCompleted = false,
+  });
+
+  final String sessionLabel;
+  final String title;
+  final bool isCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2E3D2F),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF81C784), width: 1.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black38,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _thumbnailWithPlay() {
-    final id = _id!;
-    return Semantics(
-      button: true,
-      label: 'Watch the session video on YouTube',
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // hqdefault.jpg exists for every video (maxresdefault does not).
-          Image.network(
-            'https://img.youtube.com/vi/$id/hqdefault.jpg',
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, progress) =>
-                progress == null ? child : const ColoredBox(color: Colors.black87),
-            errorBuilder: (context, error, stack) =>
-                const ColoredBox(color: Colors.black87),
-          ),
-          // Soft dark wash so the play button always stands out.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0x14000000), Color(0x66000000)],
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isCompleted ? Icons.check_circle_rounded : Icons.schedule_rounded,
+              color: const Color(0xFF81C784),
+              size: 38,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              sessionLabel,
+              style: const TextStyle(
+                color: Color(0xFF81C784),
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
-          ),
-          // YouTube-style play button.
-          Center(
-            child: Container(
-              width: 68,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF0000),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Color(0x55000000),
-                      blurRadius: 12,
-                      offset: Offset(0, 4)),
-                ],
-              ),
-              child: const Icon(Icons.play_arrow_rounded,
-                  color: Colors.white, size: 36),
-            ),
-          ),
-          // Hint pill.
-          Positioned(
-            left: 10,
-            bottom: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.open_in_new, size: 11, color: Colors.white),
-                  SizedBox(width: 4),
-                  Text('Watch on YouTube',
-                      style: TextStyle(color: Colors.white, fontSize: 10)),
-                ],
+            const SizedBox(height: 4),
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
             ),
-          ),
-          // Tap target over everything, with a ripple.
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(onTap: _openYoutube),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _unavailable() {
-    final text = _isPlaceholderState
-        ? 'Video coming soon for this session'
-        : 'This session\'s video link is not valid';
-    return Container(
-      color: const Color(0xFFFCE4EC),
-      alignment: Alignment.center,
-      padding: const EdgeInsets.all(8),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 220),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.videocam_off_outlined,
-                  size: 30, color: Colors.pink.shade300),
-              const SizedBox(height: 6),
-              Text(text,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: _kInk, fontSize: 13)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 2),
-      child: Row(
-        children: [
-          if (widget.sessionLabel != null)
+            const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                widget.sessionLabel!.toUpperCase(),
+                isCompleted ? 'Completed' : 'Video coming soon',
                 style: const TextStyle(
+                  color: Color(0xFFE0E0E0),
                   fontSize: 11,
-                  letterSpacing: 1,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF558B2F),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-          if (widget.title != null) ...[
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                widget.title!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, color: _kInk, fontSize: 14),
-              ),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _Badge extends StatelessWidget {
-  const _Badge({required this.icon, required this.color});
-  final IconData icon;
-  final Color color;
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
+    return AspectRatio(
+      aspectRatio: 16 / 9,
       child: Container(
-        width: 40,
-        height: 40,
         decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+          color: const Color(0xFF1E281F),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF81C784)),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Loading session video...',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A1C1C),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.redAccent, size: 28),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                ),
+                const SizedBox(height: 6),
+                ElevatedButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh, size: 14),
+                  label: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF81C784),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoFallbackCard extends StatelessWidget {
+  const _VideoFallbackCard({
+    required this.sessionVideo,
+    required this.sessionLabel,
+    required this.title,
+    required this.onWatchOnYoutube,
+    required this.onRetry,
+    this.isCompleted = false,
+  });
+
+  final DppSessionVideo sessionVideo;
+  final String sessionLabel;
+  final String title;
+  final VoidCallback onWatchOnYoutube;
+  final VoidCallback onRetry;
+  final bool isCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    final videoId = sessionVideo.videoId;
+    final thumbnailUrl = 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Thumbnail image background
+            Image.network(
+              thumbnailUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: const Color(0xFF1E281F),
+                child: const Center(
+                  child: Icon(Icons.play_circle_fill_rounded, color: Color(0xFF81C784), size: 48),
+                ),
+              ),
+            ),
+
+            // Gradient tint
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x66000000),
+                    Color(0x22000000),
+                    Color(0xAA000000),
+                  ],
+                ),
+              ),
+            ),
+
+            // Session badge at top left
+            Positioned(
+              top: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF81C784), width: 1),
+                ),
+                child: Text(
+                  sessionLabel.toUpperCase(),
+                  style: const TextStyle(
+                    color: Color(0xFF81C784),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ),
+
+            // Completed badge at top right if already finished
+            if (isCompleted)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32).withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF81C784), width: 1),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 12),
+                      SizedBox(width: 4),
+                      Text(
+                        'COMPLETED',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Centered Play Button
+            Center(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onWatchOnYoutube,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    width: 58,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF0000),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black45,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Bottom bar with action pills (Watch on YouTube + Retry)
+            Positioned(
+              left: 10,
+              right: 10,
+              bottom: 8,
+              child: Row(
+                children: [
+                  // Watch on YouTube button
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: onWatchOnYoutube,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF81C784),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.open_in_new_rounded, size: 13, color: Color(0xFF1B3D2F)),
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Watch on YouTube',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Color(0xFF1B3D2F),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Retry button
+                  GestureDetector(
+                    onTap: onRetry,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white38, width: 1),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.refresh_rounded, size: 13, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'Retry',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Tap surface over the whole card
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onWatchOnYoutube,
+                ),
+              ),
             ),
           ],
         ),
-        child: Icon(icon, color: color, size: 22),
       ),
     );
   }

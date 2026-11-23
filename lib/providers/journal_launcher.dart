@@ -1,17 +1,6 @@
-// lib/providers/journal_launcher.dart  (NEW)
-//
-// Single entry point for "open the journal on session X".
-// Every place that should open a session's journal (journey-map level nodes,
-// SessionsScreen "Watch Video", etc.) calls launchSessionJournal(...) and then
-// switches to the Manuscript tab. ManuscriptScreen listens to this notifier,
-// swaps to that session's video and opens the book automatically.
-//
-// requestId increments on EVERY call, so tapping the same level twice still
-// re-opens the journal.
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/session_video_progress_service.dart';
 
 class JournalLaunchNotifier extends ChangeNotifier {
   String? _sessionId;
@@ -33,8 +22,30 @@ String sessionIdForLevel(int level) =>
 
 /// Call from a tap handler. Does NOT switch tabs (the caller already knows how
 /// to do that, e.g. `MainShell.of(context)?.selectedIndex = 1`).
-void launchSessionJournal(BuildContext context, String sessionId) {
+/// Validates level unlock status before launching if progress service is available.
+void launchSessionJournal(BuildContext context, String sessionId, {bool enforceLock = true}) {
   try {
+    if (enforceLock) {
+      final progressService =
+          Provider.of<SessionVideoProgressService?>(context, listen: false);
+      final levelNum =
+          int.tryParse(sessionId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+      if (progressService != null && !progressService.isLevelUnlocked(levelNum)) {
+        final msg = progressService.getLockedLevelMessage(levelNum);
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            duration: const Duration(seconds: 3),
+            backgroundColor: const Color(0xFF1B3D6D),
+          ),
+        );
+        return;
+      }
+    }
     Provider.of<JournalLaunchNotifier>(context, listen: false).open(sessionId);
-  } catch (_) {}
+  } catch (_) {
+    try {
+      Provider.of<JournalLaunchNotifier>(context, listen: false).open(sessionId);
+    } catch (_) {}
+  }
 }
