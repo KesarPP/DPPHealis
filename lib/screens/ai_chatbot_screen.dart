@@ -237,12 +237,34 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
              mealLogCount = countQuery.count!;
           }
         } catch (_) {}
+
+        // Fetch IDRS and GPAQ directly from Firestore if not in memory
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get()
+              .timeout(const Duration(seconds: 3));
+          if (userDoc.exists && userDoc.data() != null) {
+            final data = userDoc.data()!;
+            if (data['idrsScore'] != null) {
+              AppState.idrsScore = (data['idrsScore'] as num).toInt();
+              AppState.hasIdrsResult = true;
+            }
+            if (data['gpaqLevel'] != null) {
+              AppState.gpaqLevel = data['gpaqLevel'] as String;
+              AppState.gpaqMetMinutes = (data['gpaqMetMinutes'] as num?)?.toInt() ?? AppState.gpaqMetMinutes;
+              AppState.hasGpaqResult = true;
+            }
+          }
+        } catch (_) {}
       }
 
       String contextStr = "User has a $currentStreak day activity streak. They have tracked $recentActiveMinutes active minutes in the last 7 days. They have logged $mealLogCount meals in total.";
       
-      if (AppState.hasIdrsResult) {
-        contextStr += " Their IDRS score is ${AppState.idrsScore}.";
+      if (AppState.hasIdrsResult && AppState.idrsScore > 0) {
+        final risk = AppState.idrsScore >= 60 ? 'High Risk' : (AppState.idrsScore >= 30 ? 'Moderate Risk' : 'Low Risk');
+        contextStr += " Their Indian Diabetes Risk Score (IDRS) is ${AppState.idrsScore} out of 90 ($risk).";
       }
       if (AppState.hasGpaqResult) {
         contextStr += " Their GPAQ activity level is ${AppState.gpaqLevel} with ${AppState.gpaqMetMinutes} MET-minutes.";
@@ -255,7 +277,71 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     }
   }
 
+  /// Answers personal health assessment queries directly and reliably
+  Future<String?> _getDirectAnswer(String query) async {
+    final lower = query.toLowerCase();
+    
+    // Check if user is asking for their IDRS score or diabetes risk
+    if (lower.contains('idrs') || 
+        ((lower.contains('risk') || lower.contains('score')) && 
+         (lower.contains('what is my') || lower.contains('my') || lower.contains('diabetes') || lower.contains('tell me')))) {
+      
+      int? score = (AppState.hasIdrsResult && AppState.idrsScore > 0) ? AppState.idrsScore : null;
+      
+      // Fetch fresh from Firestore users collection
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        try {
+          final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+          if (doc.exists && doc.data() != null) {
+            final data = doc.data()!;
+            if (data['idrsScore'] != null) {
+              score = (data['idrsScore'] as num).toInt();
+              AppState.idrsScore = score;
+              AppState.hasIdrsResult = true;
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (score == null || score == 0) {
+        final prefs = await SharedPreferences.getInstance();
+        final cached = prefs.getInt('idrsScore');
+        if (cached != null && cached > 0) {
+          score = cached;
+        }
+      }
+
+      if (score != null && score > 0) {
+        String riskLevel;
+        String guidance;
+        if (score >= 60) {
+          riskLevel = 'High Risk';
+          guidance = 'A score of 60 or above indicates a high risk of developing diabetes. We recommend staying consistent with your daily 30-minute activity goal, focusing on whole grains, and checking in with your coach for guidance.';
+        } else if (score >= 30) {
+          riskLevel = 'Moderate Risk';
+          guidance = 'A score between 30 and 50 indicates a moderate risk. Regular physical activity (at least 150 minutes a week) and a balanced diet with plenty of fiber can effectively help prevent diabetes.';
+        } else {
+          riskLevel = 'Low Risk';
+          guidance = 'A score below 30 indicates a low risk for diabetes! Keep up your healthy lifestyle, balanced meals, and regular physical activity.';
+        }
+
+        return 'Your Indian Diabetes Risk Score (IDRS) is **$score / 90** (**$riskLevel**).\n\n$guidance\n\nYou can review your full assessment breakdown anytime from the User Menu ➔ **IDRS Score Card**.';
+      } else {
+        return 'You haven\'t completed your IDRS risk assessment yet! You can complete it in just 2 minutes from the User Menu ➔ **"IDRS Score Card"** to calculate your personalized risk score.';
+      }
+    }
+    
+    return null;
+  }
+
   Future<String> _getVercelResponse(String query) async {
+    // 1. Check for personal assessment queries first to provide instantaneous, accurate answers
+    final directAnswer = await _getDirectAnswer(query);
+    if (directAnswer != null) {
+      return directAnswer;
+    }
+
     // If the Vercel endpoint hasn't been configured yet, fallback to mock response
     if (_vercelEndpoint.contains('your-vercel-app')) {
       return _getMockResponse(query);
@@ -290,16 +376,21 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is Map<String, dynamic>) {
-          return data['response'] ?? data['reply'] ?? data['answer'] ?? data['message'] ?? response.body;
+          final replyText = data['response'] ?? data['reply'] ?? data['answer'] ?? data['message'] ?? response.body;
+          // If backend returned an internal API key failure message, fallback gracefully to local response
+          if (replyText.toString().contains('AI API Request Failed') || replyText.toString().contains('Gemini API Error')) {
+            return _getMockResponse(query);
+          }
+          return replyText;
         }
         return response.body;
       } else {
         debugPrint('Vercel Error: ${response.statusCode} - ${response.body}');
-        return 'I am having trouble connecting to my Vercel backend server (Error ${response.statusCode}). Please check your Vercel deployment logs and API keys.';
+        return _getMockResponse(query);
       }
     } catch (e) {
       debugPrint('Vercel Exception: $e');
-      return 'Could not connect to the Vercel AI server. Please verify your Vercel deployment URL and network connection.';
+      return _getMockResponse(query);
     }
   }
 
@@ -399,6 +490,16 @@ class _AiChatbotScreenState extends State<AiChatbotScreen> {
     
     if (normalized.contains('prediabetes')) {
       return _qaMap["What is prediabetes?"]!;
+    } else if (normalized.contains('idrs') || normalized.contains('riskscore')) {
+      final score = AppState.idrsScore;
+      if (score > 0) {
+        final risk = score >= 60 ? 'High Risk' : (score >= 30 ? 'Moderate Risk' : 'Low Risk');
+        return 'Your Indian Diabetes Risk Score (IDRS) is **$score / 90** ($risk). You can view your detailed breakdown in the User Menu under IDRS Score Card.';
+      } else {
+        return 'The IDRS (Indian Diabetes Risk Score) assesses your risk of Type 2 diabetes based on age, waist circumference, physical activity, and family history. Complete it in the User Menu ➔ "IDRS Score Card" to find out your score!';
+      }
+    } else if (normalized.contains('gpaq') || normalized.contains('metminute')) {
+      return 'The GPAQ (Global Physical Activity Questionnaire) evaluates your weekly physical activity level across work, travel, and recreation. You can check your score in the User Menu under GPAQ Score Card!';
     } else if (normalized.contains('lower') && (normalized.contains('sugar') || normalized.contains('glucose'))) {
       return _qaMap["How can I lower my blood sugar naturally?"]!;
     } else if (normalized.contains('food') || normalized.contains('diet') || normalized.contains('eat')) {
