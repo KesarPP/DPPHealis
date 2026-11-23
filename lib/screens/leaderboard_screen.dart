@@ -349,7 +349,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           user: secondPlace,
                           rank: 2,
                           color: GelatoTheme.blue,
-                          height: 120,
+                          height: 125,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -367,7 +367,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           user: thirdPlace,
                           rank: 3,
                           color: GelatoTheme.orange,
-                          height: 90,
+                          height: 100,
                         ),
                       ),
                     ],
@@ -442,16 +442,20 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                     children: [
                                       Row(
                                         children: [
-                                          Text(
-                                            item['name'] as String,
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: isUser
-                                                  ? FontWeight.w900
-                                                  : FontWeight.w800,
-                                              color: isUser
-                                                  ? const Color(0xFF1D4ED8)
-                                                  : GelatoTheme.textDark,
+                                          Flexible(
+                                            child: Text(
+                                              item['name'] as String,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: isUser
+                                                    ? FontWeight.w900
+                                                    : FontWeight.w800,
+                                                color: isUser
+                                                    ? const Color(0xFF1D4ED8)
+                                                    : GelatoTheme.textDark,
+                                              ),
                                             ),
                                           ),
                                           if (isUser) ...[
@@ -491,12 +495,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                               size: 13,
                                               color: GelatoTheme.orangeDark),
                                           const SizedBox(width: 3),
-                                          Text(
-                                            '${item['badges']} badges',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: GelatoTheme.textLight,
+                                          Flexible(
+                                            child: Text(
+                                              '${item['badges']} badges',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: GelatoTheme.textLight,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -504,6 +512,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                     ],
                                   ),
                                 ),
+                                const SizedBox(width: 10),
 
                                 // Points Score
                                 Text(
@@ -582,6 +591,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(width: 10),
                         Text(
                           '${currentUserEntry['points']} pts',
                           style: const TextStyle(
@@ -626,6 +636,7 @@ class _PodiumItem extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
+        const SizedBox(height: 14),
         // Avatar
         Stack(
           alignment: Alignment.topCenter,
@@ -736,48 +747,53 @@ class _PodiumItem extends StatelessWidget {
                     ),
                   ],
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                rank == 1 ? '1st' : (rank == 2 ? '2nd' : '3rd'),
-                style: TextStyle(
-                  fontSize: isUser ? 24 : 20,
-                  fontWeight: FontWeight.w900,
-                  color: isOpen
-                      ? const Color(0xFF94A3B8)
-                      : (isUser ? const Color(0xFF1E40AF) : Colors.black),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Text(
-                  isOpen ? 'Open Spot' : (user['name'] as String? ?? 'User'),
-                  style: TextStyle(
-                    fontSize: isUser ? 16 : 14,
-                    fontWeight: FontWeight.w900,
-                    color: isOpen
-                        ? const Color(0xFF94A3B8)
-                        : (isUser ? const Color(0xFF1E40AF) : Colors.black87),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    rank == 1 ? '1st' : (rank == 2 ? '2nd' : '3rd'),
+                    style: TextStyle(
+                      fontSize: isUser ? 24 : 20,
+                      fontWeight: FontWeight.w900,
+                      color: isOpen
+                          ? const Color(0xFF94A3B8)
+                          : (isUser ? const Color(0xFF1E40AF) : Colors.black),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isOpen ? 'Open Spot' : (user['name'] as String? ?? 'User'),
+                    style: TextStyle(
+                      fontSize: isUser ? 16 : 14,
+                      fontWeight: FontWeight.w900,
+                      color: isOpen
+                          ? const Color(0xFF94A3B8)
+                          : (isUser ? const Color(0xFF1E40AF) : Colors.black87),
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isOpen ? '—' : '${user['points']} pts',
+                    style: TextStyle(
+                      fontSize: isUser ? 14 : 12,
+                      fontWeight: FontWeight.w900,
+                      color: isOpen
+                          ? const Color(0xFFCBD5E1)
+                          : (isUser ? const Color(0xFF1D4ED8) : Colors.black54),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                isOpen ? '—' : '${user['points']} pts',
-                style: TextStyle(
-                  fontSize: isUser ? 14 : 12,
-                  fontWeight: FontWeight.w900,
-                  color: isOpen
-                      ? const Color(0xFFCBD5E1)
-                      : (isUser ? const Color(0xFF1D4ED8) : Colors.black54),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ],
