@@ -280,7 +280,7 @@ class _HandoutImageScreenState extends State<_HandoutImageScreen> {
                             ),
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                              child: _buildPageContent(widget.title, _displayPages[index]),
+                              child: _buildPageContent(widget.title, index, _displayPages[index]),
                             ),
                           );
                         },
@@ -313,193 +313,643 @@ class _HandoutImageScreenState extends State<_HandoutImageScreen> {
     );
   }
 
-  Widget _buildPageContent(String title, String text) {
-    if (title == 'Understanding Prediabetes') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 5,
-                child: Text(
-                  "Welcome to your Diabetes Prevention Journey! This program is designed to help you take small, meaningful steps toward a healthier life.",
-                  style: const TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
-                    color: Color(0xFF2C3E50),
-                    height: 1.6,
+  void _showImageZoom(BuildContext context, String assetPath) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.black87, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(4, 4),
                   ),
+                ],
+              ),
+              padding: const EdgeInsets.all(12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: InteractiveViewer(
+                  maxScale: 4.0,
+                  child: Image.asset(assetPath, fit: BoxFit.contain),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 4,
-                child: Container(
-                  margin: const EdgeInsets.only(top: 40),
-                  height: 110,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(2, 2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CustomPaint(painter: _GinghamPainter(0, isMixed: true)),
-                        Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.asset('assets/images/Image 1.jpg', fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[300], child: const Center(child: Text('Image 1', style: TextStyle(fontSize: 10))),
-                              ),
-                            ),
-                          ),
+            ),
+            IconButton(
+              icon: const CircleAvatar(
+                backgroundColor: Colors.white,
+                radius: 14,
+                child: Icon(Icons.close, size: 16, color: GelatoTheme.textDark),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGinghamImage({
+    required String assetPath,
+    double? height,
+    double? width,
+    BoxFit fit = BoxFit.cover,
+  }) {
+    return GestureDetector(
+      onTap: () => _showImageZoom(context, assetPath),
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(2, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              Positioned.fill(
+                child: CustomPaint(painter: _GinghamPainter(widget.colorIndex, isMixed: true)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    assetPath,
+                    fit: fit,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[200],
+                      padding: const EdgeInsets.all(8),
+                      child: Center(
+                        child: Text(
+                          assetPath.split('/').last,
+                          style: const TextStyle(fontSize: 10, color: Colors.black54),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          const Text(
-            "Over the coming weeks, you'll learn about nutrition, movement, and habits that can make a real difference — one session at a time. Let's get started!",
-            style: TextStyle(
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSideBySide({
+    required String text,
+    required String assetPath,
+    bool imageOnLeft = false,
+    double imageHeight = 150,
+    int textFlex = 5,
+    int imageFlex = 4,
+    BoxFit fit = BoxFit.cover,
+  }) {
+    final imgWidget = _buildGinghamImage(
+      assetPath: assetPath,
+      height: imageHeight,
+      fit: fit,
+    );
+    final txtWidget = _buildFormattedText(text);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (imageOnLeft) ...[
+          Expanded(flex: imageFlex, child: imgWidget),
+          const SizedBox(width: 14),
+          Expanded(flex: textFlex, child: txtWidget),
+        ] else ...[
+          Expanded(flex: textFlex, child: txtWidget),
+          const SizedBox(width: 14),
+          Expanded(flex: imageFlex, child: imgWidget),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLandscapeImage({
+    required String assetPath,
+    double height = 155,
+    BoxFit fit = BoxFit.cover,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: _buildGinghamImage(
+        assetPath: assetPath,
+        height: height,
+        fit: fit,
+      ),
+    );
+  }
+
+  Widget _buildFormattedText(String text) {
+    final paragraphs = text.split('\n\n');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: paragraphs.map((p) {
+        final trimmed = p.trim();
+        if (trimmed.isEmpty) return const SizedBox.shrink();
+
+        final colonIndex = trimmed.indexOf(':');
+        final qIndex = trimmed.indexOf('?');
+        int splitIndex = -1;
+        if (colonIndex > 0 && colonIndex < 35) {
+          splitIndex = colonIndex + 1;
+        } else if (qIndex > 0 && qIndex < 35) {
+          splitIndex = qIndex + 1;
+        }
+
+        if (splitIndex > 0 && splitIndex < trimmed.length) {
+          final header = trimmed.substring(0, splitIndex);
+          final body = trimmed.substring(splitIndex).trim();
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.2,
+                  color: Color(0xFF2C3E50),
+                  height: 1.6,
+                ),
+                children: [
+                  TextSpan(
+                    text: '$header ',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1B365D),
+                    ),
+                  ),
+                  TextSpan(text: body),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: Text(
+            trimmed,
+            style: const TextStyle(
               fontFamily: 'serif',
-              fontSize: 14,
+              fontSize: 13.5,
               fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
               color: Color(0xFF2C3E50),
               height: 1.6,
             ),
           ),
-          const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 4,
-                child: Container(
-                  height: 110,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(2, 2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CustomPaint(painter: _GinghamPainter(0, isMixed: true)),
-                        Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.asset('assets/images/Image 2.jpg', fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[300], child: const Center(child: Text('Image 2', style: TextStyle(fontSize: 10))),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                flex: 5,
-                child: Text(
-                  "Prediabetes means that blood sugar is high but not yet high enough to be type 2 diabetes.",
-                  style: TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
-                    color: Color(0xFF2C3E50),
-                    height: 1.6,
-                  ),
-                ),
-              ),
-            ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildPageContent(String title, int pageIndex, String text) {
+    final t = title.toLowerCase();
+
+    // ==========================================
+    // SESSION 1
+    // ==========================================
+    if (t.contains('prediabetes') && !t.contains('foundations')) {
+      // Session 1, Item 1: Understanding Prediabetes
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLandscapeImage(
+            assetPath: 'assets/images/handouts/module_1/s1_glucose_levels.png',
+            height: 165,
+            fit: BoxFit.contain,
           ),
-          const SizedBox(height: 50),
-          Container(
-            width: double.infinity,
-            height: 140,
-            margin: const EdgeInsets.only(bottom: 24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF5A5A5A), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(2, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CustomPaint(painter: _GinghamPainter(0, isMixed: true)),
-                  Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.asset('assets/images/Image 3.png', fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[300], child: const Center(child: Text('Image 3 (Chart)', style: TextStyle(fontSize: 12))),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          const SizedBox(height: 14),
+          _buildFormattedText(
+            "Welcome to your Diabetes Prevention Journey! This program is designed to help you take small, meaningful steps toward a healthier life. Over the coming weeks, you'll learn about nutrition, movement, and habits that can make a real difference — one session at a time. Let's get started!\n\nPrediabetes means that blood sugar is high but not yet high enough to be type 2 diabetes.",
           ),
         ],
       );
     }
 
-    // Default layout for other pages
-    return Text(
-      text,
-      textAlign: TextAlign.left,
-      style: const TextStyle(
-        fontFamily: 'serif',
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.3,
-        color: Color(0xFF2C3E50),
-        height: 1.6,
-      ),
-    );
+    if (t.contains('type 2') || t.contains('type-2')) {
+      // Session 1, Item 2: Understanding Type 2 Diabetes
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s1_type2_diabetes.png',
+              height: 155,
+              fit: BoxFit.cover,
+            ),
+            const SizedBox(height: 14),
+            _buildFormattedText(text),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('ndpp') || t.contains('diabetes prevention program')) {
+      // Session 1, Item 3: Introduction to NDPP
+      if (pageIndex == 0) {
+        final paragraphs = text.split('\n\n');
+        final firstPara = paragraphs.isNotEmpty ? paragraphs.first : text;
+        final remaining = paragraphs.length > 1 ? paragraphs.sublist(1).join('\n\n') : '';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSideBySide(
+              text: firstPara,
+              assetPath: 'assets/images/handouts/module_1/s1_ndpp_logo.png',
+              imageOnLeft: false,
+              imageHeight: 125,
+              textFlex: 5,
+              imageFlex: 4,
+              fit: BoxFit.contain,
+            ),
+            if (remaining.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _buildFormattedText(remaining),
+            ],
+          ],
+        );
+      } else if (pageIndex == _displayPages.length - 2 || (pageIndex == 6 && _displayPages.length > 6)) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _buildGinghamImage(
+                    assetPath: 'assets/images/handouts/module_1/s1_scale_weight.png',
+                    height: 110,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildGinghamImage(
+                    assetPath: 'assets/images/handouts/module_1/s1_healthy_activity.png',
+                    height: 110,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildFormattedText(text),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('manage weight') || t.contains('why manage')) {
+      // Session 1, Item 4: Why Manage Weight?
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFormattedText(text),
+          const SizedBox(height: 12),
+          _buildLandscapeImage(
+            assetPath: 'assets/images/handouts/module_1/s1_manage_weight.png',
+            height: 165,
+            fit: BoxFit.contain,
+          ),
+        ],
+      );
+    }
+
+    // ==========================================
+    // SESSION 2
+    // ==========================================
+    if (t.contains('understanding calories')) {
+      // Session 2, Item 1: Understanding Calories
+      if (pageIndex == 0) {
+        final paragraphs = text.split('\n\n');
+        final firstPara = paragraphs.isNotEmpty ? paragraphs.first : text;
+        final remaining = paragraphs.length > 1 ? paragraphs.sublist(1).join('\n\n') : '';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSideBySide(
+              text: firstPara,
+              assetPath: 'assets/images/handouts/module_1/s2_calories_notepad.png',
+              imageOnLeft: false,
+              imageHeight: 145,
+              textFlex: 5,
+              imageFlex: 4,
+              fit: BoxFit.cover,
+            ),
+            if (remaining.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _buildFormattedText(remaining),
+            ],
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('understanding fat')) {
+      // Session 2, Item 2: Understanding Fat
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s2_understanding_fats.png',
+              height: 150,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 14),
+            _buildFormattedText(text),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('fat in foods') || t.contains('fats in food')) {
+      // Session 2, Item 3: Fats in Food
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s2_fat_per_day.png',
+              height: 150,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 14),
+            _buildFormattedText(text),
+          ],
+        );
+      } else {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSideBySide(
+              text: text,
+              assetPath: 'assets/images/handouts/module_1/s2_importance_of_fats.png',
+              imageOnLeft: false,
+              imageHeight: 155,
+              textFlex: 5,
+              imageFlex: 4,
+              fit: BoxFit.contain,
+            ),
+          ],
+        );
+      }
+    }
+
+    if (t.contains('hidden calories') && (t.contains('hidden fat') || t.contains('hidden fats'))) {
+      // Session 2, Item 4: Hidden Calories and Hidden Fats
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSideBySide(
+              text: text,
+              assetPath: 'assets/images/handouts/module_1/s2_good_vs_bad_fats.png',
+              imageOnLeft: false,
+              imageHeight: 230,
+              textFlex: 5,
+              imageFlex: 4,
+              fit: BoxFit.contain,
+            ),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('why hidden calories matter')) {
+      // Session 2, Item 5: Why Hidden Calories Matter
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildFormattedText(text),
+            const SizedBox(height: 14),
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s2_fastfood_vs_homecooked.png',
+              height: 175,
+              fit: BoxFit.contain,
+            ),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    // ==========================================
+    // SESSION 3
+    // ==========================================
+    if (t.contains('reducing fat intake') || t.contains('measuring and preparation')) {
+      // Session 3, Item 1: Measuring and Preparation
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s3_measuring_prep.png',
+              height: 155,
+              fit: BoxFit.cover,
+            ),
+            const SizedBox(height: 14),
+            _buildFormattedText(text),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('everyday fat reduction')) {
+      // Session 3, Item 2: Everyday Fat Reduction Strategies
+      if (pageIndex == 0) {
+        final paragraphs = text.split('\n\n');
+        final firstPara = paragraphs.isNotEmpty ? paragraphs.first : text;
+        final remaining = paragraphs.length > 1 ? paragraphs.sublist(1).join('\n\n') : '';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSideBySide(
+              text: firstPara,
+              assetPath: 'assets/images/handouts/module_1/s3_calorie_counter.png',
+              imageOnLeft: false,
+              imageHeight: 140,
+              textFlex: 5,
+              imageFlex: 4,
+              fit: BoxFit.cover,
+            ),
+            if (remaining.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _buildFormattedText(remaining),
+            ],
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('without feeling deprived')) {
+      // Session 3, Item 3: Reducing Calories Without Feeling Deprived
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFormattedText(text),
+          const SizedBox(height: 14),
+          _buildLandscapeImage(
+            assetPath: 'assets/images/handouts/module_1/s3_healthy_vs_sweets.png',
+            height: 155,
+            fit: BoxFit.cover,
+          ),
+        ],
+      );
+    }
+
+    // ==========================================
+    // SESSION 4
+    // ==========================================
+    if (t.contains('principles of healthy eating')) {
+      // Session 4, Item 1: Principles of Healthy Eating
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s4_balanced_diet.png',
+              height: 155,
+              fit: BoxFit.cover,
+            ),
+            const SizedBox(height: 14),
+            _buildFormattedText(text),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('the plate method') || t.contains('variety and balance')) {
+      // Session 4, Item 2: The Plate Method / Variety and Balance
+      if (pageIndex == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s4_myplate_guide.png',
+              height: 140,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 14),
+            _buildFormattedText(text),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('fruits & vegetables') || t.contains('more volume')) {
+      // Session 4, Item 3: More Volume, Fewer Calories
+      if (pageIndex == 1 || (pageIndex == 0 && _displayPages.length == 1)) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSideBySide(
+              text: text,
+              assetPath: 'assets/images/handouts/module_1/s4_high_low_volume.png',
+              imageOnLeft: false,
+              imageHeight: 230,
+              textFlex: 5,
+              imageFlex: 4,
+              fit: BoxFit.contain,
+            ),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('starches and diabetes') || t.contains('starchy foods')) {
+      // Session 4, Item 4: Starchy Foods and Fiber
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFormattedText(text),
+          const SizedBox(height: 14),
+          _buildLandscapeImage(
+            assetPath: 'assets/images/handouts/module_1/s4_starchy_fiber.png',
+            height: 155,
+            fit: BoxFit.cover,
+          ),
+        ],
+      );
+    }
+
+    if (t.contains('low-fat flavoring') || t.contains('healthy food preparation')) {
+      // Session 4, Item 5: Healthy Food Preparation
+      if (pageIndex == _displayPages.length - 1 || pageIndex == 1) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildFormattedText(text),
+            const SizedBox(height: 14),
+            _buildLandscapeImage(
+              assetPath: 'assets/images/handouts/module_1/s4_cooking_methods.png',
+              height: 170,
+              fit: BoxFit.contain,
+            ),
+          ],
+        );
+      }
+      return _buildFormattedText(text);
+    }
+
+    if (t.contains('mindful eating')) {
+      // Session 4, Item 6: Mindful Eating
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSideBySide(
+            text: text,
+            assetPath: 'assets/images/handouts/module_1/s4_mindful_eating.png',
+            imageOnLeft: false,
+            imageHeight: 145,
+            textFlex: 5,
+            imageFlex: 4,
+            fit: BoxFit.contain,
+          ),
+        ],
+      );
+    }
+
+    return _buildFormattedText(text);
   }
 }
 
